@@ -10,4 +10,5 @@ AppRegistry.registerComponent(appName, () => App);
 
 /*
 sistem mengontol
+sistem mengontol2
 */
