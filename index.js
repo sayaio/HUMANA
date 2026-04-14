@@ -11,4 +11,5 @@ AppRegistry.registerComponent(appName, () => App);
 
 /*
 Yahahaa hayyuuk
+sistem mengontol
 */
