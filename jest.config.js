@@ -4,4 +4,5 @@ module.exports = {
 
 /*
 mengolah konci toll
+mengontol konci toll
 */
