@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -10,56 +10,72 @@ import {
   StatusBar,
   ScrollView
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 
 const App = () => {
+  // 1. Tambahkan state untuk mengontrol kemunculan Splash Screen
+  const [isShowSplash, setIsShowSplash] = useState(true);
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Pastikan file-file ini ada di folder assets kamu
   const LOGO_SOURCE = require('./assets/logo_humana.png'); 
-  const EYE_ICON = require('./assets/logo_humana.png'); // Ganti dengan icon mata (eye slash) nanti
-  
-  // Icon Google dari internet agar langsung muncul
+  const EYE_ICON = require('./assets/logo_humana.png'); 
   const GOOGLE_ICON = { uri: 'https://img.icons8.com/color/48/google-logo.png' };
 
+  // 2. Tambahkan useEffect untuk membuat timer Splash Screen
+  useEffect(() => {
+    // Splash screen akan tampil selama 3000 milidetik (3 detik)
+    const timer = setTimeout(() => {
+      setIsShowSplash(false); // Setelah 3 detik, ubah state untuk menghilangkan splash
+    }, 3000);
+
+    // Membersihkan timer agar tidak bocor di memori
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ==========================================
+  // TAMPILAN SPLASH SCREEN
+  // ==========================================
+  if (isShowSplash) {
+    return (
+      <View style={styles.splashContainer}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <View style={styles.splashContent}>
+          <Image source={LOGO_SOURCE} style={styles.splashLogo} resizeMode="contain" />
+          <Text style={styles.splashText}>Humana.</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // ==========================================
+  // TAMPILAN HALAMAN LOGIN
+  // ==========================================
   return (
     <View style={styles.container}>
-      {/* Membuat status bar transparan agar gradasi menabrak ujung atas layar */}
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      
-      {/* 1. Background Gradasi Full Layar */}
-      <LinearGradient 
-        colors={['#A1CFF6', '#F8BFE6']} // Warna biru ke pink sesuai desain terakhir
-        start={{x: 0, y: 0}} 
-        end={{x: 1, y: 1}} 
-        style={StyleSheet.absoluteFillObject}
-      />
 
       <SafeAreaView style={styles.safeArea}>
-        {/* 2. ScrollView agar aman di layar kecil */}
-        <ScrollView  
+        <ScrollView 
           contentContainerStyle={styles.scrollContainer} 
           showsVerticalScrollIndicator={false}
           bounces={false}
         >
           
-          {/* 3. Bagian Header (Logo & Teks) */}
+          {/* Header */}
           <View style={styles.headerSection}>
             <View style={styles.logoWrapper}>
-                {/* Logo diletakkan di sini. Nanti kamu bisa atur ukurannya. */}
                 <Image source={LOGO_SOURCE} style={styles.logoImage} resizeMode="contain" />
             </View>
-            <Text style={styles.titleText}>No pressure,{"\n"}just progress</Text>
+            <Text style={styles.titleText}>No pressure just Progress</Text>
             <Text style={styles.subtitleText}>
               Make learning simple and enjoyable{"\n"}Sign in to get a tailored experience just for you
             </Text>
           </View>
 
-          {/* 4. Bagian Kartu Putih (Form Login) */}
+          {/* Form Card */}
           <View style={styles.formCard}>
             
-            {/* Tab Log in & Sign in */}
             <View style={styles.tabContainer}>
               <TouchableOpacity style={styles.activeTab}>
                 <Text style={styles.activeTabText}>Log in</Text>
@@ -69,7 +85,6 @@ const App = () => {
               </TouchableOpacity>
             </View>
 
-            {/* Input Email (Floating Label) */}
             <View style={styles.inputWrapper}>
               <Text style={styles.floatingLabel}>Email</Text>
               <TextInput
@@ -83,7 +98,6 @@ const App = () => {
               />
             </View>
 
-            {/* Input Password (Floating Label) */}
             <View style={styles.inputWrapper}>
               <Text style={styles.floatingLabel}>Password</Text>
               <View style={styles.passwordContainer}>
@@ -101,18 +115,15 @@ const App = () => {
               </View>
             </View>
 
-            {/* Tombol Log In */}
             <TouchableOpacity style={styles.loginButton}>
               <Text style={styles.loginButtonText}>Log in</Text>
             </TouchableOpacity>
 
-            {/* Tombol Continue with Google */}
             <TouchableOpacity style={styles.googleButton}>
               <Image source={GOOGLE_ICON} style={styles.googleIcon} resizeMode="contain" />
               <Text style={styles.googleButtonText}>Continue with Google</Text>
             </TouchableOpacity>
             
-            {/* Footer Text */}
             <Text style={styles.footerText}>
               By continuing I agree with the <Text style={styles.linkText}>Terms & Conditions</Text>,{"\n"}
               <Text style={styles.linkText}>Privacy Policy.</Text>
@@ -126,29 +137,48 @@ const App = () => {
 };
 
 const styles = StyleSheet.create({
+  // --- Gaya Khusus Splash Screen ---
+  splashContainer: {
+    flex: 1,
+    backgroundColor: '#A1CFF6', // Warna biru sama dengan halaman login
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  splashContent: {
+    alignItems: 'center',
+    flexDirection: 'row', // Agar logo dan teks menyamping (seperti di desain Figma)
+  },
+  splashLogo: {
+    width: 60,
+    height: 60,
+    marginRight: 10,
+  },
+  splashText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  
+  // --- Gaya Halaman Login (Tetap Sama) ---
   container: {
     flex: 1,
+    backgroundColor: '#A1CFF6', 
   },
   safeArea: {
     flex: 1,
   },
   scrollContainer: {
     flexGrow: 1, 
-    justifyContent: 'space-between', // Memisahkan header ke atas dan form ke bawah
+    justifyContent: 'space-between', 
   },
-  // --- Header ---
   headerSection: {
     alignItems: 'center',
     paddingHorizontal: 30,
-    paddingTop: 80, // Jarak dari atas layar
+    paddingTop: 80, 
     paddingBottom: 40,
   },
   logoWrapper: {
     marginBottom: 20,
-    // Jika ingin memberi background putih pada logo bulat (opsional):
-    // backgroundColor: '#FFF', 
-    // borderRadius: 50,
-    // padding: 10,
   },
   logoImage: {
     width: 70,
@@ -169,7 +199,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     paddingHorizontal: 10,
   },
-  // --- Form Card ---
   formCard: {
     backgroundColor: '#FFF',
     borderTopLeftRadius: 30,
@@ -178,14 +207,13 @@ const styles = StyleSheet.create({
     paddingTop: 35,
     paddingBottom: 40,
   },
-  // --- Tabs ---
   tabContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 35,
   },
   activeTab: {
-    backgroundColor: '#C2E0F9', // Biru pudar sesuai tombol
+    backgroundColor: '#C2E0F9', 
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 25,
@@ -207,7 +235,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 15,
   },
-  // --- Inputs (Floating Label) ---
   inputWrapper: {
     borderWidth: 1,
     borderColor: '#E0E0E0',
@@ -226,13 +253,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     fontSize: 12,
     color: '#D3D3D3',
-    zIndex: 1, // Memastikan label selalu di atas garis border
+    zIndex: 1, 
   },
   inputField: {
     fontSize: 15,
     color: '#333',
     height: '100%',
-    paddingVertical: 0, // Mencegah text terpotong di Android
+    paddingVertical: 0, 
   },
   passwordContainer: {
     flexDirection: 'row',
@@ -251,10 +278,9 @@ const styles = StyleSheet.create({
     height: 22,
     tintColor: '#D3D3D3',
   },
-  // --- Buttons ---
   loginButton: {
     backgroundColor: '#C2E0F9',
-    borderRadius: 12, // Dibuat sedikit rounded (bukan bulat penuh) sesuai gambar
+    borderRadius: 12, 
     height: 55,
     justifyContent: 'center',
     alignItems: 'center',
@@ -285,7 +311,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
-  // --- Footer ---
   footerText: {
     textAlign: 'center',
     fontSize: 11,
