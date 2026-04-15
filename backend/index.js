@@ -23,6 +23,8 @@ app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     let conn;
 
+    console.log("\n=== MULAI PROSES LOGIN ===");
+    console.log("1. Data dari React Native -> Email:", email, "| Password:", password);
     try {
         conn = await pool.getConnection();
 
@@ -50,7 +52,7 @@ app.post('/api/login', async (req, res) => {
 
         if (rows.length > 0) {
             const dataDB = rows[0];
-            
+            console.log("3. Akun ditemukan! Data dari DB:", dataDB);
             // Di sinilah OOP kita beraksi! 
             // Kita gunakan dataDB.role untuk menentukan class mana yang di-instansiasi
             let userAktif;
@@ -62,26 +64,36 @@ app.post('/api/login', async (req, res) => {
             } //else {
             //     userAktif = new Admin(dataDB.id, dataDB.nama_lengkap, dataDB.role, dataDB.email, dataDB.password);
             // }
+            console.log("4. Pengecekan Method Login OOP:");
+            console.log("   - Password di DB      : '" + dataDB.password + "'");
+            console.log("   - Password dari Input : '" + password + "'");
 
+            const isLoginValid = userAktif.login(email, password);
+            console.log("5. Hasil method userAktif.login() :", isLoginValid);
             // Validasi password menggunakan method yang sudah kamu buat di class User
-            if (userAktif.login(email, password)) {
+            if (isLoginValid) {
+                console.log("6. STATUS: SUKSES LOGIN!");
                 res.json({
                     success: true,
                     message: `Login Berhasil sebagai ${dataDB.role}`,
                     profile: userAktif.getProfile()
                 });
             } else {
+                console.log("6. STATUS: GAGAL! Password Salah.");
                 res.status(401).json({ success: false, message: "Password salah!" });
             }
         } else {
+            console.log("3. STATUS: GAGAL! Array kosong, email tidak ada di MariaDB.");
             res.status(404).json({ success: false, message: "Akun tidak terdaftar!" });
         }
     } catch (err) {
+        console.log("!!! ERROR FATAL SERVER !!!", err.message);
         res.status(500).json({ success: false, error: err.message });
         console.log("ERROR SERVER:", err.message); 
         // Hapus console.log(dataDB) di sini
     } finally {
         if (conn) conn.release();
+        console.log("=== SELESAI ===\n");
     }
 });
 

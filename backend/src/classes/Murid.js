@@ -4,9 +4,9 @@ class Murid extends User{
   #kelas;
   #saldo;
 
-  constructor(id, username, email, password, nama_user) {
-    super(id, username, email, password, nama_user);
-    this._saldo   = 0;
+  constructor(id, username, email, password, nama) {
+    super(id, username, email, password, nama);
+    this.#saldo = 0;
   }
 
   getRole() {
