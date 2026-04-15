@@ -6,14 +6,16 @@ class User {
     #password;
     #nama_user;
     #createdAt;
-    constructor(id_user, username, role, email, password, nama_user) {
-        this.#id_user = id_user;
-        this.#username = username;
-        this.#role = role;
-        this.#email = email;
-        this.#password = password;
-        this.#nama_user = nama_user;
-        this.#createdAt = new Date();
+    constructor(id_user, username, email, password, nama_user) {
+        if (new.target === User) {
+            throw new Error('User adalah abstract class dan tidak dapat diinstansiasi langsung');
+        }
+        this._id_user   = id_user;
+        this._username  = username;
+        this.email      = email;
+        this._password  = password;
+        this.nama_user  = nama_user;
+        this.createdAt  = new Date(); 
     }
     login(){
         return    
