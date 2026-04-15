@@ -1,4 +1,4 @@
-class Guru {
+class Guru extends User{
   constructor() {
     // TODO
   }

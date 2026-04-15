@@ -1,4 +1,4 @@
-class Murid {
+class Murid extends User{
   constructor() {
     // TODO
   }
