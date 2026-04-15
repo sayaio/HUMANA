@@ -12,6 +12,7 @@ import {
   Alert,
   Dimensions
 } from 'react-native';
+import { API_URL } from './src/config';
 
 const { width } = Dimensions.get('window');
 
@@ -47,26 +48,39 @@ const App = () => {
     }
   }, [currentPage]);
 
-  const handleAuthAction = () => {
+  const handleAuthAction = async () => {
     if (isLogin) {
-      if (email !== '' && password !== '') {
+      // --- LOGIKA LOGIN ---
+      try {
+        const response = await fetch(`${API_URL}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+          // Jika login sukses, pindah ke halaman Home
+          Alert.alert('Berhasil', result.message);
+          setCurrentPage('Home');
+          // Tips: Kamu bisa menyimpan data user di state jika perlu
+          // setUserName(result.profile.nama_lengkap);
+        } else {
+          Alert.alert('Gagal Masuk', result.message || 'Email atau password salah');
+        }
+      } catch (error) {
+            console.log("Detail Error:", error); // Muncul di terminal terminal
+            Alert.alert('Error', error.message); // Muncul di layar HP
+    }
+
+    } else {
+      // --- LOGIKA REGISTER (SIGN IN) ---
+      // Untuk register, kamu bisa buat endpoint baru di backend nanti.
+      // Sementara biarkan logic temanmu atau arahkan ke Home.
+      if (password === confirmPassword && email !== '') {
         setCurrentPage('Home');
       } else {
-        Alert.alert('Gagal Masuk', 'Mohon isi Email dan Password kamu.');
-      }
-    } else {
-      if (namaLengkap !== '' && email !== '' && password !== '' && confirmPassword !== '') {
-        if (password === confirmPassword) {
-          Alert.alert(
-            'Pendaftaran Berhasil', 
-            'Akun kamu telah dibuat. Silakan masuk menggunakan akun tersebut.',
-            [{ text: 'OK', onPress: () => setIsLogin(true) }] 
-          );
-        } else {
-          Alert.alert('Gagal Mendaftar', 'Password dan Konfirmasi Password tidak cocok!');
-        }
-      } else {
-        Alert.alert('Gagal Mendaftar', 'Mohon isi semua kolom yang tersedia.');
+        Alert.alert('Gagal', 'Cek kembali data pendaftaranmu.');
       }
     }
   };
