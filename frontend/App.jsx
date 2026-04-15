@@ -190,7 +190,7 @@ const App = () => {
             <View style={styles.logoWrapper}>
                 <Image source={LOGO_SOURCE} style={styles.logoImage} resizeMode="contain" />
             </View>
-            <Text style={styles.titleText}>No pressure,{"\n"}just progress</Text>
+            <Text style={styles.titleText}>  No pressure,  {"\n"}just progress</Text>
             <Text style={styles.subtitleText}>
               Make learning simple and enjoyable{"\n"}Sign in to get a tailored experience just for you
             </Text>
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   scrollContainer: { flexGrow: 1, justifyContent: 'space-between' },
   headerSection: { alignItems: 'center', paddingHorizontal: 30, paddingTop: 60, paddingBottom: 20 },
   logoWrapper: { marginBottom: 15 },
-  logoImage: { width: 70, height: 70 },
+  logoImage: { width: 100, height: 100 },
   titleText: { fontSize: 26, fontWeight: 'bold', color: '#FFF', textAlign: 'center', lineHeight: 32, marginBottom: 10 },
   subtitleText: { fontSize: 12, color: 'rgba(255, 255, 255, 0.9)', textAlign: 'center', lineHeight: 18, paddingHorizontal: 10 },
   

@@ -11,7 +11,7 @@ app.use(express.json());
 const pool = mariadb.createPool({
     host: 'localhost',
     user: 'root',
-    password: '1234',
+    password: 'humanaprotot',
     database: 'humana'
 });
 
