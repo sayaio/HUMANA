@@ -17,8 +17,11 @@ class User {
         this.nama_user  = nama_user;
         this.createdAt  = new Date(); 
     }
-    login(){
-        return    
+    login(inputEmail, inputPassword){
+        if (this.#email === inputEmail && this.#password === inputPassword) {
+            return true;
+        }
+        return false;
     }
     logout(){
 
