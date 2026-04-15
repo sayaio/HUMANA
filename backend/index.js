@@ -50,13 +50,6 @@ app.post('/api/login', async (req, res) => {
 
         if (rows.length > 0) {
             const dataDB = rows[0];
-
-    // ✅ DEBUG DI SINI SAJA
-            console.log("===== DEBUG LOGIN =====");
-            console.log("INPUT EMAIL:", email);
-            console.log("INPUT PASSWORD:", password);
-            console.log("DATA DB:", dataDB);
-            console.log("=======================");
             
             // Di sinilah OOP kita beraksi! 
             // Kita gunakan dataDB.role untuk menentukan class mana yang di-instansiasi
@@ -83,10 +76,10 @@ app.post('/api/login', async (req, res) => {
         } else {
             res.status(404).json({ success: false, message: "Akun tidak terdaftar!" });
         }
-    }catch (err) {
-        res.status(500).json({ error: err.message });
-        console.log("DATA DB:", dataDB);
-        console.log("INPUT:", email, password);
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+        console.log("ERROR SERVER:", err.message); 
+        // Hapus console.log(dataDB) di sini
     } finally {
         if (conn) conn.release();
     }
