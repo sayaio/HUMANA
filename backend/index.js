@@ -3,7 +3,8 @@ const mariadb = require('mariadb');
 const cors = require('cors');
 
 // 1. Import Class User yang sudah kamu buat
-const User = require('./src/classes/User'); 
+const Guru = require('./src/classes/Guru');
+const Murid = require('./src/classes/Murid');
 
 const app = express();
 app.use(cors());
@@ -26,29 +27,48 @@ app.post('/api/login', async (req, res) => {
         conn = await pool.getConnection();
 
         const query = `
-            SELECT id, nama_lengkap, email, password, 'Admin' as role FROM admin WHERE email = ?
-            UNION ALL
-            SELECT id, nama_lengkap, email, password, 'Guru' as role FROM guru WHERE email = ?
-            UNION ALL
-            SELECT id, nama_lengkap, email, password, 'Murid' as role FROM murid WHERE email = ?
+    SELECT 
+        id_guru AS id, 
+        nama_guru AS nama_lengkap, 
+        email_guru AS email, 
+        password, 
+        'Guru' AS role 
+    FROM guru WHERE email_guru = ?
+
+    UNION ALL
+
+    SELECT 
+        id_murid AS id, 
+        nama_murid AS nama_lengkap, 
+        email, 
+        password, 
+        'Murid' AS role 
+    FROM murid WHERE email = ?
         `;
 
-        const rows = await conn.query(query, [email, email, email]);
+        const rows = await conn.query(query, [email, email]);
 
         if (rows.length > 0) {
             const dataDB = rows[0];
 
+    // ✅ DEBUG DI SINI SAJA
+            console.log("===== DEBUG LOGIN =====");
+            console.log("INPUT EMAIL:", email);
+            console.log("INPUT PASSWORD:", password);
+            console.log("DATA DB:", dataDB);
+            console.log("=======================");
+            
             // Di sinilah OOP kita beraksi! 
             // Kita gunakan dataDB.role untuk menentukan class mana yang di-instansiasi
             let userAktif;
             
             if (dataDB.role === 'Guru') {
-                userAktif = new Guru(dataDB.id, dataDB.nama_lengkap, dataDB.role, dataDB.email, dataDB.password);
+                userAktif = new Guru(dataDB.id, dataDB.nama_lengkap, dataDB.email, dataDB.password, dataDB.nama_lengkap);
             } else if (dataDB.role === 'Murid') {
-                userAktif = new Murid(dataDB.id, dataDB.nama_lengkap, dataDB.role, dataDB.email, dataDB.password);
-            } else {
-                userAktif = new Admin(dataDB.id, dataDB.nama_lengkap, dataDB.role, dataDB.email, dataDB.password);
-            }
+                userAktif = new Murid(dataDB.id, dataDB.nama_lengkap, dataDB.email, dataDB.password, dataDB.nama_lengkap);
+            } //else {
+            //     userAktif = new Admin(dataDB.id, dataDB.nama_lengkap, dataDB.role, dataDB.email, dataDB.password);
+            // }
 
             // Validasi password menggunakan method yang sudah kamu buat di class User
             if (userAktif.login(email, password)) {
@@ -63,8 +83,10 @@ app.post('/api/login', async (req, res) => {
         } else {
             res.status(404).json({ success: false, message: "Akun tidak terdaftar!" });
         }
-    } catch (err) {
+    }catch (err) {
         res.status(500).json({ error: err.message });
+        console.log("DATA DB:", dataDB);
+        console.log("INPUT:", email, password);
     } finally {
         if (conn) conn.release();
     }

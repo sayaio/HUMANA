@@ -3,9 +3,9 @@ const User = require('./User');
 class Murid extends User{
   #kelas;
   #saldo;
-  constructor(id_user, username, email, password, nama_user, kelas) {
-    super(id_user, username, email, password, nama_user);
-    this.kelas    = kelas;
+
+  constructor(id, username, email, password, nama_user) {
+    super(id, username, email, password, nama_user);
     this._saldo   = 0;
   }
 
