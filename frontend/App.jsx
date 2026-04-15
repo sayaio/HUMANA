@@ -9,21 +9,26 @@ import {
   SafeAreaView, 
   StatusBar,
   ScrollView,
-  Alert
+  Alert,
+  Dimensions
 } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 const App = () => {
   // ==========================================
   // STATE MANAGEMENT
   // ==========================================
   const [currentPage, setCurrentPage] = useState('Splash');
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(true); // true = Masuk, false = Daftar
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  // Form State
+  const [namaLengkap, setNamaLengkap] = useState('');
+  const [role, setRole] = useState('Murid');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Aset Gambar
   const LOGO_SOURCE = require('./assets/logo_humana.png'); 
@@ -31,7 +36,7 @@ const App = () => {
   const GOOGLE_ICON = { uri: 'https://img.icons8.com/color/48/google-logo.png' };
 
   // ==========================================
-  // FUNGSI LOGIKA
+  // FUNGSI LOGIKA (NAVIGASI)
   // ==========================================
   useEffect(() => {
     if (currentPage === 'Splash') {
@@ -50,11 +55,15 @@ const App = () => {
         Alert.alert('Gagal Masuk', 'Mohon isi Email dan Password kamu.');
       }
     } else {
-      if (firstName !== '' && email !== '' && password !== '' && confirmPassword !== '') {
+      if (namaLengkap !== '' && email !== '' && password !== '' && confirmPassword !== '') {
         if (password === confirmPassword) {
-          setCurrentPage('Home');
+          Alert.alert(
+            'Pendaftaran Berhasil', 
+            'Akun kamu telah dibuat. Silakan masuk menggunakan akun tersebut.',
+            [{ text: 'OK', onPress: () => setIsLogin(true) }] 
+          );
         } else {
-          Alert.alert('Gagal Mendaftar', 'Password dan Confirm Password tidak cocok!');
+          Alert.alert('Gagal Mendaftar', 'Password dan Konfirmasi Password tidak cocok!');
         }
       } else {
         Alert.alert('Gagal Mendaftar', 'Mohon isi semua kolom yang tersedia.');
@@ -66,12 +75,13 @@ const App = () => {
     setEmail('');
     setPassword('');
     setCurrentPage('Auth');
+    setIsLogin(true);
   };
 
   const displayName = email ? email.split('@')[0] : 'Pengguna';
 
   // ==========================================
-  // HALAMAN 1: SPLASH SCREEN (TEMA NAVY)
+  // HALAMAN 1: SPLASH SCREEN
   // ==========================================
   if (currentPage === 'Splash') {
     return (
@@ -92,15 +102,11 @@ const App = () => {
     return (
       <View style={styles.homeContainer}>
         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-        
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-          
-          {/* Background Header Solid Navy */}
           <View style={styles.homeHeaderBg} />
-
           <View style={styles.homeGreetingContainer}>
             <Text style={styles.homeGreetingText}>
-              Selamat datang,{"\n"}{displayName} !
+              Selamat datang,{"\n"}{namaLengkap || displayName} !
             </Text>
           </View>
 
@@ -108,44 +114,27 @@ const App = () => {
             <Text style={styles.scheduleTitle}>
               <Text style={{fontWeight: 'bold'}}>Matematika</Text> - Relasi & Fungsi
             </Text>
-            
             <View style={styles.scheduleDetails}>
-              <View>
-                <Text style={styles.scheduleLabel}>Waktu</Text>
-                <Text style={styles.scheduleValue}>06.30 - 09.30</Text>
-              </View>
-              <View>
-                <Text style={styles.scheduleLabel}>Guru</Text>
-                <Text style={styles.scheduleValue}>Ahmad Pambudi, S.Pd.</Text>
-              </View>
+              <View><Text style={styles.scheduleLabel}>Waktu</Text><Text style={styles.scheduleValue}>06.30 - 09.30</Text></View>
+              <View><Text style={styles.scheduleLabel}>Guru</Text><Text style={styles.scheduleValue}>Ahmad Pambudi, S.Pd.</Text></View>
             </View>
-            
             <Image source={LOGO_SOURCE} style={styles.watermarkLogo} resizeMode="contain" />
           </View>
 
           <View style={styles.quickActionsContainer}>
             <TouchableOpacity style={styles.actionItem}>
-              <View style={styles.actionIconBox}>
-                <Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" />
-              </View>
+              <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
               <Text style={styles.actionText}>Pesan Sesi</Text>
             </TouchableOpacity>
-
             <TouchableOpacity style={styles.actionItem}>
-              <View style={styles.actionIconBox}>
-                <Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" />
-              </View>
+              <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
               <Text style={styles.actionText}>Materi</Text>
             </TouchableOpacity>
-
             <TouchableOpacity style={styles.actionItem}>
-              <View style={styles.actionIconBox}>
-                <Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" />
-              </View>
+              <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
               <Text style={styles.actionText}>Jadwal Saya</Text>
             </TouchableOpacity>
           </View>
-
           <View style={styles.divider} />
 
           <View style={styles.chartSection}>
@@ -154,7 +143,6 @@ const App = () => {
                 <Text style={styles.donutHoleText}>Total{"\n"}sesi{"\n"}<Text style={{fontWeight: 'bold', fontSize: 16}}>14</Text></Text>
               </View>
             </View>
-
             <Text style={[styles.chartLabel, { top: 0, right: '20%' }]}>Matematika{"\n"}21.4%</Text>
             <Text style={[styles.chartLabel, { bottom: 0, right: '15%' }]}>Bahasa Indonesia{"\n"}35.7%</Text>
             <Text style={[styles.chartLabel, { bottom: '20%', left: '20%' }]}>IPS{"\n"}14.3%</Text>
@@ -164,46 +152,32 @@ const App = () => {
           <TouchableOpacity style={styles.tempLogout} onPress={handleLogout}>
             <Text style={{color: '#FFF'}}>Logout (Sementara)</Text>
           </TouchableOpacity>
-
         </ScrollView>
 
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem}>
-            <Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#2A3563' }]} resizeMode="contain" />
-            <Text style={[styles.navText, { color: '#2A3563' }]}>Home</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
-            <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
-            <Text style={styles.navText}>Activity</Text>
-          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#2A3563' }]} resizeMode="contain" /><Text style={[styles.navText, { color: '#2A3563' }]}>Home</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Activity</Text></TouchableOpacity>
           <View style={styles.fabContainer}>
-            <TouchableOpacity style={styles.fabButton}>
-              <Image source={LOGO_SOURCE} style={styles.fabIcon} resizeMode="contain" />
-            </TouchableOpacity>
+            <TouchableOpacity style={styles.fabButton}><Image source={LOGO_SOURCE} style={styles.fabIcon} resizeMode="contain" /></TouchableOpacity>
             <Text style={styles.fabText}>Pesan{"\n"}Sesi</Text>
           </View>
-          <TouchableOpacity style={styles.navItem}>
-            <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
-            <Text style={styles.navText}>Chat</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
-            <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
-            <Text style={styles.navText}>Profile</Text>
-          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Chat</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Profile</Text></TouchableOpacity>
         </View>
       </View>
     );
   }
 
   // ==========================================
-  // HALAMAN 3: AUTH PAGE (TEMA NAVY)
+  // HALAMAN 3: AUTH PAGE (HASIL TERJEMAHAN XML)
   // ==========================================
   return (
+    // styles.container sekarang menggunakan pengaturan dari file XML kamu
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
-      {/* Background Utama Solid Navy */}
-      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#2A3563' }]} />
+      <View style={styles.navyBackgroundTop} />
+      <View style={styles.navyBackgroundTriangle} />
 
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false} bounces={false}>
@@ -220,26 +194,45 @@ const App = () => {
 
           <View style={styles.formCard}>
             
-            <View style={styles.tabContainer}>
-              <TouchableOpacity style={isLogin ? styles.activeTab : styles.inactiveTab} onPress={() => setIsLogin(true)}>
-                <Text style={isLogin ? styles.activeTabText : styles.inactiveTabText}>Log in</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={!isLogin ? styles.activeTab : styles.inactiveTab} onPress={() => setIsLogin(false)}>
-                <Text style={!isLogin ? styles.activeTabText : styles.inactiveTabText}>Sign in</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.formCardTitle}>{isLogin ? 'Masuk' : 'Daftar'}</Text>
+            
+            {isLogin ? (
+              <View style={styles.switchModeContainer}>
+                <Text style={styles.switchModeText}>Belum memiliki akun? </Text>
+                <TouchableOpacity onPress={() => setIsLogin(false)}>
+                  <Text style={styles.switchModeLink}>Daftar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.switchModeContainer}>
+                <Text style={styles.switchModeText}>Sudah memiliki akun? </Text>
+                <TouchableOpacity onPress={() => setIsLogin(true)}>
+                  <Text style={styles.switchModeLink}>Masuk</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
             {!isLogin && (
-              <View style={styles.rowInputs}>
-                <View style={[styles.inputWrapper, { flex: 1, marginRight: 10 }]}>
-                  <Text style={styles.floatingLabel}>First Name</Text>
-                  <TextInput style={styles.inputField} placeholder="someone" value={firstName} onChangeText={setFirstName} placeholderTextColor="#A9A9A9" />
+              <>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.floatingLabel}>Nama Lengkap</Text>
+                  <TextInput style={styles.inputField} placeholder="someone" value={namaLengkap} onChangeText={setNamaLengkap} placeholderTextColor="#A9A9A9" />
                 </View>
-                <View style={[styles.inputWrapper, { flex: 1 }]}>
-                  <Text style={styles.floatingLabel}>Last Name</Text>
-                  <TextInput style={styles.inputField} placeholder="someone" value={lastName} onChangeText={setLastName} placeholderTextColor="#A9A9A9" />
+
+                <View style={[styles.inputWrapper, { height: 65, flexDirection: 'row', alignItems: 'center' }]}>
+                  <Text style={styles.floatingLabel}>Daftar Sebagai</Text>
+                  <View style={styles.radioGroup}>
+                    <TouchableOpacity style={styles.radioOption} onPress={() => setRole('Guru')}>
+                      <View style={styles.radioCircle}>{role === 'Guru' && <View style={styles.radioInnerCircle} />}</View>
+                      <Text style={styles.radioText}>Guru</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.radioOption} onPress={() => setRole('Murid')}>
+                      <View style={styles.radioCircle}>{role === 'Murid' && <View style={styles.radioInnerCircle} />}</View>
+                      <Text style={styles.radioText}>Murid</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
+              </>
             )}
 
             <View style={styles.inputWrapper}>
@@ -250,29 +243,48 @@ const App = () => {
             <View style={styles.inputWrapper}>
               <Text style={styles.floatingLabel}>Password</Text>
               <View style={styles.passwordContainer}>
-                <TextInput style={styles.passwordField} placeholder="Enter password" value={password} onChangeText={setPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
+                <TextInput style={styles.passwordField} placeholder="Masukan password" value={password} onChangeText={setPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
                 <TouchableOpacity><Image source={EYE_ICON} style={styles.eyeIcon} resizeMode="contain" /></TouchableOpacity>
               </View>
             </View>
 
             {!isLogin && (
               <View style={styles.inputWrapper}>
-                <Text style={styles.floatingLabel}>Confirm Password</Text>
+                <Text style={styles.floatingLabel}>Konfirmasi Password</Text>
                 <View style={styles.passwordContainer}>
-                  <TextInput style={styles.passwordField} placeholder="Enter password again" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
+                  <TextInput style={styles.passwordField} placeholder="Masukan password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
                   <TouchableOpacity><Image source={EYE_ICON} style={styles.eyeIcon} resizeMode="contain" /></TouchableOpacity>
                 </View>
               </View>
             )}
 
-            {/* Tombol Submit mengikuti tema gelap */}
+            {isLogin && (
+              <View style={styles.rememberForgotRow}>
+                <TouchableOpacity style={styles.checkboxContainer} onPress={() => setRememberMe(!rememberMe)}>
+                  <View style={[styles.checkbox, rememberMe && styles.checkboxActive]}>
+                    {rememberMe && <Text style={{color: '#FFF', fontSize: 10, fontWeight: 'bold'}}>✓</Text>}
+                  </View>
+                  <Text style={styles.checkboxText}>Remember me</Text>
+                </TouchableOpacity>
+                <TouchableOpacity>
+                  <Text style={styles.forgotPasswordText}>Lupa password ?</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             <TouchableOpacity style={styles.submitButton} onPress={handleAuthAction}>
-              <Text style={styles.submitButtonText}>{isLogin ? 'Log in' : 'Sign in'}</Text>
+              <Text style={styles.submitButtonText}>{isLogin ? 'Masuk' : 'Daftar'}</Text>
             </TouchableOpacity>
 
+            <View style={styles.orDividerContainer}>
+              <View style={styles.orLine} />
+              <Text style={styles.orText}>Atau</Text>
+              <View style={styles.orLine} />
+            </View>
+
             <TouchableOpacity style={styles.googleButton}>
-              <Image source={GOOGLE_ICON} style={styles.googleIcon} resizeMode="contain" />
-              <Text style={styles.googleButtonText}>Continue with Google</Text>
+              <Text style={styles.googleButtonText}>{isLogin ? 'Masuk dengan Google' : 'Daftar dengan Google'}</Text>
+              <Image source={GOOGLE_ICON} style={styles.googleIconRight} resizeMode="contain" />
             </TouchableOpacity>
             
             <Text style={styles.footerText}>
@@ -287,9 +299,78 @@ const App = () => {
 };
 
 const styles = StyleSheet.create({
-  // --- WARNA TEMA BARU ---
-  // Background Navy: #2A3563
-  // Tombol Active/Submit: #34315A
+  navyBackgroundTop: { position: 'absolute', top: 0, left: 0, right: 0, height: '65%', backgroundColor: '#2A3563' },
+  navyBackgroundTriangle: { 
+    position: 'absolute', top: '65%', left: 0, width: 0, height: 0,
+    backgroundColor: 'transparent', borderStyle: 'solid',
+    borderLeftWidth: width / 2, borderRightWidth: width / 2, borderTopWidth: 60,
+    borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#2A3563',
+  },
+
+  // --- Translasi Kode XML dari Figma ---
+  container: { 
+    flex: 1, 
+    backgroundColor: '#FFFFFF', // Translasi dari: android:fillColor="#FFFFFF"
+    borderRadius: 20,           // Translasi dari hitungan: M20 0H420C431.046... (radius 20)
+    overflow: 'hidden'          // Translasi dari: android:clipToOutline="true"
+  },
+  
+  safeArea: { flex: 1 },
+  scrollContainer: { flexGrow: 1, justifyContent: 'space-between' },
+  headerSection: { alignItems: 'center', paddingHorizontal: 30, paddingTop: 60, paddingBottom: 20 },
+  logoWrapper: { marginBottom: 15 },
+  logoImage: { width: 70, height: 70 },
+  titleText: { fontSize: 26, fontWeight: 'bold', color: '#FFF', textAlign: 'center', lineHeight: 32, marginBottom: 10 },
+  subtitleText: { fontSize: 12, color: 'rgba(255, 255, 255, 0.9)', textAlign: 'center', lineHeight: 18, paddingHorizontal: 10 },
+  
+  formCard: { 
+    backgroundColor: '#FFF', borderRadius: 30, paddingHorizontal: 25, paddingTop: 35, paddingBottom: 40,
+    marginHorizontal: 20, marginBottom: 30, elevation: 8, shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.1, shadowRadius: 10 
+  },
+  
+  formCardTitle: { fontSize: 28, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 5 },
+  switchModeContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: 25 },
+  switchModeText: { fontSize: 12, color: '#888' },
+  switchModeLink: { fontSize: 12, color: '#4285F4', fontWeight: 'bold' },
+
+  inputWrapper: { borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12, height: 55, marginBottom: 25, justifyContent: 'center', paddingHorizontal: 15, backgroundColor: '#FFF' },
+  floatingLabel: { position: 'absolute', top: -10, left: 15, backgroundColor: '#FFF', paddingHorizontal: 5, fontSize: 12, color: '#D3D3D3', zIndex: 1 },
+  inputField: { fontSize: 15, color: '#333', height: '100%', paddingVertical: 0 },
+  passwordContainer: { flexDirection: 'row', alignItems: 'center', height: '100%' },
+  passwordField: { flex: 1, fontSize: 15, color: '#333', height: '100%', paddingVertical: 0 },
+  eyeIcon: { width: 22, height: 22, tintColor: '#D3D3D3' },
+  
+  radioGroup: { flexDirection: 'row', marginLeft: 10 },
+  radioOption: { flexDirection: 'row', alignItems: 'center', marginRight: 20 },
+  radioCircle: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#2A3563', justifyContent: 'center', alignItems: 'center', marginRight: 8 },
+  radioInnerCircle: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#2A3563' },
+  radioText: { fontSize: 14, color: '#333' },
+
+  rememberForgotRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25, marginTop: -10 },
+  checkboxContainer: { flexDirection: 'row', alignItems: 'center' },
+  checkbox: { width: 16, height: 16, borderWidth: 1.5, borderColor: '#A9A9A9', borderRadius: 4, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
+  checkboxActive: { backgroundColor: '#2A3563', borderColor: '#2A3563' },
+  checkboxText: { fontSize: 12, color: '#666' },
+  forgotPasswordText: { fontSize: 12, color: '#4285F4', fontWeight: '600' },
+
+  submitButton: { backgroundColor: '#B5CB68', borderRadius: 25, height: 50, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  submitButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  
+  orDividerContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  orLine: { flex: 1, height: 1, backgroundColor: '#E0E0E0' },
+  orText: { marginHorizontal: 15, fontSize: 12, color: '#A9A9A9' },
+
+  googleButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12, height: 55, marginBottom: 20 },
+  googleButtonText: { color: '#333', fontSize: 15, fontWeight: 'bold', marginRight: 10 },
+  googleIconRight: { width: 20, height: 20 },
+  
+  footerText: { textAlign: 'center', fontSize: 10, color: '#A9A9A9', lineHeight: 16 },
+  linkText: { textDecorationLine: 'underline' },
+
+  splashContainer: { flex: 1, backgroundColor: '#2A3563', justifyContent: 'center', alignItems: 'center' },
+  splashContent: { alignItems: 'center', flexDirection: 'row' },
+  splashLogo: { width: 60, height: 60, marginRight: 10 },
+  splashText: { fontSize: 36, fontWeight: 'bold', color: '#FFF' },
   
   homeContainer: { flex: 1, backgroundColor: '#FAFAFA' },
   homeHeaderBg: { position: 'absolute', width: '100%', height: 260, borderBottomLeftRadius: 40, borderBottomRightRadius: 40, backgroundColor: '#2A3563' },
@@ -323,48 +404,6 @@ const styles = StyleSheet.create({
   fabButton: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', elevation: 5, shadowColor: '#000', shadowOffset: {width: 0, height: 3}, shadowOpacity: 0.2, shadowRadius: 5, marginBottom: 5 },
   fabIcon: { width: 35, height: 35, tintColor: '#2A3563' },
   fabText: { fontSize: 10, color: '#A9A9A9', textAlign: 'center' },
-  
-  // --- Gaya Khusus Halaman Splash & Auth ---
-  splashContainer: { flex: 1, backgroundColor: '#2A3563', justifyContent: 'center', alignItems: 'center' },
-  splashContent: { alignItems: 'center', flexDirection: 'row' },
-  splashLogo: { width: 60, height: 60, marginRight: 10 },
-  splashText: { fontSize: 36, fontWeight: 'bold', color: '#FFF' },
-  
-  container: { flex: 1 },
-  safeArea: { flex: 1 },
-  scrollContainer: { flexGrow: 1, justifyContent: 'space-between' },
-  headerSection: { alignItems: 'center', paddingHorizontal: 30, paddingTop: 80, paddingBottom: 40 },
-  logoWrapper: { marginBottom: 20 },
-  logoImage: { width: 70, height: 70 },
-  titleText: { fontSize: 28, fontWeight: 'bold', color: '#FFF', textAlign: 'center', lineHeight: 34, marginBottom: 15 },
-  subtitleText: { fontSize: 13, color: 'rgba(255, 255, 255, 0.9)', textAlign: 'center', lineHeight: 18, paddingHorizontal: 10 },
-  
-  formCard: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 25, paddingTop: 35, paddingBottom: 40 },
-  tabContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: 35 },
-  
-  // Tab aktif menggunakan warna ungu gelap sesuai gambar
-  activeTab: { backgroundColor: '#34315A', paddingVertical: 12, paddingHorizontal: 40, borderRadius: 25, marginRight: 10 },
-  inactiveTab: { backgroundColor: 'transparent', paddingVertical: 12, paddingHorizontal: 40, borderRadius: 25 },
-  activeTabText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
-  inactiveTabText: { color: '#555', fontWeight: '600', fontSize: 15 },
-  
-  rowInputs: { flexDirection: 'row', justifyContent: 'space-between' },
-  inputWrapper: { borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12, height: 55, marginBottom: 25, justifyContent: 'center', paddingHorizontal: 15, backgroundColor: '#FFF' },
-  floatingLabel: { position: 'absolute', top: -10, left: 15, backgroundColor: '#FFF', paddingHorizontal: 5, fontSize: 12, color: '#D3D3D3', zIndex: 1 },
-  inputField: { fontSize: 15, color: '#333', height: '100%', paddingVertical: 0 },
-  passwordContainer: { flexDirection: 'row', alignItems: 'center', height: '100%' },
-  passwordField: { flex: 1, fontSize: 15, color: '#333', height: '100%', paddingVertical: 0 },
-  eyeIcon: { width: 22, height: 22, tintColor: '#D3D3D3' },
-  
-  // Tombol Submit Utama menggunakan warna ungu gelap
-  submitButton: { backgroundColor: '#34315A', borderRadius: 12, height: 55, justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
-  submitButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
-  
-  googleButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12, height: 55, marginBottom: 25 },
-  googleIcon: { width: 20, height: 20, marginRight: 10 },
-  googleButtonText: { color: '#333', fontSize: 15, fontWeight: '600' },
-  footerText: { textAlign: 'center', fontSize: 11, color: '#A9A9A9', lineHeight: 16 },
-  linkText: { textDecorationLine: 'underline' },
 });
 
 export default App;
