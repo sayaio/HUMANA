@@ -50,7 +50,6 @@ const App = () => {
 
   const handleAuthAction = async () => {
     if (isLogin) {
-      // --- LOGIKA LOGIN ---
       try {
         const response = await fetch(`${API_URL}/login`, {
           method: 'POST',
@@ -60,23 +59,17 @@ const App = () => {
 
         const result = await response.json();
         if (response.ok && result.success) {
-          // Jika login sukses, pindah ke halaman Home
           Alert.alert('Berhasil', result.message);
           setCurrentPage('Home');
-          // Tips: Kamu bisa menyimpan data user di state jika perlu
-          // setUserName(result.profile.nama_lengkap);
         } else {
           Alert.alert('Gagal Masuk', result.message || 'Email atau password salah');
         }
       } catch (error) {
-            console.log("Detail Error:", error); // Muncul di terminal terminal
-            Alert.alert('Error', error.message); // Muncul di layar HP
+            console.log("Detail Error:", error);
+            Alert.alert('Error', error.message);
     }
 
     } else {
-      // --- LOGIKA REGISTER (SIGN IN) ---
-      // Untuk register, kamu bisa buat endpoint baru di backend nanti.
-      // Sementara biarkan logic temanmu atau arahkan ke Home.
       if (password === confirmPassword && email !== '') {
         setCurrentPage('Home');
       } else {
@@ -93,10 +86,7 @@ const App = () => {
   };
 
   const displayName = email ? email.split('@')[0] : 'Pengguna';
-
-  // ==========================================
-  // HALAMAN 1: SPLASH SCREEN
-  // ==========================================
+  
   if (currentPage === 'Splash') {
     return (
       <View style={styles.splashContainer}>

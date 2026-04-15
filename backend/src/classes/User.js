@@ -11,7 +11,6 @@ class User {
         if (new.target === User) {
             throw new Error('User adalah abstract class dan tidak dapat diinstansiasi langsung');
         }
-        // Inisialisasi menggunakan variabel private (#) yang benar
         this.#id_user   = id_user;
         this.#username  = username;
         this.#email     = email;
@@ -21,7 +20,6 @@ class User {
     }
 
     login(inputEmail, inputPassword) {
-    // Gunakan .trim() untuk membuang spasi di depan/belakang jika ada
         const emailDB = String(this.#email).trim();
         const passDB = String(this.#password).trim();
     
@@ -41,8 +39,6 @@ class User {
             email: this.#email
         };
     }
-    
-    // ... method lainnya biarkan kosong tidak apa-apa
 }
 
 module.exports = User;
