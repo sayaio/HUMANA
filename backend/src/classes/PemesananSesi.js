@@ -1,4 +1,12 @@
 class PemesananSesi {
+  #id_pemesanan;
+  #murid;
+  #guru;
+  #sesi;
+  #materi;
+  #statusPemesanan;
+  #waktuPemesanan;
+  #pembayaran;
   constructor(id_pemesanan, murid, guru, sesi, materi, statusPemesanan, pembayaran) {
     this.id_pemesanan     = id_pemesanan;
     this.murid            = murid;
@@ -10,7 +18,6 @@ class PemesananSesi {
     this.pembayaran       = pembayaran ?? null;
   }
 
-  #Method
   getStatus() {
     // TODO: return this.statusPemesanan
   }

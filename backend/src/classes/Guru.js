@@ -1,6 +1,11 @@
 const User = require('./User');
 
 class Guru extends User{
+  #portofolio;
+  #meanRating;
+  #daftarMateri;
+  #jadwalAvailable;
+  #totalSesi;
   constructor() {
     super(id_user, username, email, password, nama_user);
     this.portfolio        = [];
@@ -10,7 +15,6 @@ class Guru extends User{
     this._totalSesi       = 0;
   }
   
-  #Method
   getRole() {
     // TODO: return 'GURU'
   }
@@ -51,7 +55,6 @@ class Guru extends User{
     // TODO: return histori semua sesi yang sudah selesai
   }
 
-  #Getter
   get totalSesi() { return this._totalSesi; }
 }
 

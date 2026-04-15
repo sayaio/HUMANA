@@ -1,4 +1,10 @@
 class Sesi {
+  #id_sesi;
+  #tanggalSesi;
+  #waktuMulai;
+  #waktuSelesai;
+  #status;
+  #lokasi;
   constructor(id_sesi, tanggalSesi, waktuMulai, waktuSelesai, status, lokasi) {
     this.id_sesi      = id_sesi;
     this.tanggalSesi  = tanggalSesi; 
@@ -8,7 +14,6 @@ class Sesi {
     this.lokasi       = lokasi;
   }
 
-  #Getter
   getDurasi() {
     // TODO: hitung selisih waktuMulai dan waktuSelesai dalam menit
   }

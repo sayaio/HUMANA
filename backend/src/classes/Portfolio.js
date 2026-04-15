@@ -1,4 +1,11 @@
 class Portfolio {
+  #guru;
+  #judul;
+  #deskripsi;
+  #tipe;
+  #bukti;
+  #tanggalMulai;
+  #tanggalSelesai;
   constructor(guru, judul, deskripsi, tipe, bukti, tanggalMulai, tanggalSelesai) {
     this.guru           = guru;
     this.judul          = judul;
@@ -9,7 +16,6 @@ class Portfolio {
     this.tanggalSelesai = tanggalSelesai;
   }
 
-  #Getter
   get deskripsi() { return this._deskripsi; }
   get bukti()     { return this._bukti;     }
 }

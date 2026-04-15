@@ -1,12 +1,12 @@
 const User = require('./User');
 
 class Admin extends User{
+  #AdminLevel;
   constructor(adminLevel) {
     super()
     this._adminLevel = adminLevel;
   }
 
-  #Method
   kelolaMateri() {
     // TODO: CRUD materi pembelajaran
   }
@@ -19,7 +19,6 @@ class Admin extends User{
     // TODO: ambil semua user dari repository
   }
 
-  #Getter
   get adminLevel() { return this._adminLevel; }
 }
 

@@ -1,4 +1,10 @@
 class Feedback {
+  #id_feedback;
+  #rating;
+  #komentar;
+  #lokasi;
+  #murid;
+  #guru;
   constructor(id_feedback, rating, komentar, lokasi, murid, guru) {
     this.id_feedback  = id_feedback;   
     this._rating      = rating;        
@@ -8,7 +14,6 @@ class Feedback {
     this._guru        = guru;          
   }
 
-  #Method
   getRating() {
     // TODO: return this._rating
   }

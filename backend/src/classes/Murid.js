@@ -1,13 +1,14 @@
 const User = require('./User');
 
 class Murid extends User{
+  #kelas;
+  #saldo;
   constructor(id_user, username, email, password, nama_user, kelas) {
     super(id_user, username, email, password, nama_user);
     this.kelas    = kelas;
     this._saldo   = 0;
   }
 
-  #Method
   getRole() {
     // TODO: return 'MURID'
   }
@@ -40,7 +41,6 @@ class Murid extends User{
     // TODO: terima notifikasi (override)
   }
 
-  #Getter
   get saldo() { return this._saldo; }
 }
 

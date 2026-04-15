@@ -1,4 +1,9 @@
 class Pembayaran {
+  #id_pembayaran;
+  #pemesanan;
+  #nominal;
+  #metodeBayar;
+  #statusBayar;
   constructor(id_pembayaran, pemesanan, nominal, metodeBayar, statusBayar) {
     this.id_pembayaran  = id_pembayaran;
     this.pemesanan      = pemesanan;  
@@ -7,9 +12,8 @@ class Pembayaran {
     this.statusBayar    = statusBayar ?? 'PENDING';
   }
 
-  #Method
   konfirmasiBayar(){
-    
+
   }
 }
 
