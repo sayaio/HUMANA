@@ -11,7 +11,6 @@ import {
   ScrollView,
   Alert
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 
 const App = () => {
   // ==========================================
@@ -69,12 +68,10 @@ const App = () => {
     setCurrentPage('Auth');
   };
 
-  // LOGIKA PENGAMBILAN NAMA DARI EMAIL
-  // Mengambil teks sebelum lambang "@"
   const displayName = email ? email.split('@')[0] : 'Pengguna';
 
   // ==========================================
-  // HALAMAN 1: SPLASH SCREEN
+  // HALAMAN 1: SPLASH SCREEN (TEMA NAVY)
   // ==========================================
   if (currentPage === 'Splash') {
     return (
@@ -98,13 +95,9 @@ const App = () => {
         
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
           
-          <LinearGradient 
-            colors={['#A1CFF6', '#F8BFE6']} 
-            start={{x: 0, y: 0}} end={{x: 1, y: 1}} 
-            style={styles.homeHeaderBg}
-          />
+          {/* Background Header Solid Navy */}
+          <View style={styles.homeHeaderBg} />
 
-          {/* Teks Sambutan yang memanggil displayName dari Email */}
           <View style={styles.homeGreetingContainer}>
             <Text style={styles.homeGreetingText}>
               Selamat datang,{"\n"}{displayName} !
@@ -176,8 +169,8 @@ const App = () => {
 
         <View style={styles.bottomNav}>
           <TouchableOpacity style={styles.navItem}>
-            <Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#F8BFE6' }]} resizeMode="contain" />
-            <Text style={[styles.navText, { color: '#F8BFE6' }]}>Home</Text>
+            <Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#2A3563' }]} resizeMode="contain" />
+            <Text style={[styles.navText, { color: '#2A3563' }]}>Home</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
             <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
@@ -203,17 +196,14 @@ const App = () => {
   }
 
   // ==========================================
-  // HALAMAN 3: AUTH PAGE
+  // HALAMAN 3: AUTH PAGE (TEMA NAVY)
   // ==========================================
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
-      <LinearGradient 
-        colors={['#A1CFF6', '#F8BFE6']} 
-        start={{x: 0, y: 0}} end={{x: 1, y: 1}} 
-        style={StyleSheet.absoluteFillObject}
-      />
+      {/* Background Utama Solid Navy */}
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#2A3563' }]} />
 
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false} bounces={false}>
@@ -275,8 +265,9 @@ const App = () => {
               </View>
             )}
 
-            <TouchableOpacity style={!isLogin ? styles.signinButton : styles.loginButton} onPress={handleAuthAction}>
-              <Text style={styles.loginButtonText}>{isLogin ? 'Log in' : 'Sign in'}</Text>
+            {/* Tombol Submit mengikuti tema gelap */}
+            <TouchableOpacity style={styles.submitButton} onPress={handleAuthAction}>
+              <Text style={styles.submitButtonText}>{isLogin ? 'Log in' : 'Sign in'}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.googleButton}>
@@ -296,11 +287,13 @@ const App = () => {
 };
 
 const styles = StyleSheet.create({
-  homeContainer: { flex: 1, backgroundColor: '#FAFAFA' },
-  homeHeaderBg: { position: 'absolute', width: '100%', height: 260, borderBottomLeftRadius: 40, borderBottomRightRadius: 40 },
-  homeGreetingContainer: { marginTop: 80, paddingHorizontal: 30 },
+  // --- WARNA TEMA BARU ---
+  // Background Navy: #2A3563
+  // Tombol Active/Submit: #34315A
   
-  // Font diperbesar sedikit dan di-capitalize agar namanya terlihat jelas
+  homeContainer: { flex: 1, backgroundColor: '#FAFAFA' },
+  homeHeaderBg: { position: 'absolute', width: '100%', height: 260, borderBottomLeftRadius: 40, borderBottomRightRadius: 40, backgroundColor: '#2A3563' },
+  homeGreetingContainer: { marginTop: 80, paddingHorizontal: 30 },
   homeGreetingText: { fontSize: 28, fontWeight: 'bold', color: '#FFF', textAlign: 'center', lineHeight: 36, textTransform: 'capitalize' },
   
   scheduleCard: { backgroundColor: '#FFF', marginHorizontal: 25, marginTop: 40, borderRadius: 20, padding: 25, elevation: 5, shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 5, overflow: 'hidden' },
@@ -312,27 +305,31 @@ const styles = StyleSheet.create({
   quickActionsContainer: { flexDirection: 'row', justifyContent: 'space-evenly', marginTop: 30, paddingHorizontal: 10 },
   actionItem: { alignItems: 'center' },
   actionIconBox: { width: 70, height: 70, backgroundColor: '#FFF', borderRadius: 15, justifyContent: 'center', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.1, shadowRadius: 3, marginBottom: 10 },
-  actionIcon: { width: 35, height: 35, tintColor: '#A1CFF6' },
+  actionIcon: { width: 35, height: 35, tintColor: '#2A3563' },
   actionText: { fontSize: 12, color: '#333' },
   divider: { height: 1, backgroundColor: '#E0E0E0', marginHorizontal: 30, marginTop: 30 },
   chartSection: { marginTop: 40, alignItems: 'center', height: 250, position: 'relative' },
-  donutChartPlaceholder: { width: 160, height: 160, borderRadius: 80, backgroundColor: '#D7A1F9', borderWidth: 20, borderColor: '#A259FF', justifyContent: 'center', alignItems: 'center' },
+  donutChartPlaceholder: { width: 160, height: 160, borderRadius: 80, backgroundColor: '#34315A', borderWidth: 20, borderColor: '#2A3563', justifyContent: 'center', alignItems: 'center' },
   donutHole: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center' },
   donutHoleText: { textAlign: 'center', fontSize: 12, color: '#333' },
   chartLabel: { position: 'absolute', fontSize: 10, color: '#333', textAlign: 'center' },
   tempLogout: { alignSelf: 'center', marginTop: 20, padding: 10, backgroundColor: '#FF6B6B', borderRadius: 10 },
+  
   bottomNav: { position: 'absolute', bottom: 0, width: '100%', height: 70, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderColor: '#EEE', paddingHorizontal: 10 },
   navItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   navIcon: { width: 24, height: 24, tintColor: '#A9A9A9', marginBottom: 5 },
   navText: { fontSize: 10, color: '#A9A9A9' },
   fabContainer: { alignItems: 'center', justifyContent: 'center', top: -20 },
   fabButton: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', elevation: 5, shadowColor: '#000', shadowOffset: {width: 0, height: 3}, shadowOpacity: 0.2, shadowRadius: 5, marginBottom: 5 },
-  fabIcon: { width: 35, height: 35, tintColor: '#F8BFE6' },
+  fabIcon: { width: 35, height: 35, tintColor: '#2A3563' },
   fabText: { fontSize: 10, color: '#A9A9A9', textAlign: 'center' },
-  splashContainer: { flex: 1, backgroundColor: '#A1CFF6', justifyContent: 'center', alignItems: 'center' },
+  
+  // --- Gaya Khusus Halaman Splash & Auth ---
+  splashContainer: { flex: 1, backgroundColor: '#2A3563', justifyContent: 'center', alignItems: 'center' },
   splashContent: { alignItems: 'center', flexDirection: 'row' },
   splashLogo: { width: 60, height: 60, marginRight: 10 },
   splashText: { fontSize: 36, fontWeight: 'bold', color: '#FFF' },
+  
   container: { flex: 1 },
   safeArea: { flex: 1 },
   scrollContainer: { flexGrow: 1, justifyContent: 'space-between' },
@@ -341,12 +338,16 @@ const styles = StyleSheet.create({
   logoImage: { width: 70, height: 70 },
   titleText: { fontSize: 28, fontWeight: 'bold', color: '#FFF', textAlign: 'center', lineHeight: 34, marginBottom: 15 },
   subtitleText: { fontSize: 13, color: 'rgba(255, 255, 255, 0.9)', textAlign: 'center', lineHeight: 18, paddingHorizontal: 10 },
+  
   formCard: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 25, paddingTop: 35, paddingBottom: 40 },
   tabContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: 35 },
-  activeTab: { backgroundColor: '#C2E0F9', paddingVertical: 12, paddingHorizontal: 40, borderRadius: 25, marginRight: 10 },
+  
+  // Tab aktif menggunakan warna ungu gelap sesuai gambar
+  activeTab: { backgroundColor: '#34315A', paddingVertical: 12, paddingHorizontal: 40, borderRadius: 25, marginRight: 10 },
   inactiveTab: { backgroundColor: 'transparent', paddingVertical: 12, paddingHorizontal: 40, borderRadius: 25 },
   activeTabText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
   inactiveTabText: { color: '#555', fontWeight: '600', fontSize: 15 },
+  
   rowInputs: { flexDirection: 'row', justifyContent: 'space-between' },
   inputWrapper: { borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12, height: 55, marginBottom: 25, justifyContent: 'center', paddingHorizontal: 15, backgroundColor: '#FFF' },
   floatingLabel: { position: 'absolute', top: -10, left: 15, backgroundColor: '#FFF', paddingHorizontal: 5, fontSize: 12, color: '#D3D3D3', zIndex: 1 },
@@ -354,9 +355,11 @@ const styles = StyleSheet.create({
   passwordContainer: { flexDirection: 'row', alignItems: 'center', height: '100%' },
   passwordField: { flex: 1, fontSize: 15, color: '#333', height: '100%', paddingVertical: 0 },
   eyeIcon: { width: 22, height: 22, tintColor: '#D3D3D3' },
-  loginButton: { backgroundColor: '#C2E0F9', borderRadius: 12, height: 55, justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
-  signinButton: { backgroundColor: '#F8BFE6', borderRadius: 12, height: 55, justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
-  loginButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  
+  // Tombol Submit Utama menggunakan warna ungu gelap
+  submitButton: { backgroundColor: '#34315A', borderRadius: 12, height: 55, justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
+  submitButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  
   googleButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12, height: 55, marginBottom: 25 },
   googleIcon: { width: 20, height: 20, marginRight: 10 },
   googleButtonText: { color: '#333', fontSize: 15, fontWeight: '600' },
