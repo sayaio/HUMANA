@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -12,146 +12,162 @@ import {
   Alert,
   Dimensions
 } from 'react-native';
-
-import LoginPage from './pages/LoginPage';
-
 const { width } = Dimensions.get('window');
 
-const App = () => {
-  // ==========================================
-  // STATE MANAGEMENT
-  // ==========================================
-  const [currentPage, setCurrentPage] = useState('Splash');
-  const [isLogin, setIsLogin] = useState(true); // true = Masuk, false = Daftar
+import { loginUser } from '../services/authService'; // <--- PANGGIL LAYANAN
 
-  // Form State
-  const [namaLengkap, setNamaLengkap] = useState('');
-  const [role, setRole] = useState('Murid');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+const LoginPage = ({ onLoginSuccess }) => {
+    const [isLogin, setIsLogin] = useState(true);
+    const [namaLengkap, setNamaLengkap] = useState('');
+    const [role, setRole] = useState('Murid');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
 
-  // Aset Gambar
-  const LOGO_SOURCE = require('./assets/logo_humana.png'); 
-  const EYE_ICON = require('./assets/logo_humana.png'); 
-  const GOOGLE_ICON = { uri: 'https://img.icons8.com/color/48/google-logo.png' };
+    const LOGO_SOURCE = require('../assets/logo_humana.png'); 
+    const EYE_ICON = require('../assets/logo_humana.png'); 
+    const GOOGLE_ICON = { uri: 'https://img.icons8.com/color/48/google-logo.png' };
 
-  // ==========================================
-  // FUNGSI LOGIKA (NAVIGASI)
-  // ==========================================
-  useEffect(() => {
-    if (currentPage === 'Splash') {
-      const timer = setTimeout(() => {
-        setCurrentPage('Auth'); 
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [currentPage]);
-
-
-  const handleLogout = () => {
-    setEmail('');
-    setPassword('');
-    setCurrentPage('Auth');
-    setIsLogin(true);
-  };
-
-  const displayName = email ? email.split('@')[0] : 'Pengguna';
-  
-  if (currentPage === 'Splash') {
+    const handleLogin = async () => {
+        try {
+            const result = await loginUser(email, password); // Cukup panggil fungsinya
+            if (result.success) {
+                Alert.alert("Berhasil", result.message);
+                onLoginSuccess(); // Beri tahu App.jsx kalau login sukses
+            } else {
+                Alert.alert('Gagal Masuk', result.message || 'Email atau password salah');
+            }
+        } catch (err) {
+            Alert.alert("Error", err.message);
+        }
+    };
     return (
-      <View style={styles.splashContainer}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-        <View style={styles.splashContent}>
-          <Image source={LOGO_SOURCE} style={styles.splashLogo} resizeMode="contain" />
-          <Text style={styles.splashText}>Humana.</Text>
-        </View>
-      </View>
-    );
-  }
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      
+      <View style={styles.navyBackgroundTop} />
+      <View style={styles.navyBackgroundTriangle} />
 
-  // ==========================================
-  // HALAMAN 2: HOME PAGE
-  // ==========================================
-  if (currentPage === 'Home') {
-    return (
-      <View style={styles.homeContainer}>
-        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-          <View style={styles.homeHeaderBg} />
-          <View style={styles.homeGreetingContainer}>
-            <Text style={styles.homeGreetingText}>
-              Selamat datang,{"\n"}{namaLengkap || displayName} !
-            </Text>
-          </View>
-
-          <View style={styles.scheduleCard}>
-            <Text style={styles.scheduleTitle}>
-              <Text style={{fontWeight: 'bold'}}>Matematika</Text> - Relasi & Fungsi
-            </Text>
-            <View style={styles.scheduleDetails}>
-              <View><Text style={styles.scheduleLabel}>Waktu</Text><Text style={styles.scheduleValue}>06.30 - 09.30</Text></View>
-              <View><Text style={styles.scheduleLabel}>Guru</Text><Text style={styles.scheduleValue}>Ahmad Pambudi, S.Pd.</Text></View>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false} bounces={false}>
+          
+          <View style={styles.headerSection}>
+            <View style={styles.logoWrapper}>
+                <Image source={LOGO_SOURCE} style={styles.logoImage} resizeMode="contain" />
             </View>
-            <Image source={LOGO_SOURCE} style={styles.watermarkLogo} resizeMode="contain" />
+            <Text style={styles.titleText}>  No pressure,  {"\n"}just progress</Text>
+            <Text style={styles.subtitleText}>
+              Make learning simple and enjoyable{"\n"}Sign in to get a tailored experience just for you
+            </Text>
           </View>
 
-          <View style={styles.quickActionsContainer}>
-            <TouchableOpacity style={styles.actionItem}>
-              <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
-              <Text style={styles.actionText}>Pesan Sesi</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionItem}>
-              <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
-              <Text style={styles.actionText}>Materi</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionItem}>
-              <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
-              <Text style={styles.actionText}>Jadwal Saya</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.divider} />
+          <View style={styles.formCard}>
+            
+            <Text style={styles.formCardTitle}>{isLogin ? 'Masuk' : 'Daftar'}</Text>
+            
+            {isLogin ? (
+              <View style={styles.switchModeContainer}>
+                <Text style={styles.switchModeText}>Belum memiliki akun? </Text>
+                <TouchableOpacity onPress={() => setIsLogin(false)}>
+                  <Text style={styles.switchModeLink}>Daftar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.switchModeContainer}>
+                <Text style={styles.switchModeText}>Sudah memiliki akun? </Text>
+                <TouchableOpacity onPress={() => setIsLogin(true)}>
+                  <Text style={styles.switchModeLink}>Masuk</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
-          <View style={styles.chartSection}>
-            <View style={styles.donutChartPlaceholder}>
-              <View style={styles.donutHole}>
-                <Text style={styles.donutHoleText}>Total{"\n"}sesi{"\n"}<Text style={{fontWeight: 'bold', fontSize: 16}}>14</Text></Text>
+            {!isLogin && (
+              <>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.floatingLabel}>Nama Lengkap</Text>
+                  <TextInput style={styles.inputField} placeholder="someone" value={namaLengkap} onChangeText={setNamaLengkap} placeholderTextColor="#A9A9A9" />
+                </View>
+
+                <View style={[styles.inputWrapper, { height: 65, flexDirection: 'row', alignItems: 'center' }]}>
+                  <Text style={styles.floatingLabel}>Daftar Sebagai</Text>
+                  <View style={styles.radioGroup}>
+                    <TouchableOpacity style={styles.radioOption} onPress={() => setRole('Guru')}>
+                      <View style={styles.radioCircle}>{role === 'Guru' && <View style={styles.radioInnerCircle} />}</View>
+                      <Text style={styles.radioText}>Guru</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.radioOption} onPress={() => setRole('Murid')}>
+                      <View style={styles.radioCircle}>{role === 'Murid' && <View style={styles.radioInnerCircle} />}</View>
+                      <Text style={styles.radioText}>Murid</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
+            )}
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.floatingLabel}>Email</Text>
+              <TextInput style={styles.inputField} placeholder="someone@domain.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#A9A9A9" />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.floatingLabel}>Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput style={styles.passwordField} placeholder="Masukan password" value={password} onChangeText={setPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
+                <TouchableOpacity><Image source={EYE_ICON} style={styles.eyeIcon} resizeMode="contain" /></TouchableOpacity>
               </View>
             </View>
-            <Text style={[styles.chartLabel, { top: 0, right: '20%' }]}>Matematika{"\n"}21.4%</Text>
-            <Text style={[styles.chartLabel, { bottom: 0, right: '15%' }]}>Bahasa Indonesia{"\n"}35.7%</Text>
-            <Text style={[styles.chartLabel, { bottom: '20%', left: '20%' }]}>IPS{"\n"}14.3%</Text>
-            <Text style={[styles.chartLabel, { top: '20%', left: '20%' }]}>IPA{"\n"}28.6%</Text>
-          </View>
 
-          <TouchableOpacity style={styles.tempLogout} onPress={handleLogout}>
-            <Text style={{color: '#FFF'}}>Logout (Sementara)</Text>
-          </TouchableOpacity>
+            {!isLogin && (
+              <View style={styles.inputWrapper}>
+                <Text style={styles.floatingLabel}>Konfirmasi Password</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput style={styles.passwordField} placeholder="Masukan password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
+                  <TouchableOpacity><Image source={EYE_ICON} style={styles.eyeIcon} resizeMode="contain" /></TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {isLogin && (
+              <View style={styles.rememberForgotRow}>
+                <TouchableOpacity style={styles.checkboxContainer} onPress={() => setRememberMe(!rememberMe)}>
+                  <View style={[styles.checkbox, rememberMe && styles.checkboxActive]}>
+                    {rememberMe && <Text style={{color: '#FFF', fontSize: 10, fontWeight: 'bold'}}>✓</Text>}
+                  </View>
+                  <Text style={styles.checkboxText}>Remember me</Text>
+                </TouchableOpacity>
+                <TouchableOpacity>
+                  <Text style={styles.forgotPasswordText}>Lupa password ?</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity style={styles.submitButton} onPress={handleLogin}>
+              <Text style={styles.submitButtonText}>{isLogin ? 'Masuk' : 'Daftar'}</Text>
+            </TouchableOpacity>
+
+            <View style={styles.orDividerContainer}>
+              <View style={styles.orLine} />
+              <Text style={styles.orText}>Atau</Text>
+              <View style={styles.orLine} />
+            </View>
+
+            <TouchableOpacity style={styles.googleButton}>
+              <Text style={styles.googleButtonText}>{isLogin ? 'Masuk dengan Google' : 'Daftar dengan Google'}</Text>
+              <Image source={GOOGLE_ICON} style={styles.googleIconRight} resizeMode="contain" />
+            </TouchableOpacity>
+            
+            <Text style={styles.footerText}>
+              By continuing I agree with the <Text style={styles.linkText}>Terms & Conditions</Text>,{"\n"}<Text style={styles.linkText}>Privacy Policy.</Text>
+            </Text>
+
+          </View>
         </ScrollView>
-
-        <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#2A3563' }]} resizeMode="contain" /><Text style={[styles.navText, { color: '#2A3563' }]}>Home</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Activity</Text></TouchableOpacity>
-          <View style={styles.fabContainer}>
-            <TouchableOpacity style={styles.fabButton}><Image source={LOGO_SOURCE} style={styles.fabIcon} resizeMode="contain" /></TouchableOpacity>
-            <Text style={styles.fabText}>Pesan{"\n"}Sesi</Text>
-          </View>
-          <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Chat</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Profile</Text></TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  // ==========================================
-  // HALAMAN 3: AUTH PAGE (HASIL TERJEMAHAN XML)
-  // ==========================================
-    return (
-       <LoginPage onLoginSuccess={() => setCurrentPage('Home')} />
+      </SafeAreaView>
+    </View>
   );
+  
 };
-
 const styles = StyleSheet.create({
   navyBackgroundTop: { position: 'absolute', top: 0, left: 0, right: 0, height: '65%', backgroundColor: '#2A3563' },
   navyBackgroundTriangle: { 
@@ -260,4 +276,4 @@ const styles = StyleSheet.create({
   fabText: { fontSize: 10, color: '#A9A9A9', textAlign: 'center' },
 });
 
-export default App;
+export default LoginPage;

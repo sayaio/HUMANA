@@ -12,8 +12,7 @@ import {
   Alert,
   Dimensions
 } from 'react-native';
-
-import LoginPage from './pages/LoginPage';
+import { API_URL } from './src/config';
 
 const { width } = Dimensions.get('window');
 
@@ -49,6 +48,34 @@ const App = () => {
     }
   }, [currentPage]);
 
+  const handleAuthAction = async () => {
+    if (isLogin) {
+        try {
+            const response = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+            });
+
+            const result = await response.json();
+            if (response.ok && result.success) {
+            Alert.alert('Berhasil', result.message);
+            setCurrentPage('Home');
+            } else {
+            Alert.alert('Gagal Masuk', result.message || 'Email atau password salah');
+            }
+        } catch (error) {
+            console.log("Detail Error:", error);
+            Alert.alert('Error', error.message);
+        }
+    } else {
+      if (password === confirmPassword && email !== '') {
+        setCurrentPage('Home');
+      } else {
+        Alert.alert('Gagal', 'Cek kembali data pendaftaranmu.');
+      }
+    }
+  };
 
   const handleLogout = () => {
     setEmail('');
@@ -147,8 +174,129 @@ const App = () => {
   // ==========================================
   // HALAMAN 3: AUTH PAGE (HASIL TERJEMAHAN XML)
   // ==========================================
-    return (
-       <LoginPage onLoginSuccess={() => setCurrentPage('Home')} />
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      
+      <View style={styles.navyBackgroundTop} />
+      <View style={styles.navyBackgroundTriangle} />
+
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false} bounces={false}>
+          
+          <View style={styles.headerSection}>
+            <View style={styles.logoWrapper}>
+                <Image source={LOGO_SOURCE} style={styles.logoImage} resizeMode="contain" />
+            </View>
+            <Text style={styles.titleText}>  No pressure,  {"\n"}just progress</Text>
+            <Text style={styles.subtitleText}>
+              Make learning simple and enjoyable{"\n"}Sign in to get a tailored experience just for you
+            </Text>
+          </View>
+
+          <View style={styles.formCard}>
+            
+            <Text style={styles.formCardTitle}>{isLogin ? 'Masuk' : 'Daftar'}</Text>
+            
+            {isLogin ? (
+              <View style={styles.switchModeContainer}>
+                <Text style={styles.switchModeText}>Belum memiliki akun? </Text>
+                <TouchableOpacity onPress={() => setIsLogin(false)}>
+                  <Text style={styles.switchModeLink}>Daftar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.switchModeContainer}>
+                <Text style={styles.switchModeText}>Sudah memiliki akun? </Text>
+                <TouchableOpacity onPress={() => setIsLogin(true)}>
+                  <Text style={styles.switchModeLink}>Masuk</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {!isLogin && (
+              <>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.floatingLabel}>Nama Lengkap</Text>
+                  <TextInput style={styles.inputField} placeholder="someone" value={namaLengkap} onChangeText={setNamaLengkap} placeholderTextColor="#A9A9A9" />
+                </View>
+
+                <View style={[styles.inputWrapper, { height: 65, flexDirection: 'row', alignItems: 'center' }]}>
+                  <Text style={styles.floatingLabel}>Daftar Sebagai</Text>
+                  <View style={styles.radioGroup}>
+                    <TouchableOpacity style={styles.radioOption} onPress={() => setRole('Guru')}>
+                      <View style={styles.radioCircle}>{role === 'Guru' && <View style={styles.radioInnerCircle} />}</View>
+                      <Text style={styles.radioText}>Guru</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.radioOption} onPress={() => setRole('Murid')}>
+                      <View style={styles.radioCircle}>{role === 'Murid' && <View style={styles.radioInnerCircle} />}</View>
+                      <Text style={styles.radioText}>Murid</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
+            )}
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.floatingLabel}>Email</Text>
+              <TextInput style={styles.inputField} placeholder="someone@domain.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#A9A9A9" />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.floatingLabel}>Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput style={styles.passwordField} placeholder="Masukan password" value={password} onChangeText={setPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
+                <TouchableOpacity><Image source={EYE_ICON} style={styles.eyeIcon} resizeMode="contain" /></TouchableOpacity>
+              </View>
+            </View>
+
+            {!isLogin && (
+              <View style={styles.inputWrapper}>
+                <Text style={styles.floatingLabel}>Konfirmasi Password</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput style={styles.passwordField} placeholder="Masukan password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
+                  <TouchableOpacity><Image source={EYE_ICON} style={styles.eyeIcon} resizeMode="contain" /></TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {isLogin && (
+              <View style={styles.rememberForgotRow}>
+                <TouchableOpacity style={styles.checkboxContainer} onPress={() => setRememberMe(!rememberMe)}>
+                  <View style={[styles.checkbox, rememberMe && styles.checkboxActive]}>
+                    {rememberMe && <Text style={{color: '#FFF', fontSize: 10, fontWeight: 'bold'}}>✓</Text>}
+                  </View>
+                  <Text style={styles.checkboxText}>Remember me</Text>
+                </TouchableOpacity>
+                <TouchableOpacity>
+                  <Text style={styles.forgotPasswordText}>Lupa password ?</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity style={styles.submitButton} onPress={handleAuthAction}>
+              <Text style={styles.submitButtonText}>{isLogin ? 'Masuk' : 'Daftar'}</Text>
+            </TouchableOpacity>
+
+            <View style={styles.orDividerContainer}>
+              <View style={styles.orLine} />
+              <Text style={styles.orText}>Atau</Text>
+              <View style={styles.orLine} />
+            </View>
+
+            <TouchableOpacity style={styles.googleButton}>
+              <Text style={styles.googleButtonText}>{isLogin ? 'Masuk dengan Google' : 'Daftar dengan Google'}</Text>
+              <Image source={GOOGLE_ICON} style={styles.googleIconRight} resizeMode="contain" />
+            </TouchableOpacity>
+            
+            <Text style={styles.footerText}>
+              By continuing I agree with the <Text style={styles.linkText}>Terms & Conditions</Text>,{"\n"}<Text style={styles.linkText}>Privacy Policy.</Text>
+            </Text>
+
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 };
 
