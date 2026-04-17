@@ -1,5 +1,4 @@
 import { API_URL } from '../src/config';
-import { Alert } from 'react-native';
 
 export const loginUser = async (email, password) => {
     try {
@@ -10,12 +9,9 @@ export const loginUser = async (email, password) => {
         });
 
         const result = await response.json();
-        if (response.ok && result.success) {
-            return result;
-        }
+        return result;
     } catch (error) {
-        console.log("Detail Error:", error);
-        Alert.alert('Error', error.message); 
+        console.log("Detail Error Fetch:", error);
         return { success: false, message: error.message };
     }
 };

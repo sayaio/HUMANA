@@ -30,13 +30,17 @@ const LoginPage = ({ onLoginSuccess }) => {
     const GOOGLE_ICON = { uri: 'https://img.icons8.com/color/48/google-logo.png' };
 
     const handleLogin = async () => {
+        if (!email.trim() || !password.trim()) {
+            Alert.alert("Gagal", "Email dan Password tidak boleh kosong");
+            return;
+        }
         try {
             const result = await loginUser(email, password); // Cukup panggil fungsinya
             if (result.success) {
-                Alert.alert("Berhasil", result.message);
+                Alert.alert("Berhasil", "Login berhasil");
                 onLoginSuccess(); // Beri tahu App.jsx kalau login sukses
             } else {
-                Alert.alert('Gagal Masuk', result.message || 'Email atau password salah');
+                Alert.alert('Gagal Masuk', result.message);
             }
         } catch (err) {
             Alert.alert("Error", err.message);
