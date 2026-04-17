@@ -9,7 +9,6 @@ const register = async (req, res) => {
     try {
         conn = await pool.getConnection();
 
-        // 1. CEK APAKAH EMAIL SUDAH DIGUNAKAN (Cek di kedua tabel)
         const checkQuery = `
             SELECT email_guru FROM guru WHERE email_guru = ?
             UNION
@@ -24,7 +23,6 @@ const register = async (req, res) => {
             });
         }
 
-        // 2. PROSES INSERT BERDASARKAN ROLE
         if (role === 'Guru') {
             const queryGuru = `INSERT INTO guru (nama_guru, email_guru, password) VALUES (?, ?, ?)`;
             await conn.query(queryGuru, [namaLengkap, email, password]);
@@ -40,7 +38,6 @@ const register = async (req, res) => {
             return res.status(400).json({ success: false, message: "Role tidak valid!" });
         }
 
-        // 3. RESPONSE SUKSES
         res.status(201).json({
             success: true,
             message: "Registrasi berhasil"
