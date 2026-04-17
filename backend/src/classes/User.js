@@ -26,9 +26,6 @@ class User {
         const emailInput = String(inputEmail).trim();
         const passInput = String(inputPassword).trim();
 
-        console.log(`DEBUG DALAM CLASS:`);
-        console.log(`DB Email: "${this.#email}" | Input: "${inputEmail}"`);
-        console.log(`DB Pass : "${this.#password}" | Input: "${inputPassword}"`);
         return emailDB === emailInput && passDB === passInput;
     }   
 
