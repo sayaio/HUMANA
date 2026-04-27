@@ -3,7 +3,7 @@ import {
     StyleSheet, Text, View, TextInput, TouchableOpacity,
     Image, SafeAreaView, StatusBar, ScrollView, Alert, Dimensions
 } from 'react-native';
-
+import { registerUser } from '../services/registerService';
 const { width } = Dimensions.get('window');
 
 const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
@@ -19,7 +19,7 @@ const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
 
     const handleRegister = async () => { // Tambahkan async
         // 1. Validasi Input Kosong
-        if (!namaLengkap || !email || !password || !confirmPassword || !selectedRole) {
+        if (!namaLengkap || !email || !password || !confirmPassword || !role) {
             Alert.alert('Gagal Mendaftar', 'Mohon isi semua kolom, termasuk memilih Role.');
             return;
         }
@@ -34,9 +34,9 @@ const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
             // 3. Panggil API (Ini yang belum ada di kode temanmu)
             const userData = {
                 namaLengkap,
+                role: role,
                 email,
                 password,
-                role: selectedRole, // Pastikan ada state/pilihan role (Guru/Murid)
                 username: null      // Kita set null dulu sesuai diskusi tadi
             };
 

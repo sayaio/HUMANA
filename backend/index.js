@@ -10,5 +10,5 @@ app.use('/api', apiRoutes);
 
 const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(`Server Backend Humana berjalan di http://localhost:${PORT}`);
+    console.log(`Server Backend Humana berjalan di http://10.0.2.2:${PORT}`);
 });
