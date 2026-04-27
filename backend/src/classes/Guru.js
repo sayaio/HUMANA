@@ -2,60 +2,81 @@ const User = require('./User');
 
 class Guru extends User{
   #portofolio;
-  #meanRating;
   #daftarMateri;
   #jadwalAvailable;
-  #totalSesi;
-  constructor(id, username, email, password, nama_user) {
-    super(id, username, email, password, nama_user);
+  constructor(username, email, password, nama_user) {
+    super(username, email, password, nama_user);
     this.portfolio        = [];
-    this.meanRating       = 0;
     this.daftarMateri     = [];
     this.jadwalAvailable  = [];
-    this._totalSesi       = 0;
   }
   
   getRole() {
-    // TODO: return 'GURU'
+    return "Guru";
   }
  
-  tambahJadwal() {
-    // TODO: tambah slot jadwal ke jadwalAvailable
-  }
- 
-  hapusJadwal() {
-    // TODO: hapus slot jadwal dari jadwalAvailable
+  getPortofolio(){
+    return this.#portofolio;
   }
 
-  getJadwalAvailable() {
-    // TODO: return daftar jadwal yang tersedia
+  tambahJadwal(waktuMulai, waktuSelesai) {
+    const jadwalBaru = new Availability(waktuMulai, waktuSelesai);
+    this.#daftarAvailability.push(jadwalBaru);
+    console.log(`Jadwal baru berhasil ditambahkan untuk Guru ${this.namaUser}.`);
   }
- 
-  konfirmasiPesanan() {
-    // TODO: konfirmasi atau tolak pemesanan dari murid
+  
+  hapusJadwal(id) {
+    const index = this.#daftarAvailability.findIndex(a => a.idAvailability === id);
+    if (index !== -1) {
+      this.#daftarAvailability.splice(index, 1);
+      console.log("Jadwal ketersediaan berhasil dihapus.");
+      return true;
+    }
+    return false;
   }
- 
+
+  getJadwalAvailable(waktuCek) {
+    // waktuCek harus berupa objek Date
+    return this.#daftarAvailability.filter(a => a.isAvailable(waktuCek));
+  }
+
+  konfirmasiPesanan(idPesanan, status) {
+    const pesanan = this.#daftarPesanan.find(p => p.id === idPesanan);
+    if (pesanan) {
+      pesanan.status = status;
+      console.log(`Pesanan ${idPesanan} telah ${status}.`);
+    }
+  }
+
   getPemesananSesi() {
-    // TODO: return semua sesi yang dipesan untuk guru ini
+    return this.#daftarPesanan;
   }
- 
+
   getRating() {
-    // TODO: hitung dan return rata-rata rating dari Feedback
-  }
- 
-  addNewReview() {
-    // TODO: tambah review baru ke daftar feedback
-  }
- 
-  receiveNotification() {
-    // TODO: terima notifikasi (override)
-  }
- 
-  getRiwayatSesi() {
-    // TODO: return histori semua sesi yang sudah selesai
+    if (this.#feedback.length === 0) return 0;
+    const total = this.#feedback.reduce((acc, curr) => acc + curr.rating, 0);
+    return total / this.#feedback.length;
   }
 
-  get totalSesi() { return this._totalSesi; }
+  receiveNotification(pesan) {
+    console.log(`Notifikasi Guru: ${pesan}`);
+  }
+
+  getRiwayatSesi(){
+    return this.#riwayatSesi;
+  }
+
+  addFeedback(feedback) {
+    // Validasi sederhana untuk memastikan yang dimasukkan adalah objek feedback
+    if (feedback instanceof Feedback) {
+      this.#daftarFeedback.push(feedback);
+      console.log(`Feedback baru berhasil ditambahkan untuk ${this.namaUser}.`);
+      return true;
+    } else {
+      console.error("Gagal: Data yang dimasukkan bukan objek Feedback.");
+      return false;
+    }
+  }
+
 }
-
 module.exports = Guru;
