@@ -4,8 +4,7 @@ import {
   Image, SafeAreaView, StatusBar, ScrollView, Alert, Dimensions
 } from 'react-native';
 
-// Mengimpor fungsi loginUser dari file API kamu
-// (Pastikan path ini sesuai dengan letak file service kamu, misal: '../services/authService')
+// Pastikan path ini sesuai dengan letak file service kamu
 import { loginUser } from '../services/authService'; 
 
 const { width } = Dimensions.get('window');
@@ -19,22 +18,29 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
     const EYE_ICON = require('../assets/logo_humana.png'); 
     const GOOGLE_ICON = { uri: 'https://img.icons8.com/color/48/google-logo.png' };
 
-    // Fungsi handleLogin diubah menjadi async untuk memanggil API
+    // Fungsi handleLogin dengan fitur Debugging
     const handleLogin = async () => {
         if (!email.trim() || !password.trim()) {
             Alert.alert("Gagal", "Email dan Password tidak boleh kosong");
             return;
         }
+        
         try {
-            const result = await loginUser(email, password); // Cukup panggil fungsinya
-            if (result.success) {
-                Alert.alert("Berhasil", "Login berhasil");
-                onLoginSuccess(); // Beri tahu App.jsx kalau login sukses
+            // Memanggil API login ke backend
+            const result = await loginUser(email, password); 
+            
+            // 💡 FITUR DEBUGGING: Cek terminal/CMD kamu untuk melihat apa balasan asli dari backend
+            console.log("Balasan dari Backend: ", result);
+
+            // Mengecek apakah backend merespon dengan sukses, token, atau status 200
+            if (result.success === true || result.token || result.status === 200) {
+                onLoginSuccess(); 
             } else {
-                Alert.alert('Gagal Masuk', result.message);
+                // Jika gagal, kita paksa tampilkan wujud asli error dari backend di layar HP
+                Alert.alert('Gagal Masuk', JSON.stringify(result));
             }
         } catch (err) {
-            Alert.alert("Error", err.message);
+            Alert.alert("Error Jaringan", err.message || "Pastikan URL backend sudah benar dan server menyala.");
         }
     };
 
