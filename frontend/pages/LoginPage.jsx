@@ -21,27 +21,20 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
 
     // Fungsi handleLogin diubah menjadi async untuk memanggil API
     const handleLogin = async () => {
-        // Validasi jika ada form yang kosong
-        if (email.trim() === '' || password.trim() === '') {
-            Alert.alert('Gagal Masuk', 'Mohon isi Email dan Password kamu.');
+        if (!email.trim() || !password.trim()) {
+            Alert.alert("Gagal", "Email dan Password tidak boleh kosong");
             return;
         }
-
         try {
-            // Memanggil API login ke backend
-            const result = await loginUser(email, password);
-
-            // Mengecek response dari backend (menggunakan result.success)
+            const result = await loginUser(email, password); // Cukup panggil fungsinya
             if (result.success) {
-                // Jika berhasil masuk, panggil onLoginSuccess untuk pindah ke HomePage
-                onLoginSuccess();
+                Alert.alert("Berhasil", "Login berhasil");
+                onLoginSuccess(); // Beri tahu App.jsx kalau login sukses
             } else {
-                // Jika gagal (contoh: password salah atau email tidak ada)
-                Alert.alert('Gagal Masuk', result.message || 'Email atau password salah.');
+                Alert.alert('Gagal Masuk', result.message);
             }
-        } catch (error) {
-            // Jika ada error jaringan atau server mati
-            Alert.alert('Terjadi Kesalahan', 'Silakan periksa koneksi internet kamu.');
+        } catch (err) {
+            Alert.alert("Error", err.message);
         }
     };
 
