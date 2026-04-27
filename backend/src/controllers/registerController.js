@@ -23,13 +23,13 @@ const register = async (req, res) => {
             });
         }
 
-        let newUserInstace;
+        let newUserInstance;
 
         if (role === 'Guru') {
             const queryGuru = `INSERT INTO guru (nama_guru, email_guru, password, username) VALUES (?, ?, ?, ?)`;
             const result = await conn.query(queryGuru, [namaLengkap, email, password, username]);
             
-            const insertedId = result.insertedId;
+            const insertedId = result.insertId;
             newUserInstance = new Guru(username, email, password, namaLengkap, insertedId);
 
         } else if (role === 'Murid') {

@@ -7,8 +7,8 @@ class Murid extends User {
   #saldo;
   #orderHistory;
 
-  constructor(username, email, password, nama_user, kelas = '') {
-    super(null, username, email, password, nama_user);
+  constructor(username, email, password, nama_user, id = null, kelas = ''){
+    super(username, email, password, nama_user, id);
     this.#kelas        = kelas;
     this.#saldo        = 0;
     this.#orderHistory = [];

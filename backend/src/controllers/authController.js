@@ -1,5 +1,5 @@
 const pool = require('../database');
-const Guru = require('../classes/Guru');
+const Guru = require('../classes/Guru').default;
 const Murid = require('../classes/Murid');
 
 const login = async (req, res) => {

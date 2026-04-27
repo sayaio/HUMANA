@@ -6,8 +6,8 @@ class Guru extends User{
   #daftarMateri;
   #jadwalAvailable;
   #totalSesi;
-  constructor(id, username, email, password, nama_user) {
-    super(id, username, email, password, nama_user);
+  constructor(username, email, password, nama_user, id = null){
+    super(username, email, password, nama_user, id);
     this.portfolio        = [];
     this.meanRating       = 0;
     this.daftarMateri     = [];

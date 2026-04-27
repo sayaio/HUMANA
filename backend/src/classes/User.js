@@ -10,7 +10,7 @@ class User {
         this.#username = username;
         this.#email = email;
         this.#password = password;
-        this.#nama_user = nama_user;
+        this.#namaUser = nama_user;
         this.#createdAt = new Date();
     }
     login(inputEmail, inputPassword) {
@@ -23,20 +23,20 @@ class User {
         return emailDB === emailInput && passDB === passInput;
     }   
     logout() {
-        console.log(`${this.#nama_user} telah keluar dari sistem.`);
+        console.log(`${this.#namaUser} telah keluar dari sistem.`);
     }
     // Cara panggil: User.editProfile({ username: "dani_baru" })`
     editProfile(dataUpdate) {
         this.#username  = dataUpdate.username  ?? this.#username;
         this.#email     = dataUpdate.email     ?? this.#email;
         this.#password  = dataUpdate.password  ?? this.#password;
-        this.#nama_user = dataUpdate.nama_user ?? this.#nama_user;
+        this.#namaUser = dataUpdate.nama_user ?? this.#namaUser;
     }
     getProfile() {
         return {
-            id: this.#id_user,
+            id: this.#idUser,
             username: this.#username,
-            nama: this.#nama_user,
+            nama: this.#namaUser,
             email: this.#email,
             createdAt: this.#createdAt
         };
