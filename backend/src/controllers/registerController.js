@@ -29,7 +29,6 @@ const register = async (req, res) => {
 
         if (role === 'Guru') {
             const queryGuru = `INSERT INTO guru (nama_guru, email_guru, password, username) VALUES (?, ?, ?, ?)`;
-            // HAPUS kurung siku di sini juga
             const result = await conn.query(queryGuru, [namaLengkap, email, password, namaLengkap]); // SEMENTARA USERNAME KARENA BLM ADA INPUTAN JADINYA ISI NAMALENGKAP DULU
 
             const insertedId = Number(result.insertId); // Pastikan jadi number
