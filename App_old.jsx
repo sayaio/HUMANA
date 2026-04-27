@@ -59,10 +59,10 @@ const App = () => {
 
             const result = await response.json();
             if (response.ok && result.success) {
-            Alert.alert('Berhasil', result.message);
-            setCurrentPage('Home');
+                Alert.alert('Berhasil', result.message);
+                setCurrentPage('Home');
             } else {
-            Alert.alert('Gagal Masuk', result.message || 'Email atau password salah');
+                Alert.alert('Gagal Masuk', result.message || 'Email atau password salah');
             }
         } catch (error) {
             console.log("Detail Error:", error);

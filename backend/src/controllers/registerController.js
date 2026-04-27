@@ -8,7 +8,6 @@ const register = async (req, res) => {
 
     try {
         conn = await pool.getConnection();
-        console.log("REGISTER API KE HIT 🔥");
 
         const checkQuery = `
         SELECT email_guru as email FROM guru WHERE email_guru = ?
@@ -31,14 +30,14 @@ const register = async (req, res) => {
         if (role === 'Guru') {
             const queryGuru = `INSERT INTO guru (nama_guru, email_guru, password, username) VALUES (?, ?, ?, ?)`;
             // HAPUS kurung siku di sini juga
-            const result = await conn.query(queryGuru, [namaLengkap, email, password, username]);
+            const result = await conn.query(queryGuru, [namaLengkap, email, password, namaLengkap]); // SEMENTARA USERNAME KARENA BLM ADA INPUTAN JADINYA ISI NAMALENGKAP DULU
 
             const insertedId = Number(result.insertId); // Pastikan jadi number
             newUserInstance = new Guru(username, email, password, namaLengkap, insertedId);
 
         } else if (role === 'Murid') {
             const queryMurid = `INSERT INTO murid (nama_murid, email, password, username) VALUES (?, ?, ?, ?)`;
-            const result = await conn.query(queryMurid, [namaLengkap, email, password, username]);
+            const result = await conn.query(queryMurid, [namaLengkap, email, password, namaLengkap]); // SEMENTARA USERNAME KARENA BLM ADA INPUTAN JADINYA ISI NAMALENGKAP DULU
 
             const insertedId = Number(result.insertId);
             newUserInstance = new Murid(username, email, password, namaLengkap, insertedId);
