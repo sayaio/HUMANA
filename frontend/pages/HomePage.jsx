@@ -5,17 +5,12 @@ import {
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
-const LOGO_SOURCE = require('../assets/logo_humana.png'); // Placeholder icon utama
+const LOGO_SOURCE = require('../assets/logo_humana.png'); 
 
-const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject }) => {
+const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate }) => {
   const displayName = email ? email.split('@')[0] : 'Pengguna';
-
-  // State untuk mengontrol visibilitas Modal Materi
   const [isMateriVisible, setIsMateriVisible] = useState(false);
 
-  // ==========================================
-  // DATA PELAJARAN DENGAN ASSET ASLI KAMU
-  // ==========================================
   const favoriteSubjects = [
     { id: 'Informatika', name: 'Informatika', icon: require('../assets/informatika.png') },
     { id: 'Sosiologi', name: 'Sosiologi', icon: require('../assets/sosiologi.png') },
@@ -34,22 +29,17 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject }) => {
     { id: 'Inggris', name: 'Inggris', icon: require('../assets/inggris.png') },
   ];
 
-  // Komponen Reusable untuk Render Ikon Pelajaran di dalam Modal
   const renderSubjectItem = (subject) => (
     <TouchableOpacity 
       key={subject.id} 
       style={styles.subjectItemContainer}
       onPress={() => {
-        setIsMateriVisible(false); // Tutup modal saat diklik
-        onSelectSubject(subject.id); // Pindah ke halaman Materi sesuai mapel
+        setIsMateriVisible(false); 
+        onSelectSubject(subject.id); 
       }}
     >
       <View style={styles.subjectIconBox}>
-        <Image 
-          source={subject.icon} 
-          style={styles.subjectIconImage} 
-          resizeMode="contain" 
-        />
+        <Image source={subject.icon} style={styles.subjectIconImage} resizeMode="contain" />
       </View>
       <Text style={styles.subjectItemText}>{subject.name}</Text>
     </TouchableOpacity>
@@ -61,18 +51,16 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject }) => {
       
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 130 }}>
         
-        {/* HEADER SECTION */}
         <View style={styles.headerBackground}>
           <Image source={LOGO_SOURCE} style={styles.headerWatermark} resizeMode="contain" />
         </View>
 
         <View style={styles.greetingContainer}>
-          <Text style={styles.greetingText}>
+          <Text style={styles.homeGreetingText}>
             Selamat datang,{"\n"}{namaLengkap || displayName} !
           </Text>
         </View>
 
-        {/* KARTU JADWAL */}
         <View style={styles.scheduleCard}>
           <Text style={styles.scheduleSubHeader}>SESI HARI INI</Text>
           <Text style={styles.scheduleTitle}>
@@ -84,34 +72,26 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject }) => {
           </View>
         </View>
 
-        {/* QUICK ACTIONS */}
         <View style={styles.quickActionsContainer}>
           <TouchableOpacity style={styles.actionItem}>
-            <View style={[styles.actionIconBox, { backgroundColor: '#E8F5E9' }]}>
-              <Image source={LOGO_SOURCE} style={[styles.actionIcon, { tintColor: '#81C784' }]} resizeMode="contain" />
-            </View>
+            <View style={[styles.actionIconBox, { backgroundColor: '#E8F5E9' }]}><Image source={LOGO_SOURCE} style={[styles.actionIcon, { tintColor: '#81C784' }]} resizeMode="contain" /></View>
             <Text style={styles.actionText}>Pesan Sesi</Text>
           </TouchableOpacity>
           
-          {/* TOMBOL MATERI MENGAKTIFKAN MODAL */}
           <TouchableOpacity style={styles.actionItem} onPress={() => setIsMateriVisible(true)}>
-            <View style={[styles.actionIconBox, { backgroundColor: '#E0F7FA' }]}>
-              <Image source={LOGO_SOURCE} style={[styles.actionIcon, { tintColor: '#4DD0E1' }]} resizeMode="contain" />
-            </View>
+            <View style={[styles.actionIconBox, { backgroundColor: '#E0F7FA' }]}><Image source={LOGO_SOURCE} style={[styles.actionIcon, { tintColor: '#4DD0E1' }]} resizeMode="contain" /></View>
             <Text style={styles.actionText}>Materi</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.actionItem}>
-            <View style={[styles.actionIconBox, { backgroundColor: '#E8F5E9' }]}>
-              <Image source={LOGO_SOURCE} style={[styles.actionIcon, { tintColor: '#81C784' }]} resizeMode="contain" />
-            </View>
+          {/* Pindah ke Activity > Jadwal Aktif */}
+          <TouchableOpacity style={styles.actionItem} onPress={() => onNavigate('Activity', 'aktif')}>
+            <View style={[styles.actionIconBox, { backgroundColor: '#E8F5E9' }]}><Image source={LOGO_SOURCE} style={[styles.actionIcon, { tintColor: '#81C784' }]} resizeMode="contain" /></View>
             <Text style={styles.actionText}>Jadwal Saya</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.divider} />
 
-        {/* SECTION: PESAN LAGI */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>PESAN LAGI</Text>
           <View style={styles.pesanLagiCard}>
@@ -130,10 +110,18 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject }) => {
 
       </ScrollView>
 
-      {/* BOTTOM NAVIGATION */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#2A3563' }]} resizeMode="contain" /><Text style={[styles.navText, { color: '#2A3563', fontWeight: 'bold' }]}>Home</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Activity</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.navItem}>
+          <Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#284B7A' }]} resizeMode="contain" />
+          <Text style={[styles.navText, { color: '#284B7A', fontWeight: 'bold' }]}>Home</Text>
+        </TouchableOpacity>
+        
+        {/* Pindah ke Activity > Jadwal Aktif dari Bottom Nav */}
+        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('Activity', 'aktif')}>
+          <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
+          <Text style={styles.navText}>Activity</Text>
+        </TouchableOpacity>
+        
         <View style={styles.fabContainer}>
           <View style={styles.fabCutout}>
             <TouchableOpacity style={styles.fabButton}><Image source={LOGO_SOURCE} style={styles.fabIcon} resizeMode="contain" /></TouchableOpacity>
@@ -144,28 +132,17 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject }) => {
         <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Profile</Text></TouchableOpacity>
       </View>
 
-      {/* ========================================== */}
-      {/* MODAL BOTTOM SHEET MATERI */}
-      {/* ========================================== */}
       <Modal visible={isMateriVisible} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
-          {/* Area transparan di atas untuk menutup modal jika di-klik */}
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsMateriVisible(false)} />
-          
-          {/* Kontainer Putih Bottom Sheet */}
           <View style={styles.bottomSheetContainer}>
             <View style={styles.sheetHandle} />
-            
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Bagian Pelajaran Favorit */}
               <Text style={styles.sheetSectionTitle}>Pelajaran Favorit</Text>
               <View style={styles.subjectGrid}>
                 {favoriteSubjects.map(renderSubjectItem)}
               </View>
-
               <View style={styles.sheetDivider} />
-
-              {/* Bagian Semua Pelajaran */}
               <Text style={styles.sheetSectionTitle}>Semua Pelajaran</Text>
               <View style={styles.subjectGrid}>
                 {allSubjects.map(renderSubjectItem)}
@@ -181,10 +158,12 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject }) => {
 
 const styles = StyleSheet.create({
   homeContainer: { flex: 1, backgroundColor: '#FAFAFA' },
-  headerBackground: { position: 'absolute', width: '100%', height: 280, backgroundColor: '#2A3563', borderBottomRightRadius: 80, borderBottomLeftRadius: 20, overflow: 'hidden' },
+  headerBackground: { position: 'absolute', width: '100%', height: 280, backgroundColor: '#284B7A', borderBottomRightRadius: 80, borderBottomLeftRadius: 20, overflow: 'hidden' },
   headerWatermark: { position: 'absolute', right: -40, top: 20, width: 250, height: 250, tintColor: '#FFFFFF', opacity: 0.05 },
+  
   homeGreetingContainer: { marginTop: 70, paddingHorizontal: 30 },
-  homeGreetingText: { fontSize: 26, fontWeight: 'bold', color: '#FFF', lineHeight: 34, textTransform: 'capitalize' },
+  homeGreetingText: { fontSize: 32, fontWeight: 'bold', color: '#FFF', lineHeight: 40, textTransform: 'capitalize' },
+  
   scheduleCard: { backgroundColor: '#FFF', marginHorizontal: 20, marginTop: 35, borderRadius: 20, padding: 20, elevation: 4, shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 5 },
   scheduleSubHeader: { fontSize: 10, color: '#A9A9A9', fontWeight: 'bold', marginBottom: 5, letterSpacing: 1 },
   scheduleTitle: { fontSize: 16, color: '#333', marginBottom: 15 },
@@ -208,38 +187,24 @@ const styles = StyleSheet.create({
   pesanLagiGraphic: { position: 'absolute', right: -10, bottom: -10 },
   mathSymbols: { fontSize: 45, fontWeight: 'bold', color: 'rgba(255,255,255,0.15)', lineHeight: 45 },
   
-  // --- BOTTOM NAV ---
   bottomNav: { position: 'absolute', bottom: 0, width: '100%', height: 75, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderColor: '#F0F0F0', paddingHorizontal: 15 },
   navItem: { alignItems: 'center', justifyContent: 'center', flex: 1, paddingTop: 10 },
   navIcon: { width: 22, height: 22, tintColor: '#A9A9A9', marginBottom: 5 },
   navText: { fontSize: 10, color: '#A9A9A9' },
   fabContainer: { alignItems: 'center', justifyContent: 'flex-start', width: 70, height: 90, top: -25 },
   fabCutout: { width: 66, height: 66, borderRadius: 33, backgroundColor: '#FAFAFA', justifyContent: 'center', alignItems: 'center' },
-  fabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#2A3563', justifyContent: 'center', alignItems: 'center', elevation: 5, shadowColor: '#2A3563', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 5 },
+  fabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', elevation: 5, shadowColor: '#284B7A', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 5 },
   fabIcon: { width: 28, height: 28, tintColor: '#FFF' },
   fabText: { fontSize: 10, color: '#A9A9A9', textAlign: 'center', marginTop: 2 },
-
-  // --- MODAL BOTTOM SHEET MATERI ---
+  
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
-  bottomSheetContainer: { 
-    backgroundColor: '#FFF', 
-    borderTopLeftRadius: 30, borderTopRightRadius: 30, 
-    paddingHorizontal: 20, paddingBottom: 40, paddingTop: 15,
-    maxHeight: '85%' 
-  },
+  bottomSheetContainer: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 20, paddingBottom: 40, paddingTop: 15, maxHeight: '85%' },
   sheetHandle: { width: 50, height: 5, backgroundColor: '#E0E0E0', borderRadius: 3, alignSelf: 'center', marginBottom: 20 },
   sheetSectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 15, marginTop: 10 },
   sheetDivider: { height: 1, backgroundColor: '#EEE', marginVertical: 15 },
-  
   subjectGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' },
   subjectItemContainer: { width: '25%', alignItems: 'center', marginBottom: 20 }, 
-  
-  subjectIconBox: { 
-    width: 60, height: 60, borderRadius: 15, 
-    justifyContent: 'center', alignItems: 'center', marginBottom: 8, 
-    elevation: 2, shadowColor: '#000', shadowOffset: {width:0, height:2}, 
-    shadowOpacity: 0.1, shadowRadius: 3, backgroundColor: 'transparent' // Background transparan karena icon kamu sudah kotak berwarna
-  },
+  subjectIconBox: { width: 60, height: 60, borderRadius: 15, justifyContent: 'center', alignItems: 'center', marginBottom: 8, elevation: 2, shadowColor: '#000', shadowOffset: {width:0, height:2}, shadowOpacity: 0.1, shadowRadius: 3, backgroundColor: 'transparent' },
   subjectIconImage: { width: 55, height: 55, borderRadius: 12 }, 
   subjectItemText: { fontSize: 11, color: '#333', fontWeight: '500', textAlign: 'center' }
 });

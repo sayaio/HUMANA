@@ -7,18 +7,16 @@ import {
 const DetailMateriPage = ({ chapterName, onBack }) => {
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#2A3563" translucent={false} />
+      <StatusBar barStyle="light-content" backgroundColor="#284B7A" translucent={false} />
       
-      {/* Header Navy */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
           <Text style={styles.backIcon}>{'❮'}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{chapterName}</Text>
-        <View style={{ width: 40 }} /> {/* Spacer */}
+        <View style={{ width: 40 }} />
       </View>
 
-      {/* Kontainer Putih (Melengkung di atas) */}
       <View style={styles.contentContainer}>
         <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 50 }}>
           <Text style={styles.sectionTitle}>Deskripsi Materi</Text>
@@ -37,14 +35,14 @@ const DetailMateriPage = ({ chapterName, onBack }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#2A3563' },
+  container: { flex: 1, backgroundColor: '#284B7A' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 30, paddingHorizontal: 20 },
   backBtn: { padding: 10, marginLeft: -10 },
   backIcon: { fontSize: 24, color: '#FFF', fontWeight: 'bold' },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
   
   contentContainer: { flex: 1, backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 25, paddingTop: 30 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#2E7D32', marginBottom: 15 }, // Warna hijau
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#2E7D32', marginBottom: 15 }, 
   paragraph: { fontSize: 14, color: '#555', lineHeight: 22, marginBottom: 15, textAlign: 'justify' }
 });
 

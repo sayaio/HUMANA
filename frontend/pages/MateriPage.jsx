@@ -4,10 +4,9 @@ import {
   SafeAreaView, StatusBar, ScrollView, TextInput, Image 
 } from 'react-native';
 
-const LOGO_SOURCE = require('../assets/logo_humana.png'); // Dummy Icon
+const LOGO_SOURCE = require('../assets/logo_humana.png'); 
 
 const MateriPage = ({ subjectName, onBack, onChapterSelect }) => {
-  // Dummy data bab materi
   const dummyChapters = [
     { id: 1, title: 'Aljabar Linear' },
     { id: 2, title: 'Geometri Ruang' },
@@ -18,28 +17,23 @@ const MateriPage = ({ subjectName, onBack, onChapterSelect }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#2A3563" translucent={false} />
+      <StatusBar barStyle="light-content" backgroundColor="#284B7A" translucent={false} />
       
-      {/* Header Navy */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
           <Text style={styles.backIcon}>{'❮'}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{subjectName}</Text>
-        <View style={{ width: 40 }} /> {/* Spacer */}
+        <View style={{ width: 40 }} />
       </View>
 
-      {/* Kontainer Putih (Melengkung di atas) */}
       <View style={styles.contentContainer}>
         
-        {/* Header Filter & Judul */}
         <View style={styles.contentHeader}>
           <Text style={styles.contentTitle}><Text style={{fontWeight: 'bold'}}>Materi</Text></Text>
-          {/* Dummy Filter Icon */}
           <Text style={{fontSize: 18, color: '#666'}}>▼</Text>
         </View>
 
-        {/* Search Bar */}
         <View style={styles.searchContainer}>
           <TextInput 
             style={styles.searchInput} 
@@ -49,7 +43,6 @@ const MateriPage = ({ subjectName, onBack, onChapterSelect }) => {
           <Text style={{fontSize: 16, color: '#A9A9A9'}}>🔍</Text>
         </View>
 
-        {/* List Materi */}
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 50 }}>
           {dummyChapters.map((chapter) => (
             <View key={chapter.id} style={styles.card}>
@@ -77,7 +70,8 @@ const MateriPage = ({ subjectName, onBack, onChapterSelect }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#2A3563' },
+  // Warna dirubah ke biru baru #284B7A
+  container: { flex: 1, backgroundColor: '#284B7A' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 30, paddingHorizontal: 20 },
   backBtn: { padding: 10, marginLeft: -10 },
   backIcon: { fontSize: 24, color: '#FFF', fontWeight: 'bold' },
@@ -98,7 +92,7 @@ const styles = StyleSheet.create({
   cardSubtitle: { fontSize: 11, color: '#888', lineHeight: 14 },
   
   lihatBtn: { backgroundColor: '#D0E1F9', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 8 },
-  lihatBtnText: { color: '#2A3563', fontSize: 12, fontWeight: 'bold' }
+  lihatBtnText: { color: '#284B7A', fontSize: 12, fontWeight: 'bold' } // tombol teks warna navy
 });
 
 export default MateriPage;
