@@ -1,19 +1,48 @@
 class Pembayaran {
-  #id_pembayaran;
-  #pemesanan;
+  #idPembayaran;
   #nominal;
   #metodeBayar;
   #statusBayar;
-  constructor(id_pembayaran, pemesanan, nominal, metodeBayar, statusBayar) {
-    this.id_pembayaran  = id_pembayaran;
-    this.pemesanan      = pemesanan;  
-    this.nominal        = nominal;
-    this.metodeBayar    = metodeBayar;
-    this.statusBayar    = statusBayar ?? 'PENDING';
+  #tanggalBayar;
+
+  constructor(nominal, metodeBayar) {
+    this.#idPembayaran = null;
+    this.#nominal = nominal;
+    this.#metodeBayar = metodeBayar;
+    this.#statusBayar = 'PENDING';
+    this.#tanggalBayar = new Date();
   }
 
-  konfirmasiBayar(){
+  isBayar() {
+    return this.#statusBayar === 'PAID';
+  }
 
+  konfirmasiBayar() {
+    if (this.#statusBayar === 'PENDING') {
+      this.#statusBayar = 'PAID';
+      return true;
+    }
+    return false;
+  }
+
+  getNominal() {
+    return this.#nominal;
+  }
+
+  getMetodeBayar() {
+    return this.#metodeBayar;
+  }
+
+  getStatusBayar() {
+    return this.#statusBayar;
+  }
+
+  getTanggalBayar() {
+    return this.#tanggalBayar;
+  }
+
+  getId() {
+    return this.#idPembayaran;
   }
 }
 
