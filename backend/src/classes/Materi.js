@@ -1,25 +1,35 @@
 class Materi {
-  #id_materi;
+  #idMateri;
   #namaMateri;
   #kelas;
   #deskripsiMateri;
-  constructor(id_materi, namaMateri, kelas, deskripsiMateri) {
-    this.id_materi       = id_materi;
-    this.namaMateri      = namaMateri;
-    this.kelas           = kelas;
-    this._deskripsiMateri = deskripsiMateri;
-  }
-
-  #Method
+  constructor(idMateri, namaMateri, kelas, deskripsiMateri) {
+    this.#idMateri = null;
+    this.#namaMateri = namaMateri;
+    this.#kelas = kelas;
+    this.#deskripsiMateri = deskripsiMateri;
+    }
   getNamaMateri() {
-    // TODO: return this.namaMateri
-  }
- 
-  getDeskripsi() {
-    // TODO: return this._deskripsiMateri
+    return this.#namaMateri;
   }
 
-  get deskripsiMateri() { return this._deskripsiMateri; }
+  getDeskripsi() {
+    return this.#deskripsiMateri;
+  }
+
+  setDeskripsi(deskripsiMateri) {
+    this.#deskripsiMateri = deskripsiMateri;
+  }
+
+  getId() {
+    return this.#idMateri;
+  }
+
+  getKelas() {
+    return this.#kelas;
+  }
+
+  get deskripsiMateri() { return this.#deskripsiMateri; }
 }
 
 module.exports = Materi;
