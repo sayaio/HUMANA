@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, Image, StatusBar } from 'react-native';
 
-// Perhatikan path assets mundur satu folder (../) karena file ini ada di dalam folder 'pages'
 const LOGO_SOURCE = require('../assets/logo_humana.png'); 
 
 const SplashScreen = ({ onFinish }) => {
@@ -24,7 +23,7 @@ const SplashScreen = ({ onFinish }) => {
 };
 
 const styles = StyleSheet.create({
-  splashContainer: { flex: 1, backgroundColor: '#2A3563', justifyContent: 'center', alignItems: 'center' },
+  splashContainer: { flex: 1, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center' },
   splashContent: { alignItems: 'center', flexDirection: 'row' },
   splashLogo: { width: 60, height: 60, marginRight: 10 },
   splashText: { fontSize: 36, fontWeight: 'bold', color: '#FFF' },

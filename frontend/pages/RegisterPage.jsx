@@ -3,44 +3,33 @@ import {
   StyleSheet, Text, View, TextInput, TouchableOpacity, 
   Image, SafeAreaView, StatusBar, ScrollView, Alert, Dimensions
 } from 'react-native';
+
 const { width } = Dimensions.get('window');
 
-const LoginPage = ({ onLoginSuccess, onForgotPassword }) => {
-    const [isLogin, setIsLogin] = useState(true);
+const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
     const [namaLengkap, setNamaLengkap] = useState('');
     const [role, setRole] = useState('Murid');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [rememberMe, setRememberMe] = useState(false);
 
     const LOGO_SOURCE = require('../assets/logo_humana.png'); 
     const EYE_ICON = require('../assets/logo_humana.png'); 
     const GOOGLE_ICON = { uri: 'https://img.icons8.com/color/48/google-logo.png' };
 
-    const handleAuthAction = () => {
-        if (isLogin) {
-            // Proses Masuk
-            if (email !== '' && password !== '') {
-                onLoginSuccess();
+    const handleRegister = () => {
+        if (namaLengkap !== '' && email !== '' && password !== '' && confirmPassword !== '') {
+            if (password === confirmPassword) {
+                Alert.alert(
+                    'Pendaftaran Berhasil', 
+                    'Akun kamu telah dibuat. Silakan masuk menggunakan akun tersebut.',
+                    [{ text: 'OK', onPress: () => onNavigateToLogin() }] 
+                );
             } else {
-                Alert.alert('Gagal Masuk', 'Mohon isi Email dan Password kamu.');
+                Alert.alert('Gagal Mendaftar', 'Password dan Konfirmasi Password tidak cocok!');
             }
         } else {
-            // Proses Daftar
-            if (namaLengkap !== '' && email !== '' && password !== '' && confirmPassword !== '') {
-                if (password === confirmPassword) {
-                    Alert.alert(
-                        'Pendaftaran Berhasil', 
-                        'Akun kamu telah dibuat. Silakan masuk menggunakan akun tersebut.',
-                        [{ text: 'OK', onPress: () => setIsLogin(true) }] 
-                    );
-                } else {
-                    Alert.alert('Gagal Mendaftar', 'Password dan Konfirmasi Password tidak cocok!');
-                }
-            } else {
-                Alert.alert('Gagal Mendaftar', 'Mohon isi semua kolom yang tersedia.');
-            }
+            Alert.alert('Gagal Mendaftar', 'Mohon isi semua kolom yang tersedia.');
         }
     };
 
@@ -63,46 +52,33 @@ const LoginPage = ({ onLoginSuccess, onForgotPassword }) => {
 
           <View style={styles.formCard}>
             
-            <Text style={styles.formCardTitle}>{isLogin ? 'Masuk' : 'Daftar'}</Text>
+            <Text style={styles.formCardTitle}>Daftar</Text>
             
-            {isLogin ? (
-              <View style={styles.switchModeContainer}>
-                <Text style={styles.switchModeText}>Belum memiliki akun? </Text>
-                <TouchableOpacity onPress={() => setIsLogin(false)}>
-                  <Text style={styles.switchModeLink}>Daftar</Text>
+            <View style={styles.switchModeContainer}>
+              <Text style={styles.switchModeText}>Sudah memiliki akun? </Text>
+              <TouchableOpacity onPress={onNavigateToLogin}>
+                <Text style={styles.switchModeLink}>Masuk</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.floatingLabel}>Nama Lengkap</Text>
+              <TextInput style={styles.inputField} placeholder="someone" value={namaLengkap} onChangeText={setNamaLengkap} placeholderTextColor="#A9A9A9" />
+            </View>
+
+            <View style={[styles.inputWrapper, { height: 65, flexDirection: 'row', alignItems: 'center' }]}>
+              <Text style={styles.floatingLabel}>Daftar Sebagai</Text>
+              <View style={styles.radioGroup}>
+                <TouchableOpacity style={styles.radioOption} onPress={() => setRole('Guru')}>
+                  <View style={styles.radioCircle}>{role === 'Guru' && <View style={styles.radioInnerCircle} />}</View>
+                  <Text style={styles.radioText}>Guru</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.radioOption} onPress={() => setRole('Murid')}>
+                  <View style={styles.radioCircle}>{role === 'Murid' && <View style={styles.radioInnerCircle} />}</View>
+                  <Text style={styles.radioText}>Murid</Text>
                 </TouchableOpacity>
               </View>
-            ) : (
-              <View style={styles.switchModeContainer}>
-                <Text style={styles.switchModeText}>Sudah memiliki akun? </Text>
-                <TouchableOpacity onPress={() => setIsLogin(true)}>
-                  <Text style={styles.switchModeLink}>Masuk</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {!isLogin && (
-              <>
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.floatingLabel}>Nama Lengkap</Text>
-                  <TextInput style={styles.inputField} placeholder="someone" value={namaLengkap} onChangeText={setNamaLengkap} placeholderTextColor="#A9A9A9" />
-                </View>
-
-                <View style={[styles.inputWrapper, { height: 65, flexDirection: 'row', alignItems: 'center' }]}>
-                  <Text style={styles.floatingLabel}>Daftar Sebagai</Text>
-                  <View style={styles.radioGroup}>
-                    <TouchableOpacity style={styles.radioOption} onPress={() => setRole('Guru')}>
-                      <View style={styles.radioCircle}>{role === 'Guru' && <View style={styles.radioInnerCircle} />}</View>
-                      <Text style={styles.radioText}>Guru</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.radioOption} onPress={() => setRole('Murid')}>
-                      <View style={styles.radioCircle}>{role === 'Murid' && <View style={styles.radioInnerCircle} />}</View>
-                      <Text style={styles.radioText}>Murid</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </>
-            )}
+            </View>
 
             <View style={styles.inputWrapper}>
               <Text style={styles.floatingLabel}>Email</Text>
@@ -117,32 +93,16 @@ const LoginPage = ({ onLoginSuccess, onForgotPassword }) => {
               </View>
             </View>
 
-            {!isLogin && (
-              <View style={styles.inputWrapper}>
-                <Text style={styles.floatingLabel}>Konfirmasi Password</Text>
-                <View style={styles.passwordContainer}>
-                  <TextInput style={styles.passwordField} placeholder="Masukan password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
-                  <TouchableOpacity><Image source={EYE_ICON} style={styles.eyeIcon} resizeMode="contain" /></TouchableOpacity>
-                </View>
+            <View style={styles.inputWrapper}>
+              <Text style={styles.floatingLabel}>Konfirmasi Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput style={styles.passwordField} placeholder="Masukan password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
+                <TouchableOpacity><Image source={EYE_ICON} style={styles.eyeIcon} resizeMode="contain" /></TouchableOpacity>
               </View>
-            )}
+            </View>
 
-            {isLogin && (
-              <View style={styles.rememberForgotRow}>
-                <TouchableOpacity style={styles.checkboxContainer} onPress={() => setRememberMe(!rememberMe)}>
-                  <View style={[styles.checkbox, rememberMe && styles.checkboxActive]}>
-                    {rememberMe && <Text style={{color: '#FFF', fontSize: 10, fontWeight: 'bold'}}>✓</Text>}
-                  </View>
-                  <Text style={styles.checkboxText}>Remember me</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={onForgotPassword}>
-                  <Text style={styles.forgotPasswordText}>Lupa password ?</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            <TouchableOpacity style={styles.submitButton} onPress={handleAuthAction}>
-              <Text style={styles.submitButtonText}>{isLogin ? 'Masuk' : 'Daftar'}</Text>
+            <TouchableOpacity style={styles.submitButton} onPress={handleRegister}>
+              <Text style={styles.submitButtonText}>Daftar</Text>
             </TouchableOpacity>
 
             <View style={styles.orDividerContainer}>
@@ -152,7 +112,7 @@ const LoginPage = ({ onLoginSuccess, onForgotPassword }) => {
             </View>
 
             <TouchableOpacity style={styles.googleButton}>
-              <Text style={styles.googleButtonText}>{isLogin ? 'Masuk dengan Google' : 'Daftar dengan Google'}</Text>
+              <Text style={styles.googleButtonText}>Daftar dengan Google</Text>
               <Image source={GOOGLE_ICON} style={styles.googleIconRight} resizeMode="contain" />
             </TouchableOpacity>
             
@@ -175,7 +135,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: width / 2, borderRightWidth: width / 2, borderTopWidth: 60,
     borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#284B7A',
   },
-
   container: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 20, overflow: 'hidden' },
   safeArea: { flex: 1 },
   scrollContainer: { flexGrow: 1, justifyContent: 'space-between' },
@@ -183,50 +142,35 @@ const styles = StyleSheet.create({
   logoWrapper: { marginBottom: 15 },
   logoImage: { width: 100, height: 100 },
   titleText: { fontSize: 24, fontWeight: 'bold', color: '#FFF', textAlign: 'center', lineHeight: 32, marginBottom: 10 },
-  
   formCard: { 
     backgroundColor: '#FFF', borderRadius: 30, paddingHorizontal: 25, paddingTop: 35, paddingBottom: 40,
     marginHorizontal: 20, marginBottom: 30, elevation: 8, shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.1, shadowRadius: 10 
   },
-  
   formCardTitle: { fontSize: 28, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 5 },
   switchModeContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: 25 },
   switchModeText: { fontSize: 12, color: '#888' },
   switchModeLink: { fontSize: 12, color: '#4285F4', fontWeight: 'bold' },
-
   inputWrapper: { borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12, height: 55, marginBottom: 25, justifyContent: 'center', paddingHorizontal: 15, backgroundColor: '#FFF' },
   floatingLabel: { position: 'absolute', top: -10, left: 15, backgroundColor: '#FFF', paddingHorizontal: 5, fontSize: 12, color: '#D3D3D3', zIndex: 1 },
   inputField: { fontSize: 15, color: '#333', height: '100%', paddingVertical: 0 },
   passwordContainer: { flexDirection: 'row', alignItems: 'center', height: '100%' },
   passwordField: { flex: 1, fontSize: 15, color: '#333', height: '100%', paddingVertical: 0 },
   eyeIcon: { width: 22, height: 22, tintColor: '#D3D3D3' },
-  
   radioGroup: { flexDirection: 'row', marginLeft: 10 },
   radioOption: { flexDirection: 'row', alignItems: 'center', marginRight: 20 },
   radioCircle: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#284B7A', justifyContent: 'center', alignItems: 'center', marginRight: 8 },
   radioInnerCircle: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#284B7A' },
   radioText: { fontSize: 14, color: '#333' },
-
-  rememberForgotRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25, marginTop: -10 },
-  checkboxContainer: { flexDirection: 'row', alignItems: 'center' },
-  checkbox: { width: 16, height: 16, borderWidth: 1.5, borderColor: '#A9A9A9', borderRadius: 4, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
-  checkboxActive: { backgroundColor: '#284B7A', borderColor: '#284B7A' },
-  checkboxText: { fontSize: 12, color: '#666' },
-  forgotPasswordText: { fontSize: 12, color: '#4285F4', fontWeight: '600' },
-
   submitButton: { backgroundColor: '#B5CB68', borderRadius: 25, height: 50, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
   submitButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
-  
   orDividerContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   orLine: { flex: 1, height: 1, backgroundColor: '#E0E0E0' },
   orText: { marginHorizontal: 15, fontSize: 12, color: '#A9A9A9' },
-
   googleButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12, height: 55, marginBottom: 20 },
   googleButtonText: { color: '#333', fontSize: 15, fontWeight: 'bold', marginRight: 10 },
   googleIconRight: { width: 20, height: 20 },
-  
   footerText: { textAlign: 'center', fontSize: 10, color: '#A9A9A9', lineHeight: 16 },
   linkText: { textDecorationLine: 'underline' },
 });
 
-export default LoginPage;
+export default RegisterPage;
