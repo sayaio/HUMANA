@@ -1,22 +1,14 @@
 const User = require('./User');
 
 class Admin extends User{
-  #AdminLevel;
-  constructor(adminLevel) {
-    super()
+  #adminLevel;
+  constructor(idUser, username, email, password, namaUser, adminLevel) {
+    super(idUser, username, email, password, namaUser)
     this._adminLevel = adminLevel;
   }
 
-  kelolaMateri() {
-    // TODO: CRUD materi pembelajaran
-  }
- 
-  kelolaHistoriSesi() {
-    // TODO: ambil semua histori sesi dari repository
-  }
- 
-  getAllUser() {
-    // TODO: ambil semua user dari repository
+  tambahMateri(){
+    
   }
 
   get adminLevel() { return this._adminLevel; }

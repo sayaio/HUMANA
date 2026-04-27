@@ -1,11 +1,10 @@
 class Feedback {
-  #id_feedback;
+  #idFeedback;
   #rating;
   #komentar;
-  #lokasi;
   #murid;
   #guru;
-  constructor(id_feedback, rating, komentar, lokasi, murid, guru) {
+  constructor(idFeedback, rating, komentar, lokasi, murid, guru) {
     this.id_feedback  = id_feedback;   
     this._rating      = rating;        
     this._komentar    = komentar;    
@@ -15,11 +14,11 @@ class Feedback {
   }
 
   getRating() {
-    // TODO: return this._rating
+    return this._rating
   }
  
   getKomentar() {
-    // TODO: return this._komentar
+    TODO: return this._komentar
   }
  
   getTimestamp() {
