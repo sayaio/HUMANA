@@ -3,7 +3,7 @@ const Guru = require('../classes/Guru');
 const Murid = require('../classes/Murid');
 
 const register = async (req, res) => {
-    const { namaLengkap, email, password, role, username = null } = req.body;
+    const { namaLengkap, role, email, password, username = null } = req.body;
     let conn;
 
     try {
@@ -34,7 +34,7 @@ const register = async (req, res) => {
 
         } else if (role === 'Murid') {
             const queryMurid = `INSERT INTO murid (nama_murid, email, password, username) VALUES (?, ?, ?, ?)`;
-            const result = await conn.query(queryMurid, [namaLengkap, email, password]);
+            const result = await conn.query(queryMurid, [namaLengkap, email, password, username]);
             
             const insertedId = result.insertId;
             newUserInstance = new Murid(username, email, password, namaLengkap, insertedId);
