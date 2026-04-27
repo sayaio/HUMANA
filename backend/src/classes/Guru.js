@@ -5,12 +5,21 @@ const Feedback = require('./Feedback');
 class Guru extends User{
   #portofolio;
   #daftarMateri;
-  #jadwalAvailable;
+  #daftarAvailability;
+  #riwayatSesi;
+  #daftarPesanan;
+  #daftarFeedback;
+
   constructor(username, email, password, nama_user) {
     super(username, email, password, nama_user);
-    this.portfolio        = [];
-    this.daftarMateri     = [];
-    this.jadwalAvailable  = [];
+    
+    // Inisialisasi variabel sesuai deklarasi private di atas
+    this.#portofolio = [];
+    this.#daftarMateri = [];
+    this.#daftarAvailability = [];
+    this.#riwayatSesi = [];
+    this.#daftarPesanan = [];
+    this.#daftarFeedback = [];
   }
   
   getRole() {
@@ -55,9 +64,14 @@ class Guru extends User{
   }
 
   getRating() {
-    if (this.#feedback.length === 0) return 0;
-    const total = this.#feedback.reduce((acc, curr) => acc + curr.rating, 0);
-    return total / this.#feedback.length;
+    if (this.#daftarFeedback.length === 0) return 0;
+    
+    const total = this.#daftarFeedback.reduce((acc, f) => {
+      // Memanggil getter getRating() sesuai gambar class Feedback Anda
+      return acc + f.getRating();
+    }, 0);
+    
+    return total / this.#daftarFeedback.length;
   }
 
   receiveNotification(pesan) {
