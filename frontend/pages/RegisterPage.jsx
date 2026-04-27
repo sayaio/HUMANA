@@ -4,6 +4,8 @@ import {
   Image, SafeAreaView, StatusBar, ScrollView, Alert, Dimensions
 } from 'react-native';
 
+import { registerUser } from '../services/registerService'; 
+
 const { width } = Dimensions.get('window');
 
 const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
@@ -17,14 +19,34 @@ const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
     const EYE_ICON = require('../assets/logo_humana.png'); 
     const GOOGLE_ICON = { uri: 'https://img.icons8.com/color/48/google-logo.png' };
 
-    const handleRegister = () => {
+    const handleRegister = async () => {
         if (namaLengkap !== '' && email !== '' && password !== '' && confirmPassword !== '') {
             if (password === confirmPassword) {
-                Alert.alert(
-                    'Pendaftaran Berhasil', 
-                    'Akun kamu telah dibuat. Silakan masuk menggunakan akun tersebut.',
-                    [{ text: 'OK', onPress: () => onNavigateToLogin() }] 
-                );
+                
+                const userData = {
+                    namaLengkap: namaLengkap,
+                    email: email,
+                    password: password,
+                    role: role,
+                    username: email.split('@')[0] 
+                };
+
+                try {
+                    const result = await registerUser(userData);
+
+                    if (result.success) {
+                        Alert.alert(
+                            'Pendaftaran Berhasil', 
+                            'Akun kamu telah dibuat. Silakan masuk menggunakan akun tersebut.',
+                            [{ text: 'OK', onPress: () => onNavigateToLogin() }] 
+                        );
+                    } else {
+                        Alert.alert('Gagal Mendaftar', result.message || 'Terjadi kesalahan pada server.');
+                    }
+                } catch (error) {
+                    Alert.alert('Gagal Mendaftar', 'Periksa koneksi internet kamu.');
+                }
+
             } else {
                 Alert.alert('Gagal Mendaftar', 'Password dan Konfirmasi Password tidak cocok!');
             }
