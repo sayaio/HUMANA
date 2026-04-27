@@ -1,21 +1,31 @@
 class Sesi {
   #id_sesi;
-  #tanggalSesi;
   #waktuMulai;
   #waktuSelesai;
   #status;
   #lokasi;
-  constructor(id_sesi, tanggalSesi, waktuMulai, waktuSelesai, status, lokasi) {
-    this.id_sesi      = id_sesi;
-    this.tanggalSesi  = tanggalSesi; 
+  #feedback;
+  
+  constructor(waktuMulai, waktuSelesai, lokasi) {
+    this.id_sesi      = null;
     this.waktuMulai   = waktuMulai; 
     this.waktuSelesai = waktuSelesai;
     this.status       = status ?? Sesi.STATUS.AVAILABLE;
     this.lokasi       = lokasi;
+    this.feedback = null;
   }
 
   getDurasi() {
-    // TODO: hitung selisih waktuMulai dan waktuSelesai dalam menit
+    const ms = new Date(this.waktuSelesai) - new Date(this.waktuMulai);
+    return Math.floor(ms / 60000);
+  }
+
+  mulaiSesi() {
+    this.status = "berlangsung";
+  }
+ 
+  akhiriSesi() {
+    this.status = "selesai";
   }
 }
 

@@ -7,27 +7,32 @@ class PemesananSesi {
   #statusPemesanan;
   #waktuPemesanan;
   #pembayaran;
-  constructor(id_pemesanan, murid, guru, sesi, materi, statusPemesanan, pembayaran) {
-    this.id_pemesanan     = id_pemesanan;
-    this.murid            = murid;
-    this.guru             = guru;
-    this.sesi             = sesi;
-    this.materi           = materi;
-    this.statusPemesanan  = statusPemesanan ?? PemesananSesi.STATUS.PENDING;
-    this.waktuPemesanan   = new Date(); 
-    this.pembayaran       = pembayaran ?? null;
+  
+  constructor(murid, guru, materi) {
+    this.id_pemesanan = null;
+    this.murid = murid;
+    this.guru = guru;
+    this.sesi = null;
+    this.materi = materi;
+    this.statusPemesanan = "menunggu_konfirmasi";
+    this.waktuPesan = new Date();
+    this.pembayaran = null;
   }
 
-  getStatus() {
-    // TODO: return this.statusPemesanan
-  }
- 
-  getPembayaran() {
-    // TODO: return this.pembayaran
-  }
- 
   getInvoice() {
-    // TODO: generate atau return invoice number
+    return `INV-${this.id_pemesanan}-${this.waktuPesan.getTime()}`;
+  }
+ 
+  konfirmasi() {
+    this.statusPemesanan = "dikonfirmasi";
+  }
+ 
+  batalkan() {
+    this.statusPemesanan = "dibatalkan";
+  }
+ 
+  setPembayaran(pembayaran) {
+    this.pembayaran = pembayaran;
   }
 }
 
