@@ -3,7 +3,6 @@ import {
     StyleSheet, Text, View, TextInput, TouchableOpacity,
     Image, SafeAreaView, StatusBar, ScrollView, Alert, Dimensions
 } from 'react-native';
-import { registerUser } from '../services/authService';
 
 const { width } = Dimensions.get('window');
 
