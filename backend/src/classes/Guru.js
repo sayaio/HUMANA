@@ -4,8 +4,14 @@ class Guru extends User{
   #portofolio;
   #daftarMateri;
   #jadwalAvailable;
+<<<<<<< HEAD
   constructor(username, email, password, nama_user) {
     super(username, email, password, nama_user);
+=======
+  #totalSesi;
+  constructor(username, email, password, nama_user, id = null){
+    super(username, email, password, nama_user, id);
+>>>>>>> cc15681ea6ded3d0928ea503e0ac860d859b3e15
     this.portfolio        = [];
     this.daftarMateri     = [];
     this.jadwalAvailable  = [];
