@@ -1,5 +1,5 @@
 const pool = require('../database');
-const Guru = require('../classes/Guru').default;
+const Guru = require('../classes/Guru');
 const Murid = require('../classes/Murid');
 
 const login = async (req, res) => {
@@ -36,10 +36,11 @@ const login = async (req, res) => {
             let userAktif;
             
             if (dataDB.role === 'Guru') {
-                userAktif = new Guru(dataDB.id, dataDB.nama_lengkap, dataDB.email, dataDB.password, dataDB.nama_lengkap);
+                userAktif = new Guru(dataDB.username, dataDB.email, dataDB.password, dataDB.nama_lengkap);
             } else if (dataDB.role === 'Murid') {
-                userAktif = new Murid(dataDB.id, dataDB.nama_lengkap, dataDB.email, dataDB.password, dataDB.nama_lengkap);
+                userAktif = new Murid(dataDB.username, dataDB.email, dataDB.password, dataDB.nama_user, dataDB.id, dataDB.kelas);
             }
+        
 
             const isLoginValid = userAktif.login(email, password);
             
