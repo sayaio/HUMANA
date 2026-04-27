@@ -3,6 +3,11 @@ import {
   StyleSheet, Text, View, TextInput, TouchableOpacity, 
   Image, SafeAreaView, StatusBar, ScrollView, Alert, Dimensions
 } from 'react-native';
+
+// Mengimpor fungsi loginUser dari file API kamu
+// (Pastikan path ini sesuai dengan letak file service kamu, misal: '../services/authService')
+import { loginUser } from '../services/authService'; 
+
 const { width } = Dimensions.get('window');
 
 const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) => {
@@ -14,11 +19,29 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
     const EYE_ICON = require('../assets/logo_humana.png'); 
     const GOOGLE_ICON = { uri: 'https://img.icons8.com/color/48/google-logo.png' };
 
-    const handleLogin = () => {
-        if (email !== '' && password !== '') {
-            onLoginSuccess();
-        } else {
+    // Fungsi handleLogin diubah menjadi async untuk memanggil API
+    const handleLogin = async () => {
+        // Validasi jika ada form yang kosong
+        if (email.trim() === '' || password.trim() === '') {
             Alert.alert('Gagal Masuk', 'Mohon isi Email dan Password kamu.');
+            return;
+        }
+
+        try {
+            // Memanggil API login ke backend
+            const result = await loginUser(email, password);
+
+            // Mengecek response dari backend (menggunakan result.success)
+            if (result.success) {
+                // Jika berhasil masuk, panggil onLoginSuccess untuk pindah ke HomePage
+                onLoginSuccess();
+            } else {
+                // Jika gagal (contoh: password salah atau email tidak ada)
+                Alert.alert('Gagal Masuk', result.message || 'Email atau password salah.');
+            }
+        } catch (error) {
+            // Jika ada error jaringan atau server mati
+            Alert.alert('Terjadi Kesalahan', 'Silakan periksa koneksi internet kamu.');
         }
     };
 
@@ -52,13 +75,28 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
 
             <View style={styles.inputWrapper}>
               <Text style={styles.floatingLabel}>Email</Text>
-              <TextInput style={styles.inputField} placeholder="someone@domain.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#A9A9A9" />
+              <TextInput 
+                style={styles.inputField} 
+                placeholder="someone@domain.com" 
+                value={email} 
+                onChangeText={setEmail} 
+                keyboardType="email-address" 
+                autoCapitalize="none" 
+                placeholderTextColor="#A9A9A9" 
+              />
             </View>
 
             <View style={styles.inputWrapper}>
               <Text style={styles.floatingLabel}>Password</Text>
               <View style={styles.passwordContainer}>
-                <TextInput style={styles.passwordField} placeholder="Masukan password" value={password} onChangeText={setPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
+                <TextInput 
+                  style={styles.passwordField} 
+                  placeholder="Masukan password" 
+                  value={password} 
+                  onChangeText={setPassword} 
+                  secureTextEntry={true} 
+                  placeholderTextColor="#A9A9A9" 
+                />
                 <TouchableOpacity><Image source={EYE_ICON} style={styles.eyeIcon} resizeMode="contain" /></TouchableOpacity>
               </View>
             </View>
