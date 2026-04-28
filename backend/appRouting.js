@@ -15,7 +15,7 @@ const materiController = require('./src/controllers/MateriController');
 router.get('/materi', materiController.getMateriBySubject);
 router.get('/materi/all', materiController.getAllMateri);
 
-const FeedbackController = require('../controllers/FeedbackController');
+const FeedbackController = require('../controllers/feedbackController');
 router.post('/', FeedbackController.berikanFeedback);
 router.get('/guru/:id_guru', FeedbackController.getFeedbackByGuru);
 
