@@ -10,16 +10,18 @@ const register = async (req, res) => {
         conn = await pool.getConnection();
 
         const checkQuery = `
-            SELECT email_guru FROM guru WHERE email_guru = ?
-            UNION
-            SELECT email FROM murid WHERE email = ?
-        `;
+        SELECT email_guru as email FROM guru WHERE email_guru = ?
+        UNION
+        SELECT email FROM murid WHERE email = ?
+    `;
+
+        // HAPUS kurung siku di sini
         const existingUser = await conn.query(checkQuery, [email, email]);
 
         if (existingUser.length > 0) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Email sudah terdaftar!" 
+            return res.status(400).json({
+                success: false,
+                message: "Email sudah terdaftar!"
             });
         }
 
@@ -27,19 +29,17 @@ const register = async (req, res) => {
 
         if (role === 'Guru') {
             const queryGuru = `INSERT INTO guru (nama_guru, email_guru, password, username) VALUES (?, ?, ?, ?)`;
-            const result = await conn.query(queryGuru, [namaLengkap, email, password, username]);
-            
-            const insertedId = result.insertId;
+            const result = await conn.query(queryGuru, [namaLengkap, email, password, namaLengkap]); // SEMENTARA USERNAME KARENA BLM ADA INPUTAN JADINYA ISI NAMALENGKAP DULU
+
+            const insertedId = Number(result.insertId); // Pastikan jadi number
             newUserInstance = new Guru(username, email, password, namaLengkap, insertedId);
 
         } else if (role === 'Murid') {
             const queryMurid = `INSERT INTO murid (nama_murid, email, password, username) VALUES (?, ?, ?, ?)`;
-            const result = await conn.query(queryMurid, [namaLengkap, email, password, username]);
-            
-            const insertedId = result.insertId;
+            const result = await conn.query(queryMurid, [namaLengkap, email, password, namaLengkap]); // SEMENTARA USERNAME KARENA BLM ADA INPUTAN JADINYA ISI NAMALENGKAP DULU
+
+            const insertedId = Number(result.insertId);
             newUserInstance = new Murid(username, email, password, namaLengkap, insertedId);
-        } else {
-            return res.status(400).json({ success: false, message: "Role tidak valid!" });
         }
 
         res.status(201).json({
@@ -49,7 +49,7 @@ const register = async (req, res) => {
         });
 
     } catch (err) {
-        console.error(err);
+        console.error("REGISTER ERROR:", err);
         res.status(500).json({ success: false, message: "Gagal menyimpan data ke database" });
     } finally {
         if (conn) conn.release();
