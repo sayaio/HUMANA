@@ -1,5 +1,5 @@
 // services/MateriService.js
-import { API_URL } from '../src/config';// ganti dengan IP/domain server kamu
+import { API_URL } from '../src/config';
 
 /**
  * Fetch daftar materi berdasarkan id mata pelajaran
@@ -7,9 +7,7 @@ import { API_URL } from '../src/config';// ganti dengan IP/domain server kamu
  * @returns {Promise<Array>} - Array of { id, namaMateri, kelas, jurusan, deskripsiMateri }
  */
 export const fetchMateriBySubject = async (id_mapel) => {
-  const response = await fetch(
-    `${API_URL}/api/materi?id_mapel=${id_mapel}`
-  );
+  const response = await fetch(`${API_URL}/materi?id_mapel=${id_mapel}`);
 
   if (!response.ok) {
     throw new Error(`Gagal mengambil data materi: ${response.status}`);
@@ -29,7 +27,7 @@ export const fetchMateriBySubject = async (id_mapel) => {
  * @returns {Promise<Array>} - Array of { id_mapel, nama_mapel }
  */
 export const fetchAllMapel = async () => {
-  const response = await fetch(`${API_URL}/api/mapel`);
+  const response = await fetch(`${API_URL}/mapel`);
 
   if (!response.ok) {
     throw new Error(`Gagal mengambil data mata pelajaran: ${response.status}`);
@@ -41,5 +39,5 @@ export const fetchAllMapel = async () => {
     throw new Error(json.message || 'Gagal mengambil data mata pelajaran.');
   }
 
-  return json.data; // Array of { id_mapel, nama_mapel }
+  return json.data;
 };
