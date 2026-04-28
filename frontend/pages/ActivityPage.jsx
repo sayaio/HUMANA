@@ -57,16 +57,35 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick }) => {
 
       {/* BOTTOM NAVIGATION */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('Home')}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Home</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#284B7A' }]} resizeMode="contain" /><Text style={[styles.navText, { color: '#284B7A', fontWeight: 'bold' }]}>Activity</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('Home')}>
+          <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
+          <Text style={styles.navText}>Home</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.navItem}>
+          <Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#284B7A' }]} resizeMode="contain" />
+          <Text style={[styles.navText, { color: '#284B7A', fontWeight: 'bold' }]}>Activity</Text>
+        </TouchableOpacity>
+        
         <View style={styles.fabContainer}>
           <View style={styles.fabCutout}>
-            <TouchableOpacity style={styles.fabButton}><Image source={LOGO_SOURCE} style={styles.fabIcon} resizeMode="contain" /></TouchableOpacity>
+            <TouchableOpacity style={styles.fabButton}>
+              <Image source={LOGO_SOURCE} style={styles.fabIcon} resizeMode="contain" />
+            </TouchableOpacity>
           </View>
           <Text style={styles.fabText}>Pesan{"\n"}Sesi</Text>
         </View>
-        <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Chat</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Profile</Text></TouchableOpacity>
+        
+        <TouchableOpacity style={styles.navItem}>
+          <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
+          <Text style={styles.navText}>Chat</Text>
+        </TouchableOpacity>
+        
+        {/* --- TOMBOL PROFILE SUDAH DIPERBAIKI --- */}
+        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('Profile')}>
+          <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
+          <Text style={styles.navText}>Profile</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

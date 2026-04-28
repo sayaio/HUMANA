@@ -4,7 +4,6 @@ import {
   Image, SafeAreaView, StatusBar, ScrollView, Alert, Dimensions
 } from 'react-native';
 
-// Pastikan path ini sesuai dengan letak file service kamu
 import { loginUser } from '../services/authService'; 
 
 const { width } = Dimensions.get('window');
@@ -18,7 +17,6 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
     const EYE_ICON = require('../assets/logo_humana.png'); 
     const GOOGLE_ICON = { uri: 'https://img.icons8.com/color/48/google-logo.png' };
 
-    // Fungsi handleLogin dengan fitur Debugging
     const handleLogin = async () => {
         if (!email.trim() || !password.trim()) {
             Alert.alert("Gagal", "Email dan Password tidak boleh kosong");
@@ -26,21 +24,19 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
         }
         
         try {
-            // Memanggil API login ke backend
             const result = await loginUser(email, password); 
             
-            // 💡 FITUR DEBUGGING: Cek terminal/CMD kamu untuk melihat apa balasan asli dari backend
-            console.log("Balasan dari Backend: ", result);
-
-            // Mengecek apakah backend merespon dengan sukses, token, atau status 200
             if (result.success === true || result.token || result.status === 200) {
-                onLoginSuccess(); 
+                // Mengambil seluruh data user dari database (sesuaikan dengan format response backend kamu)
+                const userData = result.data || result.user || result || {};
+                
+                // Mengirimkan objek data lengkap dan email ke App.jsx
+                onLoginSuccess(userData, email); 
             } else {
-                // Jika gagal, kita paksa tampilkan wujud asli error dari backend di layar HP
-                Alert.alert('Gagal Masuk', JSON.stringify(result));
+                Alert.alert('Gagal Masuk', result.message || 'Email atau password salah.');
             }
         } catch (err) {
-            Alert.alert("Error Jaringan", err.message || "Pastikan URL backend sudah benar dan server menyala.");
+            Alert.alert("Error", err.message || "Pastikan server menyala.");
         }
     };
 
@@ -140,12 +136,7 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
 
 const styles = StyleSheet.create({
   blueBackgroundTop: { position: 'absolute', top: 0, left: 0, right: 0, height: '65%', backgroundColor: '#284B7A' },
-  blueBackgroundTriangle: { 
-    position: 'absolute', top: '65%', left: 0, width: 0, height: 0,
-    backgroundColor: 'transparent', borderStyle: 'solid',
-    borderLeftWidth: width / 2, borderRightWidth: width / 2, borderTopWidth: 60,
-    borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#284B7A',
-  },
+  blueBackgroundTriangle: { position: 'absolute', top: '65%', left: 0, width: 0, height: 0, backgroundColor: 'transparent', borderStyle: 'solid', borderLeftWidth: width / 2, borderRightWidth: width / 2, borderTopWidth: 60, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#284B7A' },
   container: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 20, overflow: 'hidden' },
   safeArea: { flex: 1 },
   scrollContainer: { flexGrow: 1, justifyContent: 'space-between' },
@@ -153,10 +144,7 @@ const styles = StyleSheet.create({
   logoWrapper: { marginBottom: 15 },
   logoImage: { width: 100, height: 100 },
   titleText: { fontSize: 24, fontWeight: 'bold', color: '#FFF', textAlign: 'center', lineHeight: 32, marginBottom: 10 },
-  formCard: { 
-    backgroundColor: '#FFF', borderRadius: 30, paddingHorizontal: 25, paddingTop: 35, paddingBottom: 40,
-    marginHorizontal: 20, marginBottom: 30, elevation: 8, shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.1, shadowRadius: 10 
-  },
+  formCard: { backgroundColor: '#FFF', borderRadius: 30, paddingHorizontal: 25, paddingTop: 35, paddingBottom: 40, marginHorizontal: 20, marginBottom: 30, elevation: 8, shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.1, shadowRadius: 10 },
   formCardTitle: { fontSize: 28, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 5 },
   switchModeContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: 25 },
   switchModeText: { fontSize: 12, color: '#888' },
