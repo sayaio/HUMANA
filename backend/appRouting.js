@@ -15,8 +15,11 @@ const materiController = require('./src/controllers/MateriController');
 router.get('/materi', materiController.getMateriBySubject);
 router.get('/materi/all', materiController.getAllMateri);
 
+<<<<<<< HEAD
 const FeedbackController = require('../controllers/FeedbackController');
 router.post('/', FeedbackController.berikanFeedback);
 router.get('/guru/:id_guru', FeedbackController.getFeedbackByGuru);
+=======
+>>>>>>> a37ea484d64041f8a50bca34142285fab21dc795
 
 module.exports = router;
