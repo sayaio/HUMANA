@@ -1,28 +1,27 @@
 // controllers/MateriController.js
 const pool = require('../database');
- // sesuaikan path koneksi MariaDB kamu
 
 /**
- * GET /api/materi?subjectName=Matematika
- * Fetch semua materi berdasarkan nama mata pelajaran (namaMateri)
+ * GET /api/materi?id_mapel=1
+ * Fetch semua materi berdasarkan id mata pelajaran
  */
 const getMateriBySubject = async (req, res) => {
-  const { subjectName } = req.query;
+  const { id_mapel } = req.query;
 
-  if (!subjectName) {
+  if (!id_mapel) {
     return res.status(400).json({
       success: false,
-      message: 'Parameter subjectName wajib diisi.',
+      message: 'Parameter id_mapel wajib diisi.',
     });
   }
 
   try {
     const [rows] = await pool.query(
-      `SELECT id_materi AS id, nama_materi AS namaMateri, kelas, deskripsi_materi AS deskripsiMateri
+      `SELECT id_materi AS id, nama_materi AS namaMateri, kelas, jurusan, deskripsi AS deskripsiMateri
        FROM materi
-       WHERE nama_materi = ?
+       WHERE id_mapel = ?
        ORDER BY id_materi ASC`,
-      [subjectName]
+      [id_mapel]
     );
 
     return res.status(200).json({
@@ -40,12 +39,12 @@ const getMateriBySubject = async (req, res) => {
 
 /**
  * GET /api/materi/all
- * Fetch semua materi (opsional, untuk keperluan lain)
+ * Fetch semua materi
  */
 const getAllMateri = async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT id_materi AS id, nama_materi AS namaMateri, kelas, deskripsi_materi AS deskripsiMateri
+      `SELECT id_materi AS id, nama_materi AS namaMateri, kelas, jurusan, deskripsi AS deskripsiMateri
        FROM materi
        ORDER BY id_materi ASC`
     );
@@ -63,4 +62,29 @@ const getAllMateri = async (req, res) => {
   }
 };
 
-module.exports = { getMateriBySubject, getAllMateri };
+/**
+ * GET /api/mapel
+ * Fetch semua mata pelajaran dari tabel matapelajaran
+ */
+const getAllMapel = async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT id_mapel, nama_mapel
+       FROM matapelajaran
+       ORDER BY id_mapel ASC`
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: rows,
+    });
+  } catch (error) {
+    console.error('[MateriController] Error fetching mapel:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan saat mengambil data mata pelajaran.',
+    });
+  }
+};
+
+module.exports = { getMateriBySubject, getAllMateri, getAllMapel };
