@@ -8,7 +8,7 @@ import { API_URL } from '../src/config';
  */
 export const fetchMateriBySubject = async (subjectName) => {
   const response = await fetch(
-    `${BASE_URL}/api/materi?subjectName=${encodeURIComponent(subjectName)}`
+    `${API_URL}/api/materi?subjectName=${encodeURIComponent(subjectName)}`
   );
 
   if (!response.ok) {
