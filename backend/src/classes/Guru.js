@@ -52,12 +52,25 @@ class Guru extends User{
   }
 
   konfirmasiPesanan(idPesanan, status) {
-    const pesanan = this.#daftarPesanan.find(p => p.id === idPesanan);
-    if (pesanan) {
-      pesanan.status = status;
-      console.log(`Pesanan ${idPesanan} telah ${status}.`);
-    }
+  // 1. Pastikan array sudah diinisialisasi di constructor
+  if (!this.#daftarPesanan) {
+    console.error("Gagal: Daftar pesanan belum diinisialisasi.");
+    return false;
   }
+
+  // 2. Cari pesanan berdasarkan ID
+  const pesanan = this.#daftarPesanan.find(p => p.id === idPesanan);
+
+  if (pesanan) {
+    // 3. Update status (misal: 'Diterima', 'Ditolak', atau 'Selesai')
+    pesanan.status = status;
+    console.log(`Sistem: Pesanan ID ${idPesanan} telah diubah menjadi "${status}".`);
+    return true;
+  }
+
+  console.error(`Gagal: Pesanan dengan ID ${idPesanan} tidak ditemukan.`);
+  return false;
+}
 
   getPemesananSesi() {
     return this.#daftarPesanan;
