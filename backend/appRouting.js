@@ -14,6 +14,7 @@ router.get('/history/:role/:id', historyController.getHistory);
 const materiController = require('./src/controllers/MateriController');
 router.get('/materi', materiController.getMateriBySubject);
 router.get('/materi/all', materiController.getAllMateri);
+router.get('/mapel', materiController.getAllMapel);
 
 const FeedbackController = require('../controllers/FeedbackController');
 router.post('/', FeedbackController.berikanFeedback);

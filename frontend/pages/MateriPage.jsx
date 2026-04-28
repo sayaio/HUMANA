@@ -5,11 +5,11 @@ import {
   SafeAreaView, StatusBar, ScrollView, TextInput,
   Image, ActivityIndicator
 } from 'react-native';
-import { fetchMateriBySubject } from '../services/materiService';
+import { fetchMateriBySubject } from '../services/MateriService';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
-const MateriPage = ({ subjectName, onBack, onChapterSelect }) => {
+const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
   const [materiList, setMateriList]     = useState([]);
   const [filtered, setFiltered]         = useState([]);
   const [searchQuery, setSearchQuery]   = useState('');
@@ -22,7 +22,7 @@ const MateriPage = ({ subjectName, onBack, onChapterSelect }) => {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchMateriBySubject(subjectName);
+        const data = await fetchMateriBySubject(id_mapel);
         setMateriList(data);
         setFiltered(data);
       } catch (err) {
@@ -33,8 +33,8 @@ const MateriPage = ({ subjectName, onBack, onChapterSelect }) => {
       }
     };
 
-    if (subjectName) loadMateri();
-  }, [subjectName]);
+    if (id_mapel) loadMateri();
+  }, [id_mapel]);
 
   // Filter lokal berdasarkan searchQuery
   useEffect(() => {

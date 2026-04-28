@@ -1,24 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, Text, View, Image, TouchableOpacity, 
-  StatusBar, ScrollView, Dimensions, Modal 
+  StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator
 } from 'react-native';
 
-import CustomAlert from '../components/CustomAlert'; // <--- IMPORT ALERT
+import CustomAlert from '../components/CustomAlert';
+import { fetchAllMapel } from '../services/MateriService';
 
 const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png'); 
 
+// Mapping nama mapel ke asset icon lokal
+const SUBJECT_ICONS = {
+  'Matematika':  require('../assets/matematika.png'),
+  'Informatika': require('../assets/informatika.png'),
+  'Biologi':     require('../assets/biologi.png'),
+  'Kimia':       require('../assets/kimia.png'),
+  'Fisika':      require('../assets/fisika.png'),
+  'Sejarah':     require('../assets/sejarah.png'),
+  'Sosiologi':   require('../assets/sosiologi.png'),
+  'Bahasa Inggris': require('../assets/inggris.png'),
+};
+
 const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, showSuccessAlert, onAlertClose }) => {
   const firstName = namaLengkap ? namaLengkap.split(' ')[0] : 'Murid';
   const [isMateriVisible, setIsMateriVisible] = useState(false);
+  const [allSubjects, setAllSubjects] = useState([]);
+  const [loadingMapel, setLoadingMapel] = useState(false);
 
-  // STATE UNTUK MENGONTROL ALERT
   const [alertConfig, setAlertConfig] = useState({
     visible: false, type: 'success', title: '', message: ''
   });
 
-  // MUNCULKAN ALERT JIKA TERDETEKSI LOGIN BARU
+  // Fetch mapel dari database saat modal dibuka
+  useEffect(() => {
+    if (isMateriVisible) {
+      const loadMapel = async () => {
+        setLoadingMapel(true);
+        try {
+          const data = await fetchAllMapel();
+          setAllSubjects(data);
+        } catch (err) {
+          console.error('[HomePage] Gagal fetch mapel:', err);
+        } finally {
+          setLoadingMapel(false);
+        }
+      };
+      loadMapel();
+    }
+  }, [isMateriVisible]);
+
   useEffect(() => {
     if (showSuccessAlert) {
       setAlertConfig({
@@ -32,42 +63,27 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
 
   const handleCloseAlert = () => {
     setAlertConfig(prev => ({ ...prev, visible: false }));
-    if (onAlertClose) onAlertClose(); // Matikan sinyal dari App.jsx
+    if (onAlertClose) onAlertClose();
   };
 
-  const favoriteSubjects = [
-    { id: 'Informatika', name: 'Informatika', icon: require('../assets/informatika.png') },
-    { id: 'Sosiologi', name: 'Sosiologi', icon: require('../assets/sosiologi.png') },
-    { id: 'Biologi', name: 'Biologi', icon: require('../assets/biologi.png') },
-    { id: 'Sejarah', name: 'Sejarah', icon: require('../assets/sejarah.png') },
-  ];
-
-  const allSubjects = [
-    { id: 'Matematika', name: 'Matematika', icon: require('../assets/matematika.png') },
-    { id: 'Informatika', name: 'Informatika', icon: require('../assets/informatika.png') },
-    { id: 'Biologi', name: 'Biologi', icon: require('../assets/biologi.png') },
-    { id: 'Kimia', name: 'Kimia', icon: require('../assets/kimia.png') },
-    { id: 'Fisika', name: 'Fisika', icon: require('../assets/fisika.png') },
-    { id: 'Sejarah', name: 'Sejarah', icon: require('../assets/sejarah.png') },
-    { id: 'Sosiologi', name: 'Sosiologi', icon: require('../assets/sosiologi.png') },
-    { id: 'Inggris', name: 'Inggris', icon: require('../assets/inggris.png') },
-  ];
-
-  const renderSubjectItem = (subject) => (
-    <TouchableOpacity 
-      key={subject.id} 
-      style={styles.subjectItemContainer}
-      onPress={() => {
-        setIsMateriVisible(false); 
-        if (onSelectSubject) onSelectSubject(subject.id); 
-      }}
-    >
-      <View style={styles.subjectIconBox}>
-        <Image source={subject.icon} style={styles.subjectIconImage} resizeMode="contain" />
-      </View>
-      <Text style={styles.subjectItemText}>{subject.name}</Text>
-    </TouchableOpacity>
-  );
+  const renderSubjectItem = (subject) => {
+    const icon = SUBJECT_ICONS[subject.nama_mapel] || LOGO_SOURCE;
+    return (
+      <TouchableOpacity 
+        key={subject.id_mapel} 
+        style={styles.subjectItemContainer}
+        onPress={() => {
+          setIsMateriVisible(false); 
+          if (onSelectSubject) onSelectSubject({ id_mapel: subject.id_mapel, subjectName: subject.nama_mapel }); 
+        }}
+      >
+        <View style={styles.subjectIconBox}>
+          <Image source={icon} style={styles.subjectIconImage} resizeMode="contain" />
+        </View>
+        <Text style={styles.subjectItemText}>{subject.nama_mapel}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.homeContainer}>
@@ -201,7 +217,6 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
         </TouchableOpacity>
       </View>
 
-      {/* CUSTOM ALERT DIPANGGIL DI SINI UNTUK LOGIN SUKSES */}
       <CustomAlert 
         visible={alertConfig.visible}
         type={alertConfig.type}
@@ -215,17 +230,19 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsMateriVisible(false)} />
           <View style={styles.bottomSheetContainer}>
             <View style={styles.sheetHandle} />
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.sheetSectionTitle}>Pelajaran Favorit</Text>
-              <View style={styles.subjectGrid}>
-                {favoriteSubjects.map(renderSubjectItem)}
+            {loadingMapel ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#284B7A" />
+                <Text style={styles.loadingText}>Memuat pelajaran...</Text>
               </View>
-              <View style={styles.sheetDivider} />
-              <Text style={styles.sheetSectionTitle}>Semua Pelajaran</Text>
-              <View style={styles.subjectGrid}>
-                {allSubjects.map(renderSubjectItem)}
-              </View>
-            </ScrollView>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Text style={styles.sheetSectionTitle}>Semua Pelajaran</Text>
+                <View style={styles.subjectGrid}>
+                  {allSubjects.map(renderSubjectItem)}
+                </View>
+              </ScrollView>
+            )}
           </View>
         </View>
       </Modal>
@@ -290,7 +307,9 @@ const styles = StyleSheet.create({
   subjectItemContainer: { width: '25%', alignItems: 'center', marginBottom: 20 }, 
   subjectIconBox: { width: 60, height: 60, borderRadius: 15, justifyContent: 'center', alignItems: 'center', marginBottom: 8, elevation: 2, shadowColor: '#000', shadowOffset: {width:0, height:2}, shadowOpacity: 0.1, shadowRadius: 3, backgroundColor: 'transparent' },
   subjectIconImage: { width: 55, height: 55, borderRadius: 12 }, 
-  subjectItemText: { fontSize: 11, color: '#333', fontWeight: '500', textAlign: 'center' }
+  subjectItemText: { fontSize: 11, color: '#333', fontWeight: '500', textAlign: 'center' },
+  loadingContainer: { alignItems: 'center', paddingVertical: 40, gap: 12 },
+  loadingText: { fontSize: 13, color: '#888' },
 });
 
 export default HomePage;
