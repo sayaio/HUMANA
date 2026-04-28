@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, Image } from 'react-native';
 
-const LOGO_SOURCE = require('../assets/logo_humana.png'); // Dummy icon bawah
+const LOGO_SOURCE = require('../assets/logo_humana.png'); 
 
 const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
 
-  // Update tab jika masuk dari menu Home (Jadwal Saya)
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
 
-  const dummyData = [1, 2, 3]; // Loop dummy untuk list
+  const dummyData = [1, 2, 3]; 
 
   const renderCard = (isHistory) => (
     <View style={styles.card} key={Math.random()}>
@@ -41,7 +40,6 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick }) => {
         <Text style={styles.headerTitle}>Activity</Text>
       </View>
 
-      {/* Custom Tabs */}
       <View style={styles.tabContainer}>
         <TouchableOpacity style={[styles.tabBtn, activeTab === 'aktif' && styles.activeTabBtn]} onPress={() => setActiveTab('aktif')}>
           <Text style={[styles.tabText, activeTab === 'aktif' && styles.activeTabText]}>Jadwal Aktif</Text>
@@ -57,7 +55,7 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick }) => {
 
       {/* BOTTOM NAVIGATION */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('Home')}>
+        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Home')}>
           <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
@@ -76,13 +74,13 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick }) => {
           <Text style={styles.fabText}>Pesan{"\n"}Sesi</Text>
         </View>
         
-        <TouchableOpacity style={styles.navItem}>
+        {/* === TOMBOL CHAT === */}
+        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Chat')}>
           <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
           <Text style={styles.navText}>Chat</Text>
         </TouchableOpacity>
         
-        {/* --- TOMBOL PROFILE SUDAH DIPERBAIKI --- */}
-        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('Profile')}>
+        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Profile')}>
           <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
           <Text style={styles.navText}>Profile</Text>
         </TouchableOpacity>

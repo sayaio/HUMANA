@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { 
   StyleSheet, Text, View, TextInput, TouchableOpacity, 
-  Image, SafeAreaView, StatusBar, ScrollView, Alert, Dimensions
+  Image, SafeAreaView, StatusBar, ScrollView, Dimensions
 } from 'react-native';
 
 import { loginUser } from '../services/authService'; 
+import CustomAlert from '../components/CustomAlert';
 
 const { width } = Dimensions.get('window');
 
@@ -13,13 +14,28 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
 
+    const [alertConfig, setAlertConfig] = useState({
+      visible: false, type: 'error', title: '', message: '', onCloseAction: null
+    });
+
     const LOGO_SOURCE = require('../assets/logo_humana.png'); 
     const EYE_ICON = require('../assets/logo_humana.png'); 
     const GOOGLE_ICON = { uri: 'https://img.icons8.com/color/48/google-logo.png' };
 
+    const showAlert = (type, title, message, onCloseAction = null) => {
+      setAlertConfig({ visible: true, type, title, message, onCloseAction });
+    };
+
+    const handleCloseAlert = () => {
+      setAlertConfig(prev => ({ ...prev, visible: false }));
+      if (alertConfig.onCloseAction) {
+        alertConfig.onCloseAction();
+      }
+    };
+
     const handleLogin = async () => {
         if (!email.trim() || !password.trim()) {
-            Alert.alert("Gagal", "Email dan Password tidak boleh kosong");
+            showAlert('error', 'Data Kosong', 'Email dan Password tidak boleh kosong.');
             return;
         }
         
@@ -27,16 +43,16 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
             const result = await loginUser(email, password); 
             
             if (result.success === true || result.token || result.status === 200) {
-                // Mengambil seluruh data user dari database (sesuaikan dengan format response backend kamu)
                 const userData = result.data || result.user || result || {};
                 
-                // Mengirimkan objek data lengkap dan email ke App.jsx
+                // LANGSUNG PINDAH KE HOME PAGE (Tidak memunculkan alert di sini)
                 onLoginSuccess(userData, email); 
             } else {
-                Alert.alert('Gagal Masuk', result.message || 'Email atau password salah.');
+                // TAMPILKAN ALERT GAGAL (Background tetap Login Page)
+                showAlert('error', 'Login Gagal', result.message || 'Cek kembali email dan password-mu atau coba metode lain.');
             }
         } catch (err) {
-            Alert.alert("Error", err.message || "Pastikan server menyala.");
+            showAlert('error', 'Terjadi Kesalahan', 'Coba cek koneksi internetmu atau coba metode lain.');
         }
     };
 
@@ -58,7 +74,6 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
           </View>
 
           <View style={styles.formCard}>
-            
             <Text style={styles.formCardTitle}>Masuk</Text>
             
             <View style={styles.switchModeContainer}>
@@ -70,28 +85,13 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
 
             <View style={styles.inputWrapper}>
               <Text style={styles.floatingLabel}>Email</Text>
-              <TextInput 
-                style={styles.inputField} 
-                placeholder="someone@domain.com" 
-                value={email} 
-                onChangeText={setEmail} 
-                keyboardType="email-address" 
-                autoCapitalize="none" 
-                placeholderTextColor="#A9A9A9" 
-              />
+              <TextInput style={styles.inputField} placeholder="someone@domain.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#A9A9A9" />
             </View>
 
             <View style={styles.inputWrapper}>
               <Text style={styles.floatingLabel}>Password</Text>
               <View style={styles.passwordContainer}>
-                <TextInput 
-                  style={styles.passwordField} 
-                  placeholder="Masukan password" 
-                  value={password} 
-                  onChangeText={setPassword} 
-                  secureTextEntry={true} 
-                  placeholderTextColor="#A9A9A9" 
-                />
+                <TextInput style={styles.passwordField} placeholder="Masukan password" value={password} onChangeText={setPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
                 <TouchableOpacity><Image source={EYE_ICON} style={styles.eyeIcon} resizeMode="contain" /></TouchableOpacity>
               </View>
             </View>
@@ -130,6 +130,14 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      <CustomAlert 
+        visible={alertConfig.visible}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={handleCloseAlert}
+      />
     </View>
   );
 };

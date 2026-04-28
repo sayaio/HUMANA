@@ -15,7 +15,6 @@ const ProfilePage = ({ profileData, onNavigate }) => {
     </View>
   );
 
-  // MENGAMBIL HURUF PERTAMA DARI NAMA (Atau '-' jika kosong)
   const initialLetter = (profileData.name && profileData.name !== '-') 
     ? profileData.name.charAt(0).toUpperCase() 
     : 'U';
@@ -24,7 +23,6 @@ const ProfilePage = ({ profileData, onNavigate }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={false} />
       
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
         <TouchableOpacity>
@@ -34,11 +32,9 @@ const ProfilePage = ({ profileData, onNavigate }) => {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         
-        {/* User Card */}
         <View style={styles.userCard}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatarCircle}>
-              {/* HURUF AWAL MUNCUL DI SINI */}
               <Text style={styles.avatarText}>{initialLetter}</Text>
             </View>
             <TouchableOpacity style={styles.editAvatarBtn} onPress={() => alert('Fitur ganti foto akan datang!')}>
@@ -46,14 +42,12 @@ const ProfilePage = ({ profileData, onNavigate }) => {
             </TouchableOpacity>
           </View>
           <View style={styles.userInfo}>
-            {/* NAMA LENGKAP DAN EMAIL MUNCUL DI SINI */}
             <Text style={styles.userName}>{profileData.name}</Text>
             <Text style={styles.userEmail}>{profileData.email}</Text>
           </View>
           <Image source={LOGO_SOURCE} style={styles.cardWatermark} resizeMode="contain" />
         </View>
 
-        {/* Basic Profile Section */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Basic</Text>
@@ -72,7 +66,6 @@ const ProfilePage = ({ profileData, onNavigate }) => {
           </View>
         </View>
 
-        {/* Academic Profile Section */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Academic</Text>
@@ -91,12 +84,12 @@ const ProfilePage = ({ profileData, onNavigate }) => {
 
       {/* BOTTOM NAVIGATION */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('Home')}>
+        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Home')}>
           <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('Activity', 'aktif')}>
+        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Activity', 'aktif')}>
           <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
           <Text style={styles.navText}>Activity</Text>
         </TouchableOpacity>
@@ -110,7 +103,8 @@ const ProfilePage = ({ profileData, onNavigate }) => {
           <Text style={styles.fabText}>Pesan{"\n"}Sesi</Text>
         </View>
         
-        <TouchableOpacity style={styles.navItem}>
+        {/* === TOMBOL CHAT === */}
+        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Chat')}>
           <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
           <Text style={styles.navText}>Chat</Text>
         </TouchableOpacity>

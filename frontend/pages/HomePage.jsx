@@ -1,17 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, Text, View, Image, TouchableOpacity, 
   StatusBar, ScrollView, Dimensions, Modal 
 } from 'react-native';
 
+import CustomAlert from '../components/CustomAlert'; // <--- IMPORT ALERT
+
 const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png'); 
 
-const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate }) => {
-  // Hanya ambil nama panggilan (kata pertama)
+const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, showSuccessAlert, onAlertClose }) => {
   const firstName = namaLengkap ? namaLengkap.split(' ')[0] : 'Murid';
-  
   const [isMateriVisible, setIsMateriVisible] = useState(false);
+
+  // STATE UNTUK MENGONTROL ALERT
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false, type: 'success', title: '', message: ''
+  });
+
+  // MUNCULKAN ALERT JIKA TERDETEKSI LOGIN BARU
+  useEffect(() => {
+    if (showSuccessAlert) {
+      setAlertConfig({
+        visible: true,
+        type: 'success',
+        title: 'Sukses!',
+        message: 'Berhasil masuk ke akun kamu.'
+      });
+    }
+  }, [showSuccessAlert]);
+
+  const handleCloseAlert = () => {
+    setAlertConfig(prev => ({ ...prev, visible: false }));
+    if (onAlertClose) onAlertClose(); // Matikan sinyal dari App.jsx
+  };
 
   const favoriteSubjects = [
     { id: 'Informatika', name: 'Informatika', icon: require('../assets/informatika.png') },
@@ -168,7 +190,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate })
           <Text style={styles.fabText}>Pesan{"\n"}Sesi</Text>
         </View>
         
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Chat')}>
           <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
           <Text style={styles.navText}>Chat</Text>
         </TouchableOpacity>
@@ -179,7 +201,15 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate })
         </TouchableOpacity>
       </View>
 
-      {/* MODAL MATERI */}
+      {/* CUSTOM ALERT DIPANGGIL DI SINI UNTUK LOGIN SUKSES */}
+      <CustomAlert 
+        visible={alertConfig.visible}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={handleCloseAlert}
+      />
+
       <Modal visible={isMateriVisible} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsMateriVisible(false)} />
