@@ -1,7 +1,7 @@
-const Feedback = require('./Feedback');
-const db = require('../config/database'); // Pastikan path ke koneksi database benar
+const feedback = require('../classes/Feedback');
+const db = require('../database'); // Pastikan path ke koneksi database benar
 
-class FeedbackController {
+class feedbackController {
   /**
    * Method utama untuk memproses pemberian feedback
    */
@@ -111,4 +111,4 @@ class FeedbackController {
 }
 
 
-module.exports = FeedbackController;
+module.exports = feedbackController;
