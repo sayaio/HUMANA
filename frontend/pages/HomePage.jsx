@@ -39,6 +39,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
         setLoadingMapel(true);
         try {
           const data = await fetchAllMapel();
+          console.log('mapel data:', data);
           setAllSubjects(data);
         } catch (err) {
           console.error('[HomePage] Gagal fetch mapel:', err);
@@ -239,7 +240,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
               <ScrollView showsVerticalScrollIndicator={false}>
                 <Text style={styles.sheetSectionTitle}>Semua Pelajaran</Text>
                 <View style={styles.subjectGrid}>
-                  {allSubjects.map(renderSubjectItem)}
+                  {Array.isArray(allSubjects) && allSubjects.map(renderSubjectItem)}
                 </View>
               </ScrollView>
             )}
