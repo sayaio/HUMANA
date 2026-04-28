@@ -16,7 +16,7 @@ const getMateriBySubject = async (req, res) => {
   }
 
   try {
-    const [rows] = await pool.query(
+    const rows = await pool.query(
       `SELECT id_materi AS id, nama_materi AS namaMateri, kelas, jurusan, deskripsi AS deskripsiMateri
        FROM materi
        WHERE id_mapel = ?
@@ -43,11 +43,11 @@ const getMateriBySubject = async (req, res) => {
  */
 const getAllMateri = async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `SELECT id_materi AS id, nama_materi AS namaMateri, kelas, jurusan, deskripsi AS deskripsiMateri
-       FROM materi
-       ORDER BY id_materi ASC`
-    );
+    const rows = await pool.query(`
+        SELECT id_mapel, nama_mapel
+        FROM matapelajaran
+        ORDER BY id_mapel ASC
+    `);
 
     return res.status(200).json({
       success: true,
@@ -68,7 +68,7 @@ const getAllMateri = async (req, res) => {
  */
 const getAllMapel = async (req, res) => {
   try {
-    const [rows] = await pool.query(
+    const rows = await pool.query(
       `SELECT id_mapel, nama_mapel
        FROM matapelajaran
        ORDER BY id_mapel ASC`
