@@ -20,8 +20,8 @@ const feedbackController = require('./src/controllers/feedbackController');
 router.post('/', feedbackController.berikanFeedback);
 router.get('/guru/:id_guru', feedbackController.getFeedbackByGuru);
 
-const editProfile = require('./src/controllers/editProfileController')
-router.put('/profile/basic', editProfileController.updateBasic);
-router.put('/profile/academic', editProfileController.updateAcademic);
+const editProfilController = require('./src/controllers/editProfilController')
+router.put('/profile/basic', editProfilController.updateBasic);
+router.put('/profile/academic', editProfilController.updateAcademic);
 
 module.exports = router;
