@@ -1,14 +1,68 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, TextInput } from 'react-native';
+import { 
+  StyleSheet, Text, View, TouchableOpacity, SafeAreaView, 
+  StatusBar, ScrollView, TextInput, ActivityIndicator 
+} from 'react-native';
+
+import { updateBasicProfile } from '../services/edtProfileService';
+import CustomAlert from '../components/CustomAlert'; // IMPORT CUSTOM ALERT
 
 const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
   const [username, setUsername] = useState(profileData.username);
   const [phone, setPhone] = useState(profileData.phone);
   const [gender, setGender] = useState(profileData.gender);
   const [domicile, setDomicile] = useState(profileData.domicile);
+  
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSave = () => {
-    onSave({ ...profileData, username, phone, gender, domicile });
+  // STATE UNTUK CUSTOM ALERT
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false, type: 'success', title: '', message: '', onCloseAction: null
+  });
+
+  const showAlert = (type, title, message, onCloseAction = null) => {
+    setAlertConfig({ visible: true, type, title, message, onCloseAction });
+  };
+
+  const handleCloseAlert = () => {
+    setAlertConfig(prev => ({ ...prev, visible: false }));
+    if (alertConfig.onCloseAction) {
+      alertConfig.onCloseAction();
+    }
+  };
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      const payload = {
+        id: profileData.id,
+        id_user: profileData.id,
+        username: username,
+        phone: phone,
+        no_telepon: phone,
+        gender: gender,
+        jenis_kelamin: gender,
+        domicile: domicile,
+        domisili: domicile
+      };
+
+      const result = await updateBasicProfile(payload);
+
+      if (result.success === true || result.status === 200) {
+        // Tampilkan Custom Alert Sukses, lalu simpan & kembali ke profil saat ditutup
+        showAlert('success', 'Sukses!', 'Profil dasar berhasil diperbarui.', () => {
+          onSave({ ...profileData, username, phone, gender, domicile });
+        });
+      } else {
+        // Tampilkan Custom Alert Gagal
+        showAlert('error', 'Gagal Menyimpan', result.message || "Pastikan data sudah benar.");
+      }
+    } catch (error) {
+      console.log("Error Update Basic Profile:", error);
+      showAlert('error', 'Error Jaringan', "Gagal terhubung ke server. Periksa koneksi internetmu.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const InputField = ({ label, value, onChangeText }) => (
@@ -28,7 +82,9 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={false} />
       
       <View style={styles.header}>
-        <TouchableOpacity onPress={onCancel} style={styles.backBtn}><Text style={styles.backIcon}>{'❮'}</Text></TouchableOpacity>
+        <TouchableOpacity onPress={onCancel} style={styles.backBtn} disabled={isLoading}>
+          <Text style={styles.backIcon}>{'❮'}</Text>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Basic Profile</Text>
         <View style={{ width: 40 }} />
       </View>
@@ -41,13 +97,26 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
+        <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} disabled={isLoading}>
           <Text style={styles.cancelBtnText}>Batalkan</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>Konfirmasi Perubahan</Text>
+        <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={isLoading}>
+          {isLoading ? (
+            <ActivityIndicator color="#FFF" />
+          ) : (
+            <Text style={styles.saveBtnText}>Konfirmasi Perubahan</Text>
+          )}
         </TouchableOpacity>
       </View>
+
+      {/* PANGGIL KOMPONEN CUSTOM ALERT DI SINI */}
+      <CustomAlert 
+        visible={alertConfig.visible}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={handleCloseAlert}
+      />
     </SafeAreaView>
   );
 };

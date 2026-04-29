@@ -13,6 +13,9 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
+    
+    // 1. STATE BARU UNTUK MENGONTROL VISIBILITAS PASSWORD
+    const [showPassword, setShowPassword] = useState(false);
 
     const [alertConfig, setAlertConfig] = useState({
       visible: false, type: 'error', title: '', message: '', onCloseAction: null
@@ -44,11 +47,8 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
             
             if (result.success === true || result.token || result.status === 200) {
                 const userData = result.data || result.user || result || {};
-                
-                // LANGSUNG PINDAH KE HOME PAGE (Tidak memunculkan alert di sini)
                 onLoginSuccess(userData, email); 
             } else {
-                // TAMPILKAN ALERT GAGAL (Background tetap Login Page)
                 showAlert('error', 'Login Gagal', result.message || 'Cek kembali email dan password-mu atau coba metode lain.');
             }
         } catch (err) {
@@ -85,14 +85,38 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
 
             <View style={styles.inputWrapper}>
               <Text style={styles.floatingLabel}>Email</Text>
-              <TextInput style={styles.inputField} placeholder="someone@domain.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#A9A9A9" />
+              <TextInput 
+                style={styles.inputField} 
+                placeholder="someone@domain.com" 
+                value={email} 
+                onChangeText={setEmail} 
+                keyboardType="email-address" 
+                autoCapitalize="none" 
+                placeholderTextColor="#A9A9A9" 
+              />
             </View>
 
             <View style={styles.inputWrapper}>
               <Text style={styles.floatingLabel}>Password</Text>
               <View style={styles.passwordContainer}>
-                <TextInput style={styles.passwordField} placeholder="Masukan password" value={password} onChangeText={setPassword} secureTextEntry={true} placeholderTextColor="#A9A9A9" />
-                <TouchableOpacity><Image source={EYE_ICON} style={styles.eyeIcon} resizeMode="contain" /></TouchableOpacity>
+                <TextInput 
+                  style={styles.passwordField} 
+                  placeholder="Masukan password" 
+                  value={password} 
+                  onChangeText={setPassword} 
+                  // 2. SECURE TEXT ENTRY SEKARANG DINAMIS MENGIKUTI STATE
+                  secureTextEntry={!showPassword} 
+                  placeholderTextColor="#A9A9A9" 
+                />
+                {/* 3. TOMBOL MATA DIBERI FUNGSI ONPRESS UNTUK MENGUBAH STATE */}
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Image 
+                    source={EYE_ICON} 
+                    // 4. EFEK WARNA BERUBAH JIKA PASSWORD SEDANG DILIHAT
+                    style={[styles.eyeIcon, showPassword && { tintColor: '#284B7A' }]} 
+                    resizeMode="contain" 
+                  />
+                </TouchableOpacity>
               </View>
             </View>
 

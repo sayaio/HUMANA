@@ -1,12 +1,64 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, TextInput } from 'react-native';
+import { 
+  StyleSheet, Text, View, TouchableOpacity, SafeAreaView, 
+  StatusBar, ScrollView, TextInput, ActivityIndicator 
+} from 'react-native';
+
+import { updateAcademicProfile } from '../services/edtProfileService';
+import CustomAlert from '../components/CustomAlert'; // IMPORT CUSTOM ALERT
 
 const EditAcademicProfilePage = ({ profileData, onSave, onCancel }) => {
   const [education, setEducation] = useState(profileData.education);
   const [major, setMajor] = useState(profileData.major);
+  
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSave = () => {
-    onSave({ ...profileData, education, major });
+  // STATE UNTUK CUSTOM ALERT
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false, type: 'success', title: '', message: '', onCloseAction: null
+  });
+
+  const showAlert = (type, title, message, onCloseAction = null) => {
+    setAlertConfig({ visible: true, type, title, message, onCloseAction });
+  };
+
+  const handleCloseAlert = () => {
+    setAlertConfig(prev => ({ ...prev, visible: false }));
+    if (alertConfig.onCloseAction) {
+      alertConfig.onCloseAction();
+    }
+  };
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      const payload = {
+        id: profileData.id,
+        id_user: profileData.id,
+        education: education,
+        jenjang_pendidikan: education,
+        major: major,
+        kelas_jurusan: major,
+        jurusan: major
+      };
+
+      const result = await updateAcademicProfile(payload);
+
+      if (result.success === true || result.status === 200) {
+        // Tampilkan Custom Alert Sukses, lalu simpan & kembali ke profil saat ditutup
+        showAlert('success', 'Sukses!', 'Profil akademik berhasil diperbarui.', () => {
+          onSave({ ...profileData, education, major });
+        });
+      } else {
+        // Tampilkan Custom Alert Gagal
+        showAlert('error', 'Gagal Menyimpan', result.message || "Pastikan data sudah benar.");
+      }
+    } catch (error) {
+      console.log("Error Update Academic Profile:", error);
+      showAlert('error', 'Error Jaringan', "Gagal terhubung ke server. Periksa koneksi internetmu.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const InputField = ({ label, value, onChangeText }) => (
@@ -26,25 +78,39 @@ const EditAcademicProfilePage = ({ profileData, onSave, onCancel }) => {
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={false} />
       
       <View style={styles.header}>
-        <TouchableOpacity onPress={onCancel} style={styles.backBtn}><Text style={styles.backIcon}>{'❮'}</Text></TouchableOpacity>
+        <TouchableOpacity onPress={onCancel} style={styles.backBtn} disabled={isLoading}>
+          <Text style={styles.backIcon}>{'❮'}</Text>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Academic Profile</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <InputField label="Jenjang Pendidikan" value={education} onChangeText={setEducation} />
-        {/* Typo di Figma "No. Telepon" diganti menjadi "Kelas - Jurusan" agar sinkron */}
         <InputField label="Kelas - Jurusan" value={major} onChangeText={setMajor} />
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
+        <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} disabled={isLoading}>
           <Text style={styles.cancelBtnText}>Batalkan</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>Konfirmasi Perubahan</Text>
+        <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={isLoading}>
+          {isLoading ? (
+            <ActivityIndicator color="#FFF" />
+          ) : (
+            <Text style={styles.saveBtnText}>Konfirmasi Perubahan</Text>
+          )}
         </TouchableOpacity>
       </View>
+
+      {/* PANGGIL KOMPONEN CUSTOM ALERT DI SINI */}
+      <CustomAlert 
+        visible={alertConfig.visible}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={handleCloseAlert}
+      />
     </SafeAreaView>
   );
 };

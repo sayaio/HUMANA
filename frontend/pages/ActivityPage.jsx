@@ -4,17 +4,13 @@ import {
   StatusBar, ScrollView, Image, ActivityIndicator 
 } from 'react-native';
 
-// IMPORT API getHistory DARI FOLDER SERVICES
-// Sesuaikan path-nya jika nama file service kamu berbeda
 import { getHistory } from '../services/historyService';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png'); 
 
-// Menambahkan props userId dan userRole untuk dilempar ke API
 const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId, userRole }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
   
-  // State untuk menampung data dari database
   const [historyData, setHistoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,46 +18,64 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
     setActiveTab(initialTab);
   }, [initialTab]);
 
-  // Fungsi untuk memanggil API riwayat dari backend
   const fetchHistoryData = async () => {
-    if (!userId || !userRole) return; // Cegah error jika data user belum ada
+    if (!userId || !userRole) return; 
+
+    // DEBUGGING: Cek terminal untuk melihat apakah role dan id sudah benar
+    console.log(`[DEBUG] Memanggil API History -> Role: ${userRole}, ID: ${userId}`);
 
     setIsLoading(true);
     try {
       const result = await getHistory(userRole, userId);
-      if (result.success) {
-        // Sesuaikan 'result.data' dengan struktur JSON dari backend-mu
-        setHistoryData(result.data || []); 
-      } else {
-        console.log("Gagal mengambil riwayat:", result.message);
+      
+      // DEBUGGING: Cek terminal untuk melihat wujud asli balasan backend
+      console.log("[DEBUG] Balasan API History:", result);
+
+      // LOGIKA BARU: Lebih fleksibel menerima berbagai bentuk JSON dari backend
+      if (Array.isArray(result)) {
+        // Jika backend langsung mengirim Array: [ {id: 1...}, {id: 2...} ]
+        setHistoryData(result);
+      } 
+      else if (result && (result.success === true || result.status === 200)) {
+        // Jika backend mengirim Object: { success: true, data: [...] }
+        setHistoryData(result.data || result.history || []); 
+      } 
+      else {
+        console.log("[DEBUG] Gagal atau data kosong:", result);
+        setHistoryData([]); 
       }
+
     } catch (error) {
-      console.log("Error fetch history:", error);
+      console.log("[DEBUG] Error fetch history:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Jalankan fungsi fetch setiap kali user membuka tab 'riwayat'
   useEffect(() => {
     if (activeTab === 'riwayat') {
       fetchHistoryData();
     }
   }, [activeTab, userId, userRole]);
 
-  const dummyDataAktif = [1, 2]; // Data dummy untuk jadwal aktif (sementara)
+  const dummyDataAktif = [1, 2]; 
 
-  // renderCard sekarang menerima 'item' dari database
   const renderCard = (item, isHistory, index) => (
-    <View style={styles.card} key={item.id || index}>
+    <View style={styles.card} key={item.id_sesi || item.id || index}>
       <View style={styles.cardIconBox}><Text style={{color: '#FFF', fontSize: 24}}>📖</Text></View>
       <View style={styles.cardInfo}>
         <Text style={styles.cardTitle}>
-          {/* Menampilkan data dinamis, dengan fallback teks jika kosong */}
-          <Text style={{fontWeight: 'bold'}}>{item.mata_pelajaran || 'Matematika'}</Text> - {item.materi || 'Relasi & Fungsi'}
+          {/* Fallback otomatis jika field bernama mapel, mata_pelajaran, atau nama_mapel */}
+          <Text style={{fontWeight: 'bold'}}>
+            {item.nama_mapel || item.mata_pelajaran || item.mapel || 'Matematika'}
+          </Text> - {item.materi || item.judul_materi || 'Relasi & Fungsi'}
         </Text>
-        <Text style={styles.cardGuru}>👤 {item.nama_guru || 'Ahmad Pambudi, S.Pd.'}</Text>
-        <Text style={styles.cardTime}>{item.waktu_sesi || '31 FEB, 06.30 - 09.30'}</Text>
+        
+        {/* Fallback untuk nama guru */}
+        <Text style={styles.cardGuru}>👤 {item.nama_guru || item.guru || 'Ahmad Pambudi, S.Pd.'}</Text>
+        
+        {/* Fallback untuk waktu */}
+        <Text style={styles.cardTime}>{item.waktu_sesi || item.tanggal || item.waktu || '31 FEB, 06.30 - 09.30'}</Text>
       </View>
       
       {isHistory ? (
@@ -95,16 +109,20 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
         {activeTab === 'aktif' ? (
-          // Tab Aktif masih pakai data statis sementara
           dummyDataAktif.map((_, index) => renderCard({}, false, index))
         ) : (
-          // Tab Riwayat menggunakan data dari API
           isLoading ? (
-            <ActivityIndicator size="large" color="#284B7A" style={{ marginTop: 40 }} />
-          ) : historyData.length > 0 ? (
+            <View style={{ marginTop: 50, alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#284B7A" />
+                <Text style={{ marginTop: 10, color: '#888' }}>Mencari riwayat...</Text>
+            </View>
+          ) : historyData && historyData.length > 0 ? (
             historyData.map((item, index) => renderCard(item, true, index))
           ) : (
-            <Text style={styles.emptyText}>Belum ada riwayat sesi.</Text>
+            <View style={{ marginTop: 50, alignItems: 'center' }}>
+                <Text style={{ fontSize: 40 }}>📭</Text>
+                <Text style={styles.emptyText}>Belum ada riwayat sesi.</Text>
+            </View>
           )
         )}
       </ScrollView>
@@ -162,7 +180,7 @@ const styles = StyleSheet.create({
   cardTime: { fontSize: 10, color: '#A9A9A9' },
   actionBtn: { backgroundColor: '#387C65', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 15, position: 'absolute', bottom: 15, right: 15 },
   actionBtnText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
-  emptyText: { textAlign: 'center', color: '#A9A9A9', marginTop: 40, fontSize: 14 }, // Teks saat data kosong
+  emptyText: { textAlign: 'center', color: '#888', marginTop: 10, fontSize: 14 }, 
 
   bottomNav: { position: 'absolute', bottom: 0, width: '100%', height: 75, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderColor: '#F0F0F0', paddingHorizontal: 15 },
   navItem: { alignItems: 'center', justifyContent: 'center', flex: 1, paddingTop: 10 },
