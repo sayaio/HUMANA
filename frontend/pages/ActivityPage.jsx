@@ -1,18 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { getHistory } from '../services/historyService'; // tambah import ini
 
-const LOGO_SOURCE = require('../assets/logo_humana.png'); 
+const LOGO_SOURCE = require('../assets/logo_humana.png');
 
-const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick }) => {
+const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId, userRole }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [historyData, setHistoryData] = useState([]);   // tambah state ini
+  const [loading, setLoading] = useState(false);         // tambah state ini
 
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
 
-  const dummyData = [1, 2, 3]; 
+  // tambah useEffect ini — fetch history saat tab riwayat dibuka
+  useEffect(() => {
+    if (activeTab === 'riwayat') {
+      fetchHistory();
+    }
+  }, [activeTab]);
 
-  const renderCard = (isHistory) => (
+  const fetchHistory = async () => {
+    setLoading(true);
+    const result = await getHistory(userRole, userId);
+    if (result.success) {
+      setHistoryData(result.data);
+    }
+    setLoading(false);
+  };
+
+  // card untuk jadwal aktif — tidak diubah sama sekali
+  const renderCardAktif = () => (
     <View style={styles.card} key={Math.random()}>
       <View style={styles.cardIconBox}><Text style={{color: '#FFF', fontSize: 24}}>📖</Text></View>
       <View style={styles.cardInfo}>
@@ -20,17 +38,36 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick }) => {
         <Text style={styles.cardGuru}>👤 Ahmad Pambudi, S.Pd.</Text>
         <Text style={styles.cardTime}>31 FEB, 06.30 - 09.30</Text>
       </View>
-      {isHistory ? (
-        <TouchableOpacity style={styles.actionBtn} onPress={onDetailClick}>
-          <Text style={styles.actionBtnText}>Lihat detail</Text>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity style={styles.actionBtn}>
-          <Text style={styles.actionBtnText}>Ingatkan</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity style={styles.actionBtn}>
+        <Text style={styles.actionBtnText}>Ingatkan</Text>
+      </TouchableOpacity>
     </View>
   );
+
+  // card untuk riwayat sesi — pakai data dari API
+  const renderCardRiwayat = (item) => (
+    <View style={styles.card} key={item.id_pemesanan}>
+      <View style={styles.cardIconBox}><Text style={{color: '#FFF', fontSize: 24}}>📖</Text></View>
+      <View style={styles.cardInfo}>
+        <Text style={styles.cardTitle}>
+          <Text style={{fontWeight: 'bold'}}>{item.materi.nama_materi}</Text>
+        </Text>
+        <Text style={styles.cardGuru}>👤 {item.guru.nama_guru}</Text>
+        <Text style={styles.cardTime}>
+          {new Date(item.waktu_mulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+          {' '}
+          {new Date(item.waktu_mulai).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+          {' - '}
+          {new Date(item.waktu_selesai).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+        </Text>
+      </View>
+      <TouchableOpacity style={styles.actionBtn} onPress={() => onDetailClick && onDetailClick(item)}>
+        <Text style={styles.actionBtnText}>Lihat detail</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const dummyData = [1, 2, 3];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -50,10 +87,28 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick }) => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
-        {activeTab === 'aktif' ? dummyData.slice(0, 2).map(() => renderCard(false)) : dummyData.map(() => renderCard(true))}
+        {activeTab === 'aktif' ? (
+          // =============================================
+          // JADWAL AKTIF — tidak diubah sama sekali
+          // =============================================
+          dummyData.slice(0, 2).map(() => renderCardAktif())
+        ) : (
+          // =============================================
+          // RIWAYAT SESI — disambungkan ke API
+          // =============================================
+          loading ? (
+            <ActivityIndicator size="large" color="#284B7A" style={{ marginTop: 50 }} />
+          ) : historyData.length > 0 ? (
+            historyData.map(item => renderCardRiwayat(item))
+          ) : (
+            <View style={{ alignItems: 'center', marginTop: 50 }}>
+              <Text style={{ color: '#A9A9A9', fontSize: 14 }}>Belum ada riwayat pemesanan.</Text>
+            </View>
+          )
+        )}
       </ScrollView>
 
-      {/* BOTTOM NAVIGATION */}
+      {/* BOTTOM NAVIGATION — tidak diubah sama sekali */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Home')}>
           <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
@@ -74,7 +129,6 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick }) => {
           <Text style={styles.fabText}>Pesan{"\n"}Sesi</Text>
         </View>
         
-        {/* === TOMBOL CHAT === */}
         <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Chat')}>
           <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
           <Text style={styles.navText}>Chat</Text>
@@ -98,7 +152,6 @@ const styles = StyleSheet.create({
   activeTabBtn: { borderBottomWidth: 2, borderBottomColor: '#284B7A' },
   tabText: { fontSize: 14, color: '#A9A9A9', fontWeight: '600' },
   activeTabText: { color: '#284B7A' },
-  
   card: { backgroundColor: '#FFF', borderRadius: 15, padding: 15, marginBottom: 15, flexDirection: 'row', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.1, shadowRadius: 3 },
   cardIconBox: { width: 60, height: 60, backgroundColor: '#387C65', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   cardInfo: { flex: 1 },
@@ -107,7 +160,6 @@ const styles = StyleSheet.create({
   cardTime: { fontSize: 10, color: '#A9A9A9' },
   actionBtn: { backgroundColor: '#387C65', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 15, position: 'absolute', bottom: 15, right: 15 },
   actionBtnText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
-
   bottomNav: { position: 'absolute', bottom: 0, width: '100%', height: 75, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderColor: '#F0F0F0', paddingHorizontal: 15 },
   navItem: { alignItems: 'center', justifyContent: 'center', flex: 1, paddingTop: 10 },
   navIcon: { width: 22, height: 22, tintColor: '#A9A9A9', marginBottom: 5 },
