@@ -10,7 +10,6 @@ import { fetchAllMapel } from '../services/MateriService';
 const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
-// Mapping nama mapel ke asset icon lokal
 const SUBJECT_ICONS = {
     'Matematika': require('../assets/matematika.png'),
     'Informatika': require('../assets/informatika.png'),
@@ -32,18 +31,16 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
         visible: false, type: 'success', title: '', message: ''
     });
 
-    // Fetch mapel dari database saat modal dibuka
     useEffect(() => {
         if (isMateriVisible) {
             const loadMapel = async () => {
                 setLoadingMapel(true);
                 try {
                     const data = await fetchAllMapel();
-                    console.log('mapel data:', data);
                     if (Array.isArray(data)) {
                         setAllSubjects(data);
                     } else {
-                        setAllSubjects([data]); // Bungkus jadi array jika hanya 1 data
+                        setAllSubjects([data]); 
                     }
                 } catch (err) {
                     console.error('[HomePage] Gagal fetch mapel:', err);
@@ -58,10 +55,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
     useEffect(() => {
         if (showSuccessAlert) {
             setAlertConfig({
-                visible: true,
-                type: 'success',
-                title: 'Sukses!',
-                message: 'Berhasil masuk ke akun kamu.'
+                visible: true, type: 'success', title: 'Sukses!', message: 'Berhasil masuk ke akun kamu.'
             });
         }
     }, [showSuccessAlert]);
@@ -72,11 +66,10 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
     };
 
     const renderSubjectItem = (subject) => {
-        const subjectName = subject.nama_mapel;
-        const icon = SUBJECT_ICONS[subjectName] || LOGO_SOURCE;
+        const icon = SUBJECT_ICONS[subject.nama_mapel] || LOGO_SOURCE;
         return (
             <TouchableOpacity
-                key={subject.id_mapel}
+                key={subject.id_mapel || Math.random()}
                 style={styles.subjectItemContainer}
                 onPress={() => {
                     setIsMateriVisible(false);
@@ -96,53 +89,34 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 130 }}>
-
                 <View style={styles.headerBackground}>
                     <Image source={LOGO_SOURCE} style={styles.headerWatermark} resizeMode="contain" />
                 </View>
 
                 <View style={styles.greetingContainer}>
-                    <Text style={styles.homeGreetingText}>
-                        Selamat datang,{"\n"}{firstName} !
-                    </Text>
+                    <Text style={styles.homeGreetingText}>Selamat datang,{"\n"}{firstName} !</Text>
                 </View>
 
                 <View style={styles.scheduleCard}>
                     <Text style={styles.scheduleSubHeader}>SESI HARI INI</Text>
-                    <Text style={styles.scheduleTitle}>
-                        <Text style={{ fontWeight: 'bold' }}>Matematika</Text> - Relasi & Fungsi
-                    </Text>
+                    <Text style={styles.scheduleTitle}><Text style={{ fontWeight: 'bold' }}>Matematika</Text> - Relasi & Fungsi</Text>
                     <View style={styles.scheduleDetails}>
-                        <View>
-                            <Text style={styles.scheduleLabel}>Waktu</Text>
-                            <Text style={styles.scheduleValue}>06.30 - 09.30</Text>
-                        </View>
-                        <View>
-                            <Text style={styles.scheduleLabel}>Guru</Text>
-                            <Text style={styles.scheduleValue}>Ahmad Pambudi, S.Pd.</Text>
-                        </View>
+                        <View><Text style={styles.scheduleLabel}>Waktu</Text><Text style={styles.scheduleValue}>06.30 - 09.30</Text></View>
+                        <View><Text style={styles.scheduleLabel}>Guru</Text><Text style={styles.scheduleValue}>Ahmad Pambudi, S.Pd.</Text></View>
                     </View>
                 </View>
 
                 <View style={styles.quickActionsContainer}>
                     <TouchableOpacity style={styles.actionItem}>
-                        <View style={styles.actionIconBox}>
-                            <Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" />
-                        </View>
+                        <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
                         <Text style={styles.actionText}>Pesan Sesi</Text>
                     </TouchableOpacity>
-
                     <TouchableOpacity style={styles.actionItem} onPress={() => setIsMateriVisible(true)}>
-                        <View style={styles.actionIconBox}>
-                            <Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" />
-                        </View>
+                        <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
                         <Text style={styles.actionText}>Materi</Text>
                     </TouchableOpacity>
-
                     <TouchableOpacity style={styles.actionItem} onPress={() => onNavigate && onNavigate('Activity', 'aktif')}>
-                        <View style={styles.actionIconBox}>
-                            <Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" />
-                        </View>
+                        <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
                         <Text style={styles.actionText}>Jadwal Saya</Text>
                     </TouchableOpacity>
                 </View>
@@ -154,82 +128,26 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                     <View style={styles.pesanLagiCard}>
                         <View style={styles.pesanLagiContent}>
                             <Text style={styles.pesanLagiSubtitle}>Lanjutkan sesi favoritmu</Text>
-                            <Text style={styles.pesanLagiTitle}>
-                                <Text style={{ fontWeight: 'bold' }}>Matematika</Text> - Relasi & Fungsi
-                            </Text>
-                            <TouchableOpacity style={styles.pesanSesiBtn}>
-                                <Text style={styles.pesanSesiBtnText}>Pesan Sesi →</Text>
-                            </TouchableOpacity>
+                            <Text style={styles.pesanLagiTitle}><Text style={{ fontWeight: 'bold' }}>Matematika</Text> - Relasi & Fungsi</Text>
+                            <TouchableOpacity style={styles.pesanSesiBtn}><Text style={styles.pesanSesiBtnText}>Pesan Sesi →</Text></TouchableOpacity>
                         </View>
-                        <View style={styles.pesanLagiGraphic}>
-                            <Text style={styles.mathSymbols}>+ ={"\n"}- x</Text>
-                        </View>
+                        <View style={styles.pesanLagiGraphic}><Text style={styles.mathSymbols}>+ ={"\n"}- x</Text></View>
                     </View>
                 </View>
-
-                <View style={styles.sectionContainer}>
-                    <View style={styles.sectionHeaderRow}>
-                        <Text style={styles.sectionTitle}>REKOMENDASI MATERI</Text>
-                        <TouchableOpacity>
-                            <Text style={styles.lihatSemuaText}>Lihat Semua</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.rekomendasiCard}>
-                        <View style={styles.rekomendasiIconWrapper}>
-                            <Image source={LOGO_SOURCE} style={styles.rekomendasiIcon} resizeMode="contain" />
-                        </View>
-                        <View style={styles.rekomendasiTextContainer}>
-                            <Text style={styles.rekomendasiCardTitle}>Aljabar Linear</Text>
-                            <Text style={styles.rekomendasiCardSubtitle}>Sekolah Menengah Atas</Text>
-                        </View>
-                        <TouchableOpacity style={styles.lihatMateriBtn}>
-                            <Text style={styles.lihatMateriBtnText}>Lihat Materi</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
             </ScrollView>
 
-            {/* BOTTOM NAVIGATION */}
             <View style={styles.bottomNav}>
-                <TouchableOpacity style={styles.navItem}>
-                    <Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#284B7A' }]} resizeMode="contain" />
-                    <Text style={[styles.navText, { color: '#284B7A', fontWeight: 'bold' }]}>Home</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Activity', 'aktif')}>
-                    <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
-                    <Text style={styles.navText}>Activity</Text>
-                </TouchableOpacity>
-
+                <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#284B7A' }]} resizeMode="contain" /><Text style={[styles.navText, { color: '#284B7A', fontWeight: 'bold' }]}>Home</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Activity', 'aktif')}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Activity</Text></TouchableOpacity>
                 <View style={styles.fabContainer}>
-                    <View style={styles.fabCutout}>
-                        <TouchableOpacity style={styles.fabButton}>
-                            <Image source={LOGO_SOURCE} style={styles.fabIcon} resizeMode="contain" />
-                        </TouchableOpacity>
-                    </View>
+                    <View style={styles.fabCutout}><TouchableOpacity style={styles.fabButton}><Image source={LOGO_SOURCE} style={styles.fabIcon} resizeMode="contain" /></TouchableOpacity></View>
                     <Text style={styles.fabText}>Pesan{"\n"}Sesi</Text>
                 </View>
-
-                <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Chat')}>
-                    <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
-                    <Text style={styles.navText}>Chat</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Profile')}>
-                    <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
-                    <Text style={styles.navText}>Profile</Text>
-                </TouchableOpacity>
+                <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Chat')}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Chat</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Profile')}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Profile</Text></TouchableOpacity>
             </View>
 
-            <CustomAlert
-                visible={alertConfig.visible}
-                type={alertConfig.type}
-                title={alertConfig.title}
-                message={alertConfig.message}
-                onClose={handleCloseAlert}
-            />
+            <CustomAlert visible={alertConfig.visible} type={alertConfig.type} title={alertConfig.title} message={alertConfig.message} onClose={handleCloseAlert} />
 
             <Modal visible={isMateriVisible} animationType="slide" transparent={true}>
                 <View style={styles.modalOverlay}>
@@ -245,14 +163,15 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                             <ScrollView showsVerticalScrollIndicator={false}>
                                 <Text style={styles.sheetSectionTitle}>Semua Pelajaran</Text>
                                 <View style={styles.subjectGrid}>
-                                    {Array.isArray(allSubjects) && allSubjects.map(renderSubjectItem)}
+                                    {Array.isArray(allSubjects) && allSubjects.length > 0 
+                                      ? allSubjects.map(renderSubjectItem) 
+                                      : <Text style={{color: '#888', marginLeft: 10}}>Tidak ada data mata pelajaran.</Text>}
                                 </View>
                             </ScrollView>
                         )}
                     </View>
                 </View>
             </Modal>
-
         </View>
     );
 };

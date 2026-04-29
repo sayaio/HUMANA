@@ -22,15 +22,14 @@ const App = () => {
     const [email, setEmail] = useState('');
 
     const [profileData, setProfileData] = useState({
-        name: '-', email: '-', username: '-', phone: '-', gender: '-', domicile: '-', education: '-', major: '-'
+        id: null, role: '-', name: '-', email: '-', username: '-', phone: '-', gender: '-', domicile: '-', education: '-', major: '-'
     });
 
     const [selectedSubject, setSelectedSubject] = useState(null);
-    const [selectedChapter, setSelectedChapter] = useState('');
+    const [selectedChapter, setSelectedChapter] = useState(null); // Diubah menjadi object untuk menampung seluruh data materi
     const [activityTab, setActivityTab] = useState('aktif');
     const [selectedChatUser, setSelectedChatUser] = useState(null);
 
-    // STATE BARU UNTUK MEMBERI SINYAL KE HOME PAGE BAHWA INI LOGIN BARU
     const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
 
     const handleLoginSuccess = (userData, loggedInEmail) => {
@@ -41,25 +40,27 @@ const App = () => {
         setEmail(loggedInEmail);
 
         setProfileData({
-            name: namaDariDB || '-', email: loggedInEmail || '-', username: usernameDariDB || '-',
-            phone: userData?.no_telepon || userData?.phone || '-', gender: userData?.jenis_kelamin || userData?.gender || '-',
-            domicile: userData?.domisili || userData?.domicile || '-', education: userData?.jenjang_pendidikan || userData?.education || '-',
+            id: userData?.id_user || userData?.id || 1, 
+            role: userData?.role || 'murid', 
+            name: namaDariDB || '-', 
+            email: loggedInEmail || '-', 
+            username: usernameDariDB || '-',
+            phone: userData?.no_telepon || userData?.phone || '-', 
+            gender: userData?.jenis_kelamin || userData?.gender || '-',
+            domicile: userData?.domisili || userData?.domicile || '-', 
+            education: userData?.jenjang_pendidikan || userData?.education || '-',
             major: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-'
         });
 
-        // NYALAKAN SINYAL ALERT SUKSES DAN PINDAH KE HOME
         setShowLoginSuccessAlert(true);
         setCurrentPage('Home');
     };
 
     const handleLogout = () => {
-        setShowLoginSuccessAlert(false); // Reset Sinyal
+        setShowLoginSuccessAlert(false); 
         setCurrentPage('Login');
     }
 
-    // ==========================================
-    // ROUTER
-    // ==========================================
     if (currentPage === 'Splash') return <SplashScreen onFinish={() => setCurrentPage('Login')} />;
     if (currentPage === 'Login') return <LoginPage onLoginSuccess={handleLoginSuccess} onNavigateToRegister={() => setCurrentPage('Register')} onForgotPassword={() => setCurrentPage('ResetPassword')} />;
     if (currentPage === 'Register') return <RegisterPage onRegisterSuccess={() => setCurrentPage('Login')} onNavigateToLogin={() => setCurrentPage('Login')} />;
@@ -72,7 +73,7 @@ const App = () => {
                 email={email}
                 onLogout={handleLogout}
                 onSelectSubject={(subjectData) => {
-                    setSelectedSubject(subjectData); // Menyimpan { id_mapel, subjectName }
+                    setSelectedSubject(subjectData); 
                     setCurrentPage('Materi');
                 }}
                 onNavigate={(page, tab) => { if (tab) setActivityTab(tab); setCurrentPage(page); }}
@@ -82,7 +83,7 @@ const App = () => {
         );
     }
 
-    if (currentPage === 'Activity') return <ActivityPage initialTab={activityTab} onNavigate={(page) => setCurrentPage(page)} onDetailClick={() => setCurrentPage('SessionDetail')} />;
+    if (currentPage === 'Activity') return <ActivityPage initialTab={activityTab} onNavigate={(page) => setCurrentPage(page)} onDetailClick={() => setCurrentPage('SessionDetail')} userId={profileData.id || 1} userRole={profileData.role || 'murid'} />;
     if (currentPage === 'SessionDetail') return <SessionDetailPage onBack={() => setCurrentPage('Activity')} />;
     if (currentPage === 'Profile') return <ProfilePage profileData={profileData} onNavigate={(page) => setCurrentPage(page)} />;
 
@@ -92,17 +93,20 @@ const App = () => {
     if (currentPage === 'Materi') {
         return (
             <MateriPage
-                // Tambahkan pengecekan agar tidak error saat selectedSubject masih null
                 id_mapel={selectedSubject?.id_mapel}
                 subjectName={selectedSubject?.subjectName}
                 onBack={() => setCurrentPage('Home')}
-                onChapterSelect={(chapterName) => {
-                    setSelectedChapter(chapterName);
+                onChapterSelect={(materiData) => {
+                    // Menerima seluruh objek data materi dari MateriPage
+                    setSelectedChapter(materiData);
                     setCurrentPage('Detail');
                 }}
             />
         );
-    } if (currentPage === 'Detail') return <DetailMateriPage chapterName={selectedChapter} onBack={() => setCurrentPage('Materi')} />;
+    } 
+    
+    // Melempar objek data materi ke DetailMateriPage
+    if (currentPage === 'Detail') return <DetailMateriPage chapterData={selectedChapter} onBack={() => setCurrentPage('Materi')} />;
 
     if (currentPage === 'Chat') return <ChatPage onNavigate={(page) => setCurrentPage(page)} onChatPress={(chatData) => { setSelectedChatUser(chatData); setCurrentPage('ChatRoom'); }} />;
     if (currentPage === 'ChatRoom') return <ChatRoomPage chatData={selectedChatUser} onBack={() => setCurrentPage('Chat')} />;
