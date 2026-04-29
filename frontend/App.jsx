@@ -83,7 +83,19 @@ const App = () => {
         );
     }
 
-    if (currentPage === 'Activity') return <ActivityPage initialTab={activityTab} onNavigate={(page) => setCurrentPage(page)} onDetailClick={() => setCurrentPage('SessionDetail')} userId={profileData.id || 1} userRole={profileData.role || 'murid'} />;
+    if (currentPage === 'Activity') {
+        return (
+            <ActivityPage 
+                initialTab={activityTab} 
+                onNavigate={(page) => setCurrentPage(page)} 
+                onDetailClick={() => setCurrentPage('SessionDetail')} 
+                // MENGIRIMKAN ID DAN ROLE USER DARI DATA PROFILE GLOBAL KE ACTIVITY PAGE
+                userId={profileData.id || 1} 
+                userRole={profileData.role || 'murid'} 
+            />
+        );
+    }
+    
     if (currentPage === 'SessionDetail') return <SessionDetailPage onBack={() => setCurrentPage('Activity')} />;
     if (currentPage === 'Profile') return <ProfilePage profileData={profileData} onNavigate={(page) => setCurrentPage(page)} />;
 

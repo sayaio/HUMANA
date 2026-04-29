@@ -1,27 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, Image } from 'react-native';
+import { 
+  StyleSheet, Text, View, TouchableOpacity, SafeAreaView, 
+  StatusBar, ScrollView, Image, ActivityIndicator 
+} from 'react-native';
+
+// IMPORT API getHistory DARI FOLDER SERVICES
+// Sesuaikan path-nya jika nama file service kamu berbeda
+import { getHistory } from '../services/historyService';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png'); 
 
-const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick }) => {
+// Menambahkan props userId dan userRole untuk dilempar ke API
+const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId, userRole }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
+  
+  // State untuk menampung data dari database
+  const [historyData, setHistoryData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
 
-  const dummyData = [1, 2, 3]; 
+  // Fungsi untuk memanggil API riwayat dari backend
+  const fetchHistoryData = async () => {
+    if (!userId || !userRole) return; // Cegah error jika data user belum ada
 
-  const renderCard = (isHistory) => (
-    <View style={styles.card} key={Math.random()}>
+    setIsLoading(true);
+    try {
+      const result = await getHistory(userRole, userId);
+      if (result.success) {
+        // Sesuaikan 'result.data' dengan struktur JSON dari backend-mu
+        setHistoryData(result.data || []); 
+      } else {
+        console.log("Gagal mengambil riwayat:", result.message);
+      }
+    } catch (error) {
+      console.log("Error fetch history:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Jalankan fungsi fetch setiap kali user membuka tab 'riwayat'
+  useEffect(() => {
+    if (activeTab === 'riwayat') {
+      fetchHistoryData();
+    }
+  }, [activeTab, userId, userRole]);
+
+  const dummyDataAktif = [1, 2]; // Data dummy untuk jadwal aktif (sementara)
+
+  // renderCard sekarang menerima 'item' dari database
+  const renderCard = (item, isHistory, index) => (
+    <View style={styles.card} key={item.id || index}>
       <View style={styles.cardIconBox}><Text style={{color: '#FFF', fontSize: 24}}>📖</Text></View>
       <View style={styles.cardInfo}>
-        <Text style={styles.cardTitle}><Text style={{fontWeight: 'bold'}}>Matematika</Text> - Relasi & Fungsi</Text>
-        <Text style={styles.cardGuru}>👤 Ahmad Pambudi, S.Pd.</Text>
-        <Text style={styles.cardTime}>31 FEB, 06.30 - 09.30</Text>
+        <Text style={styles.cardTitle}>
+          {/* Menampilkan data dinamis, dengan fallback teks jika kosong */}
+          <Text style={{fontWeight: 'bold'}}>{item.mata_pelajaran || 'Matematika'}</Text> - {item.materi || 'Relasi & Fungsi'}
+        </Text>
+        <Text style={styles.cardGuru}>👤 {item.nama_guru || 'Ahmad Pambudi, S.Pd.'}</Text>
+        <Text style={styles.cardTime}>{item.waktu_sesi || '31 FEB, 06.30 - 09.30'}</Text>
       </View>
+      
       {isHistory ? (
-        <TouchableOpacity style={styles.actionBtn} onPress={onDetailClick}>
+        <TouchableOpacity style={styles.actionBtn} onPress={() => onDetailClick(item)}>
           <Text style={styles.actionBtnText}>Lihat detail</Text>
         </TouchableOpacity>
       ) : (
@@ -50,7 +94,19 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick }) => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
-        {activeTab === 'aktif' ? dummyData.slice(0, 2).map(() => renderCard(false)) : dummyData.map(() => renderCard(true))}
+        {activeTab === 'aktif' ? (
+          // Tab Aktif masih pakai data statis sementara
+          dummyDataAktif.map((_, index) => renderCard({}, false, index))
+        ) : (
+          // Tab Riwayat menggunakan data dari API
+          isLoading ? (
+            <ActivityIndicator size="large" color="#284B7A" style={{ marginTop: 40 }} />
+          ) : historyData.length > 0 ? (
+            historyData.map((item, index) => renderCard(item, true, index))
+          ) : (
+            <Text style={styles.emptyText}>Belum ada riwayat sesi.</Text>
+          )
+        )}
       </ScrollView>
 
       {/* BOTTOM NAVIGATION */}
@@ -74,7 +130,6 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick }) => {
           <Text style={styles.fabText}>Pesan{"\n"}Sesi</Text>
         </View>
         
-        {/* === TOMBOL CHAT === */}
         <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Chat')}>
           <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
           <Text style={styles.navText}>Chat</Text>
@@ -107,6 +162,7 @@ const styles = StyleSheet.create({
   cardTime: { fontSize: 10, color: '#A9A9A9' },
   actionBtn: { backgroundColor: '#387C65', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 15, position: 'absolute', bottom: 15, right: 15 },
   actionBtnText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
+  emptyText: { textAlign: 'center', color: '#A9A9A9', marginTop: 40, fontSize: 14 }, // Teks saat data kosong
 
   bottomNav: { position: 'absolute', bottom: 0, width: '100%', height: 75, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderColor: '#F0F0F0', paddingHorizontal: 15 },
   navItem: { alignItems: 'center', justifyContent: 'center', flex: 1, paddingTop: 10 },
