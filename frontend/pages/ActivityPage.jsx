@@ -1,73 +1,80 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, Image, ActivityIndicator } from 'react-native';
-import { getHistory } from '../services/historyService'; // tambah import ini
+import { 
+  StyleSheet, Text, View, TouchableOpacity, SafeAreaView, 
+  StatusBar, ScrollView, Image, ActivityIndicator 
+} from 'react-native';
 
-const LOGO_SOURCE = require('../assets/logo_humana.png');
+// IMPORT API getHistory DARI FOLDER SERVICES
+// Sesuaikan path-nya jika nama file service kamu berbeda
+import { getHistory } from '../services/historyService';
 
+const LOGO_SOURCE = require('../assets/logo_humana.png'); 
+
+// Menambahkan props userId dan userRole untuk dilempar ke API
 const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId, userRole }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [historyData, setHistoryData] = useState([]);   // tambah state ini
-  const [loading, setLoading] = useState(false);         // tambah state ini
+  
+  // State untuk menampung data dari database
+  const [historyData, setHistoryData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
 
-  // tambah useEffect ini — fetch history saat tab riwayat dibuka
-  useEffect(() => {
-    if (activeTab === 'riwayat') {
-      fetchHistory();
-    }
-  }, [activeTab]);
+  // Fungsi untuk memanggil API riwayat dari backend
+  const fetchHistoryData = async () => {
+    if (!userId || !userRole) return; // Cegah error jika data user belum ada
 
-  const fetchHistory = async () => {
-    setLoading(true);
-    const result = await getHistory(userRole, userId);
-    if (result.success) {
-      setHistoryData(result.data);
+    setIsLoading(true);
+    try {
+      const result = await getHistory(userRole, userId);
+      if (result.success) {
+        // Sesuaikan 'result.data' dengan struktur JSON dari backend-mu
+        setHistoryData(result.data || []); 
+      } else {
+        console.log("Gagal mengambil riwayat:", result.message);
+      }
+    } catch (error) {
+      console.log("Error fetch history:", error);
+    } finally {
+      setIsLoading(false);
     }
-    setLoading(false);
   };
 
-  // card untuk jadwal aktif — tidak diubah sama sekali
-  const renderCardAktif = () => (
-    <View style={styles.card} key={Math.random()}>
-      <View style={styles.cardIconBox}><Text style={{color: '#FFF', fontSize: 24}}>📖</Text></View>
-      <View style={styles.cardInfo}>
-        <Text style={styles.cardTitle}><Text style={{fontWeight: 'bold'}}>Matematika</Text> - Relasi & Fungsi</Text>
-        <Text style={styles.cardGuru}>👤 Ahmad Pambudi, S.Pd.</Text>
-        <Text style={styles.cardTime}>31 FEB, 06.30 - 09.30</Text>
-      </View>
-      <TouchableOpacity style={styles.actionBtn}>
-        <Text style={styles.actionBtnText}>Ingatkan</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  // Jalankan fungsi fetch setiap kali user membuka tab 'riwayat'
+  useEffect(() => {
+    if (activeTab === 'riwayat') {
+      fetchHistoryData();
+    }
+  }, [activeTab, userId, userRole]);
 
-  // card untuk riwayat sesi — pakai data dari API
-  const renderCardRiwayat = (item) => (
-    <View style={styles.card} key={item.id_pemesanan}>
+  const dummyDataAktif = [1, 2]; // Data dummy untuk jadwal aktif (sementara)
+
+  // renderCard sekarang menerima 'item' dari database
+  const renderCard = (item, isHistory, index) => (
+    <View style={styles.card} key={item.id || index}>
       <View style={styles.cardIconBox}><Text style={{color: '#FFF', fontSize: 24}}>📖</Text></View>
       <View style={styles.cardInfo}>
         <Text style={styles.cardTitle}>
-          <Text style={{fontWeight: 'bold'}}>{item.materi.nama_materi}</Text>
+          {/* Menampilkan data dinamis, dengan fallback teks jika kosong */}
+          <Text style={{fontWeight: 'bold'}}>{item.mata_pelajaran || 'Matematika'}</Text> - {item.materi || 'Relasi & Fungsi'}
         </Text>
-        <Text style={styles.cardGuru}>👤 {item.guru.nama_guru}</Text>
-        <Text style={styles.cardTime}>
-          {new Date(item.waktu_mulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
-          {' '}
-          {new Date(item.waktu_mulai).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-          {' - '}
-          {new Date(item.waktu_selesai).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-        </Text>
+        <Text style={styles.cardGuru}>👤 {item.nama_guru || 'Ahmad Pambudi, S.Pd.'}</Text>
+        <Text style={styles.cardTime}>{item.waktu_sesi || '31 FEB, 06.30 - 09.30'}</Text>
       </View>
-      <TouchableOpacity style={styles.actionBtn} onPress={() => onDetailClick && onDetailClick(item)}>
-        <Text style={styles.actionBtnText}>Lihat detail</Text>
-      </TouchableOpacity>
+      
+      {isHistory ? (
+        <TouchableOpacity style={styles.actionBtn} onPress={() => onDetailClick(item)}>
+          <Text style={styles.actionBtnText}>Lihat detail</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity style={styles.actionBtn}>
+          <Text style={styles.actionBtnText}>Ingatkan</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
-
-  const dummyData = [1, 2, 3];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -88,27 +95,21 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
         {activeTab === 'aktif' ? (
-          // =============================================
-          // JADWAL AKTIF — tidak diubah sama sekali
-          // =============================================
-          dummyData.slice(0, 2).map(() => renderCardAktif())
+          // Tab Aktif masih pakai data statis sementara
+          dummyDataAktif.map((_, index) => renderCard({}, false, index))
         ) : (
-          // =============================================
-          // RIWAYAT SESI — disambungkan ke API
-          // =============================================
-          loading ? (
-            <ActivityIndicator size="large" color="#284B7A" style={{ marginTop: 50 }} />
+          // Tab Riwayat menggunakan data dari API
+          isLoading ? (
+            <ActivityIndicator size="large" color="#284B7A" style={{ marginTop: 40 }} />
           ) : historyData.length > 0 ? (
-            historyData.map(item => renderCardRiwayat(item))
+            historyData.map((item, index) => renderCard(item, true, index))
           ) : (
-            <View style={{ alignItems: 'center', marginTop: 50 }}>
-              <Text style={{ color: '#A9A9A9', fontSize: 14 }}>Belum ada riwayat pemesanan.</Text>
-            </View>
+            <Text style={styles.emptyText}>Belum ada riwayat sesi.</Text>
           )
         )}
       </ScrollView>
 
-      {/* BOTTOM NAVIGATION — tidak diubah sama sekali */}
+      {/* BOTTOM NAVIGATION */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Home')}>
           <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
@@ -152,6 +153,7 @@ const styles = StyleSheet.create({
   activeTabBtn: { borderBottomWidth: 2, borderBottomColor: '#284B7A' },
   tabText: { fontSize: 14, color: '#A9A9A9', fontWeight: '600' },
   activeTabText: { color: '#284B7A' },
+  
   card: { backgroundColor: '#FFF', borderRadius: 15, padding: 15, marginBottom: 15, flexDirection: 'row', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.1, shadowRadius: 3 },
   cardIconBox: { width: 60, height: 60, backgroundColor: '#387C65', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   cardInfo: { flex: 1 },
@@ -160,6 +162,8 @@ const styles = StyleSheet.create({
   cardTime: { fontSize: 10, color: '#A9A9A9' },
   actionBtn: { backgroundColor: '#387C65', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 15, position: 'absolute', bottom: 15, right: 15 },
   actionBtnText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
+  emptyText: { textAlign: 'center', color: '#A9A9A9', marginTop: 40, fontSize: 14 }, // Teks saat data kosong
+
   bottomNav: { position: 'absolute', bottom: 0, width: '100%', height: 75, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderColor: '#F0F0F0', paddingHorizontal: 15 },
   navItem: { alignItems: 'center', justifyContent: 'center', flex: 1, paddingTop: 10 },
   navIcon: { width: 22, height: 22, tintColor: '#A9A9A9', marginBottom: 5 },

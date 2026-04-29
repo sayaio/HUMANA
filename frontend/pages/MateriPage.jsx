@@ -1,4 +1,3 @@
-// pages/MateriPage.jsx
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet, Text, View, TouchableOpacity,
@@ -16,7 +15,6 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState(null);
 
-  // Fetch data saat komponen mount atau subjectName berubah
   useEffect(() => {
     const loadMateri = async () => {
       setLoading(true);
@@ -36,7 +34,6 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
     if (id_mapel) loadMateri();
   }, [id_mapel]);
 
-  // Filter lokal berdasarkan searchQuery
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFiltered(materiList);
@@ -67,10 +64,7 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
         <View style={styles.centerState}>
           <Text style={styles.errorIcon}>⚠️</Text>
           <Text style={styles.stateText}>{error}</Text>
-          <TouchableOpacity
-            style={styles.retryBtn}
-            onPress={() => setLoading(true)} // trigger ulang useEffect
-          >
+          <TouchableOpacity style={styles.retryBtn} onPress={() => setLoading(true)}>
             <Text style={styles.retryBtnText}>Coba Lagi</Text>
           </TouchableOpacity>
         </View>
@@ -89,7 +83,7 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
     }
 
     return filtered.map((materi) => (
-      <View key={materi.id} style={styles.card}>
+      <View key={materi.id || Math.random()} style={styles.card}>
         <View style={styles.cardIconBox}>
           <Image source={LOGO_SOURCE} style={styles.cardIcon} resizeMode="contain" />
         </View>
@@ -101,7 +95,8 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
         </View>
         <TouchableOpacity
           style={styles.lihatBtn}
-          onPress={() => onChapterSelect(materi.namaMateri)}
+          // PENTING: Kita kirim seluruh object "materi" ke App.jsx
+          onPress={() => onChapterSelect(materi)}
         >
           <Text style={styles.lihatBtnText}>Lihat</Text>
         </TouchableOpacity>
@@ -122,7 +117,6 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
       </View>
 
       <View style={styles.contentContainer}>
-
         <View style={styles.contentHeader}>
           <Text style={styles.contentTitle}><Text style={{ fontWeight: 'bold' }}>Materi</Text></Text>
           <Text style={{ fontSize: 18, color: '#666' }}>▼</Text>
@@ -154,25 +148,19 @@ const styles = StyleSheet.create({
   backBtn: { padding: 10, marginLeft: -10 },
   backIcon: { fontSize: 24, color: '#FFF', fontWeight: 'bold' },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
-
   contentContainer: { flex: 1, backgroundColor: '#FAFAFA', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 20, paddingTop: 25 },
   contentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   contentTitle: { fontSize: 18, color: '#333' },
-
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#EEE', borderRadius: 12, paddingHorizontal: 15, height: 50, marginBottom: 20 },
   searchInput: { flex: 1, height: '100%', color: '#333' },
-
   card: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 15, padding: 15, alignItems: 'center', marginBottom: 15, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 },
   cardIconBox: { width: 50, height: 50, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   cardIcon: { width: 35, height: 35, tintColor: '#333' },
   cardTextContainer: { flex: 1, paddingRight: 10 },
   cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 3 },
   cardSubtitle: { fontSize: 11, color: '#888', lineHeight: 14 },
-
   lihatBtn: { backgroundColor: '#D0E1F9', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 8 },
   lihatBtnText: { color: '#284B7A', fontSize: 12, fontWeight: 'bold' },
-
-  // State: loading / error / kosong
   centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 10 },
   stateText: { fontSize: 14, color: '#888', textAlign: 'center', marginTop: 8 },
   errorIcon: { fontSize: 36 },
