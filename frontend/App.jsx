@@ -35,21 +35,21 @@ const App = () => {
     const handleLoginSuccess = (userData, loggedInEmail) => {
         const namaDariDB = userData?.nama_murid || userData?.namaLengkap || userData?.name || loggedInEmail.split('@')[0];
         const usernameDariDB = userData?.username || namaDariDB.toLowerCase().replace(/\s/g, '');
-
+        console.log("Data User dari Backend:", userData);
         setNamaLengkap(namaDariDB);
         setEmail(loggedInEmail);
-
+        const userProfile = userData?.profile;
         setProfileData({
-            id: userData?.id_user || userData?.id || 1, 
-            role: userData?.role || 'murid', 
-            name: namaDariDB || '-', 
-            email: loggedInEmail || '-', 
+            id: userProfile?.id || userProfile?.id_guru || userProfile?.id_murid,
+            role: userProfile?.role,
+            name: namaDariDB || '-',
+            email: loggedInEmail || '-',
             username: usernameDariDB || '-',
-            phone: userData?.no_telepon || userData?.phone || '-', 
-            gender: userData?.jenis_kelamin || userData?.gender || '-',
-            domicile: userData?.domisili || userData?.domicile || '-', 
-            education: userData?.jenjang_pendidikan || userData?.education || '-',
-            major: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-'
+            phone: userProfile?.no_telepon || userProfile?.phone || '-',
+            gender: userProfile?.jenis_kelamin || userProfile?.gender || '-',
+            domicile: userProfile?.domisili || userProfile?.domicile || '-',
+            education: userProfile?.jenjang_pendidikan || userProfile?.education || '-',
+            major: userProfile?.kelas_jurusan || userProfile?.jurusan || userProfile?.major || '-'
         });
 
         setShowLoginSuccessAlert(true);
@@ -57,7 +57,7 @@ const App = () => {
     };
 
     const handleLogout = () => {
-        setShowLoginSuccessAlert(false); 
+        setShowLoginSuccessAlert(false);
         setCurrentPage('Login');
     }
 
@@ -73,7 +73,7 @@ const App = () => {
                 email={email}
                 onLogout={handleLogout}
                 onSelectSubject={(subjectData) => {
-                    setSelectedSubject(subjectData); 
+                    setSelectedSubject(subjectData);
                     setCurrentPage('Materi');
                 }}
                 onNavigate={(page, tab) => { if (tab) setActivityTab(tab); setCurrentPage(page); }}
@@ -85,17 +85,17 @@ const App = () => {
 
     if (currentPage === 'Activity') {
         return (
-            <ActivityPage 
-                initialTab={activityTab} 
-                onNavigate={(page) => setCurrentPage(page)} 
-                onDetailClick={() => setCurrentPage('SessionDetail')} 
+            <ActivityPage
+                initialTab={activityTab}
+                onNavigate={(page) => setCurrentPage(page)}
+                onDetailClick={() => setCurrentPage('SessionDetail')}
                 // MENGIRIMKAN ID DAN ROLE USER DARI DATA PROFILE GLOBAL KE ACTIVITY PAGE
-                userId={profileData.id || 1} 
-                userRole={profileData.role || 'murid'} 
+                userId={profileData.id}
+                userRole={profileData.role.toLowerCase()}
             />
         );
     }
-    
+
     if (currentPage === 'SessionDetail') return <SessionDetailPage onBack={() => setCurrentPage('Activity')} />;
     if (currentPage === 'Profile') return <ProfilePage profileData={profileData} onNavigate={(page) => setCurrentPage(page)} />;
 
@@ -115,14 +115,14 @@ const App = () => {
                 }}
             />
         );
-    } 
-    
+    }
+
     // Melempar objek data materi ke DetailMateriPage
     if (currentPage === 'Detail') return <DetailMateriPage chapterData={selectedChapter} onBack={() => setCurrentPage('Materi')} />;
 
     if (currentPage === 'Chat') return <ChatPage onNavigate={(page) => setCurrentPage(page)} onChatPress={(chatData) => { setSelectedChatUser(chatData); setCurrentPage('ChatRoom'); }} />;
     if (currentPage === 'ChatRoom') return <ChatRoomPage chatData={selectedChatUser} onBack={() => setCurrentPage('Chat')} />;
-
+    console.log("DEBUG GLOBAL STATE:", profileData);
     return <LoginPage onLoginSuccess={handleLoginSuccess} onNavigateToRegister={() => setCurrentPage('Register')} onForgotPassword={() => setCurrentPage('ResetPassword')} />;
 };
 

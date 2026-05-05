@@ -7,6 +7,7 @@ class User {
     #createdAt;
 
     constructor(username, email, password, nama_user, id = null) {
+        this.#idUser = id;
         this.#username = username;
         this.#email = email;
         this.#password = password;
@@ -38,6 +39,7 @@ class User {
             username: this.#username,
             nama: this.#namaUser,
             email: this.#email,
+            role: this.getRole(),
             createdAt: this.#createdAt
         };
     }

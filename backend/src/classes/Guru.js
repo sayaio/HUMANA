@@ -10,8 +10,8 @@ class Guru extends User{
   #daftarPesanan;
   #daftarFeedback;
 
-  constructor(username, email, password, nama_user) {
-    super(username, email, password, nama_user);
+  constructor(username, email, password, nama_user, id) {
+    super(username, email, password, nama_user, id);
     
     // Inisialisasi variabel sesuai deklarasi private di atas
     this.#portofolio = [];

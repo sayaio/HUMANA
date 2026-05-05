@@ -10,7 +10,7 @@ const login = async (req, res) => {
         conn = await pool.getConnection();
 
         const query = `
-        SELECT 
+        SELECT
             id_guru AS id, 
             nama_guru AS nama_lengkap, 
             email_guru AS email, 
@@ -36,7 +36,7 @@ const login = async (req, res) => {
             let userAktif;
             
             if (dataDB.role === 'Guru') {
-                userAktif = new Guru(dataDB.username, dataDB.email, dataDB.password, dataDB.nama_lengkap);
+                userAktif = new Guru(dataDB.nama_lengkap, dataDB.email, dataDB.password, dataDB.nama_user, dataDB.id);
             } else if (dataDB.role === 'Murid') {
                 userAktif = new Murid(dataDB.username, dataDB.email, dataDB.password, dataDB.nama_user, dataDB.id, dataDB.kelas);
             }
