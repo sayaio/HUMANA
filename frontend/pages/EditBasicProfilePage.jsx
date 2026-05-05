@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { 
   StyleSheet, Text, View, TouchableOpacity, SafeAreaView, 
-  StatusBar, ScrollView, TextInput, ActivityIndicator 
+  StatusBar, ScrollView, TextInput, ActivityIndicator, Alert 
 } from 'react-native';
 
+// Import API dari file service kamu
 import { updateBasicProfile } from '../services/edtProfileService';
-import CustomAlert from '../components/CustomAlert'; // IMPORT CUSTOM ALERT
 
 const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
   const [username, setUsername] = useState(profileData.username);
@@ -13,27 +13,14 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
   const [gender, setGender] = useState(profileData.gender);
   const [domicile, setDomicile] = useState(profileData.domicile);
   
+  // State untuk animasi loading
   const [isLoading, setIsLoading] = useState(false);
-
-  // STATE UNTUK CUSTOM ALERT
-  const [alertConfig, setAlertConfig] = useState({
-    visible: false, type: 'success', title: '', message: '', onCloseAction: null
-  });
-
-  const showAlert = (type, title, message, onCloseAction = null) => {
-    setAlertConfig({ visible: true, type, title, message, onCloseAction });
-  };
-
-  const handleCloseAlert = () => {
-    setAlertConfig(prev => ({ ...prev, visible: false }));
-    if (alertConfig.onCloseAction) {
-      alertConfig.onCloseAction();
-    }
-  };
 
   const handleSave = async () => {
     setIsLoading(true);
     try {
+      // Menyiapkan payload untuk dikirim ke backend
+      // (Menyertakan field ganda agar lebih fleksibel dengan nama kolom di database kamu)
       const payload = {
         id: profileData.id,
         id_user: profileData.id,
@@ -48,18 +35,16 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
 
       const result = await updateBasicProfile(payload);
 
+      // Mengecek apakah respons sukses
       if (result.success === true || result.status === 200) {
-        // Tampilkan Custom Alert Sukses, lalu simpan & kembali ke profil saat ditutup
-        showAlert('success', 'Sukses!', 'Profil dasar berhasil diperbarui.', () => {
-          onSave({ ...profileData, username, phone, gender, domicile });
-        });
+        // Jika berhasil, perbarui data di App.jsx dan kembali ke Profile
+        onSave({ ...profileData, username, phone, gender, domicile });
       } else {
-        // Tampilkan Custom Alert Gagal
-        showAlert('error', 'Gagal Menyimpan', result.message || "Pastikan data sudah benar.");
+        Alert.alert("Gagal Menyimpan", result.message || "Pastikan data sudah benar.");
       }
     } catch (error) {
       console.log("Error Update Basic Profile:", error);
-      showAlert('error', 'Error Jaringan', "Gagal terhubung ke server. Periksa koneksi internetmu.");
+      Alert.alert("Error Jaringan", "Gagal terhubung ke server. Periksa koneksi internetmu.");
     } finally {
       setIsLoading(false);
     }
@@ -108,15 +93,6 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
           )}
         </TouchableOpacity>
       </View>
-
-      {/* PANGGIL KOMPONEN CUSTOM ALERT DI SINI */}
-      <CustomAlert 
-        visible={alertConfig.visible}
-        type={alertConfig.type}
-        title={alertConfig.title}
-        message={alertConfig.message}
-        onClose={handleCloseAlert}
-      />
     </SafeAreaView>
   );
 };
