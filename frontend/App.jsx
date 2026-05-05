@@ -26,17 +26,16 @@ const App = () => {
     });
 
     const [selectedSubject, setSelectedSubject] = useState(null);
-    const [selectedChapter, setSelectedChapter] = useState(null); // Diubah menjadi object untuk menampung seluruh data materi
+    const [selectedChapter, setSelectedChapter] = useState(null);
     const [activityTab, setActivityTab] = useState('aktif');
     const [selectedChatUser, setSelectedChatUser] = useState(null);
 
     const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
 
     const handleLoginSuccess = (userData, loggedInEmail) => {
-        console.log("DEBUG DATA MENTAH:", JSON.stringify(userData, null, 2));
         const namaDariDB = userData?.nama_murid || userData?.namaLengkap || userData?.name || loggedInEmail.split('@')[0];
         const usernameDariDB = userData?.username || namaDariDB.toLowerCase().replace(/\s/g, '');
-        console.log("Data User dari Backend:", userData);
+        
         setNamaLengkap(namaDariDB);
         setEmail(loggedInEmail);
         setProfileData({
@@ -52,8 +51,6 @@ const App = () => {
             major: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-'
         });
 
-        setNamaLengkap(namaDariDB);
-        setEmail(loggedInEmail);
         setShowLoginSuccessAlert(true);
         setCurrentPage('Home');
     };
@@ -81,6 +78,9 @@ const App = () => {
                 onNavigate={(page, tab) => { if (tab) setActivityTab(tab); setCurrentPage(page); }}
                 showSuccessAlert={showLoginSuccessAlert}
                 onAlertClose={() => setShowLoginSuccessAlert(false)}
+                // ---> INI TAMBAHAN BARUNYA AGAR HOME BISA FETCH JADWAL AKTIF <---
+                userId={profileData.id}
+                userRole={(profileData.role || 'murid').toLowerCase()}
             />
         );
     }
@@ -91,7 +91,6 @@ const App = () => {
                 initialTab={activityTab}
                 onNavigate={(page) => setCurrentPage(page)}
                 onDetailClick={() => setCurrentPage('SessionDetail')}
-                // MENGIRIMKAN ID DAN ROLE USER DARI DATA PROFILE GLOBAL KE ACTIVITY PAGE
                 userId={profileData.id}
                 userRole={(profileData.role || 'murid').toLowerCase()}
             />
@@ -111,7 +110,6 @@ const App = () => {
                 subjectName={selectedSubject?.subjectName}
                 onBack={() => setCurrentPage('Home')}
                 onChapterSelect={(materiData) => {
-                    // Menerima seluruh objek data materi dari MateriPage
                     setSelectedChapter(materiData);
                     setCurrentPage('Detail');
                 }}
@@ -119,12 +117,11 @@ const App = () => {
         );
     }
 
-    // Melempar objek data materi ke DetailMateriPage
     if (currentPage === 'Detail') return <DetailMateriPage chapterData={selectedChapter} onBack={() => setCurrentPage('Materi')} />;
 
     if (currentPage === 'Chat') return <ChatPage onNavigate={(page) => setCurrentPage(page)} onChatPress={(chatData) => { setSelectedChatUser(chatData); setCurrentPage('ChatRoom'); }} />;
     if (currentPage === 'ChatRoom') return <ChatRoomPage chatData={selectedChatUser} onBack={() => setCurrentPage('Chat')} />;
-    console.log("DEBUG GLOBAL STATE:", profileData);
+    
     return <LoginPage onLoginSuccess={handleLoginSuccess} onNavigateToRegister={() => setCurrentPage('Register')} onForgotPassword={() => setCurrentPage('ResetPassword')} />;
 };
 

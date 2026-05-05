@@ -7,6 +7,9 @@ import {
 import CustomAlert from '../components/CustomAlert';
 import { fetchAllMapel } from '../services/MateriService';
 
+// ---> IMPORT API HISTORY UNTUK JADWAL AKTIF <---
+import { getActiveSchedule } from '../services/historyService';
+
 const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
@@ -21,16 +24,23 @@ const SUBJECT_ICONS = {
     'Bahasa Inggris': require('../assets/inggris.png'),
 };
 
-const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, showSuccessAlert, onAlertClose }) => {
+// Menambahkan userId dan userRole ke props
+const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, showSuccessAlert, onAlertClose, userId, userRole }) => {
     const firstName = namaLengkap ? namaLengkap.split(' ')[0] : 'Murid';
+    
     const [isMateriVisible, setIsMateriVisible] = useState(false);
     const [allSubjects, setAllSubjects] = useState([]);
     const [loadingMapel, setLoadingMapel] = useState(false);
+
+    // ---> STATE UNTUK JADWAL AKTIF <---
+    const [activeSessions, setActiveSessions] = useState([]);
+    const [loadingSessions, setLoadingSessions] = useState(false);
 
     const [alertConfig, setAlertConfig] = useState({
         visible: false, type: 'success', title: '', message: ''
     });
 
+    // EFFECT UNTUK LOAD MAPEL (TIDAK DIUBAH)
     useEffect(() => {
         if (isMateriVisible) {
             const loadMapel = async () => {
@@ -52,6 +62,34 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
         }
     }, [isMateriVisible]);
 
+    // ---> EFFECT BARU UNTUK LOAD JADWAL AKTIF <---
+    useEffect(() => {
+        const fetchActiveSessions = async () => {
+            // Jangan load jika id atau role kosong
+            if (!userId || !userRole || userRole === '-') return;
+            
+            setLoadingSessions(true);
+            try {
+                const result = await getActiveSchedule(userRole, userId);
+                if (result && result.success) {
+                    const rawData = result.data;
+                    const formattedData = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
+                    setActiveSessions(formattedData);
+                } else {
+                    setActiveSessions([]);
+                }
+            } catch (error) {
+                console.log("Error fetch active sessions di Home:", error);
+                setActiveSessions([]);
+            } finally {
+                setLoadingSessions(false);
+            }
+        };
+
+        fetchActiveSessions();
+    }, [userId, userRole]);
+
+    // EFFECT UNTUK ALERT LOGIN SUKSES
     useEffect(() => {
         if (showSuccessAlert) {
             setAlertConfig({
@@ -97,13 +135,52 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                     <Text style={styles.homeGreetingText}>Selamat datang,{"\n"}{firstName} !</Text>
                 </View>
 
-                <View style={styles.scheduleCard}>
-                    <Text style={styles.scheduleSubHeader}>SESI HARI INI</Text>
-                    <Text style={styles.scheduleTitle}><Text style={{ fontWeight: 'bold' }}>Matematika</Text> - Relasi & Fungsi</Text>
-                    <View style={styles.scheduleDetails}>
-                        <View><Text style={styles.scheduleLabel}>Waktu</Text><Text style={styles.scheduleValue}>06.30 - 09.30</Text></View>
-                        <View><Text style={styles.scheduleLabel}>Guru</Text><Text style={styles.scheduleValue}>Ahmad Pambudi, S.Pd.</Text></View>
-                    </View>
+                {/* ---> AREA JADWAL AKTIF BISA DI SLIDE <--- */}
+                <View style={styles.scheduleContainer}>
+                    {loadingSessions ? (
+                        <View style={[styles.scheduleCard, { justifyContent: 'center', alignItems: 'center' }]}>
+                            <ActivityIndicator size="small" color="#284B7A" />
+                            <Text style={{ marginTop: 10, color: '#888', fontSize: 12 }}>Mencari sesi hari ini...</Text>
+                        </View>
+                    ) : activeSessions.length > 0 ? (
+                        <ScrollView 
+                            horizontal 
+                            showsHorizontalScrollIndicator={false} 
+                            contentContainerStyle={styles.scheduleScrollContent}
+                        >
+                            {activeSessions.map((session, index) => (
+                                <View key={index} style={styles.scheduleCardScroll}>
+                                    <Text style={styles.scheduleSubHeader}>SESI HARI INI</Text>
+                                    <Text style={styles.scheduleTitle}>
+                                        <Text style={{ fontWeight: 'bold' }}>
+                                            {session.mata_pelajaran?.nama_mapel || session.nama_mapel || 'Pelajaran'}
+                                        </Text> - {session.materi?.nama_materi || session.nama_materi || 'Materi'}
+                                    </Text>
+                                    <View style={styles.scheduleDetails}>
+                                        <View>
+                                            <Text style={styles.scheduleLabel}>Waktu</Text>
+                                            <Text style={styles.scheduleValue}>
+                                                {session.waktu_mulai ? new Date(session.waktu_mulai).toLocaleString('id-ID', {
+                                                    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                                                }) : 'Waktu tidak tersedia'}
+                                            </Text>
+                                        </View>
+                                        <View>
+                                            <Text style={styles.scheduleLabel}>Guru / Murid</Text>
+                                            <Text style={styles.scheduleValue}>
+                                                {userRole === 'murid' ? (session.nama_guru || 'Guru') : (session.nama_murid || 'Murid')}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            ))}
+                        </ScrollView>
+                    ) : (
+                        <View style={[styles.scheduleCard, { justifyContent: 'center', alignItems: 'center', paddingVertical: 30 }]}>
+                            <Text style={{ fontSize: 35, marginBottom: 5 }}>🏖️</Text>
+                            <Text style={{ color: '#888', fontSize: 13, fontWeight: 'bold' }}>Tidak ada sesi hari ini.</Text>
+                        </View>
+                    )}
                 </View>
 
                 <View style={styles.quickActionsContainer}>
@@ -182,7 +259,18 @@ const styles = StyleSheet.create({
     headerWatermark: { position: 'absolute', right: -30, top: 10, width: 280, height: 280, tintColor: '#FFFFFF', opacity: 0.05 },
     greetingContainer: { marginTop: 80, paddingHorizontal: 25 },
     homeGreetingText: { fontSize: 34, fontWeight: 'bold', color: '#FFF', lineHeight: 42, textTransform: 'capitalize' },
-    scheduleCard: { backgroundColor: '#FFF', marginHorizontal: 20, marginTop: 45, borderRadius: 20, padding: 22, elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8 },
+    
+    // ---> STYLE UNTUK CONTAINER JADWAL SLIDER <---
+    scheduleContainer: { marginTop: 45 },
+    scheduleScrollContent: { paddingHorizontal: 20, paddingBottom: 15 },
+    scheduleCardScroll: { 
+        backgroundColor: '#FFF', borderRadius: 20, padding: 22, elevation: 6, 
+        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8,
+        width: width * 0.85, // Lebar card dikurangi agar card selanjutnya kelihatan
+        marginRight: 15
+    },
+    
+    scheduleCard: { backgroundColor: '#FFF', marginHorizontal: 20, borderRadius: 20, padding: 22, elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8 },
     scheduleSubHeader: { fontSize: 10, color: '#A9A9A9', fontWeight: 'bold', marginBottom: 6, letterSpacing: 1 },
     scheduleTitle: { fontSize: 17, color: '#333', marginBottom: 18 },
     scheduleDetails: { flexDirection: 'row', justifyContent: 'flex-start', gap: 40 },
