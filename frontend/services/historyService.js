@@ -18,3 +18,20 @@ export const getHistory = async (role, id) => {
         return { success: false, message: error.message };
     }
 };
+
+export const getActiveSchedule = async (role, id) => {
+    console.log(`[Service] Memanggil URL: ${API_URL}/active/${role}/${id}`);
+    try {
+        const response = await fetch(`${API_URL}/active/${role}/${id}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        // Fetch perlu di-parsing dulu ke JSON
+        const result = await response.json(); 
+        return result; // Kembalikan seluruh objek result { success: true, data: [...] }
+    } catch (error) {
+        console.log('[HistoryService] Error fetching active schedule:', error);
+        return { success: false, data: [], message: error.message };
+    }
+};

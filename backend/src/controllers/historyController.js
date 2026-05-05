@@ -4,7 +4,7 @@ const pool = require('../database');
 const getHistory = async (req, res) => {
     const { role, id } = req.params;
     const userRole = role.toLowerCase();
-    
+
     if (!role || !id) {
         return res.status(400).json({ success: false, message: 'Parameter role dan id wajib diisi.' });
     }
@@ -15,7 +15,7 @@ const getHistory = async (req, res) => {
 
     try {
         const whereClause = userRole === 'murid' ? 'murid.id_murid' : 'guru.id_guru';
-        
+
         // --- QUERY DIPERBAIKI ---
         // 1. Menambahkan SELECT yang dibutuhkan frontend
         // 2. Menambahkan LEFT JOIN untuk mata_pelajaran
@@ -54,9 +54,9 @@ const getHistory = async (req, res) => {
         `;
 
         const rows = await pool.query(query, [id]);
-        
+
         console.log(`Found ${rows.length} history records for ${userRole} ID ${id}`);
-        
+
         if (rows.length === 0) {
             return res.status(404).json({ success: false, message: 'Belum ada riwayat pemesanan.' });
         }
@@ -90,7 +90,7 @@ const getHistory = async (req, res) => {
                 jurusan: row.jurusan,
             },
             // Abaikan sesi, pembayaran, feedback untuk sekarang jika belum di JOIN di SQL atas
-            sesi: null, 
+            sesi: null,
             pembayaran: null,
             feedback: null
         }));
@@ -103,4 +103,36 @@ const getHistory = async (req, res) => {
     }
 };
 
-module.exports = { getHistory };
+const getActiveSchedule = async (req, res) => {
+    console.log(`[Backend] Ada request masuk untuk role: ${req.params.role}, id: ${req.params.id}`);
+    const { role, id } = req.params;
+    const userRole = role.toLowerCase();
+    const whereClause = userRole === 'murid' ? 'murid.id_murid' : 'guru.id_guru';
+
+    try {
+        const query = `
+            SELECT 
+                pemesanan.id_pemesanan, pemesanan.status_pemesanan, 
+                pemesanan.waktu_mulai, pemesanan.waktu_selesai,
+                murid.nama_murid, guru.nama_guru, 
+                materi.nama_materi, mapel.nama_mapel
+            FROM pemesanan 
+            JOIN murid ON murid.id_murid = pemesanan.id_murid
+            JOIN guru ON guru.id_guru = pemesanan.id_guru
+            LEFT JOIN materi ON materi.id_materi = pemesanan.id_materi
+            LEFT JOIN matapelajaran mapel ON mapel.id_mapel = materi.id_mapel
+            WHERE (pemesanan.status_pemesanan = 'dikonfirmasi' OR pemesanan.status_pemesanan = 'menunggu konfirmasi') 
+            AND (${whereClause} = ?)
+            ORDER BY pemesanan.waktu_mulai ASC;
+        `;
+
+        const rows = await pool.query(query, [id]);
+
+        console.log(`[Backend] Ditemukan ${rows.length} jadwal aktif untuk ID ${id}`);
+        return res.status(200).json({ success: true, data: rows });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+module.exports = { getHistory, getActiveSchedule };

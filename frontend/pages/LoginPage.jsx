@@ -46,7 +46,7 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
             const result = await loginUser(email, password); 
             
             if (result.success === true || result.token || result.status === 200) {
-                const userData = result.data || result.user || result || {};
+                const userData = result.profile || result.data || result.user || result || {};
                 onLoginSuccess(userData, email); 
             } else {
                 showAlert('error', 'Login Gagal', result.message || 'Cek kembali email dan password-mu atau coba metode lain.');

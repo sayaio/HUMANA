@@ -16,7 +16,8 @@ const feedbackController = require('./src/controllers/feedbackController');
 router.post('/', feedbackController.berikanFeedback);
 router.get('/guru/:id_guru', feedbackController.getFeedbackByGuru);
 
-const historyController = require('./src/controllers/historyController'); // tambah ini
-router.get('/history/:role/:id', historyController.getHistory);           // tambah ini
+const historyController = require('./src/controllers/historyController');
+router.get('/history/:role/:id', historyController.getHistory); 
+router.get('/active/:role/:id', historyController.getActiveSchedule);
 
 module.exports = router;

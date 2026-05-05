@@ -33,25 +33,27 @@ const App = () => {
     const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
 
     const handleLoginSuccess = (userData, loggedInEmail) => {
+        console.log("DEBUG DATA MENTAH:", JSON.stringify(userData, null, 2));
         const namaDariDB = userData?.nama_murid || userData?.namaLengkap || userData?.name || loggedInEmail.split('@')[0];
         const usernameDariDB = userData?.username || namaDariDB.toLowerCase().replace(/\s/g, '');
         console.log("Data User dari Backend:", userData);
         setNamaLengkap(namaDariDB);
         setEmail(loggedInEmail);
-        const userProfile = userData?.profile;
         setProfileData({
-            id: userProfile?.id || userProfile?.id_guru || userProfile?.id_murid,
-            role: userProfile?.role,
+            id: userData?.id,
+            role: userData?.role || '-',
             name: namaDariDB || '-',
             email: loggedInEmail || '-',
             username: usernameDariDB || '-',
-            phone: userProfile?.no_telepon || userProfile?.phone || '-',
-            gender: userProfile?.jenis_kelamin || userProfile?.gender || '-',
-            domicile: userProfile?.domisili || userProfile?.domicile || '-',
-            education: userProfile?.jenjang_pendidikan || userProfile?.education || '-',
-            major: userProfile?.kelas_jurusan || userProfile?.jurusan || userProfile?.major || '-'
+            phone: userData?.no_telepon || userData?.phone || '-',
+            gender: userData?.jenis_kelamin || userData?.gender || '-',
+            domicile: userData?.domisili || userData?.domicile || '-',
+            education: userData?.jenjang_pendidikan || userData?.education || '-',
+            major: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-'
         });
 
+        setNamaLengkap(namaDariDB);
+        setEmail(loggedInEmail);
         setShowLoginSuccessAlert(true);
         setCurrentPage('Home');
     };
@@ -91,7 +93,7 @@ const App = () => {
                 onDetailClick={() => setCurrentPage('SessionDetail')}
                 // MENGIRIMKAN ID DAN ROLE USER DARI DATA PROFILE GLOBAL KE ACTIVITY PAGE
                 userId={profileData.id}
-                userRole={profileData.role.toLowerCase()}
+                userRole={(profileData.role || 'murid').toLowerCase()}
             />
         );
     }

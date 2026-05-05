@@ -4,7 +4,7 @@ import {
     StatusBar, ScrollView, Image, ActivityIndicator
 } from 'react-native';
 
-import { getHistory } from '../services/historyService';
+import { getHistory, getActiveSchedule } from '../services/historyService';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
@@ -22,9 +22,22 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
         setIsLoading(true);
         try {
             const result = await getActiveSchedule(userRole, userId);
-            setActiveData(result.data || []);
+            console.log("Hasil dari Backend:", result); // Lihat di terminal/console log
+
+            if (result && result.success) {
+                // LOGIKA PERBAIKAN:
+                // Jika result.data sudah array, pakai langsung.
+                // Jika result.data adalah object tunggal, bungkus jadi [result.data].
+                const rawData = result.data;
+                const formattedData = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
+
+                setActiveData(formattedData);
+            } else {
+                setActiveData([]);
+            }
         } catch (error) {
             console.log("Error fetch active:", error);
+            setActiveData([]);
         } finally {
             setIsLoading(false);
         }
@@ -93,18 +106,16 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
             <View style={styles.cardInfo}>
                 <Text style={styles.cardTitle}>
                     <Text style={{ fontWeight: 'bold' }}>
-                        {/* Mengambil nama_mapel dari dalam objek mata_pelajaran */}
-                        {item.mata_pelajaran?.nama_mapel || 'Pelajaran'}
-                    </Text> - {item.materi?.nama_materi || 'Materi'}
+                        {/* Cek format dari getHistory ATAU format flat dari getActiveSchedule */}
+                        {item.mata_pelajaran?.nama_mapel || item.nama_mapel || 'Pelajaran'}
+                    </Text> - {item.materi?.nama_materi || item.nama_materi || 'Materi'}
                 </Text>
 
                 <Text style={styles.cardGuru}>
-                    {/* Mengambil nama_guru dari dalam objek guru */}
                     👤 {userRole === 'murid' ? item.nama_guru : item.nama_murid}
                 </Text>
 
                 <Text style={styles.cardTime}>
-                    {/* Format waktu dari database */}
                     {item.waktu_mulai ? new Date(item.waktu_mulai).toLocaleString('id-ID', {
                         day: '2-digit',
                         month: 'short',
@@ -145,8 +156,22 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
                 {activeTab === 'aktif' ? (
-                    dummyDataAktif.map((_, index) => renderCard({}, false, index))
+                    // --- SEKSI JADWAL AKTIF ---
+                    isLoading ? (
+                        <View style={{ marginTop: 50, alignItems: 'center' }}>
+                            <ActivityIndicator size="large" color="#284B7A" />
+                            <Text style={{ marginTop: 10, color: '#888' }}>Memuat jadwal...</Text>
+                        </View>
+                    ) : activeData && activeData.length > 0 ? (
+                        activeData.map((item, index) => renderCard(item, false, index))
+                    ) : (
+                        <View style={{ marginTop: 50, alignItems: 'center' }}>
+                            <Text style={{ fontSize: 40 }}>📅</Text>
+                            <Text style={styles.emptyText}>Tidak ada jadwal aktif saat ini.</Text>
+                        </View>
+                    )
                 ) : (
+                    // --- SEKSI RIWAYAT SESI ---
                     isLoading ? (
                         <View style={{ marginTop: 50, alignItems: 'center' }}>
                             <ActivityIndicator size="large" color="#284B7A" />
