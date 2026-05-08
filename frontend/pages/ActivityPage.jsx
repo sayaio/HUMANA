@@ -126,8 +126,13 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
             </View>
 
             {isHistory ? (
-                <TouchableOpacity style={styles.actionBtn} onPress={() => onDetailClick(item)}>
-                    <Text style={styles.actionBtnText}>Lihat detail</Text>
+                <TouchableOpacity 
+                    style={[styles.actionBtn, { backgroundColor: '#284B7A' }]} 
+                    onPress={() => {
+                        onDetailClick(item); 
+                    }}
+                >
+                    <Text style={styles.actionBtnText}>Beri Ulasan</Text>
                 </TouchableOpacity>
             ) : (
                 <TouchableOpacity style={styles.actionBtn}>

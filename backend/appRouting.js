@@ -13,8 +13,7 @@ router.get('/materi/all', materiController.getAllMateri);
 router.get('/mapel', materiController.getAllMapel);
 
 const feedbackController = require('./src/controllers/feedbackController');
-router.post('/', feedbackController.berikanFeedback);
-router.get('/guru/:id_guru', feedbackController.getFeedbackByGuru);
+router.post('/feedback', feedbackController.submitFeedback);
 
 const historyController = require('./src/controllers/historyController');
 router.get('/history/:role/:id', historyController.getHistory); 

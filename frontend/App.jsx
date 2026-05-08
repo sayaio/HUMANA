@@ -32,6 +32,8 @@ const App = () => {
 
     const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
 
+    const [selectedSession, setSelectedSession] = useState(null);
+
     const handleLoginSuccess = (userData, loggedInEmail) => {
         const namaDariDB = userData?.nama_murid || userData?.namaLengkap || userData?.name || loggedInEmail.split('@')[0];
         const usernameDariDB = userData?.username || namaDariDB.toLowerCase().replace(/\s/g, '');
@@ -90,14 +92,27 @@ const App = () => {
             <ActivityPage
                 initialTab={activityTab}
                 onNavigate={(page) => setCurrentPage(page)}
-                onDetailClick={() => setCurrentPage('SessionDetail')}
+                onDetailClick={(item) => { // TAMBAHKAN 'item'
+                    setSelectedSession(item); // SIMPAN data yang diklik
+                    setCurrentPage('SessionDetail');
+                }}
                 userId={profileData.id}
                 userRole={(profileData.role || 'murid').toLowerCase()}
             />
         );
     }
 
-    if (currentPage === 'SessionDetail') return <SessionDetailPage onBack={() => setCurrentPage('Activity')} />;
+    // Pastikan juga bagian ini mengirim selectedSession
+    if (currentPage === 'SessionDetail') {
+        return (
+            <SessionDetailPage 
+                onBack={() => setCurrentPage('Activity')} 
+                sessionData={selectedSession} // KIRIM data ke halaman detail
+                userId={profileData.id} 
+            />
+        );
+    }
+
     if (currentPage === 'Profile') return <ProfilePage profileData={profileData} onNavigate={(page) => setCurrentPage(page)} />;
 
     if (currentPage === 'EditBasicProfile') return <EditBasicProfilePage profileData={profileData} onCancel={() => setCurrentPage('Profile')} onSave={(updatedData) => { setProfileData(updatedData); setNamaLengkap(updatedData.name); setCurrentPage('Profile'); }} />;

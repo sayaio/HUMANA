@@ -1,19 +1,19 @@
 import { API_URL } from '../src/config';
 
-export const submitFeedback = async (id_pemesanan, rating, ulasan) => {
+export const postFeedback = async (feedbackData) => {
     try {
         const response = await fetch(`${API_URL}/feedback`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id_pemesanan,
-                rating,
-                ulasan
-            }),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(feedbackData),
         });
-        return await response.json();
+
+        const result = await response.json();
+        return result;
     } catch (error) {
-        console.log('[FeedbackService] Error:', error);
-        return { success: false, message: error.message };
+        console.error("Error pada feedbackService:", error);
+        return { success: false, message: "Gagal terhubung ke server" };
     }
 };
