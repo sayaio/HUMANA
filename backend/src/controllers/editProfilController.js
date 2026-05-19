@@ -2,35 +2,65 @@
 const pool = require('../database');
 
 const updateBasic = async (req, res) => {
-  const { email, username, phone, gender, domicile } = req.body; // domicile di sini adalah Alamat Lengkap
+    const { email, username, phone, gender, domicile } = req.body; // domicile di sini adalah Alamat Lengkap
 
-  try {
-    await pool.query(
-      `UPDATE murid SET username = ?, no_telepon = ?, jenis_kelamin = ?, domisili = ? WHERE email = ?`,
-      [username, phone, gender, domicile, email]
-    );
+    try {
+        let genderDb = null;
+        if (gender) {
+            const normalizedGender = gender.trim().toLowerCase();
+            if (normalizedGender === 'laki-laki' || normalizedGender === 'l') {
+                genderDb = 'L';
+            } else if (normalizedGender === 'perempuan' || normalizedGender === 'p') {
+                genderDb = 'P';
+            }
+        }
+        await pool.query(
+            `UPDATE murid SET username = ?, no_telepon = ?, jenis_kelamin = ?, alamat = ? WHERE email = ?`,
+            [username, phone, genderDb, domicile, email]
+        );
 
-    return res.status(200).json({ success: true, message: 'Profil dasar berhasil diperbarui.' });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: 'Gagal memperbarui profil dasar.' });
-  }
+        return res.status(200).json({ success: true, message: 'Profil dasar berhasil diperbarui.' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Gagal memperbarui profil dasar.' });
+    }
 };
 
 const updateAcademic = async (req, res) => {
-  const { email, education, major } = req.body; // education = kelas (int), major = jurusan
+    const { email, major } = req.body; // major menerima string gabungan seperti "12 - IPA" atau "9 - (NULL)" atau "9"
 
-  try {
-    await pool.query(
-      `UPDATE murid SET jenjang_pendidikan = ?, kelas_jurusan = ? WHERE email = ?`,
-      [education, major, email]
-    );
+    try {
+        let kelasDb = null;
+        let jurusanDb = null;
 
-    return res.status(200).json({ success: true, message: 'Profil akademik berhasil diperbarui.' });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: 'Gagal memperbarui profil akademik.' });
-  }
+        if (major && major.includes('-')) {
+            // Kasus 1: Input berupa format gabungan "Kelas - Jurusan" (cth: "12 - IPA")
+            const parts = major.split('-');
+            const rawKelas = parts[0].trim();
+            const rawJurusan = parts[1].trim();
+
+            kelasDb = parseInt(rawKelas, 10) || null;
+
+            // Cek jika jurusan kosong, bertuliskan (NULL), atau tidak diisi
+            if (rawJurusan && rawJurusan.toUpperCase() !== '(NULL)' && rawJurusan !== '') {
+                jurusanDb = rawJurusan;
+            }
+        } else if (major) {
+            // Kasus 2: User hanya menginput angka kelas saja (cth: "9")
+            kelasDb = parseInt(major.trim(), 10) || null;
+        }
+
+        // Jalankan query ke nama kolom database yang asli: 'kelas' dan 'jurusan'
+        await pool.query(
+            `UPDATE murid SET kelas = ?, jurusan = ? WHERE email = ?`,
+            [kelasDb, jurusanDb, email]
+        );
+
+        return res.status(200).json({ success: true, message: 'Profil akademik berhasil diperbarui.' });
+    } catch (error) {
+        console.error("Error pada updateAcademic:", error);
+        return res.status(500).json({ success: false, message: 'Gagal memperbarui profil akademik.' });
+    }
 };
 
 module.exports = { updateBasic, updateAcademic };

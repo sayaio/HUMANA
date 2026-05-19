@@ -7,6 +7,10 @@ router.post('/login', authController.login);
 const registerController = require('./src/controllers/registerController');
 router.post('/register', registerController.register);
 
+const editProfilController = require('./src/controllers/EditProfilController'); // Sesuaikan path-nya jika beda
+router.put('/profile/basic', editProfilController.updateBasic);
+router.put('/profile/academic', editProfilController.updateAcademic);
+
 const materiController = require('./src/controllers/MateriController');
 router.get('/materi', materiController.getMateriBySubject);
 router.get('/materi/all', materiController.getAllMateri);

@@ -37,7 +37,7 @@ const App = () => {
     const handleLoginSuccess = (userData, loggedInEmail) => {
         const namaDariDB = userData?.nama_murid || userData?.namaLengkap || userData?.name || loggedInEmail.split('@')[0];
         const usernameDariDB = userData?.username || namaDariDB.toLowerCase().replace(/\s/g, '');
-        
+
         setNamaLengkap(namaDariDB);
         setEmail(loggedInEmail);
         setProfileData({
@@ -46,11 +46,23 @@ const App = () => {
             name: namaDariDB || '-',
             email: loggedInEmail || '-',
             username: usernameDariDB || '-',
+
+            // 🛠️ FIX DOUBLE KEY: Supaya dibaca di EditProfile DAN ProfilePage
             phone: userData?.no_telepon || userData?.phone || '-',
+            no_telepon: userData?.no_telepon || userData?.phone || '-', // Dipakai ProfilePage
+
             gender: userData?.jenis_kelamin || userData?.gender || '-',
-            domicile: userData?.domisili || userData?.domicile || '-',
+            jenis_kelamin: userData?.jenis_kelamin || userData?.gender || '-', // Dipakai ProfilePage
+
+            domicile: userData?.domisili || userData?.domicile || userData?.alamat || '-',
+            domisili: userData?.domisili || userData?.domicile || userData?.alamat || '-',
+            alamat: userData?.domisili || userData?.domicile || userData?.alamat || '-', // Dipakai ProfilePage
+
             education: userData?.jenjang_pendidikan || userData?.education || '-',
-            major: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-'
+            jenjang_pendidikan: userData?.jenjang_pendidikan || userData?.education || '-',
+
+            major: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
+            kelas_jurusan: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-'
         });
 
         setShowLoginSuccessAlert(true);
@@ -105,10 +117,10 @@ const App = () => {
     // Pastikan juga bagian ini mengirim selectedSession
     if (currentPage === 'SessionDetail') {
         return (
-            <SessionDetailPage 
-                onBack={() => setCurrentPage('Activity')} 
+            <SessionDetailPage
+                onBack={() => setCurrentPage('Activity')}
                 sessionData={selectedSession} // KIRIM data ke halaman detail
-                userId={profileData.id} 
+                userId={profileData.id}
             />
         );
     }
@@ -136,7 +148,7 @@ const App = () => {
 
     if (currentPage === 'Chat') return <ChatPage onNavigate={(page) => setCurrentPage(page)} onChatPress={(chatData) => { setSelectedChatUser(chatData); setCurrentPage('ChatRoom'); }} />;
     if (currentPage === 'ChatRoom') return <ChatRoomPage chatData={selectedChatUser} onBack={() => setCurrentPage('Chat')} />;
-    
+
     return <LoginPage onLoginSuccess={handleLoginSuccess} onNavigateToRegister={() => setCurrentPage('Register')} onForgotPassword={() => setCurrentPage('ResetPassword')} />;
 };
 

@@ -15,7 +15,13 @@ const login = async (req, res) => {
             nama_guru AS nama_lengkap, 
             email_guru AS email, 
             password, 
-            'Guru' AS role 
+            'Guru' AS role,
+            NULL AS username, 
+            no_telepon,
+            jenis_kelamin,
+            alamat,
+            NULL AS kelas,
+            NULL AS jurusan
         FROM guru WHERE email_guru = ?
 
         UNION ALL
@@ -25,7 +31,13 @@ const login = async (req, res) => {
             nama_murid AS nama_lengkap, 
             email, 
             password, 
-            'Murid' AS role 
+            'Murid' AS role,
+            username,       
+            no_telepon,
+            jenis_kelamin,
+            alamat,
+            kelas,
+            jurusan
         FROM murid WHERE email = ?
         `;
 
@@ -34,25 +46,37 @@ const login = async (req, res) => {
         if (rows.length > 0) {
             const dataDB = rows[0];
             let userAktif;
-            
+
             if (dataDB.role === 'Guru') {
                 userAktif = new Guru(dataDB.nama_lengkap, dataDB.email, dataDB.password, dataDB.nama_user, dataDB.id);
             } else if (dataDB.role === 'Murid') {
-                userAktif = new Murid(dataDB.username, dataDB.email, dataDB.password, dataDB.nama_user, dataDB.id, dataDB.kelas);
+                userAktif = new Murid(
+                    dataDB.username,      // Menggunakan username asli dari DB
+                    dataDB.email,
+                    dataDB.password,
+                    dataDB.nama_lengkap,  // nama_user
+                    dataDB.id,
+                    dataDB.kelas,
+                    dataDB.no_telepon,
+                    dataDB.jenis_kelamin,
+                    dataDB.alamat,
+                    dataDB.jurusan
+                );
             }
-        
+
 
             const isLoginValid = userAktif.login(email, password);
-            
+
             if (isLoginValid) {
                 res.json({
                     success: true,
                     profile: userAktif.getProfile()
                 });
             } else {
-                res.status(401).json({ 
-                    success: false, 
-                    message: "Password salah!" });
+                res.status(401).json({
+                    success: false,
+                    message: "Password salah!"
+                });
             }
         } else {
             res.status(404).json({ success: false, message: "Akun tidak terdaftar!" });
