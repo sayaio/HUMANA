@@ -44,6 +44,8 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister, onForgotPassword }) =
         
         try {
             const result = await loginUser(email, password); 
+            console.log("Hasil Login:", email);
+            console.log("Hasil Login:", password);
             
             if (result.success === true || result.token || result.status === 200) {
                 const userData = result.profile || result.data || result.user || result || {};
