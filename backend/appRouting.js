@@ -26,5 +26,8 @@ router.get('/active/:role/:id', historyController.getActiveSchedule);
 const bankerController = require('./src/controllers/BankerController');
 router.get('/sesi/detail/:id', bankerController.getSesiDetail);
 router.put('/sesi/bayar-simulasi', bankerController.bayarSimulasi);
+const pemesananController = require('./src/controllers/pemesananController');
+router.get('/pemesanan/materi', pemesananController.getMateriDropdown);
+router.post('/pemesanan/tambah', pemesananController.tambahPemesanan);
 
 module.exports = router;
