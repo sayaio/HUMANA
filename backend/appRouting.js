@@ -23,4 +23,8 @@ const historyController = require('./src/controllers/historyController');
 router.get('/history/:role/:id', historyController.getHistory); 
 router.get('/active/:role/:id', historyController.getActiveSchedule);
 
+const bankerController = require('./src/controllers/BankerController');
+router.get('/sesi/detail/:id', bankerController.getSesiDetail);
+router.put('/sesi/bayar-simulasi', bankerController.bayarSimulasi);
+
 module.exports = router;
