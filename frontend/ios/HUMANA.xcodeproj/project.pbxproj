@@ -11,6 +11,13 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		6E9DEB435F1944B695B17A77 /* DarkerGrotesque-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 63F29BDF33D54B4D9FC6B48C /* DarkerGrotesque-Black.ttf */; };
+		78735E3CC90C470FAB2EE9C2 /* DarkerGrotesque-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 129E0A1B6FFB42FDB7961982 /* DarkerGrotesque-Bold.ttf */; };
+		C88520B4171B4A6AB952DE02 /* DarkerGrotesque-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0466C3D9F3DB48F8BED10C82 /* DarkerGrotesque-ExtraBold.ttf */; };
+		A02A66E701A947E4AB532DB5 /* DarkerGrotesque-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5DD410F3D6374F028101D5CA /* DarkerGrotesque-Light.ttf */; };
+		197AD8E9DB4A43ABA70BD645 /* DarkerGrotesque-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7015449F431C49EBBCF74844 /* DarkerGrotesque-Medium.ttf */; };
+		151FA24EEC014109AAEBE982 /* DarkerGrotesque-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 218778D9D3714AF582F03441 /* DarkerGrotesque-Regular.ttf */; };
+		C1619FDC378741D99E07FD14 /* DarkerGrotesque-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3F87ECCF29914317A6EA9D21 /* DarkerGrotesque-SemiBold.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +31,13 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = HUMANA/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = HUMANA/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		63F29BDF33D54B4D9FC6B48C /* DarkerGrotesque-Black.ttf */ = {isa = PBXFileReference; name = "DarkerGrotesque-Black.ttf"; path = "../assets/fonts/DarkerGrotesque-Black.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		129E0A1B6FFB42FDB7961982 /* DarkerGrotesque-Bold.ttf */ = {isa = PBXFileReference; name = "DarkerGrotesque-Bold.ttf"; path = "../assets/fonts/DarkerGrotesque-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		0466C3D9F3DB48F8BED10C82 /* DarkerGrotesque-ExtraBold.ttf */ = {isa = PBXFileReference; name = "DarkerGrotesque-ExtraBold.ttf"; path = "../assets/fonts/DarkerGrotesque-ExtraBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		5DD410F3D6374F028101D5CA /* DarkerGrotesque-Light.ttf */ = {isa = PBXFileReference; name = "DarkerGrotesque-Light.ttf"; path = "../assets/fonts/DarkerGrotesque-Light.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		7015449F431C49EBBCF74844 /* DarkerGrotesque-Medium.ttf */ = {isa = PBXFileReference; name = "DarkerGrotesque-Medium.ttf"; path = "../assets/fonts/DarkerGrotesque-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		218778D9D3714AF582F03441 /* DarkerGrotesque-Regular.ttf */ = {isa = PBXFileReference; name = "DarkerGrotesque-Regular.ttf"; path = "../assets/fonts/DarkerGrotesque-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		3F87ECCF29914317A6EA9D21 /* DarkerGrotesque-SemiBold.ttf */ = {isa = PBXFileReference; name = "DarkerGrotesque-SemiBold.ttf"; path = "../assets/fonts/DarkerGrotesque-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +88,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				DCF4A45DB35E40C89587C506 /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -96,6 +111,21 @@
 			);
 			path = Pods;
 			sourceTree = "<group>";
+		};
+		DCF4A45DB35E40C89587C506 /* Resources */ = {
+			isa = "PBXGroup";
+			children = (
+				63F29BDF33D54B4D9FC6B48C /* DarkerGrotesque-Black.ttf */,
+				129E0A1B6FFB42FDB7961982 /* DarkerGrotesque-Bold.ttf */,
+				0466C3D9F3DB48F8BED10C82 /* DarkerGrotesque-ExtraBold.ttf */,
+				5DD410F3D6374F028101D5CA /* DarkerGrotesque-Light.ttf */,
+				7015449F431C49EBBCF74844 /* DarkerGrotesque-Medium.ttf */,
+				218778D9D3714AF582F03441 /* DarkerGrotesque-Regular.ttf */,
+				3F87ECCF29914317A6EA9D21 /* DarkerGrotesque-SemiBold.ttf */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+			path = "";
 		};
 /* End PBXGroup section */
 
@@ -159,6 +189,13 @@
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				6E9DEB435F1944B695B17A77 /* DarkerGrotesque-Black.ttf in Resources */,
+				78735E3CC90C470FAB2EE9C2 /* DarkerGrotesque-Bold.ttf in Resources */,
+				C88520B4171B4A6AB952DE02 /* DarkerGrotesque-ExtraBold.ttf in Resources */,
+				A02A66E701A947E4AB532DB5 /* DarkerGrotesque-Light.ttf in Resources */,
+				197AD8E9DB4A43ABA70BD645 /* DarkerGrotesque-Medium.ttf in Resources */,
+				151FA24EEC014109AAEBE982 /* DarkerGrotesque-Regular.ttf in Resources */,
+				C1619FDC378741D99E07FD14 /* DarkerGrotesque-SemiBold.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
