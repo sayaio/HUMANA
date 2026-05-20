@@ -23,4 +23,8 @@ const historyController = require('./src/controllers/historyController');
 router.get('/history/:role/:id', historyController.getHistory); 
 router.get('/active/:role/:id', historyController.getActiveSchedule);
 
+const pemesananController = require('./src/controllers/pemesananController');
+router.get('/pemesanan/materi', pemesananController.getMateriDropdown);
+router.post('/pemesanan/tambah', pemesananController.tambahPemesanan);
+
 module.exports = router;
