@@ -27,4 +27,7 @@ const pemesananController = require('./src/controllers/pemesananController');
 router.get('/pemesanan/materi', pemesananController.getMateriDropdown);
 router.post('/pemesanan/tambah', pemesananController.tambahPemesanan);
 
+const matchingController = require('./src/controllers/matchingController');
+router.get('/permintaan-baru', matchingController.getPermintaanBaru);
+
 module.exports = router;

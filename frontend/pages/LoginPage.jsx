@@ -90,33 +90,9 @@ const LoginPage = ({
     }
   };
 
-<<<<<<< HEAD
   // Kalkulasi dimensi dinamis berbasis ukuran layar HP
   const dynamicBackgroundHeight = height * 0.55; // Mengurangi tinggi background biru agar aman di HP pendek
   const dynamicLogoSize = width * 0.22; // Logo berukuran 22% dari lebar layar
-=======
-    const handleLogin = async () => {
-        if (!email.trim() || !password.trim()) {
-            showAlert('error', 'Data Kosong', 'Email dan Password tidak boleh kosong.');
-            return;
-        }
-        
-        try {
-            const result = await loginUser(email, password); 
-            console.log("Hasil Login:", email);
-            console.log("Hasil Login:", password);
-            
-            if (result.success === true || result.token || result.status === 200) {
-                const userData = result.profile || result.data || result.user || result || {};
-                onLoginSuccess(userData, email); 
-            } else {
-                showAlert('error', 'Login Gagal', result.message || 'Cek kembali email dan password-mu atau coba metode lain.');
-            }
-        } catch (err) {
-            showAlert('error', 'Terjadi Kesalahan', 'Coba cek koneksi internetmu atau coba metode lain.');
-        }
-    };
->>>>>>> 0afc7a3e0c2dc9bce710a47a17dec894ad24e071
 
   return (
     <KeyboardAvoidingView
