@@ -6,8 +6,6 @@ import {
 
 import CustomAlert from '../components/CustomAlert';
 import { fetchAllMapel } from '../services/MateriService';
-
-// ---> IMPORT API HISTORY UNTUK JADWAL AKTIF <---
 import { getActiveSchedule } from '../services/historyService';
 
 const { width } = Dimensions.get('window');
@@ -24,7 +22,6 @@ const SUBJECT_ICONS = {
     'Bahasa Inggris': require('../assets/inggris.png'),
 };
 
-// Menambahkan userId dan userRole ke props
 const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, showSuccessAlert, onAlertClose, userId, userRole }) => {
     const firstName = namaLengkap ? namaLengkap.split(' ')[0] : 'Murid';
     
@@ -32,7 +29,6 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
     const [allSubjects, setAllSubjects] = useState([]);
     const [loadingMapel, setLoadingMapel] = useState(false);
 
-    // ---> STATE UNTUK JADWAL AKTIF <---
     const [activeSessions, setActiveSessions] = useState([]);
     const [loadingSessions, setLoadingSessions] = useState(false);
 
@@ -40,7 +36,6 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
         visible: false, type: 'success', title: '', message: ''
     });
 
-    // EFFECT UNTUK LOAD MAPEL (TIDAK DIUBAH)
     useEffect(() => {
         if (isMateriVisible) {
             const loadMapel = async () => {
@@ -62,10 +57,8 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
         }
     }, [isMateriVisible]);
 
-    // ---> EFFECT BARU UNTUK LOAD JADWAL AKTIF <---
     useEffect(() => {
         const fetchActiveSessions = async () => {
-            // Jangan load jika id atau role kosong
             if (!userId || !userRole || userRole === '-') return;
             
             setLoadingSessions(true);
@@ -89,7 +82,6 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
         fetchActiveSessions();
     }, [userId, userRole]);
 
-    // EFFECT UNTUK ALERT LOGIN SUKSES
     useEffect(() => {
         if (showSuccessAlert) {
             setAlertConfig({
@@ -135,7 +127,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                     <Text style={styles.homeGreetingText}>Selamat datang,{"\n"}{firstName} !</Text>
                 </View>
 
-                {/* ---> AREA JADWAL AKTIF BISA DI SLIDE <--- */}
+                {/* AREA JADWAL AKTIF */}
                 <View style={styles.scheduleContainer}>
                     {loadingSessions ? (
                         <View style={[styles.scheduleCard, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -183,8 +175,9 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                     )}
                 </View>
 
+                {/* QUICK ACTIONS - PESAN SESI SUDAH DIARAHKAN KE PesanSesi */}
                 <View style={styles.quickActionsContainer}>
-                    <TouchableOpacity style={styles.actionItem}>
+                    <TouchableOpacity style={styles.actionItem} onPress={() => onNavigate && onNavigate('PesanSesi')}>
                         <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
                         <Text style={styles.actionText}>Pesan Sesi</Text>
                     </TouchableOpacity>
@@ -200,24 +193,32 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
 
                 <View style={styles.divider} />
 
+                {/* PESAN LAGI SECTION */}
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionTitle}>PESAN LAGI</Text>
                     <View style={styles.pesanLagiCard}>
                         <View style={styles.pesanLagiContent}>
                             <Text style={styles.pesanLagiSubtitle}>Lanjutkan sesi favoritmu</Text>
                             <Text style={styles.pesanLagiTitle}><Text style={{ fontWeight: 'bold' }}>Matematika</Text> - Relasi & Fungsi</Text>
-                            <TouchableOpacity style={styles.pesanSesiBtn}><Text style={styles.pesanSesiBtnText}>Pesan Sesi →</Text></TouchableOpacity>
+                            <TouchableOpacity style={styles.pesanSesiBtn} onPress={() => onNavigate && onNavigate('PesanSesi')}>
+                                <Text style={styles.pesanSesiBtnText}>Pesan Sesi →</Text>
+                            </TouchableOpacity>
                         </View>
                         <View style={styles.pesanLagiGraphic}><Text style={styles.mathSymbols}>+ ={"\n"}- x</Text></View>
                     </View>
                 </View>
             </ScrollView>
 
+            {/* BOTTOM NAV - FAB DIARAHKAN KE PesanSesi */}
             <View style={styles.bottomNav}>
                 <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#284B7A' }]} resizeMode="contain" /><Text style={[styles.navText, { color: '#284B7A', fontWeight: 'bold' }]}>Home</Text></TouchableOpacity>
                 <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Activity', 'aktif')}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Activity</Text></TouchableOpacity>
                 <View style={styles.fabContainer}>
-                    <View style={styles.fabCutout}><TouchableOpacity style={styles.fabButton}><Image source={LOGO_SOURCE} style={styles.fabIcon} resizeMode="contain" /></TouchableOpacity></View>
+                    <View style={styles.fabCutout}>
+                        <TouchableOpacity style={styles.fabButton} onPress={() => onNavigate && onNavigate('PesanSesi')}>
+                            <Image source={LOGO_SOURCE} style={styles.fabIcon} resizeMode="contain" />
+                        </TouchableOpacity>
+                    </View>
                     <Text style={styles.fabText}>Pesan{"\n"}Sesi</Text>
                 </View>
                 <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Chat')}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Chat</Text></TouchableOpacity>
@@ -226,6 +227,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
 
             <CustomAlert visible={alertConfig.visible} type={alertConfig.type} title={alertConfig.title} message={alertConfig.message} onClose={handleCloseAlert} />
 
+            {/* MODAL MATA PELAJARAN */}
             <Modal visible={isMateriVisible} animationType="slide" transparent={true}>
                 <View style={styles.modalOverlay}>
                     <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsMateriVisible(false)} />
@@ -259,17 +261,14 @@ const styles = StyleSheet.create({
     headerWatermark: { position: 'absolute', right: -30, top: 10, width: 280, height: 280, tintColor: '#FFFFFF', opacity: 0.05 },
     greetingContainer: { marginTop: 80, paddingHorizontal: 25 },
     homeGreetingText: { fontSize: 34, fontWeight: 'bold', color: '#FFF', lineHeight: 42, textTransform: 'capitalize' },
-    
-    // ---> STYLE UNTUK CONTAINER JADWAL SLIDER <---
     scheduleContainer: { marginTop: 45 },
     scheduleScrollContent: { paddingHorizontal: 20, paddingBottom: 15 },
     scheduleCardScroll: { 
         backgroundColor: '#FFF', borderRadius: 20, padding: 22, elevation: 6, 
         shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8,
-        width: width * 0.85, // Lebar card dikurangi agar card selanjutnya kelihatan
+        width: width * 0.85,
         marginRight: 15
     },
-    
     scheduleCard: { backgroundColor: '#FFF', marginHorizontal: 20, borderRadius: 20, padding: 22, elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8 },
     scheduleSubHeader: { fontSize: 10, color: '#A9A9A9', fontWeight: 'bold', marginBottom: 6, letterSpacing: 1 },
     scheduleTitle: { fontSize: 17, color: '#333', marginBottom: 18 },
