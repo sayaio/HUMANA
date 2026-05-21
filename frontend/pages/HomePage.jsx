@@ -3,7 +3,6 @@ import {
     StyleSheet, Text, View, Image, TouchableOpacity,
     StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator
 } from 'react-native';
-
 import CustomAlert from '../components/CustomAlert';
 import { fetchAllMapel } from '../services/MateriService';
 import { getActiveSchedule } from '../services/historyService';
@@ -23,67 +22,106 @@ const SUBJECT_ICONS = {
 };
 
 const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, showSuccessAlert, onAlertClose, userId, userRole }) => {
+    console.log('===== 🏠 [HomePage] Component Loaded =====');
+    console.log('📥 Props received:');
+    console.log('  ↳ namaLengkap:', namaLengkap);
+    console.log('  ↳ email:', email);
+    console.log('  ↳ onSelectSubject:', typeof onSelectSubject);
+    console.log('  ↳ onNavigate:', typeof onNavigate);
+    console.log('  ↳ userId:', userId);
+    console.log('  ↳ userRole:', userRole);
+    console.log('===============================================');
+
     const firstName = namaLengkap ? namaLengkap.split(' ')[0] : 'Murid';
     
     const [isMateriVisible, setIsMateriVisible] = useState(false);
     const [allSubjects, setAllSubjects] = useState([]);
     const [loadingMapel, setLoadingMapel] = useState(false);
-
     const [activeSessions, setActiveSessions] = useState([]);
     const [loadingSessions, setLoadingSessions] = useState(false);
-
     const [alertConfig, setAlertConfig] = useState({
         visible: false, type: 'success', title: '', message: ''
     });
 
+    // useEffect untuk fetch mapel saat modal dibuka
     useEffect(() => {
+        console.log('🔄 [HomePage] useEffect isMateriVisible triggered:', isMateriVisible);
+        
         if (isMateriVisible) {
             const loadMapel = async () => {
                 setLoadingMapel(true);
+                console.log('📡 [HomePage] Fetching all mapel...');
                 try {
                     const data = await fetchAllMapel();
+                    console.log('✅ [HomePage] Mapel data fetched:', data);
+                    console.log('  ↳ Is array?', Array.isArray(data));
+                    console.log('  ↳ Length:', data?.length || 0);
+                    
                     if (Array.isArray(data)) {
                         setAllSubjects(data);
+                        console.log('✅ [HomePage] allSubjects set to array with', data.length, 'items');
                     } else {
-                        setAllSubjects([data]); 
+                        setAllSubjects([data]);
+                        console.log('✅ [HomePage] allSubjects set to single item array');
                     }
                 } catch (err) {
-                    console.error('[HomePage] Gagal fetch mapel:', err);
+                    console.error('❌ [HomePage] Error fetching mapel:', err);
+                    console.error('  ↳ Error message:', err.message);
                 } finally {
                     setLoadingMapel(false);
+                    console.log('✅ [HomePage] Loading mapel complete');
                 }
             };
             loadMapel();
         }
     }, [isMateriVisible]);
 
+    // useEffect untuk fetch active sessions
     useEffect(() => {
+        console.log('🔄 [HomePage] useEffect for active sessions triggered');
+        console.log('  ↳ userId:', userId);
+        console.log('  ↳ userRole:', userRole);
+
         const fetchActiveSessions = async () => {
-            if (!userId || !userRole || userRole === '-') return;
-            
+            if (!userId || !userRole || userRole === '-') {
+                console.log('⚠️ [HomePage] Skipping active sessions fetch - invalid userId or userRole');
+                return;
+            }
+
             setLoadingSessions(true);
+            console.log('📡 [HomePage] Fetching active sessions for:', { userRole, userId });
+            
             try {
                 const result = await getActiveSchedule(userRole, userId);
+                console.log('✅ [HomePage] Active sessions result:', result);
+                
                 if (result && result.success) {
                     const rawData = result.data;
                     const formattedData = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
+                    console.log('✅ [HomePage] Active sessions formatted:', formattedData);
+                    console.log('  ↳ Count:', formattedData.length);
                     setActiveSessions(formattedData);
                 } else {
+                    console.log('⚠️ [HomePage] No active sessions found');
                     setActiveSessions([]);
                 }
             } catch (error) {
-                console.log("Error fetch active sessions di Home:", error);
+                console.error('❌ [HomePage] Error fetching active sessions:', error);
+                console.error('  ↳ Error message:', error.message);
                 setActiveSessions([]);
             } finally {
                 setLoadingSessions(false);
+                console.log('✅ [HomePage] Loading sessions complete');
             }
         };
 
         fetchActiveSessions();
     }, [userId, userRole]);
 
+    // useEffect untuk success alert
     useEffect(() => {
         if (showSuccessAlert) {
+            console.log('✅ [HomePage] Showing login success alert');
             setAlertConfig({
                 visible: true, type: 'success', title: 'Sukses!', message: 'Berhasil masuk ke akun kamu.'
             });
@@ -91,6 +129,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
     }, [showSuccessAlert]);
 
     const handleCloseAlert = () => {
+        console.log('🔔 [HomePage] Closing alert');
         setAlertConfig(prev => ({ ...prev, visible: false }));
         if (onAlertClose) onAlertClose();
     };
@@ -102,8 +141,31 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                 key={subject.id_mapel || Math.random()}
                 style={styles.subjectItemContainer}
                 onPress={() => {
+                    console.log('===== 👆 [HomePage] Subject Item Clicked =====');
+                    console.log('📚 Subject clicked:', subject);
+                    console.log('  ↳ id_mapel:', subject.id_mapel);
+                    console.log('  ↳ nama_mapel:', subject.nama_mapel);
+                    
+                    console.log('🔀 Closing modal...');
                     setIsMateriVisible(false);
-                    if (onSelectSubject) onSelectSubject({ id_mapel: subject.id_mapel, subjectName: subject.nama_mapel });
+                    
+                    console.log('🔍 Checking onSelectSubject...');
+                    console.log('  ↳ onSelectSubject type:', typeof onSelectSubject);
+                    console.log('  ↳ onSelectSubject exists?', !!onSelectSubject);
+                    
+                    if (onSelectSubject) {
+                        const dataToSend = { 
+                            id_mapel: subject.id_mapel, 
+                            subjectName: subject.nama_mapel 
+                        };
+                        console.log('📤 [HomePage] Calling onSelectSubject with:', dataToSend);
+                        onSelectSubject(dataToSend);
+                        console.log('✅ [HomePage] onSelectSubject called successfully');
+                    } else {
+                        console.error('❌ [HomePage] onSelectSubject is NOT defined!');
+                        console.error('  ↳ Props:', { onSelectSubject, onNavigate, onLogout });
+                    }
+                    console.log('===== ✅ [HomePage] Subject Click Handler Complete =====');
                 }}
             >
                 <View style={styles.subjectIconBox}>
@@ -117,7 +179,6 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
     return (
         <View style={styles.homeContainer}>
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 130 }}>
                 <View style={styles.headerBackground}>
                     <Image source={LOGO_SOURCE} style={styles.headerWatermark} resizeMode="contain" />
@@ -177,15 +238,33 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
 
                 {/* QUICK ACTIONS - PESAN SESI SUDAH DIARAHKAN KE PesanSesi */}
                 <View style={styles.quickActionsContainer}>
-                    <TouchableOpacity style={styles.actionItem} onPress={() => onNavigate && onNavigate('PesanSesi')}>
+                    <TouchableOpacity 
+                        style={styles.actionItem} 
+                        onPress={() => {
+                            console.log('🧭 [HomePage] Navigate to PesanSesi');
+                            onNavigate && onNavigate('PesanSesi');
+                        }}
+                    >
                         <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
                         <Text style={styles.actionText}>Pesan Sesi</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionItem} onPress={() => setIsMateriVisible(true)}>
+                    <TouchableOpacity 
+                        style={styles.actionItem} 
+                        onPress={() => {
+                            console.log('📚 [HomePage] Opening Materi modal');
+                            setIsMateriVisible(true);
+                        }}
+                    >
                         <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
                         <Text style={styles.actionText}>Materi</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionItem} onPress={() => onNavigate && onNavigate('Activity', 'aktif')}>
+                    <TouchableOpacity 
+                        style={styles.actionItem} 
+                        onPress={() => {
+                            console.log('🧭 [HomePage] Navigate to Activity (aktif)');
+                            onNavigate && onNavigate('Activity', 'aktif');
+                        }}
+                    >
                         <View style={styles.actionIconBox}><Image source={LOGO_SOURCE} style={styles.actionIcon} resizeMode="contain" /></View>
                         <Text style={styles.actionText}>Jadwal Saya</Text>
                     </TouchableOpacity>
@@ -200,7 +279,13 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                         <View style={styles.pesanLagiContent}>
                             <Text style={styles.pesanLagiSubtitle}>Lanjutkan sesi favoritmu</Text>
                             <Text style={styles.pesanLagiTitle}><Text style={{ fontWeight: 'bold' }}>Matematika</Text> - Relasi & Fungsi</Text>
-                            <TouchableOpacity style={styles.pesanSesiBtn} onPress={() => onNavigate && onNavigate('PesanSesi')}>
+                            <TouchableOpacity 
+                                style={styles.pesanSesiBtn} 
+                                onPress={() => {
+                                    console.log('🧭 [HomePage] Navigate to PesanSesi from Pesan Lagi');
+                                    onNavigate && onNavigate('PesanSesi');
+                                }}
+                            >
                                 <Text style={styles.pesanSesiBtnText}>Pesan Sesi →</Text>
                             </TouchableOpacity>
                         </View>
@@ -211,26 +296,74 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
 
             {/* BOTTOM NAV - FAB DIARAHKAN KE PesanSesi */}
             <View style={styles.bottomNav}>
-                <TouchableOpacity style={styles.navItem}><Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#284B7A' }]} resizeMode="contain" /><Text style={[styles.navText, { color: '#284B7A', fontWeight: 'bold' }]}>Home</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Activity', 'aktif')}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Activity</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.navItem}>
+                    <Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#284B7A' }]} resizeMode="contain" />
+                    <Text style={[styles.navText, { color: '#284B7A', fontWeight: 'bold' }]}>Home</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                    style={styles.navItem} 
+                    onPress={() => {
+                        console.log('🧭 [HomePage] Navigate to Activity from bottom nav');
+                        onNavigate && onNavigate('Activity', 'aktif');
+                    }}
+                >
+                    <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
+                    <Text style={styles.navText}>Activity</Text>
+                </TouchableOpacity>
                 <View style={styles.fabContainer}>
                     <View style={styles.fabCutout}>
-                        <TouchableOpacity style={styles.fabButton} onPress={() => onNavigate && onNavigate('PesanSesi')}>
+                        <TouchableOpacity 
+                            style={styles.fabButton} 
+                            onPress={() => {
+                                console.log('🧭 [HomePage] Navigate to PesanSesi from FAB');
+                                onNavigate && onNavigate('PesanSesi');
+                            }}
+                        >
                             <Image source={LOGO_SOURCE} style={styles.fabIcon} resizeMode="contain" />
                         </TouchableOpacity>
                     </View>
                     <Text style={styles.fabText}>Pesan{"\n"}Sesi</Text>
                 </View>
-                <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Chat')}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Chat</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.navItem} onPress={() => onNavigate && onNavigate('Profile')}><Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" /><Text style={styles.navText}>Profile</Text></TouchableOpacity>
+                <TouchableOpacity 
+                    style={styles.navItem} 
+                    onPress={() => {
+                        console.log('🧭 [HomePage] Navigate to Chat');
+                        onNavigate && onNavigate('Chat');
+                    }}
+                >
+                    <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
+                    <Text style={styles.navText}>Chat</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                    style={styles.navItem} 
+                    onPress={() => {
+                        console.log('🧭 [HomePage] Navigate to Profile');
+                        onNavigate && onNavigate('Profile');
+                    }}
+                >
+                    <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
+                    <Text style={styles.navText}>Profile</Text>
+                </TouchableOpacity>
             </View>
 
-            <CustomAlert visible={alertConfig.visible} type={alertConfig.type} title={alertConfig.title} message={alertConfig.message} onClose={handleCloseAlert} />
+            <CustomAlert 
+                visible={alertConfig.visible} 
+                type={alertConfig.type} 
+                title={alertConfig.title} 
+                message={alertConfig.message} 
+                onClose={handleCloseAlert} 
+            />
 
             {/* MODAL MATA PELAJARAN */}
             <Modal visible={isMateriVisible} animationType="slide" transparent={true}>
                 <View style={styles.modalOverlay}>
-                    <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsMateriVisible(false)} />
+                    <TouchableOpacity 
+                        style={{ flex: 1 }} 
+                        onPress={() => {
+                            console.log('🔙 [HomePage] Closing modal via overlay tap');
+                            setIsMateriVisible(false);
+                        }} 
+                    />
                     <View style={styles.bottomSheetContainer}>
                         <View style={styles.sheetHandle} />
                         {loadingMapel ? (
@@ -257,7 +390,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
 
 const styles = StyleSheet.create({
     homeContainer: { flex: 1, backgroundColor: '#FAFAFA' },
-    headerBackground: { position: 'absolute', top: 0, left: 0, right: 0, height: 310, backgroundColor: '#284B7A', borderBottomRightRadius: 100, borderBottomLeftRadius: 15, overflow: 'hidden' },
+    headerBackground: { position: 'absolute', top: 0, left: 0, right: 0, height: 310, backgroundColor: '#284B7A', borderBottomRightRadius: 40, borderBottomLeftRadius: 40, overflow: 'hidden' },
     headerWatermark: { position: 'absolute', right: -30, top: 10, width: 280, height: 280, tintColor: '#FFFFFF', opacity: 0.05 },
     greetingContainer: { marginTop: 80, paddingHorizontal: 25 },
     homeGreetingText: { fontSize: 34, fontWeight: 'bold', color: '#FFF', lineHeight: 42, textTransform: 'capitalize' },

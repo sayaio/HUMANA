@@ -9,29 +9,52 @@ import { fetchMateriBySubject } from '../services/MateriService';
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
-  const [materiList, setMateriList]     = useState([]);
-  const [filtered, setFiltered]         = useState([]);
-  const [searchQuery, setSearchQuery]   = useState('');
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState(null);
+  console.log('===== 📖 [MateriPage] Component Loaded =====');
+  console.log('📥 Props received:');
+  console.log('  ↳ subjectName:', subjectName);
+  console.log('  ↳ id_mapel:', id_mapel);
+  console.log('  ↳ onBack:', typeof onBack);
+  console.log('  ↳ onChapterSelect:', typeof onChapterSelect);
+  console.log('===============================================');
+
+  const [materiList, setMateriList] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log('🔄 [MateriPage] useEffect triggered with id_mapel:', id_mapel);
+    
     const loadMateri = async () => {
       setLoading(true);
       setError(null);
       try {
+        console.log('📡 [MateriPage] Fetching materi for id_mapel:', id_mapel);
         const data = await fetchMateriBySubject(id_mapel);
+        console.log('✅ [MateriPage] Data fetched successfully:', data);
+        console.log('  ↳ Jumlah materi:', data?.length || 0);
+        
         setMateriList(data);
         setFiltered(data);
       } catch (err) {
-        console.error(err);
+        console.error('❌ [MateriPage] Error fetching materi:', err);
+        console.error('  ↳ Error message:', err.message);
         setError(err.message || 'Gagal memuat materi.');
       } finally {
         setLoading(false);
+        console.log('✅ [MateriPage] Loading complete');
       }
     };
 
-    if (id_mapel) loadMateri();
+    if (id_mapel) {
+      console.log('✅ [MateriPage] id_mapel exists, calling loadMateri()');
+      loadMateri();
+    } else {
+      console.warn('⚠️ [MateriPage] id_mapel is null/undefined! Cannot load materi.');
+      setLoading(false);
+      setError('ID Mata Pelajaran tidak valid.');
+    }
   }, [id_mapel]);
 
   useEffect(() => {
@@ -51,6 +74,7 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
 
   const renderContent = () => {
     if (loading) {
+      console.log('⏳ [MateriPage] Rendering loading state...');
       return (
         <View style={styles.centerState}>
           <ActivityIndicator size="large" color="#284B7A" />
@@ -60,6 +84,7 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
     }
 
     if (error) {
+      console.log('❌ [MateriPage] Rendering error state:', error);
       return (
         <View style={styles.centerState}>
           <Text style={styles.errorIcon}>⚠️</Text>
@@ -72,6 +97,7 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
     }
 
     if (filtered.length === 0) {
+      console.log('📭 [MateriPage] Rendering empty state');
       return (
         <View style={styles.centerState}>
           <Text style={styles.errorIcon}>📭</Text>
@@ -82,7 +108,8 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
       );
     }
 
-    return filtered.map((materi) => (
+    console.log('📚 [MateriPage] Rendering', filtered.length, 'materi items');
+    return filtered.map((materi, index) => (
       <View key={materi.id || Math.random()} style={styles.card}>
         <View style={styles.cardIconBox}>
           <Image source={LOGO_SOURCE} style={styles.cardIcon} resizeMode="contain" />
@@ -95,8 +122,15 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
         </View>
         <TouchableOpacity
           style={styles.lihatBtn}
-          // PENTING: Kita kirim seluruh object "materi" ke App.jsx
-          onPress={() => onChapterSelect(materi)}
+          onPress={() => {
+            console.log('===== 👆 [MateriPage] Materi Item Clicked =====');
+            console.log('📝 Materi data:', materi);
+            console.log('  ↳ id:', materi.id);
+            console.log('  ↳ namaMateri:', materi.namaMateri);
+            console.log('🔀 Calling onChapterSelect...');
+            onChapterSelect(materi);
+            console.log('===== ✅ [MateriPage] onChapterSelect called =====');
+          }}
         >
           <Text style={styles.lihatBtnText}>Lihat</Text>
         </TouchableOpacity>
@@ -107,18 +141,25 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#284B7A" translucent={false} />
-
       <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+        <TouchableOpacity 
+          onPress={() => {
+            console.log('⬅️ [MateriPage] Back button clicked, calling onBack()');
+            onBack();
+          }} 
+          style={styles.backBtn}
+        >
           <Text style={styles.backIcon}>{'❮'}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{subjectName}</Text>
+        <Text style={styles.headerTitle}>{subjectName || 'Materi'}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <View style={styles.contentContainer}>
         <View style={styles.contentHeader}>
-          <Text style={styles.contentTitle}><Text style={{ fontWeight: 'bold' }}>Materi</Text></Text>
+          <Text style={styles.contentTitle}>
+            <Text style={{ fontWeight: 'bold' }}>Materi</Text>
+          </Text>
           <Text style={{ fontSize: 18, color: '#666' }}>▼</Text>
         </View>
 
@@ -133,10 +174,12 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
           <Text style={{ fontSize: 16, color: '#A9A9A9' }}>🔍</Text>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 50 }}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false} 
+          contentContainerStyle={{ paddingBottom: 50 }}
+        >
           {renderContent()}
         </ScrollView>
-
       </View>
     </View>
   );
@@ -144,29 +187,92 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#284B7A' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 30, paddingHorizontal: 20 },
+  header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingTop: 20, 
+    paddingBottom: 30, 
+    paddingHorizontal: 20 
+  },
   backBtn: { padding: 10, marginLeft: -10 },
   backIcon: { fontSize: 24, color: '#FFF', fontWeight: 'bold' },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
-  contentContainer: { flex: 1, backgroundColor: '#FAFAFA', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 20, paddingTop: 25 },
-  contentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
+  contentContainer: { 
+    flex: 1, 
+    backgroundColor: '#FAFAFA', 
+    borderTopLeftRadius: 30, 
+    borderTopRightRadius: 30, 
+    paddingHorizontal: 20, 
+    paddingTop: 25 
+  },
+  contentHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 15 
+  },
   contentTitle: { fontSize: 18, color: '#333' },
-  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#EEE', borderRadius: 12, paddingHorizontal: 15, height: 50, marginBottom: 20 },
+  searchContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#FFF', 
+    borderWidth: 1, 
+    borderColor: '#EEE', 
+    borderRadius: 12, 
+    paddingHorizontal: 15, 
+    height: 50, 
+    marginBottom: 20 
+  },
   searchInput: { flex: 1, height: '100%', color: '#333' },
-  card: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 15, padding: 15, alignItems: 'center', marginBottom: 15, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 },
-  cardIconBox: { width: 50, height: 50, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+  card: { 
+    flexDirection: 'row', 
+    backgroundColor: '#FFF', 
+    borderRadius: 15, 
+    padding: 15, 
+    alignItems: 'center', 
+    marginBottom: 15, 
+    elevation: 2, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 1 }, 
+    shadowOpacity: 0.1, 
+    shadowRadius: 3 
+  },
+  cardIconBox: { 
+    width: 50, 
+    height: 50, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginRight: 15 
+  },
   cardIcon: { width: 35, height: 35, tintColor: '#333' },
   cardTextContainer: { flex: 1, paddingRight: 10 },
   cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 3 },
   cardSubtitle: { fontSize: 11, color: '#888', lineHeight: 14 },
-  lihatBtn: { backgroundColor: '#D0E1F9', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 8 },
+  lihatBtn: { 
+    backgroundColor: '#D0E1F9', 
+    paddingVertical: 8, 
+    paddingHorizontal: 15, 
+    borderRadius: 8 
+  },
   lihatBtnText: { color: '#284B7A', fontSize: 12, fontWeight: 'bold' },
-  centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 10 },
+  centerState: { 
+    flex: 1, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    paddingTop: 60, 
+    gap: 10 
+  },
   stateText: { fontSize: 14, color: '#888', textAlign: 'center', marginTop: 8 },
   errorIcon: { fontSize: 36 },
-  retryBtn: { marginTop: 12, backgroundColor: '#284B7A', paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10 },
+  retryBtn: { 
+    marginTop: 12, 
+    backgroundColor: '#284B7A', 
+    paddingVertical: 10, 
+    paddingHorizontal: 24, 
+    borderRadius: 10 
+  },
   retryBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 13 },
 });
 
 export default MateriPage;
-//arkan

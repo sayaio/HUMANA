@@ -15,50 +15,6 @@ import EditAcademicProfilePage from './pages/EditAcademicProfilePage';
 import ChatPage from './pages/ChatPage';
 import ChatRoomPage from './pages/ChatRoomPage';
 import PageGuru from './pages/PageGuru';
-<<<<<<< HEAD
-
-const App = () => {
-  const [currentPage, setCurrentPage] = useState('Splash');
-
-  const [namaLengkap, setNamaLengkap] = useState('');
-  const [email, setEmail] = useState('');
-
-  const [profileData, setProfileData] = useState({
-    id: null,
-    role: '-',
-    name: '-',
-    email: '-',
-    username: '-',
-    phone: '-',
-    gender: '-',
-    domicile: '-',
-    education: '-',
-    major: '-',
-  });
-
-  const [selectedSubject, setSelectedSubject] = useState(null);
-  const [selectedChapter, setSelectedChapter] = useState(null);
-  const [activityTab, setActivityTab] = useState('aktif');
-  const [selectedChatUser, setSelectedChatUser] = useState(null);
-
-  const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
-
-  const [selectedSession, setSelectedSession] = useState(null);
-
-  const handleLoginSuccess = (userData, loggedInEmail) => {
-    const namaDariDB =
-      userData?.nama_murid ||
-      userData?.namaLengkap ||
-      userData?.name ||
-      loggedInEmail.split('@')[0];
-    const usernameDariDB =
-      userData?.username || namaDariDB.toLowerCase().replace(/\s/g, '');
-    const roleDariDB = (
-      userData?.role ||
-      userData?.id_role ||
-      'murid'
-    ).toLowerCase();
-=======
 import PesanSesiPage from './pages/PesanSesiPage';
 
 const App = () => {
@@ -89,7 +45,7 @@ const App = () => {
     const namaDariDB = userData?.nama_murid || userData?.namaLengkap || userData?.name || loggedInEmail.split('@')[0];
     const usernameDariDB = userData?.username || namaDariDB.toLowerCase().replace(/\s/g, '');
     const roleDariDB = (userData?.role || userData?.id_role || 'murid').toLowerCase();
->>>>>>> 0afc7a3e0c2dc9bce710a47a17dec894ad24e071
+
     setNamaLengkap(namaDariDB);
     setEmail(loggedInEmail);
     setProfileData({
@@ -98,37 +54,6 @@ const App = () => {
       name: namaDariDB || '-',
       email: loggedInEmail || '-',
       username: usernameDariDB || '-',
-<<<<<<< HEAD
-
-      // 🛠️ FIX DOUBLE KEY: Supaya dibaca di EditProfile DAN ProfilePage
-      phone: userData?.no_telepon || userData?.phone || '-',
-      no_telepon: userData?.no_telepon || userData?.phone || '-', // Dipakai ProfilePage
-
-      gender: userData?.jenis_kelamin || userData?.gender || '-',
-      jenis_kelamin: userData?.jenis_kelamin || userData?.gender || '-', // Dipakai ProfilePage
-
-      domicile:
-        userData?.domisili || userData?.domicile || userData?.alamat || '-',
-      domisili:
-        userData?.domisili || userData?.domicile || userData?.alamat || '-',
-      alamat:
-        userData?.domisili || userData?.domicile || userData?.alamat || '-', // Dipakai ProfilePage
-
-      education: userData?.jenjang_pendidikan || userData?.education || '-',
-      jenjang_pendidikan:
-        userData?.jenjang_pendidikan || userData?.education || '-',
-
-      major:
-        userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
-      kelas_jurusan:
-        userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
-    });
-
-    if (roleDariDB === 'guru') {
-      setCurrentPage('PageGuru'); // Jika Guru, lempar ke Dashboard Guru
-    } else {
-      setCurrentPage('Home'); // Jika Murid/Lainnya, ke Home biasa
-=======
       phone: userData?.no_telepon || userData?.phone || '-',
       no_telepon: userData?.no_telepon || userData?.phone || '-',
       gender: userData?.jenis_kelamin || userData?.gender || '-',
@@ -141,11 +66,11 @@ const App = () => {
       major: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
       kelas_jurusan: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
     });
+
     if (roleDariDB === 'guru') {
       setCurrentPage('PageGuru');
     } else {
       setCurrentPage('Home');
->>>>>>> 0afc7a3e0c2dc9bce710a47a17dec894ad24e071
     }
   };
 
@@ -154,10 +79,18 @@ const App = () => {
     setCurrentPage('Login');
   };
 
-<<<<<<< HEAD
-  if (currentPage === 'Splash')
+  // ==========================================
+  // ROUTER SYSTEM
+  // ==========================================
+
+  console.log('🔄 [App.jsx] Current Page:', currentPage);
+  console.log('📦 [App.jsx] Selected Subject:', selectedSubject);
+
+  if (currentPage === 'Splash') {
     return <SplashScreen onFinish={() => setCurrentPage('Login')} />;
-  if (currentPage === 'Login')
+  }
+
+  if (currentPage === 'Login') {
     return (
       <LoginPage
         onLoginSuccess={handleLoginSuccess}
@@ -165,79 +98,73 @@ const App = () => {
         onForgotPassword={() => setCurrentPage('ResetPassword')}
       />
     );
-  if (currentPage === 'Register')
+  }
+
+  if (currentPage === 'Register') {
     return (
       <RegisterPage
         onRegisterSuccess={() => setCurrentPage('Login')}
         onNavigateToLogin={() => setCurrentPage('Login')}
       />
     );
-  if (currentPage === 'ResetPassword')
+  }
+
+  if (currentPage === 'ResetPassword') {
     return <ResetPasswordPage onBack={() => setCurrentPage('Login')} />;
+  }
+
   if (currentPage === 'PageGuru') {
-        return (
-            <PageGuru 
-                namaLengkap={namaLengkap}
-                email={email}
-                onLogout={handleLogout}
-                onNavigate={(page, tab) => { if (tab) setActivityTab(tab); setCurrentPage(page); }}
-            />
-        );
-    }
-=======
-  // ==========================================
-  // ROUTER SYSTEM
-  // ==========================================
-  if (currentPage === 'Splash') return <SplashScreen onFinish={() => setCurrentPage('Login')} />;
-  if (currentPage === 'Login') return <LoginPage onLoginSuccess={handleLoginSuccess} onNavigateToRegister={() => setCurrentPage('Register')} onForgotPassword={() => setCurrentPage('ResetPassword')} />;
-  if (currentPage === 'Register') return <RegisterPage onRegisterSuccess={() => setCurrentPage('Login')} onNavigateToLogin={() => setCurrentPage('Login')} />;
-  if (currentPage === 'ResetPassword') return <ResetPasswordPage onBack={() => setCurrentPage('Login')} />;
-  if (currentPage === 'PageGuru') return <PageGuru namaLengkap={namaLengkap} email={email} onLogout={handleLogout} onNavigate={(page, tab) => { if (tab) setActivityTab(tab); setCurrentPage(page); }} />;
->>>>>>> 0afc7a3e0c2dc9bce710a47a17dec894ad24e071
+    return (
+      <PageGuru
+        namaLengkap={namaLengkap}
+        email={email}
+        onLogout={handleLogout}
+        onNavigate={(page, tab) => {
+          console.log('🧭 [App.jsx] Navigate from PageGuru to:', page, 'tab:', tab);
+          if (tab) setActivityTab(tab);
+          setCurrentPage(page);
+        }}
+      />
+    );
+  }
 
   if (currentPage === 'Home') {
+    console.log('🏠 [App.jsx] Rendering HomePage...');
     return (
       <HomePage
         namaLengkap={namaLengkap}
         email={email}
         onLogout={handleLogout}
         onSelectSubject={subjectData => {
+          console.log('===== 🎯 [App.jsx] onSelectSubject DIPANGGIL =====');
+          console.log('📚 Data subject diterima:', subjectData);
+          console.log('  ↳ id_mapel:', subjectData?.id_mapel);
+          console.log('  ↳ subjectName:', subjectData?.subjectName);
+          
           setSelectedSubject(subjectData);
+          console.log('✅ selectedSubject di-set ke:', subjectData);
+          
+          console.log('🔀 Mengubah currentPage dari "Home" ke "Materi"...');
           setCurrentPage('Materi');
+          console.log('===== ✅ [App.jsx] Navigation ke Materi SELESAI =====');
         }}
         onNavigate={(page, tab) => {
+          console.log('🧭 [App.jsx] Navigate from Home to:', page, 'tab:', tab);
           if (tab) setActivityTab(tab);
           setCurrentPage(page);
         }}
         showSuccessAlert={showLoginSuccessAlert}
         onAlertClose={() => setShowLoginSuccessAlert(false)}
-<<<<<<< HEAD
-        // ---> INI TAMBAHAN BARUNYA AGAR HOME BISA FETCH JADWAL AKTIF <---
-=======
->>>>>>> 0afc7a3e0c2dc9bce710a47a17dec894ad24e071
         userId={profileData.id}
         userRole={(profileData.role || 'murid').toLowerCase()}
       />
     );
   }
 
-<<<<<<< HEAD
-  if (currentPage === 'Activity') {
-    return (
-      <ActivityPage
-        initialTab={activityTab}
-        onNavigate={page => setCurrentPage(page)}
-        onDetailClick={item => {
-          // TAMBAHKAN 'item'
-          setSelectedSession(item); // SIMPAN data yang diklik
-          setCurrentPage('SessionDetail');
-        }}
-        userId={profileData.id}
-        userRole={(profileData.role || 'murid').toLowerCase()}
-=======
   // ==========================================
   // ALUR PESAN SESI
   // ==========================================
+
   if (currentPage === 'PesanSesi') {
     return (
       <PesanSesiPage
@@ -246,96 +173,10 @@ const App = () => {
           setBookingSessionData(data);
           setCurrentPage('MencariPengajar');
         }}
->>>>>>> 0afc7a3e0c2dc9bce710a47a17dec894ad24e071
       />
     );
   }
 
-<<<<<<< HEAD
-  // Pastikan juga bagian ini mengirim selectedSession
-  if (currentPage === 'SessionDetail') {
-    return (
-      <SessionDetailPage
-        onBack={() => setCurrentPage('Activity')}
-        sessionData={selectedSession} // KIRIM data ke halaman detail
-        userId={profileData.id}
-      />
-    );
-  }
-
-  if (currentPage === 'Profile')
-    return (
-      <ProfilePage
-        profileData={profileData}
-        onNavigate={page => setCurrentPage(page)}
-      />
-    );
-
-  if (currentPage === 'EditBasicProfile')
-    return (
-      <EditBasicProfilePage
-        profileData={profileData}
-        onCancel={() => setCurrentPage('Profile')}
-        onSave={updatedData => {
-          setProfileData(updatedData);
-          setNamaLengkap(updatedData.name);
-          setCurrentPage('Profile');
-        }}
-      />
-    );
-  if (currentPage === 'EditAcademicProfile')
-    return (
-      <EditAcademicProfilePage
-        profileData={profileData}
-        onCancel={() => setCurrentPage('Profile')}
-        onSave={updatedData => {
-          setProfileData(updatedData);
-          setCurrentPage('Profile');
-        }}
-      />
-    );
-
-  if (currentPage === 'Materi') {
-    return (
-      <MateriPage
-        id_mapel={selectedSubject?.id_mapel}
-        subjectName={selectedSubject?.subjectName}
-        onBack={() => setCurrentPage('Home')}
-        onChapterSelect={materiData => {
-          setSelectedChapter(materiData);
-          setCurrentPage('Detail');
-        }}
-      />
-    );
-  }
-
-  if (currentPage === 'Detail')
-    return (
-      <DetailMateriPage
-        chapterData={selectedChapter}
-        onBack={() => setCurrentPage('Materi')}
-      />
-    );
-
-  if (currentPage === 'Chat')
-    return (
-      <ChatPage
-        onNavigate={page => setCurrentPage(page)}
-        onChatPress={chatData => {
-          setSelectedChatUser(chatData);
-          setCurrentPage('ChatRoom');
-        }}
-      />
-    );
-  if (currentPage === 'ChatRoom')
-    return (
-      <ChatRoomPage
-        chatData={selectedChatUser}
-        onBack={() => setCurrentPage('Chat')}
-      />
-    );
-
-=======
   if (currentPage === 'MencariPengajar') {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF' }}>
@@ -378,46 +219,105 @@ const App = () => {
   // ==========================================
   // HALAMAN LAINNYA
   // ==========================================
+
   if (currentPage === 'Activity') {
     return (
       <ActivityPage
         initialTab={activityTab}
-        onNavigate={page => { setCurrentPage(page); }}
-        onDetailClick={item => { setSelectedSession(item); setCurrentPage('SessionDetail'); }}
+        onNavigate={page => setCurrentPage(page)}
+        onDetailClick={item => {
+          setSelectedSession(item);
+          setCurrentPage('SessionDetail');
+        }}
         userId={profileData.id}
         userRole={(profileData.role || 'murid').toLowerCase()}
       />
     );
   }
-  if (currentPage === 'SessionDetail') return <SessionDetailPage onBack={() => setCurrentPage('Activity')} sessionData={selectedSession} userId={profileData.id} />;
+
+  if (currentPage === 'SessionDetail') {
+    return (
+      <SessionDetailPage
+        onBack={() => setCurrentPage('Activity')}
+        sessionData={selectedSession}
+        userId={profileData.id}
+      />
+    );
+  }
+
   if (currentPage === 'Profile') {
     return (
       <ProfilePage
         profileData={profileData}
-        onNavigate={page => { setCurrentPage(page); }}
+        onNavigate={page => setCurrentPage(page)}
       />
     );
   }
-  if (currentPage === 'EditBasicProfile') return <EditBasicProfilePage profileData={profileData} onCancel={() => setCurrentPage('Profile')} onSave={updatedData => { setProfileData(updatedData); setNamaLengkap(updatedData.name); setCurrentPage('Profile'); }} />;
-  if (currentPage === 'EditAcademicProfile') return <EditAcademicProfilePage profileData={profileData} onCancel={() => setCurrentPage('Profile')} onSave={updatedData => { setProfileData(updatedData); setCurrentPage('Profile'); }} />;
+
+  if (currentPage === 'EditBasicProfile') {
+    return (
+      <EditBasicProfilePage
+        profileData={profileData}
+        onCancel={() => setCurrentPage('Profile')}
+        onSave={updatedData => {
+          setProfileData(updatedData);
+          setNamaLengkap(updatedData.name);
+          setCurrentPage('Profile');
+        }}
+      />
+    );
+  }
+
+  if (currentPage === 'EditAcademicProfile') {
+    return (
+      <EditAcademicProfilePage
+        profileData={profileData}
+        onCancel={() => setCurrentPage('Profile')}
+        onSave={updatedData => {
+          setProfileData(updatedData);
+          setCurrentPage('Profile');
+        }}
+      />
+    );
+  }
+
   if (currentPage === 'Materi') {
+    console.log('===== 📖 [App.jsx] Rendering MateriPage =====');
+    console.log('📦 selectedSubject:', selectedSubject);
+    console.log('  ↳ id_mapel:', selectedSubject?.id_mapel);
+    console.log('  ↳ subjectName:', selectedSubject?.subjectName);
+    console.log('===== 📖 [App.jsx] Props yang akan dikirim ke MateriPage =====');
+    
     return (
       <MateriPage
         id_mapel={selectedSubject?.id_mapel}
         subjectName={selectedSubject?.subjectName}
-        onBack={() => setCurrentPage('Home')}
+        onBack={() => {
+          console.log('⬅️ [App.jsx] Back dari MateriPage ke Home');
+          setCurrentPage('Home');
+        }}
         onChapterSelect={materiData => {
+          console.log('📝 [App.jsx] Chapter selected:', materiData);
           setSelectedChapter(materiData);
           setCurrentPage('Detail');
         }}
       />
     );
   }
-  if (currentPage === 'Detail') return <DetailMateriPage chapterData={selectedChapter} onBack={() => setCurrentPage('Materi')} />;
+
+  if (currentPage === 'Detail') {
+    return (
+      <DetailMateriPage
+        chapterData={selectedChapter}
+        onBack={() => setCurrentPage('Materi')}
+      />
+    );
+  }
+
   if (currentPage === 'Chat') {
     return (
       <ChatPage
-        onNavigate={page => { setCurrentPage(page); }}
+        onNavigate={page => setCurrentPage(page)}
         onChatPress={chatData => {
           setSelectedChatUser(chatData);
           setCurrentPage('ChatRoom');
@@ -425,9 +325,16 @@ const App = () => {
       />
     );
   }
-  if (currentPage === 'ChatRoom') return <ChatRoomPage chatData={selectedChatUser} onBack={() => setCurrentPage('Chat')} />;
 
->>>>>>> 0afc7a3e0c2dc9bce710a47a17dec894ad24e071
+  if (currentPage === 'ChatRoom') {
+    return (
+      <ChatRoomPage
+        chatData={selectedChatUser}
+        onBack={() => setCurrentPage('Chat')}
+      />
+    );
+  }
+
   return (
     <LoginPage
       onLoginSuccess={handleLoginSuccess}

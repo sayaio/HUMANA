@@ -13,7 +13,6 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-
 import { loginUser } from '../services/authService';
 import CustomAlert from '../components/CustomAlert';
 import { Eye, EyeOff } from 'lucide-react-native';
@@ -30,7 +29,6 @@ const LoginPage = ({
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
   const [alertConfig, setAlertConfig] = useState({
     visible: false,
     type: 'error',
@@ -40,8 +38,6 @@ const LoginPage = ({
   });
 
   const LOGO_SOURCE = require('../assets/logo_humana.png');
-  // Disarankan mengganti EYE_ICON dengan icon mata asli jika sudah ada di assets
-
   const GOOGLE_ICON = {
     uri: 'https://img.icons8.com/color/48/google-logo.png',
   };
@@ -66,10 +62,11 @@ const LoginPage = ({
       );
       return;
     }
-
     try {
       const result = await loginUser(email, password);
-
+      console.log("Hasil Login Email:", email);
+      console.log("Hasil Login Password:", password);
+      
       if (result.success === true || result.token || result.status === 200) {
         const userData =
           result.profile || result.data || result.user || result || {};
@@ -78,7 +75,7 @@ const LoginPage = ({
         showAlert(
           'error',
           'Login Gagal',
-          result.message || 'Cek kembali email dan password-mu.',
+          result.message || 'Cek kembali email dan password-mu atau coba metode lain.',
         );
       }
     } catch (err) {
@@ -90,33 +87,9 @@ const LoginPage = ({
     }
   };
 
-<<<<<<< HEAD
   // Kalkulasi dimensi dinamis berbasis ukuran layar HP
   const dynamicBackgroundHeight = height * 0.55; // Mengurangi tinggi background biru agar aman di HP pendek
   const dynamicLogoSize = width * 0.22; // Logo berukuran 22% dari lebar layar
-=======
-    const handleLogin = async () => {
-        if (!email.trim() || !password.trim()) {
-            showAlert('error', 'Data Kosong', 'Email dan Password tidak boleh kosong.');
-            return;
-        }
-        
-        try {
-            const result = await loginUser(email, password); 
-            console.log("Hasil Login:", email);
-            console.log("Hasil Login:", password);
-            
-            if (result.success === true || result.token || result.status === 200) {
-                const userData = result.profile || result.data || result.user || result || {};
-                onLoginSuccess(userData, email); 
-            } else {
-                showAlert('error', 'Login Gagal', result.message || 'Cek kembali email dan password-mu atau coba metode lain.');
-            }
-        } catch (err) {
-            showAlert('error', 'Terjadi Kesalahan', 'Coba cek koneksi internetmu atau coba metode lain.');
-        }
-    };
->>>>>>> 0afc7a3e0c2dc9bce710a47a17dec894ad24e071
 
   return (
     <KeyboardAvoidingView
@@ -128,7 +101,6 @@ const LoginPage = ({
         translucent
         backgroundColor="transparent"
       />
-
       {/* Background dekoratif diposisikan secara dinamis */}
       <View
         style={[styles.blueBackgroundTop, { height: dynamicBackgroundHeight }]}
@@ -172,7 +144,6 @@ const LoginPage = ({
           {/* Form Card */}
           <View style={[styles.formCard, { marginTop: height * 0.02 }]}>
             <Text style={styles.formCardTitle}>Masuk</Text>
-
             <View style={styles.switchModeContainer}>
               <Text style={styles.switchModeText}>Belum memiliki akun? </Text>
               <TouchableOpacity onPress={onNavigateToRegister}>
@@ -210,10 +181,9 @@ const LoginPage = ({
                   onPress={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                   
                     <Eye size={22} color="#D3D3D3" />
                   ) : (
-                     <EyeOff size={22} color="#284B7A" />
+                    <EyeOff size={22} color="#284B7A" />
                   )}
                 </TouchableOpacity>
               </View>
@@ -232,7 +202,6 @@ const LoginPage = ({
                 </View>
                 <Text style={styles.checkboxText}>Remember me</Text>
               </TouchableOpacity>
-
               <TouchableOpacity onPress={onForgotPassword}>
                 <Text style={styles.forgotPasswordText}>Lupa password ?</Text>
               </TouchableOpacity>
