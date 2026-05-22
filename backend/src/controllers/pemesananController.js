@@ -13,16 +13,16 @@ const getMateriDropdown = async (req, res) => {
 
 // 2. Controller untuk menyimpan pemesanan baru
 const tambahPemesanan = async (req, res) => {
+    console.log("Data diterima:", req.body);
     const { 
         id_murid, 
-        id_guru, 
         id_materi, 
         waktu_mulai,   
         waktu_selesai, 
         lokasi_sesi    
     } = req.body;
 
-    if (!id_murid || !id_guru || !id_materi || !waktu_mulai || !waktu_selesai || !lokasi_sesi) {
+    if (!id_murid || !id_materi || !waktu_mulai || !waktu_selesai || !lokasi_sesi) {
         return res.status(400).json({ success: false, message: 'Harap melengkapi seluruh form pemesanan.' });
     }
 
@@ -30,12 +30,11 @@ const tambahPemesanan = async (req, res) => {
         const querySQL = `
             INSERT INTO pemesanan 
             (id_murid, id_guru, id_materi, status_pemesanan, waktu_mulai, waktu_selesai, lokasi_sesi) 
-            VALUES (?, ?, ?, 'menunggu konfirmasi', ?, ?, ?)
+            VALUES (?, null, ?, 'menunggu konfirmasi', ?, ?, ?)
         `;
 
         const result = await pool.query(querySQL, [
-            id_murid,      
-            id_guru,       
+            id_murid,         
             id_materi,     
             waktu_mulai,   
             waktu_selesai, 

@@ -1,8 +1,9 @@
 import { API_URL } from '../src/config'; // Sesuaikan path ke config.js
 
-export const fetchPermintaanBaru = async () => {
+export const fetchPermintaanBaru = async (idGuru) => {
     try {
-        const response = await fetch(`${API_URL}/permintaan-baru`, {
+        // Kirim idGuru sebagai query parameter
+        const response = await fetch(`${API_URL}/permintaan-baru?id_guru=${idGuru}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
         });
