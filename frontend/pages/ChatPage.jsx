@@ -4,10 +4,14 @@ import {
   StatusBar, ScrollView, TextInput, Image 
 } from 'react-native';
 
+// Import Ikon Lucide agar seragam dengan HomePage
+import { Calendar, MessageSquare, User, Home } from 'lucide-react-native';
+
 const LOGO_SOURCE = require('../assets/logo_humana.png'); 
 
-const ChatPage = ({ onNavigate, onChatPress }) => {
-  // Data dummy untuk list chat
+const ChatPage = ({ onNavigate, onChatPress, userRole }) => {
+  const role = userRole ? userRole.toLowerCase() : 'murid';
+
   const dummyChats = Array(6).fill({
     id: 1,
     name: 'Yanto Kurniawan',
@@ -16,14 +20,13 @@ const ChatPage = ({ onNavigate, onChatPress }) => {
     time: '10:11',
     unread: 1,
     initials: 'YK',
-    color: '#FF9B9B' // Warna pink pudar sesuai desain
+    color: '#FF9B9B'
   });
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#284B7A" translucent={false} />
       
-      {/* Header Biru */}
       <View style={styles.header}>
         <Image source={LOGO_SOURCE} style={styles.headerWatermark} resizeMode="contain" />
         <Text style={styles.headerTitle}>Chat</Text>
@@ -37,10 +40,9 @@ const ChatPage = ({ onNavigate, onChatPress }) => {
         </View>
       </View>
 
-      {/* Kontainer Putih List Chat */}
       <View style={styles.contentContainer}>
         <Text style={styles.sectionTitle}>TERBARU</Text>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
           {dummyChats.map((chat, index) => (
             <TouchableOpacity 
               key={index} 
@@ -68,31 +70,42 @@ const ChatPage = ({ onNavigate, onChatPress }) => {
         </ScrollView>
       </View>
 
-      {/* BOTTOM NAVIGATION */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('Home')}>
-          <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
-          <Text style={styles.navText}>Home</Text>
+      {/* SAMAKAN BOTTOM NAVBAR DENGAN HOMEPAGE */}
+      <View style={styles.customBottomNavbar}>
+        <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate('Home')}>
+          <Home color="#A9A9A9" size={22} />
+          <Text style={styles.navBarLabel}>{role === 'guru' ? 'Home' : 'Beranda'}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('Activity', 'aktif')}>
-          <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
-          <Text style={styles.navText}>Activity</Text>
+        
+        <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate('Activity', 'aktif')}>
+          <Calendar color="#A9A9A9" size={22} />
+          <Text style={styles.navBarLabel}>{role === 'guru' ? 'Activity' : 'Aktivitas'}</Text>
         </TouchableOpacity>
-        <View style={styles.fabContainer}>
-          <View style={styles.fabCutout}>
-            <TouchableOpacity style={styles.fabButton}>
-              <Image source={LOGO_SOURCE} style={styles.fabIcon} resizeMode="contain" />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.fabText}>Pesan{"\n"}Sesi</Text>
+
+        <View style={styles.centerFabContainer}>
+          <TouchableOpacity 
+            style={styles.centerFabButton}
+            onPress={() => {
+              if (onNavigate) {
+                onNavigate(role === 'guru' ? 'Activity' : 'PesanSesi');
+              }
+            }}
+          >
+            <Image source={LOGO_SOURCE} style={styles.centerFabLogoIcon} resizeMode="contain" />
+          </TouchableOpacity>
+          <Text style={styles.centerFabLabelText}>
+            {role === 'guru' ? 'Permintaan' : 'Pesan Sesi'}
+          </Text>
         </View>
-        <TouchableOpacity style={styles.navItem}>
-          <Image source={LOGO_SOURCE} style={[styles.navIcon, { tintColor: '#284B7A' }]} resizeMode="contain" />
-          <Text style={[styles.navText, { color: '#284B7A', fontWeight: 'bold' }]}>Chat</Text>
+
+        <TouchableOpacity style={styles.navBarItem}>
+          <MessageSquare color="#284B7A" size={22} />
+          <Text style={[styles.navBarLabel, { color: '#284B7A', fontWeight: 'bold' }]}>Chat</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('Profile')}>
-          <Image source={LOGO_SOURCE} style={styles.navIcon} resizeMode="contain" />
-          <Text style={styles.navText}>Profile</Text>
+        
+        <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate('Profile')}>
+          <User color="#A9A9A9" size={22} />
+          <Text style={styles.navBarLabel}>Profile</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -122,15 +135,14 @@ const styles = StyleSheet.create({
   unreadBadge: { backgroundColor: '#284B7A', width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   unreadText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
 
-  bottomNav: { position: 'absolute', bottom: 0, width: '100%', height: 75, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderColor: '#F0F0F0', paddingHorizontal: 15 },
-  navItem: { alignItems: 'center', justifyContent: 'center', flex: 1, paddingTop: 10 },
-  navIcon: { width: 22, height: 22, tintColor: '#A9A9A9', marginBottom: 5 },
-  navText: { fontSize: 10, color: '#A9A9A9' },
-  fabContainer: { alignItems: 'center', justifyContent: 'flex-start', width: 70, height: 90, top: -25 },
-  fabCutout: { width: 66, height: 66, borderRadius: 33, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center' },
-  fabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', elevation: 5, shadowColor: '#284B7A', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 5 },
-  fabIcon: { width: 28, height: 28, tintColor: '#FFF' },
-  fabText: { fontSize: 10, color: '#A9A9A9', textAlign: 'center', marginTop: 2 },
+  // STYLE SINKRONISASI HOMEPAGE NAVBAR
+  customBottomNavbar: { position: 'absolute', bottom: 0, width: '100%', height: 75, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderColor: '#EEF0F2', paddingHorizontal: 10 },
+  navBarItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
+  navBarLabel: { fontSize: 10, color: '#A9A9A9', marginTop: 4 },
+  centerFabContainer: { alignItems: 'center', width: 75, height: 80, top: -16 },
+  centerFabButton: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#284B7A', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 4 },
+  centerFabLogoIcon: { width: 24, height: 24, tintColor: '#FFF' },
+  centerFabLabelText: { fontSize: 9, color: '#284B7A', textAlign: 'center', marginTop: 4, fontWeight: '600' },
 });
 
 export default ChatPage;
