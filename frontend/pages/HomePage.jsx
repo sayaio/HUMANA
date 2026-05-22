@@ -248,7 +248,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                         </>
                     ) : (
                         <>
-                            <TouchableOpacity style={styles.emeraldMenuItem}>
+                            <TouchableOpacity style={styles.emeraldMenuItem} onPress={() => onNavigate && onNavigate('PesanSesi')}>
                                 <View style={styles.emeraldIconBox}><Search color="#FFF" size={24} /></View>
                                 <Text style={styles.emeraldMenuText} numberOfLines={1}>Pesan Sesi</Text>
                             </TouchableOpacity>
@@ -317,7 +317,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                             <View style={styles.pesanLagiContent}>
                                 <Text style={styles.pesanLagiSubtitle}>Lanjutkan sesi favoritmu</Text>
                                 <Text style={styles.pesanLagiTitle} numberOfLines={2}><Text style={{ fontWeight: 'bold' }}>Matematika</Text> - Relasi & Fungsi</Text>
-                                <TouchableOpacity style={styles.pesanSesiBtn}><Text style={styles.pesanSesiBtnText}>Pesan Sesi →</Text></TouchableOpacity>
+                                <TouchableOpacity style={styles.pesanSesiBtn} onPress={() => onNavigate && onNavigate('PesanSesi')}><Text style={styles.pesanSesiBtnText}>Pesan Sesi →</Text></TouchableOpacity>
                             </View>
                             <View style={styles.pesanLagiGraphic}><Text style={styles.mathSymbols}>+ ={"\n"}- x</Text></View>
                         </View>
@@ -336,7 +336,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                                 <Text style={styles.rekomendasiCardSubtitle} numberOfLines={1}>Sekolah Menengah Atas</Text>
                             </View>
                             <TouchableOpacity style={styles.lihatMateriBtn} onPress={() => setIsMateriVisible(true)}>
-                                <Text style={styles.lihatMateriBtnText}>Lihat</Text>
+                                <Text style={styles.lihatMateriBtnText}>Lihat Materi</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -361,7 +361,14 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                 </TouchableOpacity>
 
                 <View style={styles.centerFabContainer}>
-                    <TouchableOpacity style={styles.centerFabButton}>
+                    <TouchableOpacity 
+                        style={styles.centerFabButton} 
+                        onPress={() => {
+                            if (onNavigate) {
+                                onNavigate(role === 'guru' ? 'Activity' : 'PesanSesi');
+                            }
+                        }}
+                    >
                         <Image source={LOGO_SOURCE} style={styles.centerFabLogoIcon} resizeMode="contain" />
                     </TouchableOpacity>
                     <Text style={styles.centerFabLabelText}>
@@ -416,10 +423,10 @@ const styles = StyleSheet.create({
     top: 0, 
     left: 0, 
     right: 0, 
-    height: 280, // Tambahkan sedikit tinggi agar lebih proporsional
+    height: 280, 
     backgroundColor: '#284B7A', 
-    borderBottomLeftRadius: 50,  // Tambahkan ini (kiri)
-    borderBottomRightRadius: 50, // Sesuaikan ini (kanan)
+    borderBottomLeftRadius: 50,  
+    borderBottomRightRadius: 50, 
     overflow: 'hidden' 
 },
     headerWatermark: { position: 'absolute', right: -30, top: -10, width: 260, height: 260, tintColor: '#FFFFFF', opacity: 0.05 },
@@ -442,29 +449,23 @@ const styles = StyleSheet.create({
     badgeBaru: { backgroundColor: '#FFF9C4', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 12 },
     badgeBaruText: { color: '#FBC02D', fontSize: 11, fontWeight: 'bold' },
 
-    // =========================================================
-    // FIX LAYOUT BREAKING: Strategi Kombinasi Grid & Wrap Dinamis
-    // =========================================================
     scheduleDetailsGrid: { 
         flexDirection: 'row', 
-        flexWrap: 'wrap', // Biarkan membungkus ke bawah kalau space tidak cukup di hp kecil
+        flexWrap: 'wrap', 
         justifyContent: 'space-between', 
         alignItems: 'flex-start',
         marginTop: 15, 
         width: '100%' 
     },
-    // Kalau role Guru: bagi 3 kolom sama rata (dikurangi sedikit gap aman)
     gridDetailItemTigaKolom: { 
         width: '30%', 
         minWidth: 80 
     },
-    // Kalau role Murid: bagi 2 kolom saja agar space jauh lebih lega
     gridDetailItemDuaKolom: { 
         width: '45%' 
     },
     scheduleLabel: { fontSize: 11, color: '#A9A9A9', marginBottom: 4 },
     scheduleValue: { fontSize: 13, color: '#222', fontWeight: 'bold', lineHeight: 16 },
-    // =========================================================
 
     guruActionCardButtons: { flexDirection: 'row', gap: 12, marginTop: 20 },
     btnLihatRute: { flex: 1, backgroundColor: '#284B7A', height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
