@@ -43,11 +43,11 @@ const getHistory = async (req, res) => {
                 
                 mapel.id_mapel,
                 mapel.nama_mapel
-            FROM pemesanan 
-            JOIN murid ON murid.id_murid = pemesanan.id_murid
-            JOIN guru ON guru.id_guru = pemesanan.id_guru
-            LEFT JOIN materi ON materi.id_materi = pemesanan.id_materi
-            LEFT JOIN matapelajaran mapel ON mapel.id_mapel = materi.id_mapel
+            FROM Pemesanan pemesanan
+            JOIN Murid murid ON murid.id_murid = pemesanan.id_murid
+            JOIN Guru guru ON guru.id_guru = pemesanan.id_guru
+            LEFT JOIN Materi materi ON materi.id_materi = pemesanan.id_materi
+            LEFT JOIN MataPelajaran mapel ON mapel.id_mapel = materi.id_mapel
             WHERE (pemesanan.status_pemesanan = 'selesai' OR pemesanan.status_pemesanan = 'ditolak') 
             AND (${whereClause} = ?)
             ORDER BY pemesanan.waktu_mulai DESC;
@@ -116,11 +116,11 @@ const getActiveSchedule = async (req, res) => {
                 pemesanan.waktu_mulai, pemesanan.waktu_selesai,
                 murid.nama_murid, guru.nama_guru, 
                 materi.nama_materi, mapel.nama_mapel
-            FROM pemesanan 
-            JOIN murid ON murid.id_murid = pemesanan.id_murid
-            JOIN guru ON guru.id_guru = pemesanan.id_guru
-            LEFT JOIN materi ON materi.id_materi = pemesanan.id_materi
-            LEFT JOIN matapelajaran mapel ON mapel.id_mapel = materi.id_mapel
+            FROM Pemesanan pemesanan
+            JOIN Murid murid ON murid.id_murid = pemesanan.id_murid
+            JOIN Guru guru ON guru.id_guru = pemesanan.id_guru
+            LEFT JOIN Materi materi ON materi.id_materi = pemesanan.id_materi
+            LEFT JOIN MataPelajaran mapel ON mapel.id_mapel = materi.id_mapel
             WHERE (pemesanan.status_pemesanan = 'dikonfirmasi' OR pemesanan.status_pemesanan = 'menunggu konfirmasi') 
             AND (${whereClause} = ?)
             ORDER BY pemesanan.waktu_mulai ASC;

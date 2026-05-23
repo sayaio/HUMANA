@@ -47,7 +47,7 @@ const getSesiDetail = async (req, res) => {
                 pembayaran.status_pembayaran,
                 pembayaran.tanggal_pembayaran
             FROM Sesi sesi
-            JOIN pemesanan ON pemesanan.id_pemesanan = sesi.id_pemesanan
+            JOIN Pemesanan ON pemesanan.id_pemesanan = sesi.id_pemesanan
             JOIN Murid murid ON murid.id_murid = pemesanan.id_murid
             JOIN Guru guru ON guru.id_guru = pemesanan.id_guru
             LEFT JOIN Materi materi ON materi.id_materi = pemesanan.id_materi

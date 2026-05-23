@@ -15,7 +15,7 @@ const updateBasic = async (req, res) => {
             }
         }
         await pool.query(
-            `UPDATE murid SET username = ?, no_telepon = ?, jenis_kelamin = ?, alamat = ? WHERE email = ?`,
+            `UPDATE Murid SET username = ?, no_telepon = ?, jenis_kelamin = ?, alamat = ? WHERE email = ?`,
             [username, phone, genderDb, domicile, email]
         );
 

@@ -28,7 +28,7 @@ const tambahPemesanan = async (req, res) => {
 
     try {
         const querySQL = `
-            INSERT INTO pemesanan 
+            INSERT INTO Pemesanan 
             (id_murid, id_guru, id_materi, status_pemesanan, waktu_mulai, waktu_selesai, lokasi_sesi) 
             VALUES (?, null, ?, 'menunggu konfirmasi', ?, ?, ?)
         `;

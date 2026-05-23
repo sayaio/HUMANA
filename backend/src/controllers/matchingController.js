@@ -38,12 +38,12 @@ const getPermintaanBaru = async (req, res) => {
                 p.id_pemesanan, 
                 p.waktu_mulai, 
                 p.waktu_selesai, 
-                p.lokasi_sesi, -- Ini menampung teks nama jalan seperti 'Jl. AWOKAOWK'
+                p.lokasi_sesi,
                 m.nama_murid, 
                 mat.nama_materi
-            FROM pemesanan p
-            JOIN murid m ON p.id_murid = m.id_murid
-            JOIN materi mat ON p.id_materi = mat.id_materi
+            FROM Pemesanan p
+            JOIN Murid m ON p.id_murid = m.id_murid
+            JOIN Materi mat ON p.id_materi = mat.id_materi
             WHERE p.id_guru IS NULL 
               AND LOWER(p.status_pemesanan) = 'menunggu konfirmasi'
             ORDER BY p.waktu_mulai ASC
@@ -94,14 +94,14 @@ const terimaPermintaanSesi = async (req, res) => {
     try {
         // 1. Update status pemesanan dan isi id_guru yang menerima
         await pool.query(`
-            UPDATE pemesanan 
+            UPDATE Pemesanan 
             SET id_guru = ?, status_pemesanan = 'dikonfirmasi' 
             WHERE id_pemesanan = ?
         `, [id_guru, id_pemesanan]);
 
         // 2. INSERT ke tabel pembayaran (Nama kolom diganti dari id_sesi menjadi id_pemesanan)
         await pool.query(`
-            INSERT INTO pembayaran (id_pemesanan, metode_pembayaran, nominal, status_pembayaran) 
+            INSERT INTO Pembayaran (id_pemesanan, metode_pembayaran, nominal, status_pembayaran) 
             VALUES (?, 'menunggu', ?, 'menunggu')
         `, [id_pemesanan, total_pembayaran_final]);
 
@@ -133,9 +133,9 @@ const getSesiDikonfirmasi = async (req, res) => {
                 m.nama_murid, 
                 mat.nama_materi,
                 pem.nominal AS harga_total
-            FROM pemesanan p
-            JOIN murid m ON p.id_murid = m.id_murid
-            JOIN materi mat ON p.id_materi = mat.id_materi
+            FROM Pemesanan p
+            JOIN Murid m ON p.id_murid = m.id_murid
+            JOIN Materi mat ON p.id_materi = mat.id_materi
             LEFT JOIN pembayaran pem ON p.id_pemesanan = pem.id_pemesanan
             WHERE p.id_guru = ? 
               AND LOWER(p.status_pemesanan) = 'dikonfirmasi'

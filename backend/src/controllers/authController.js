@@ -22,7 +22,7 @@ const login = async (req, res) => {
             alamat,
             NULL AS kelas,
             NULL AS jurusan
-        FROM guru WHERE email_guru = ?
+        FROM Guru WHERE email_guru = ?
 
         UNION ALL
 
@@ -38,7 +38,7 @@ const login = async (req, res) => {
             alamat,
             kelas,
             jurusan
-        FROM murid WHERE email = ?
+        FROM Murid WHERE email = ?
         `;
 
         const rows = await conn.query(query, [email, email]);
