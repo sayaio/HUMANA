@@ -68,19 +68,28 @@ class PemesananSesi {
     }
 
     toJSON() {
-        const jamMulaiText = this.#waktuMulai ? this.#waktuMulai.substring(11, 16) : "";
-        const jamSelesaiText = this.#waktuSelesai ? this.#waktuSelesai.substring(11, 16) : "";
+        // Tangani konversi Date object bawaan MariaDB ke ISO String jika diperlukan
+        const mulaiStr = this.#waktuMulai instanceof Date ? this.#waktuMulai.toISOString() : this.#waktuMulai;
+        const selesaiStr = this.#waktuSelesai instanceof Date ? this.#waktuSelesai.toISOString() : this.#waktuSelesai;
+
+        // Substring '11, 16' mengambil format HH:MM dari ISO String
+        const jamMulaiText = mulaiStr ? mulaiStr.substring(11, 16) : "";
+        const jamSelesaiText = selesaiStr ? selesaiStr.substring(11, 16) : "";
+
+        const rincianBiaya = this.HitungTotalBiaya(this.jarak_km);
 
         return {
             id_pemesanan: this.id_pemesanan,
             nama_murid: this.murid,
             nama_materi: this.materi,
             status_pemesanan: this.statusPemesanan,
-            waktu_string: `${jamMulaiText} – ${jamSelesaiText}`,
-            durasi_jam: this.HitungDurasiJam(),
+            // Satukan waktu langsung dari backend
+            waktu_string: jamMulaiText && jamSelesaiText ? `${jamMulaiText} – ${jamSelesaiText}` : "Waktu tidak valid",
             jarak_km: parseFloat(this.jarak_km.toFixed(2)),
-            lokasi_koordinat: this.#lokasiSesi,
-            rincian: this.HitungTotalBiaya(this.jarak_km)
+            // SAMAKAN NAMA PROPERTI DENGAN FRONTEND
+            lokasi_sesi: this.#lokasiSesi,
+            // Ekspos harga_total agar formatRupiah(item.harga_total) di frontend langsung jalan
+            harga_total: rincianBiaya.totalPembayaran
         };
     }
 }

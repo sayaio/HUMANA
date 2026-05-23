@@ -13,3 +13,20 @@ export const fetchPermintaanBaru = async (idGuru, lat, lng) => {
         return { success: false, message: error.message, data: [] };
     }
 };
+
+export const terimaPermintaanSesiAPI = async (idPemesanan, idGuru, totalPembayaranFinal) => {
+    try {
+        const response = await fetch(`${API_URL}/terima-permintaan`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_pemesanan: idPemesanan,
+                id_guru: idGuru,
+                total_pembayaran_final: totalPembayaranFinal
+            })
+        });
+        return await response.json();
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
+};

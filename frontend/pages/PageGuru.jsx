@@ -7,29 +7,33 @@ import {
     TouchableOpacity,
     StatusBar,
     useWindowDimensions,
-    ActivityIndicator
+    ActivityIndicator,
+    Alert
 } from 'react-native';
 import { Calendar, BookOpen, Wallet, MousePointerClick, MapPin, MessageSquare, Home, Activity, MessageCircle, User } from 'lucide-react-native';
 
-import { fetchPermintaanBaru } from '../services/matchingService';
+// Import service yang sudah diperbarui
+import { fetchPermintaanBaru, terimaPermintaanSesiAPI } from '../services/matchingService';
 
-// 1. TERIMA PROPS guruData DAN onNavigate DARI PARENT COMPONENT
 const PageGuru = ({ guruData, onNavigate }) => {
     const { width } = useWindowDimensions();
 
     const [permintaan, setPermintaan] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // Hardcode koordinat sementara (Sesuai lokasi Sukapura/Telkom University)
+    const LAT_GURU_MOCK = -6.9744;
+    const LNG_GURU_MOCK = 107.6303;
+
     const loadPermintaan = async () => {
-        // Pastikan guruData dan id-nya tersedia sebelum nge-fetch
         if (!guruData || !guruData.id) {
             setLoading(false);
             return;
         }
 
         setLoading(true);
-        // 2. GUNAKAN ID DARI PROPS
-        const result = await fetchPermintaanBaru(guruData.id);
+        // Kirim ID serta koordinat mock agar backend tidak melempar error 400
+        const result = await fetchPermintaanBaru(guruData.id, LAT_GURU_MOCK, LNG_GURU_MOCK);
 
         if (result && result.success) {
             setPermintaan(result.data);
@@ -41,12 +45,52 @@ const PageGuru = ({ guruData, onNavigate }) => {
 
     useEffect(() => {
         loadPermintaan();
-    }, [guruData]); // Tambahkan guruData ke dependency array agar reload jika data berubah
+    }, [guruData]);
 
-    const formatWaktu = (waktuString) => {
-        if (!waktuString) return '';
-        const date = new Date(waktuString);
-        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    // HANDLER AKSI: TERIMA SESI
+    const handleTerimaSesi = async (item) => {
+        Alert.alert(
+            "Konfirmasi Terima",
+            `Apakah Anda yakin ingin menerima permintaan mengajar dari ${item.nama_murid}?`,
+            [
+                { text: "Batal", style: "cancel" },
+                {
+                    text: "Terima",
+                    onPress: async () => {
+                        setLoading(true);
+                        const res = await terimaPermintaanSesiAPI(item.id_pemesanan, guruData.id, item.harga_total);
+
+                        if (res && res.success) {
+                            Alert.alert("Sukses", "Sesi berhasil dikonfirmasi!");
+                            // Hapus data dari daftar list permintaan secara real-time
+                            setPermintaan(prev => prev.filter(p => p.id_pemesanan !== item.id_pemesanan));
+                        } else {
+                            Alert.alert("Gagal", res.message || "Terjadi kesalahan sistem.");
+                        }
+                        setLoading(false);
+                    }
+                }
+            ]
+        );
+    };
+
+    // HANDLER AKSI: TOLAK SESI
+    const handleTolakSesi = (item) => {
+        Alert.alert(
+            "Tolak Permintaan",
+            `Abaikan permintaan dari ${item.nama_murid}? Sesi akan dihapus dari daftar pantauan Anda.`,
+            [
+                { text: "Batal", style: "cancel" },
+                {
+                    text: "Tolak",
+                    style: "destructive",
+                    onPress: () => {
+                        // Sifat menolak pesanan bertipe 'broadcast' (p.id_guru IS NULL) cukup dengan menyembunyikannya dari UI lokal guru tersebut
+                        setPermintaan(prev => prev.filter(p => p.id_pemesanan !== item.id_pemesanan));
+                    }
+                }
+            ]
+        );
     };
 
     const formatRupiah = (number) => {
@@ -62,7 +106,6 @@ const PageGuru = ({ guruData, onNavigate }) => {
 
                 <View style={styles.headerBackground}>
                     <Text style={styles.welcomeText}>Halo,</Text>
-                    {/* 3. TAMPILKAN NAMA DARI PROPS (Berikan fallback 'Guru' jika kosong) */}
                     <Text style={styles.nameText}>{guruData?.nama || 'Guru'}!</Text>
                 </View>
 
@@ -162,12 +205,12 @@ const PageGuru = ({ guruData, onNavigate }) => {
                             <View style={styles.detailGrid}>
                                 <View style={styles.detailItem}>
                                     <Text style={styles.detailLabel}>Waktu</Text>
-                                    <Text style={styles.detailValue}>
-                                        {formatWaktu(item.waktu_mulai)} – {formatWaktu(item.waktu_selesai)}
-                                    </Text>
+                                    {/* SEKARANG LANGSUNG MEMANGGIL STRING BENTUKAN BACKEND */}
+                                    <Text style={styles.detailValue}>{item.waktu_string}</Text>
                                 </View>
                                 <View style={styles.detailItem}>
                                     <Text style={styles.detailLabel}>Lokasi</Text>
+                                    {/* SUDAH SESUAI DENGAN FORMAT JSON YANG BARU */}
                                     <Text style={styles.detailValue} numberOfLines={2}>{item.lokasi_sesi}</Text>
                                 </View>
                                 <View style={styles.detailItem}>
@@ -179,13 +222,13 @@ const PageGuru = ({ guruData, onNavigate }) => {
                             <View style={styles.actionButtonRow}>
                                 <TouchableOpacity
                                     style={[styles.btnAction, styles.btnDanger]}
-                                    onPress={() => console.log('Tolak id:', item.id_pemesanan)}
+                                    onPress={() => handleTolakSesi(item)}
                                 >
                                     <Text style={styles.btnTextWhite}>Tolak</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={[styles.btnAction, styles.btnPrimary]}
-                                    onPress={() => console.log('Terima id:', item.id_pemesanan)}
+                                    onPress={() => handleTerimaSesi(item)}
                                 >
                                     <Text style={styles.btnTextWhite}>Terima</Text>
                                 </TouchableOpacity>
@@ -199,7 +242,6 @@ const PageGuru = ({ guruData, onNavigate }) => {
 
             {/* BOTTOM NAVIGATION BAR */}
             <View style={styles.bottomTabContainer}>
-                {/* 4. CONTOH IMPLEMENTASI onNavigate DI BOTTOM NAV */}
                 <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('HomeGuru')}>
                     <Home color="#284B7A" size={24} />
                     <Text style={[styles.tabLabel, styles.activeTabLabel]}>Home</Text>
@@ -229,36 +271,14 @@ const PageGuru = ({ guruData, onNavigate }) => {
     );
 };
 
-// ... BAGIAN STYLES TETAP SAMA PERSIS SEPERTI MILIKMU ...
+// ... Gaya penulisan layout/styles di bawah tetap dipertahankan seperti milikmu ...
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFF' },
     scrollContainer: { flex: 1 },
-
-    // Header Blue Styling
-    headerBackground: {
-        backgroundColor: '#284B7A',
-        paddingTop: 60,
-        paddingHorizontal: 24,
-        paddingBottom: 70,
-        borderBottomLeftRadius: 35,
-        borderBottomRightRadius: 35,
-    },
+    headerBackground: { backgroundColor: '#284B7A', paddingTop: 60, paddingHorizontal: 24, paddingBottom: 70, borderBottomLeftRadius: 35, borderBottomRightRadius: 35 },
     welcomeText: { color: '#FFF', fontSize: 28, fontWeight: '400' },
     nameText: { color: '#FFF', fontSize: 32, fontWeight: 'bold', marginTop: 4 },
-
-    // Main Card Sesi Hari Ini
-    mainCard: {
-        backgroundColor: '#FFF',
-        marginHorizontal: 24,
-        borderRadius: 24,
-        padding: 20,
-        marginTop: -50,
-        elevation: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-    },
+    mainCard: { backgroundColor: '#FFF', marginHorizontal: 24, borderRadius: 24, padding: 20, marginTop: -50, elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 },
     cardSectionTitle: { fontSize: 13, fontWeight: 'bold', color: '#999', marginBottom: 12 },
     profileRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
     avatarCircle: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#333', justifyContent: 'center', alignItems: 'center' },
@@ -266,20 +286,14 @@ const styles = StyleSheet.create({
     profileInfo: { flex: 1, marginLeft: 12 },
     studentName: { fontSize: 18, fontWeight: 'bold', color: '#1A335E' },
     subjectText: { fontSize: 13, color: '#666', marginTop: 2 },
-
-    // Badges
     badgeSegera: { backgroundColor: '#C1F4D3', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
     badgeTextSegera: { color: '#25A244', fontSize: 12, fontWeight: 'bold' },
     badgeBaru: { backgroundColor: '#FFE6A3', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
     badgeTextBaru: { color: '#D4A017', fontSize: 12, fontWeight: 'bold' },
-
-    // Detail Info Grid
     detailGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
     detailItem: { flex: 1, marginRight: 8 },
     detailLabel: { fontSize: 12, color: '#999', fontWeight: 'bold' },
     detailValue: { fontSize: 14, fontWeight: 'bold', color: '#333', marginTop: 4 },
-
-    // Buttons Action
     actionButtonRow: { flexDirection: 'row', justifyContent: 'space-between' },
     btnAction: { flex: 1, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginHorizontal: 4 },
     btnPrimary: { backgroundColor: '#284B7A' },
@@ -287,44 +301,22 @@ const styles = StyleSheet.create({
     btnDanger: { backgroundColor: '#FF8A8A' },
     btnTextWhite: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
     btnTextBlue: { color: '#284B7A', fontWeight: 'bold', fontSize: 14 },
-
-    // Grid Menu Buttons Middle
     menuGridContainer: { paddingHorizontal: 24, marginTop: 24 },
     menuRow: { flexDirection: 'row', justifyContent: 'space-between' },
     menuItemButton: { alignItems: 'center', width: '22%' },
     iconContainer: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#E4F0EC', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
     menuButtonText: { fontSize: 12, fontWeight: 'bold', color: '#222', textAlign: 'center' },
-
     divider: { height: 6, backgroundColor: '#F0F2F5', marginTop: 24 },
-
-    // Section Permintaan Baru
     sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 24, marginTop: 20, alignItems: 'center' },
     sectionTitleText: { fontSize: 14, fontWeight: 'bold', color: '#888' },
     linkText: { fontSize: 14, fontWeight: 'bold', color: '#3A7BD5' },
     requestCard: { backgroundColor: '#FFF', marginHorizontal: 24, borderRadius: 24, padding: 20, marginTop: 12, borderWidth: 1, borderColor: '#ECEFF1' },
-
-    // Bottom Navigation Bar Custom Look
-    bottomTabContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: 70,
-        backgroundColor: '#FFF',
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        borderTopWidth: 1,
-        borderTopColor: '#EEE',
-        paddingBottom: 10,
-    },
+    bottomTabContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 70, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEE', paddingBottom: 10 },
     tabItem: { alignItems: 'center', justifyContent: 'center' },
     tabLabel: { fontSize: 11, color: '#666', marginTop: 4 },
     activeTabLabel: { color: '#284B7A', fontWeight: 'bold' },
-
-    // Center Floating Tab Button Style
     centerTabWrapper: { alignItems: 'center', marginTop: -30 },
-    centerTabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', borderWhiteWidth: 4, borderColor: '#FFF', elevation: 4 },
+    centerTabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', borderWidth: 4, borderColor: '#FFF', elevation: 4 },
     centerLogoText: { color: '#FFF', fontSize: 24, fontWeight: 'bold' },
     centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
 });
