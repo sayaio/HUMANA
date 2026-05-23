@@ -68,13 +68,26 @@ class PemesananSesi {
     }
 
     toJSON() {
-        // Tangani konversi Date object bawaan MariaDB ke ISO String jika diperlukan
-        const mulaiStr = this.#waktuMulai instanceof Date ? this.#waktuMulai.toISOString() : this.#waktuMulai;
-        const selesaiStr = this.#waktuSelesai instanceof Date ? this.#waktuSelesai.toISOString() : this.#waktuSelesai;
+        // Buat helper function internal untuk mengubah Date object atau string dari DB menjadi format HH:MM lokal
+        const formatKeJamLokal = (waktuRaw) => {
+            if (!waktuRaw) return "";
 
-        // Substring '11, 16' mengambil format HH:MM dari ISO String
-        const jamMulaiText = mulaiStr ? mulaiStr.substring(11, 16) : "";
-        const jamSelesaiText = selesaiStr ? selesaiStr.substring(11, 16) : "";
+            // Bungkus ke objek Date jika bentukannya masih string dari database
+            const dateObj = waktuRaw instanceof Date ? waktuRaw : new Date(waktuRaw);
+
+            // Cek apakah parsing date berhasil/valid
+            if (isNaN(dateObj.getTime())) return "";
+
+            // Ambil waktu lokal (WIB jika dijalankan di server lokal / device Indonesia) tanpa konversi UTC
+            return dateObj.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).replace('.', ':'); // Mengganti pemisah titik bawaan id-ID menjadi titik dua (:)
+        };
+
+        const jamMulaiText = formatKeJamLokal(this.#waktuMulai);
+        const jamSelesaiText = formatKeJamLokal(this.#waktuSelesai);
 
         const rincianBiaya = this.HitungTotalBiaya(this.jarak_km);
 
@@ -83,12 +96,10 @@ class PemesananSesi {
             nama_murid: this.murid,
             nama_materi: this.materi,
             status_pemesanan: this.statusPemesanan,
-            // Satukan waktu langsung dari backend
+            // Sekarang waktu_string akan menghasilkan jam lokal yang pas (07:30 – 09:30)
             waktu_string: jamMulaiText && jamSelesaiText ? `${jamMulaiText} – ${jamSelesaiText}` : "Waktu tidak valid",
             jarak_km: parseFloat(this.jarak_km.toFixed(2)),
-            // SAMAKAN NAMA PROPERTI DENGAN FRONTEND
             lokasi_sesi: this.#lokasiSesi,
-            // Ekspos harga_total agar formatRupiah(item.harga_total) di frontend langsung jalan
             harga_total: rincianBiaya.totalPembayaran
         };
     }

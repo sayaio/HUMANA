@@ -30,5 +30,5 @@ router.post('/pemesanan/tambah', pemesananController.tambahPemesanan);
 const matchingController = require('./src/controllers/matchingController');
 router.get('/permintaan-baru', matchingController.getPermintaanBaru);
 router.post('/terima-permintaan', matchingController.terimaPermintaanSesi);
-
+router.get('/sesi-dikonfirmasi', matchingController.getSesiDikonfirmasi);
 module.exports = router;

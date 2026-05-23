@@ -30,3 +30,16 @@ export const terimaPermintaanSesiAPI = async (idPemesanan, idGuru, totalPembayar
         return { success: false, message: error.message };
     }
 };
+export const fetchSesiDikonfirmasi = async (idGuru) => {
+    try {
+        // Menembak endpoint backend dengan membawa query parameter id_guru
+        const response = await fetch(`${API_URL}/sesi-dikonfirmasi?id_guru=${idGuru}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        return await response.json();
+    } catch (error) {
+        return { success: false, message: error.message, data: null };
+    }
+};

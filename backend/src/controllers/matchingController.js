@@ -115,7 +115,75 @@ const terimaPermintaanSesi = async (req, res) => {
     }
 };
 
+const getSesiDikonfirmasi = async (req, res) => {
+    const { id_guru } = req.query;
+
+    if (!id_guru) {
+        return res.status(400).json({ success: false, message: "ID Guru tidak disediakan." });
+    }
+
+    try {
+        // Query mengambil data pemesanan yang statusnya 'dikonfirmasi' untuk guru terkait
+        const rows = await pool.query(`
+            SELECT 
+                p.id_pemesanan, 
+                p.waktu_mulai, 
+                p.waktu_selesai, 
+                p.lokasi_sesi, 
+                m.nama_murid, 
+                mat.nama_materi,
+                pem.nominal AS harga_total
+            FROM pemesanan p
+            JOIN murid m ON p.id_murid = m.id_murid
+            JOIN materi mat ON p.id_materi = mat.id_materi
+            LEFT JOIN pembayaran pem ON p.id_pemesanan = pem.id_pemesanan
+            WHERE p.id_guru = ? 
+              AND LOWER(p.status_pemesanan) = 'dikonfirmasi'
+            ORDER BY p.waktu_mulai ASC
+            LIMIT 1
+        `, [id_guru]);
+
+        // Jika tidak ada sesi yang berstatus dikonfirmasi
+        if (rows.length === 0) {
+            return res.status(200).json({ success: true, data: null });
+        }
+
+        const row = rows[0];
+        
+        // Memetakan ke struktur kelas PemesananSesi agar seragam dengan frontend
+        const sesiDikonfirmasi = new PemesananSesi(
+            row.nama_murid,
+            id_guru,
+            row.nama_materi,
+            row.waktu_mulai,
+            row.waktu_selesai,
+            row.lokasi_sesi
+        );
+        sesiDikonfirmasi.id_pemesanan = row.id_pemesanan;
+        
+        // Menyisipkan properti tambahan untuk keperluan UI
+        sesiDikonfirmasi.harga_total = row.harga_total || 0; 
+        
+        // Membuat string format waktu kustom (contoh: 08:30 - 10:30)
+        if (row.waktu_mulai && row.waktu_selesai) {
+            const opsiJam = { hour: '2-digit', minute: '2-digit', hour12: false };
+            const jamMulai = new Date(row.waktu_mulai).toLocaleTimeString('id-ID', opsiJam);
+            const jamSelesai = new Date(row.waktu_selesai).toLocaleTimeString('id-ID', opsiJam);
+            sesiDikonfirmasi.waktu_string = `${jamMulai.replace('.', ':')} – ${jamSelesai.replace('.', ':')}`;
+        } else {
+            sesiDikonfirmasi.waktu_string = "-";
+        }
+
+        res.status(200).json({ success: true, data: sesiDikonfirmasi });
+
+    } catch (error) {
+        console.error("Error pada getSesiDikonfirmasi:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     getPermintaanBaru,
-    terimaPermintaanSesi
+    terimaPermintaanSesi,
+    getSesiDikonfirmasi // <-- Jangan lupa diekspor
 };

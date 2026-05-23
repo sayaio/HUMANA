@@ -13,12 +13,13 @@ import {
 import { Calendar, BookOpen, Wallet, MousePointerClick, MapPin, MessageSquare, Home, Activity, MessageCircle, User } from 'lucide-react-native';
 
 // Import service yang sudah diperbarui
-import { fetchPermintaanBaru, terimaPermintaanSesiAPI } from '../services/matchingService';
 
+import { fetchPermintaanBaru, terimaPermintaanSesiAPI, fetchSesiDikonfirmasi } from '../services/matchingService';
 const PageGuru = ({ guruData, onNavigate }) => {
     const { width } = useWindowDimensions();
 
     const [permintaan, setPermintaan] = useState([]);
+    const [sesiDikonfirmasi, setSesiDikonfirmasi] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // Hardcode koordinat sementara (Sesuai lokasi Sukapura/Telkom University)
@@ -32,14 +33,23 @@ const PageGuru = ({ guruData, onNavigate }) => {
         }
 
         setLoading(true);
-        // Kirim ID serta koordinat mock agar backend tidak melempar error 400
-        const result = await fetchPermintaanBaru(guruData.id, LAT_GURU_MOCK, LNG_GURU_MOCK);
 
-        if (result && result.success) {
-            setPermintaan(result.data);
+        // 1. Ambil data permintaan baru (Broadcast)
+        const resultReq = await fetchPermintaanBaru(guruData.id, LAT_GURU_MOCK, LNG_GURU_MOCK);
+        if (resultReq && resultReq.success) {
+            setPermintaan(resultReq.data);
         } else {
             setPermintaan([]);
         }
+
+        // 2. Ambil data sesi yang sudah dikonfirmasi
+        const resultSesi = await fetchSesiDikonfirmasi(guruData.id);
+        if (resultSesi && resultSesi.success && resultSesi.data) {
+            setSesiDikonfirmasi(resultSesi.data); // Menyimpan objek sesi dikonfirmasi
+        } else {
+            setSesiDikonfirmasi(null);
+        }
+
         setLoading(false);
     };
 
@@ -111,40 +121,55 @@ const PageGuru = ({ guruData, onNavigate }) => {
 
                 {/* CARD: SESI HARI INI (Statis) */}
                 <View style={styles.mainCard}>
-                    <Text style={styles.cardSectionTitle}>SESI HARI INI</Text>
+                    <Text style={styles.cardSectionTitle}>SESI DIKONFIRMASI / TERDEKAT</Text>
 
-                    <View style={styles.profileRow}>
-                        <View style={styles.avatarCircle}><Text style={styles.avatarText}>MA</Text></View>
-                        <View style={styles.profileInfo}>
-                            <Text style={styles.studentName}>Mario Arkan</Text>
-                            <Text style={styles.subjectText}>Matematika — Relasi & Fungsi</Text>
-                        </View>
-                        <View style={styles.badgeSegera}><Text style={styles.badgeTextSegera}>• Segera</Text></View>
-                    </View>
+                    {sesiDikonfirmasi ? (
+                        <>
+                            <View style={styles.profileRow}>
+                                <View style={styles.avatarCircle}>
+                                    <Text style={styles.avatarText}>
+                                        {sesiDikonfirmasi.nama_murid ? sesiDikonfirmasi.nama_murid.substring(0, 2).toUpperCase() : 'SR'}
+                                    </Text>
+                                </View>
+                                <View style={styles.profileInfo}>
+                                    <Text style={styles.studentName}>{sesiDikonfirmasi.nama_murid}</Text>
+                                    <Text style={styles.subjectText}>{sesiDikonfirmasi.nama_materi}</Text>
+                                </View>
+                                <View style={[styles.badgeSegera, { backgroundColor: '#D1E7DD' }]}>
+                                    <Text style={[styles.badgeTextSegera, { color: '#0F5132' }]}>• Siap</Text>
+                                </View>
+                            </View>
 
-                    <View style={styles.detailGrid}>
-                        <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Waktu</Text>
-                            <Text style={styles.detailValue}>06.30 – 09.30</Text>
-                        </View>
-                        <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Lokasi</Text>
-                            <Text style={styles.detailValue} numberOfLines={2}>Jl. Cihampelas No.12</Text>
-                        </View>
-                        <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Bayaran</Text>
-                            <Text style={styles.detailValue}>Rp 34.000</Text>
-                        </View>
-                    </View>
+                            <View style={styles.detailGrid}>
+                                <View style={styles.detailItem}>
+                                    <Text style={styles.detailLabel}>Waktu</Text>
+                                    {/* Jika string waktu mentah dari DB, bisa gunakan format substring atau field bentukan backend */}
+                                    <Text style={styles.detailValue}>{sesiDikonfirmasi.waktu_string || 'Sesi Terjadwal'}</Text>
+                                </View>
+                                <View style={styles.detailItem}>
+                                    <Text style={styles.detailLabel}>Lokasi</Text>
+                                    <Text style={styles.detailValue} numberOfLines={2}>{sesiDikonfirmasi.lokasi_sesi}</Text>
+                                </View>
+                                <View style={styles.detailItem}>
+                                    <Text style={styles.detailLabel}>Bayaran</Text>
+                                    <Text style={styles.detailValue}>{formatRupiah(sesiDikonfirmasi.harga_total)}</Text>
+                                </View>
+                            </View>
 
-                    <View style={styles.actionButtonRow}>
-                        <TouchableOpacity style={[styles.btnAction, styles.btnPrimary]}>
-                            <Text style={styles.btnTextWhite}>Lihat Rute</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={[styles.btnAction, styles.btnSecondary]}>
-                            <Text style={styles.btnTextBlue}>Chat Murid</Text>
-                        </TouchableOpacity>
-                    </View>
+                            <View style={styles.actionButtonRow}>
+                                <TouchableOpacity style={[styles.btnAction, styles.btnPrimary]}>
+                                    <Text style={styles.btnTextWhite}>Lihat Rute</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.btnAction, styles.btnSecondary]}>
+                                    <Text style={styles.btnTextBlue}>Chat Murid</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </>
+                    ) : (
+                        <View style={{ padding: 25, alignItems: 'center' }}>
+                            <Text style={{ color: '#888', fontSize: 13 }}>Belum ada sesi mengajar yang dikonfirmasi.</Text>
+                        </View>
+                    )}
                 </View>
 
                 {/* GRID MENU BUTTONS */}
