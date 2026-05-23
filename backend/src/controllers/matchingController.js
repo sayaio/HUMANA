@@ -136,7 +136,7 @@ const getSesiDikonfirmasi = async (req, res) => {
             FROM Pemesanan p
             JOIN Murid m ON p.id_murid = m.id_murid
             JOIN Materi mat ON p.id_materi = mat.id_materi
-            LEFT JOIN pembayaran pem ON p.id_pemesanan = pem.id_pemesanan
+            LEFT JOIN Pembayaran pem ON p.id_pemesanan = pem.id_pemesanan
             WHERE p.id_guru = ? 
               AND LOWER(p.status_pemesanan) = 'dikonfirmasi'
             ORDER BY p.waktu_mulai ASC
