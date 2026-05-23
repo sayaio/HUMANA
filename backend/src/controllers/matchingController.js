@@ -1,57 +1,118 @@
-// pemesananService.js
+const PemesananSesi = require('../classes/PemesananSesi');
 const pool = require('../database');
 
+// ==========================================
+// FUNGSI PEMBANTU (HELPERS)
+// ==========================================
+function hitungJarak(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+// ==========================================
+// CONTROLLERS
+// ==========================================
+
 const getPermintaanBaru = async (req, res) => {
-    let conn;
-    try {
-        // 1. Tangkap id_guru dari parameter query yang dikirim frontend
-        const idGuru = req.query.id_guru;
+    const { id_guru, lat_guru, lng_guru } = req.query;
 
-        // Validasi
-        if (!idGuru) {
-            return res.status(400).json({
-                success: false,
-                message: "id_guru wajib dikirim!"
-            });
-        }
-
-        conn = await pool.getConnection();
-
-        // 2. Tambahkan p.harga_total di dalam SELECT
-        const query = `
-            SELECT 
-                p.id_pemesanan, 
-                p.waktu_mulai, 
-                p.waktu_selesai, 
-                p.lokasi_sesi,
-                m.nama_murid, 
-                mat.nama_materi
-            FROM pemesanan p
-            JOIN murid m ON p.id_murid = m.id_murid
-            JOIN materi mat ON p.id_materi = mat.id_materi
-            WHERE p.id_guru IS NULL 
-              AND p.status_pemesanan = 'menunggu konfirmasi'
-            ORDER BY p.waktu_mulai ASC
-        `;
-
-        const rows = await conn.query(query);
-
-        res.status(200).json({
-            success: true,
-            message: "Berhasil mengambil permintaan baru",
-            data: rows
-        });
-
-    } catch (err) {
-        console.error("Error di getPermintaanBaru:", err);
-        res.status(500).json({
+    if (!id_guru || !lat_guru || !lng_guru) {
+        return res.status(400).json({
             success: false,
-            message: "Terjadi kesalahan pada server",
-            error: err.message
+            message: "Koordinat lokasi terkini Guru tidak terdeteksi oleh sistem."
         });
-    } finally {
-        if (conn) conn.release();
+    }
+
+    try {
+        const guruLat = Number(lat_guru);
+        const guruLng = Number(lng_guru);
+
+        // 1. Ambil data mentah pesanan yang statusnya 'menunggu_konfirmasi'
+        const rows = await pool.query(`
+            SELECT 
+        p.id_pemesanan, 
+        p.waktu_mulai, 
+        p.waktu_selesai, 
+        p.lokasi_sesi,
+        m.nama_murid, 
+        mat.nama_materi
+    FROM pemesanan p
+    JOIN murid m ON p.id_murid = m.id_murid
+    JOIN materi mat ON p.id_materi = mat.id_materi
+    WHERE p.id_guru IS NULL 
+      AND LOWER(p.status_pemesanan) = 'menunggu konfirmasi'
+    ORDER BY p.waktu_mulai ASC
+        `);
+        console.log("Isi dari rows:", rows);
+        if (!Array.isArray(rows)) {
+            throw new Error("Hasil query database bukan array. Periksa query SQL Anda.");
+        }
+        const daftarSesi = Array.isArray(rows) ? rows : [rows];
+        // 2. Olah langsung menjadi array berisikan objek kelas PemesananSesi
+        const daftarSesiObjek = daftarSesi.map(row => {
+            const sesiPemesanan = new PemesananSesi(
+                row.nama_murid,
+                id_guru,
+                row.nama_materi,
+                row.waktu_mulai,
+                row.waktu_selesai,
+                row.lokasi_sesi
+            );
+            sesiPemesanan.id_pemesanan = row.id_pemesanan;
+
+            // Hitung jarak dan suntikkan ke dalam properti objek kelas
+            const [muridLat, muridLng] = row.lokasi_sesi.split(',').map(Number);
+            sesiPemesanan.jarak_km = hitungJarak(guruLat, guruLng, muridLat, muridLng);
+
+            // Return objek kelas utuh
+            return sesiPemesanan;
+        });
+
+        // 3. Express otomatis memanggil method .toJSON() dari objek kelas di dalam array ini
+        res.status(200).json({ success: true, data: daftarSesiObjek });
+
+    } catch (error) {
+        console.error("Error pada getPermintaanBaruUntukGuru:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
-module.exports = { getPermintaanBaru };
+const terimaPermintaanSesi = async (req, res) => {
+    const { id_pemesanan, id_guru, total_pembayaran_final } = req.body;
+
+    if (!id_pemesanan || !id_guru || !total_pembayaran_final) {
+        return res.status(400).json({ success: false, message: "Data penerimaan tidak lengkap." });
+    }
+
+    try {
+        await pool.query(`
+            UPDATE pemesanan 
+            SET id_guru = ?, status_pemesanan = 'dikonfirmasi' 
+            WHERE id_pemesanan = ?
+        `, [id_guru, id_pemesanan]);
+
+        await pool.query(`
+            INSERT INTO pembayaran (id_sesi, metode_pembayaran, nominal, status_pembayaran) 
+            VALUES (?, 'menunggu', ?, 'menunggu')
+        `, [id_pemesanan, total_pembayaran_final]);
+
+        res.status(200).json({
+            success: true,
+            message: "Sesi berhasil diterima, tagihan pembayaran telah dibuat untuk murid."
+        });
+    } catch (error) {
+        console.error("Error pada terimaPermintaanSesi:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+module.exports = {
+    getPermintaanBaru,
+    terimaPermintaanSesi
+};
