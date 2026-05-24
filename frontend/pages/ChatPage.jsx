@@ -1,72 +1,103 @@
-import React from 'react';
-import { 
-  StyleSheet, Text, View, TouchableOpacity, SafeAreaView, 
-  StatusBar, ScrollView, TextInput, Image 
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { API_URL } from '../src/config';
+import {
+  StyleSheet, Text, View, TouchableOpacity, SafeAreaView,
+  StatusBar, ScrollView, TextInput, Image
 } from 'react-native';
 
 // Import Ikon Lucide agar seragam dengan HomePage
 import { Calendar, MessageSquare, User, Home } from 'lucide-react-native';
 
-const LOGO_SOURCE = require('../assets/logo_humana.png'); 
+const LOGO_SOURCE = require('../assets/logo_humana.png');
 
-const ChatPage = ({ onNavigate, onChatPress, userRole }) => {
+const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
+  const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true);
   const role = userRole ? userRole.toLowerCase() : 'murid';
 
-  const dummyChats = Array(6).fill({
-    id: 1,
-    name: 'Yanto Kurniawan',
-    subject: 'Pendidikan Kewarganegaraan',
-    lastMessage: 'Baik, sampai bertemu besok ya kak!',
-    time: '10:11',
-    unread: 1,
-    initials: 'YK',
-    color: '#FF9B9B'
-  });
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/chats`, { params: { userId, role } });
 
+        // DEBUG: Lihat apa yang diterima
+        console.log("ISI RESPONSE API:", JSON.stringify(response.data, null, 2));
+
+        const data = response.data.data;
+
+        if (Array.isArray(data)) {
+          setChats(data);
+        } else if (data) {
+          setChats([data]);
+        } else {
+          setChats([]);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil chat:", error);
+        setChats([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [userId, role]);
+  // ... sisa komponen
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#284B7A" translucent={false} />
-      
+
       <View style={styles.header}>
         <Image source={LOGO_SOURCE} style={styles.headerWatermark} resizeMode="contain" />
         <Text style={styles.headerTitle}>Chat</Text>
         <View style={styles.searchContainer}>
-          <TextInput 
-            style={styles.searchInput} 
-            placeholder="Cari" 
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Cari"
             placeholderTextColor="#A9A9A9"
           />
-          <Text style={{fontSize: 16, color: '#888'}}>🔍</Text>
+          <Text style={{ fontSize: 16, color: '#888' }}>🔍</Text>
         </View>
       </View>
 
       <View style={styles.contentContainer}>
         <Text style={styles.sectionTitle}>TERBARU</Text>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
-          {dummyChats.map((chat, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={styles.chatItem} 
-              onPress={() => onChatPress(chat)}
-            >
-              <View style={[styles.avatar, { backgroundColor: chat.color }]}>
-                <Text style={styles.avatarText}>{chat.initials}</Text>
-              </View>
-              <View style={styles.chatInfo}>
-                <Text style={styles.chatName}>{chat.name}</Text>
-                <Text style={styles.chatSubject}>{chat.subject}</Text>
-                <Text style={styles.chatMessage} numberOfLines={1}>{chat.lastMessage}</Text>
-              </View>
-              <View style={styles.chatMeta}>
-                <Text style={styles.chatTime}>{chat.time}</Text>
-                {chat.unread > 0 && (
-                  <View style={styles.unreadBadge}>
-                    <Text style={styles.unreadText}>{chat.unread}</Text>
+          {Array.isArray(chats) && chats.length > 0 ? (
+            chats.map((chat, index) => {
+              // 1. Ambil nama berdasarkan role dengan fallback yang aman
+              const displayName = role === 'guru' ? (chat?.nama_murid || "Murid") : (chat?.nama_guru || "Guru");
+              const firstLetter = displayName.charAt(0).toUpperCase();
+
+              return (
+                <TouchableOpacity
+                  key={chat?.id_chat || index.toString()}
+                  style={styles.chatItem}
+                  onPress={() => onChatPress(chat)}
+                >
+                  <View style={[styles.avatar, { backgroundColor: '#FF9B9B' }]}>
+                    <Text style={styles.avatarText}>{firstLetter}</Text>
                   </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          ))}
+                  <View style={styles.chatInfo}>
+                    <Text style={styles.chatName}>{displayName}</Text>
+                    <Text style={styles.chatMessage} numberOfLines={1}>
+                      {chat?.isi_pesan || "Tidak ada pesan terbaru"}
+                    </Text>
+                  </View>
+                  {/* Bagian meta untuk waktu */}
+                  <View style={styles.chatMeta}>
+                    <Text style={styles.chatTime}>
+                      {chat?.timestamp ? chat.timestamp.split(' ')[1]?.substring(0, 5) : ''}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          ) : (
+            <Text style={{ textAlign: 'center', marginTop: 20, color: '#999' }}>
+              Belum ada chat yang tersedia.
+            </Text>
+          )}
         </ScrollView>
       </View>
 
@@ -76,14 +107,14 @@ const ChatPage = ({ onNavigate, onChatPress, userRole }) => {
           <Home color="#A9A9A9" size={22} />
           <Text style={styles.navBarLabel}>{role === 'guru' ? 'Home' : 'Beranda'}</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate('Activity', 'aktif')}>
           <Calendar color="#A9A9A9" size={22} />
           <Text style={styles.navBarLabel}>{role === 'guru' ? 'Activity' : 'Aktivitas'}</Text>
         </TouchableOpacity>
 
         <View style={styles.centerFabContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.centerFabButton}
             onPress={() => {
               if (onNavigate) {
@@ -102,7 +133,7 @@ const ChatPage = ({ onNavigate, onChatPress, userRole }) => {
           <MessageSquare color="#284B7A" size={22} />
           <Text style={[styles.navBarLabel, { color: '#284B7A', fontWeight: 'bold' }]}>Chat</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate('Profile')}>
           <User color="#A9A9A9" size={22} />
           <Text style={styles.navBarLabel}>Profile</Text>
@@ -119,10 +150,10 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#FFF', marginBottom: 15 },
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 10, paddingHorizontal: 15, height: 45 },
   searchInput: { flex: 1, fontSize: 14, color: '#333' },
-  
+
   contentContainer: { flex: 1, backgroundColor: '#FFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 20 },
   sectionTitle: { fontSize: 12, fontWeight: 'bold', color: '#888', letterSpacing: 1, marginBottom: 15 },
-  
+
   chatItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   avatar: { width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   avatarText: { color: '#FFF', fontSize: 20, fontWeight: 'bold' },
