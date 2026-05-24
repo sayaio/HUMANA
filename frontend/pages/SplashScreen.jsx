@@ -1,40 +1,54 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, Image, StatusBar, Animated, useWindowDimensions } from 'react-native';
 
-const LOGO_SOURCE = require('../assets/logo_humana.png'); 
+const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const SplashScreen = ({ onFinish }) => {
   const { width } = useWindowDimensions();
-  const fadeAnim = useRef(new Animated.Value(1)).current;
+  
+  // 1. UBAH KE 0: Agar aplikasi mulai dari kondisi transparan (Fade In terasa)
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // 2. GUNAKAN ANIMATED SEQUENCE: Rangkaian komando animasi berurutan yang aman di Hermes
+    Animated.sequence([
+      
+      // TAHAP 1: Muncul perlahan (Fade In) dari opacity 0 ke 1
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800, // Berjalan selama 0.8 detik
+        useNativeDriver: true,
+      }),
+
+      // TAHAP 2: Menahan logo tetap tampil penuh di layar
+      Animated.delay(1200), // Diam selama 1.2 detik agar user sempat membaca
+
+      // TAHAP 3: Menghilang perlahan (Fade Out) dari opacity 1 ke 0
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 400, 
-        useNativeDriver: true, 
-      }).start(() => {
-        onFinish();
-      });
-    }, 1500); 
+        duration: 500, // Transisi menghilang selama 0.5 detik
+        useNativeDriver: true,
+      }),
 
-    return () => clearTimeout(timer);
-  }, [onFinish, fadeAnim]);
+    ]).start(() => {
+      // Ketika seluruh urutan (Fade In -> Delay -> Fade Out) selesai, oper perintah ke App.jsx
+      if (onFinish) onFinish();
+    });
+  }, [fadeAnim]);
 
-  // --- KALKULASI UKURAN DINAMIS (BISA DIATUR DI SINI) ---
-  const logoSize = width * 0.18;  // Ukuran simbol logo (~18% dari lebar layar)
-  const textSize = width * 0.18;  // Ukuran font teks "Humana." (~12% dari lebar layar)
+  // --- KALKULASI UKURAN DINAMIS (Tetap menggunakan milikmu) ---
+  const logoSize = width * 0.18;  
+  const textSize = width * 0.18;  
 
   return (
     <Animated.View style={[styles.splashContainer, { opacity: fadeAnim }]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      
-      {/* Pembungkus konten dibuat berjejer ke samping (row) */}
+
       <View style={styles.splashContent}>
-        <Image 
-          source={LOGO_SOURCE} 
-          style={{ width: logoSize, height: logoSize }} 
-          resizeMode="contain" 
+        <Image
+          source={LOGO_SOURCE}
+          style={{ width: logoSize, height: logoSize }}
+          resizeMode="contain"
         />
         <Text style={[styles.splashText, { fontSize: textSize }]}>Humana.</Text>
       </View>
@@ -43,23 +57,25 @@ const SplashScreen = ({ onFinish }) => {
 };
 
 const styles = StyleSheet.create({
-  splashContainer: { 
-    flex: 1, 
-    backgroundColor: '#284B7A', 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  },
-  splashContent: { 
-    flexDirection: 'row',       // Membuat logo dan teks berjejer horizontal
-    alignItems: 'center',       // Membuat logo dan teks rata tengah secara vertikal
+  splashContainer: {
+    ...StyleSheet.absoluteFillObject, // Mengunci splash screen agar menutupi halaman utama di bawahnya
+    zIndex: 999,
+    flex: 1,
+    backgroundColor: '#284B7A',
     justifyContent: 'center',
-    paddingHorizontal: 20 
+    alignItems: 'center'
   },
-  splashText: { 
-    fontFamily: 'DarkerGrotesque-Bold', 
+  splashContent: {
+    flexDirection: 'row',       
+    alignItems: 'center',       
+    justifyContent: 'center',
+    paddingHorizontal: 20
+  },
+  splashText: {
+    fontFamily: 'DarkerGrotesque-Bold',
     color: '#FFF',
-    marginLeft: 6,             // Jarak aman antara logo dengan tulisan di sampingnya
-    letterSpacing: -0.5         // Sedikit merapatkan antar huruf agar mirip mockup
+    marginLeft: 6,             
+    letterSpacing: -0.5         
   },
 });
 

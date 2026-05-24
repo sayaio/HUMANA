@@ -13,7 +13,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-
+import { Dimensions } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loginUser } from '../services/authService';
 import CustomAlert from '../components/CustomAlert';
 import { Eye, EyeOff } from 'lucide-react-native';
@@ -73,6 +74,19 @@ const LoginPage = ({
       if (result.success === true || result.token || result.status === 200) {
         const userData =
           result.profile || result.data || result.user || result || {};
+        if (rememberMe) {
+          // Kita satukan data user dan email ke dalam satu objek
+          const sessionData = {
+            userData: userData,
+            email: email,
+          };
+          // Cukup simpan 1 key 'user_session' berbentuk string JSON
+          await AsyncStorage.setItem('user_session', JSON.stringify(sessionData));
+          console.log('Sesi login berhasil disimpan ke user_session!');
+        } else {
+          // Jika tidak dicentang, hapus key 'user_session' agar bersih
+          await AsyncStorage.removeItem('user_session');
+        }
         onLoginSuccess(userData, email);
       } else {
         showAlert(
@@ -186,10 +200,10 @@ const LoginPage = ({
                   onPress={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                   
-                    <Eye size={22} color="#D3D3D3" />
+
+                    <Eye size={22} color="#284B7A" />
                   ) : (
-                     <EyeOff size={22} color="#284B7A" />
+                    <EyeOff size={22} color="#D3D3D3" />
                   )}
                 </TouchableOpacity>
               </View>
@@ -256,24 +270,27 @@ const LoginPage = ({
     </KeyboardAvoidingView>
   );
 };
-
+const { width, height } = Dimensions.get('window');
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
   blueBackgroundTop: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    right: 0,
+    width: '100%',
     backgroundColor: '#284B7A',
+    // HAPUS: height: height * 0.45
   },
   blueBackgroundTriangle: {
     position: 'absolute',
-    left: 0,
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
-    borderTopWidth: 45,
+    // HAPUS: top: height * 0.45
+    borderLeftWidth: width / 2,
+    borderRightWidth: width / 2,
+    borderTopWidth: 50,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderTopColor: '#284B7A',
@@ -282,8 +299,8 @@ const styles = StyleSheet.create({
   scrollContainer: { flexGrow: 1, justifyContent: 'center' },
   headerSection: {
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingBottom: 10,
+    paddingTop: height * 0.06, // <-- Samakan ini
+    paddingBottom: 20,
   },
   logoWrapper: { marginBottom: 12 },
   titleText: {
@@ -294,17 +311,17 @@ const styles = StyleSheet.create({
   },
   formCard: {
     backgroundColor: '#FFF',
-    borderRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 30,
-    paddingBottom: 30,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    elevation: 6,
+    borderRadius: 30, // Samakan dengan Register
+    paddingHorizontal: width * 0.06,
+    paddingTop: height * 0.04,
+    paddingBottom: height * 0.04,
+    marginHorizontal: width * 0.05,
+    marginBottom: height * 0.03,
+    elevation: 8, // Samakan elevasi
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: 10,
   },
   formCardTitle: {
     fontSize: 26,
@@ -324,8 +341,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     borderRadius: 12,
-    height: 52,
-    marginBottom: 20,
+    height: height * 0.065, // <-- Gunakan ini di KEDUA file
+    marginBottom: height * 0.02,
     justifyContent: 'center',
     paddingHorizontal: 15,
     backgroundColor: '#FFF',
@@ -377,11 +394,11 @@ const styles = StyleSheet.create({
   forgotPasswordText: { fontSize: 13, color: '#4285F4', fontWeight: '600' },
   submitButton: {
     backgroundColor: '#B5CB68',
-    borderRadius: 12,
-    height: 48,
+    borderRadius: 25,
+    height: height * 0.06, // <-- Samakan nilai ini
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: height * 0.02,
   },
   submitButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   orDividerContainer: {
