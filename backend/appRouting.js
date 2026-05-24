@@ -31,4 +31,10 @@ const matchingController = require('./src/controllers/matchingController');
 router.get('/permintaan-baru', matchingController.getPermintaanBaru);
 router.post('/terima-permintaan', matchingController.terimaPermintaanSesi);
 router.get('/sesi-dikonfirmasi', matchingController.getSesiDikonfirmasi);
+
+const chatController = require('./src/controllers/chatController'); // Pastikan path benar
+router.get('/chats', chatController.getChatList);
+router.get('/chats/messages/:id_guru/:id_murid', chatController.getMessages);
+router.post('/chats/send', chatController.sendMessage);
+
 module.exports = router;
