@@ -1,0 +1,298 @@
+import React, { useState } from 'react';
+import {
+    StyleSheet,
+    Text,
+    View,
+    ScrollView,
+    TouchableOpacity,
+    StatusBar,
+    TextInput,
+    Switch,
+    Alert
+} from 'react-native';
+import { Settings, Edit2, Briefcase, Plus, Trash2, Home, Activity, MessageCircle, User } from 'lucide-react-native';
+
+const ProfileGuruPage = ({ guruData, onNavigate }) => {
+    // State untuk toggle Status Aktif (Sesuai di gambar Figma)
+    const [isAktif, setIsAktif] = useState(true);
+
+    // State untuk manajemen data Portofolio tambahan
+    const [portofolios, setPortofolios] = useState([
+        { id: '1', judul: 'Tutor Olimpiade Matematika SMA', deskripsi: 'Berhasil membimbing 3 siswa masuk ke tingkat nasional.' },
+        { id: '2', judul: 'Sertifikasi Pengajaran Kurikulum Merdeka', deskripsi: 'Diterbitkan oleh Kemendikbud Ristek.' }
+    ]);
+
+    // State untuk form input portofolio baru
+    const [newJudul, setNewJudul] = useState('');
+    const [newDeskripsi, setNewDeskripsi] = useState('');
+    const [isAdding, setIsAdding] = useState(false);
+
+    const handleAddPorto = () => {
+        if (!newJudul.trim() || !newDeskripsi.trim()) {
+            Alert.alert('Eror', 'Judul dan deskripsi portofolio tidak boleh kosong!');
+            return;
+        }
+
+        const newId = String(portofolios.length + 1);
+        setPortofolios([...portofolios, { id: newId, judul: newJudul, deskripsi: newDeskripsi }]);
+        setNewJudul('');
+        setNewDeskripsi('');
+        setIsAdding(false);
+        Alert.alert('Sukses', 'Portofolio berhasil ditambahkan!');
+    };
+
+    const handleDeletePorto = (id) => {
+        Alert.alert('Hapus Portofolio', 'Apakah Anda yakin ingin menghapus portofolio ini?', [
+            { text: 'Batal', style: 'cancel' },
+            {
+                text: 'Hapus',
+                style: 'destructive',
+                onPress: () => {
+                    setPortofolios(portofolios.filter(porto => porto.id !== id));
+                }
+            }
+        ]);
+    };
+
+    return (
+        <View style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+            
+            {/* Top Header - Sesuai gambar Figma dengan icon Settings */}
+            <View style={styles.topHeader}>
+                <View style={{ width: 24 }} />
+                <TouchableOpacity onPress={() => Alert.alert('Info', 'Fitur Pengaturan Akun')}>
+                    <Settings size={24} color="#333" />
+                </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+                
+                {/* 1. CARD UTAMA: Foto Profil & Info Dasar */}
+                <View style={styles.profileMainCard}>
+                    <View style={styles.avatarCircle}>
+                        <Text style={styles.avatarText}>
+                            {guruData?.name ? guruData.name.substring(0, 2).toUpperCase() : 'AM'}
+                        </Text>
+                    </View>
+                    <View style={styles.profileMetaInfo}>
+                        <Text style={styles.guruName}>{guruData?.name || 'Ahmad Muhsin'}</Text>
+                        <Text style={styles.guruEmail}>{guruData?.email || 'ahmadmuhsin@gmail.com'}</Text>
+                    </View>
+                </View>
+
+                {/* 2. CARD STATUS: Sesi, Rating, Status Aktif (Persis Gambar Figma) */}
+                <View style={styles.statusCard}>
+                    <Text style={styles.statusSectionLabel}>STATUS</Text>
+                    <View style={styles.statusRow}>
+                        <View style={styles.statusSubBox}>
+                            <Text style={styles.statusValueBlue}>4</Text>
+                            <Text style={styles.statusSubLabel}>Sesi hari ini</Text>
+                        </View>
+                        <View style={styles.statusDivider} />
+                        <View style={styles.statusSubBox}>
+                            <Text style={styles.statusValueBlue}>4,9</Text>
+                            <Text style={styles.statusSubLabel}>Rating</Text>
+                        </View>
+                        <View style={styles.statusDivider} />
+                        <View style={styles.statusSubBox}>
+                            <Text style={[styles.activeStatusLabel, { color: isAktif ? '#25A244' : '#666' }]}>
+                                {isAktif ? 'Aktif' : 'Nonaktif'}
+                            </Text>
+                            <Switch
+                                value={isAktif}
+                                onValueChange={(value) => setIsAktif(value)}
+                                trackColor={{ false: '#767577', true: '#C1F4D3' }}
+                                thumbColor={isAktif ? '#25A244' : '#f4f3f4'}
+                            />
+                        </View>
+                    </View>
+                </View>
+
+                {/* 3. SECTION: Data Pribadi (Persis Tampilan Layout Figma) */}
+                <View style={styles.dataPribadiHeaderRow}>
+                    <Text style={styles.sectionTitleMain}>Data Pribadi</Text>
+                    <TouchableOpacity onPress={() => Alert.alert('Info', 'Edit Data Pribadi')}>
+                        <Edit2 size={18} color="#284B7A" />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.dataPribadiContainer}>
+                    <View style={styles.dataItemField}>
+                        <Text style={styles.fieldLabel}>Nama Pengguna</Text>
+                        <Text style={styles.fieldValue}>{guruData?.username || 'ahmadganteng88'}</Text>
+                    </View>
+                    <View style={styles.dataItemField}>
+                        <Text style={styles.fieldLabel}>No. Telepon</Text>
+                        <Text style={styles.fieldValue}>{guruData?.phone || '+6281234567890'}</Text>
+                    </View>
+                    <View style={styles.dataItemField}>
+                        <Text style={styles.fieldLabel}>Jenis Kelamin</Text>
+                        <Text style={styles.fieldValue}>{guruData?.gender || 'Laki-laki'}</Text>
+                    </View>
+                    <View style={styles.dataItemField}>
+                        <Text style={styles.fieldLabel}>Domisili</Text>
+                        <Text style={styles.fieldValue}>{guruData?.domicile || 'Kab. Bandung'}</Text>
+                    </View>
+                </View>
+
+                {/* 4. SECTION EDITAN TAMBAHAN: Portofolio & Pengalaman */}
+                <View style={styles.portoSectionHeaderRow}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Briefcase size={18} color="#284B7A" style={{ marginRight: 6 }} />
+                        <Text style={styles.sectionTitleMain}>Portofolio Pengajaran</Text>
+                    </View>
+                    {!isAdding && (
+                        <TouchableOpacity style={styles.addPortoBtn} onPress={() => setIsAdding(true)}>
+                            <Plus size={14} color="#FFF" />
+                            <Text style={styles.addPortoBtnText}>Tambah</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/* Form Input Tambah Portofolio */}
+                {isAdding && (
+                    <View style={styles.addPortoForm}>
+                        <Text style={styles.formLabel}>Judul Pengalaman / Sertifikat</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Contoh: Mengajar Fisika SMA 2 Tahun"
+                            value={newJudul}
+                            onChangeText={setNewJudul}
+                            placeholderTextColor="#999"
+                        />
+                        <Text style={styles.formLabel}>Deskripsi Singkat</Text>
+                        <TextInput
+                            style={[styles.input, styles.textArea]}
+                            placeholder="Tuliskan detail pencapaian atau sertifikasi Anda..."
+                            value={newDeskripsi}
+                            onChangeText={setNewDeskripsi}
+                            multiline
+                            numberOfLines={3}
+                            placeholderTextColor="#999"
+                        />
+                        <View style={styles.formActions}>
+                            <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsAdding(false)}>
+                                <Text style={styles.cancelBtnText}>Batal</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.saveBtn} onPress={handleAddPorto}>
+                                <Text style={styles.saveBtnText}>Simpan</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+
+                {/* Daftar Item Portofolio */}
+                <View style={styles.portoListWrapper}>
+                    {portofolios.map((item) => (
+                        <View key={item.id} style={styles.portoCard}>
+                            <View style={styles.portoHeader}>
+                                <Text style={styles.portoTitle}>{item.judul}</Text>
+                                <TouchableOpacity onPress={() => handleDeletePorto(item.id)}>
+                                    <Trash2 size={16} color="#FF8A8A" />
+                                </TouchableOpacity>
+                            </View>
+                            <Text style={styles.portoDesc}>{item.deskripsi}</Text>
+                        </View>
+                    ))}
+                </View>
+
+                {/* Spacer agar konten tidak tertutup bottom tab navbar */}
+                <View style={{ height: 120 }} />
+            </ScrollView>
+
+            {/* BOTTOM NAVIGATION BAR (Persis Struktur Penamaan PageGuru) */}
+            <View style={styles.bottomTabContainer}>
+                <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('HomeGuru')}>
+                    <Home color="#666" size={24} />
+                    <Text style={styles.tabLabel}>Beranda</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('ActivityGuru')}>
+                    <Activity color="#666" size={24} />
+                    <Text style={styles.tabLabel}>Aktivitas</Text>
+                </TouchableOpacity>
+
+                <View style={styles.centerTabWrapper}>
+                    <TouchableOpacity style={styles.centerTabButton} onPress={() => onNavigate && onNavigate('HomeGuru')}>
+                        <Text style={styles.centerLogoText}>H</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.centerTabLabel}>Permintaan</Text>
+                </View>
+
+                <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('ChatGuru')}>
+                    <MessageCircle color="#666" size={24} />
+                    <Text style={styles.tabLabel}>Chat</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('ProfileGuru')}>
+                    <User color="#284B7A" size={24} />
+                    <Text style={[styles.tabLabel, styles.activeTabLabel]}>Profil</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#FFF' },
+    topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 40, height: 80 },
+    scrollContainer: { flex: 1 },
+    
+    // Layout Profile Card Atas
+    profileMainCard: { backgroundColor: '#FFF', marginHorizontal: 24, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#F0F2F5', marginBottom: 16 },
+    avatarCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#9BB1C9', justifyContent: 'center', alignItems: 'center' },
+    avatarText: { color: '#FFF', fontWeight: 'bold', fontSize: 24 },
+    profileMetaInfo: { marginLeft: 20, flex: 1 },
+    guruName: { fontSize: 22, fontWeight: 'bold', color: '#000' },
+    guruEmail: { fontSize: 13, color: '#666', marginTop: 4 },
+    
+    // Layout Status Card (Persis Figma Box)
+    statusCard: { backgroundColor: '#FFF', marginHorizontal: 24, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#ECEFF1', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, marginBottom: 24 },
+    statusSectionLabel: { fontSize: 12, fontWeight: 'bold', color: '#999', letterSpacing: 1, marginBottom: 16 },
+    statusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    statusSubBox: { alignItems: 'center', flex: 1, justifyContent: 'center' },
+    statusValueBlue: { fontSize: 20, fontWeight: 'bold', color: '#284B7A' },
+    statusSubLabel: { fontSize: 11, color: '#999', marginTop: 6, textAlign: 'center' },
+    statusDivider: { width: 1, height: 35, backgroundColor: '#E0E0E0' },
+    activeStatusLabel: { fontSize: 11, fontWeight: 'bold', marginBottom: 4 },
+
+    // Layout Data Pribadi
+    dataPribadiHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginBottom: 12 },
+    sectionTitleMain: { fontSize: 20, fontWeight: 'bold', color: '#000' },
+    dataPribadiContainer: { backgroundColor: '#FFF', marginHorizontal: 24, borderRadius: 20, paddingHorizontal: 20, paddingVertical: 10, borderWidth: 1, borderColor: '#ECEFF1', shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 5 },
+    dataItemField: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
+    fieldLabel: { fontSize: 12, color: '#999', fontWeight: '500' },
+    fieldValue: { fontSize: 15, fontWeight: 'bold', color: '#000', marginTop: 4 },
+
+    // Layout Tambahan Portofolio
+    portoSectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginTop: 28, marginBottom: 12 },
+    addPortoBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#284B7A', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+    addPortoBtnText: { color: '#FFF', fontSize: 12, fontWeight: 'bold', marginLeft: 4 },
+    portoListWrapper: { paddingHorizontal: 24, marginTop: 4 },
+    portoCard: { backgroundColor: '#FFF', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#ECEFF1' },
+    portoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    portoTitle: { fontSize: 14, fontWeight: 'bold', color: '#284B7A', flex: 1, marginRight: 8 },
+    portoDesc: { fontSize: 13, color: '#555', marginTop: 6, lineHeight: 18 },
+
+    // Form Tambah Porto
+    addPortoForm: { backgroundColor: '#F8FAFC', marginHorizontal: 24, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 16 },
+    formLabel: { fontSize: 12, fontWeight: 'bold', color: '#4A5568', marginBottom: 6 },
+    input: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, marginBottom: 12, color: '#333' },
+    textArea: { height: 65, textAlignVertical: 'top' },
+    formActions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' },
+    cancelBtn: { paddingHorizontal: 14, paddingVertical: 8, marginRight: 8 },
+    cancelBtnText: { color: '#64748B', fontWeight: 'bold', fontSize: 14 },
+    saveBtn: { backgroundColor: '#284B7A', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+    saveBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
+
+    // Layout Bottom Tab Navbar Bawaan Proyek
+    bottomTabContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 70, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEE', paddingBottom: 10 },
+    tabItem: { alignItems: 'center', center: 'center' },
+    tabLabel: { fontSize: 11, color: '#666', marginTop: 4 },
+    activeTabLabel: { color: '#284B7A', fontWeight: 'bold' },
+    centerTabWrapper: { alignItems: 'center', marginTop: -30 },
+    centerTabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', borderWidth: 4, borderColor: '#FFF', elevation: 4 },
+    centerLogoText: { color: '#FFF', fontSize: 24, fontWeight: 'bold' },
+    centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
+});
+
+export default ProfileGuruPage;

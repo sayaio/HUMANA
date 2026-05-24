@@ -10,11 +10,11 @@ import {
     ActivityIndicator,
     Alert
 } from 'react-native';
-import { Calendar, BookOpen, Wallet, MousePointerClick, MapPin, MessageSquare, Home, Activity, MessageCircle, User } from 'lucide-react-native';
+import { Calendar, BookOpen, Wallet, MousePointerClick, Home, Activity, MessageCircle, User } from 'lucide-react-native';
 
 // Import service yang sudah diperbarui
-
 import { fetchPermintaanBaru, terimaPermintaanSesiAPI, fetchSesiDikonfirmasi } from '../services/matchingService';
+
 const PageGuru = ({ guruData, onNavigate }) => {
     const { width } = useWindowDimensions();
 
@@ -143,7 +143,6 @@ const PageGuru = ({ guruData, onNavigate }) => {
                             <View style={styles.detailGrid}>
                                 <View style={styles.detailItem}>
                                     <Text style={styles.detailLabel}>Waktu</Text>
-                                    {/* Jika string waktu mentah dari DB, bisa gunakan format substring atau field bentukan backend */}
                                     <Text style={styles.detailValue}>{sesiDikonfirmasi.waktu_string || 'Sesi Terjadwal'}</Text>
                                 </View>
                                 <View style={styles.detailItem}>
@@ -230,12 +229,10 @@ const PageGuru = ({ guruData, onNavigate }) => {
                             <View style={styles.detailGrid}>
                                 <View style={styles.detailItem}>
                                     <Text style={styles.detailLabel}>Waktu</Text>
-                                    {/* SEKARANG LANGSUNG MEMANGGIL STRING BENTUKAN BACKEND */}
                                     <Text style={styles.detailValue}>{item.waktu_string}</Text>
                                 </View>
                                 <View style={styles.detailItem}>
                                     <Text style={styles.detailLabel}>Lokasi</Text>
-                                    {/* SUDAH SESUAI DENGAN FORMAT JSON YANG BARU */}
                                     <Text style={styles.detailValue} numberOfLines={2}>{item.lokasi_sesi}</Text>
                                 </View>
                                 <View style={styles.detailItem}>
@@ -296,7 +293,6 @@ const PageGuru = ({ guruData, onNavigate }) => {
     );
 };
 
-// ... Gaya penulisan layout/styles di bawah tetap dipertahankan seperti milikmu ...
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFF' },
     scrollContainer: { flex: 1 },

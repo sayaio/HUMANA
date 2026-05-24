@@ -17,13 +17,13 @@ import EditAcademicProfilePage from './pages/EditAcademicProfilePage';
 import ChatPage from './pages/ChatPage';
 import ChatRoomPage from './pages/ChatRoomPage';
 import PageGuru from './pages/PageGuru';
+import ProfileGuruPage from './pages/ProfileGuruPage'; // Impor berkas baru profil guru
 import PesanSesiPage from './pages/PesanSesiPage';
 
 const App = () => {
     // 1. Tambahkan state isLoading murni untuk mengunci Splash Screen saat startup
     const [currentPage, setCurrentPage] = useState('Splash');
     const [isAppLoading, setIsAppLoading] = useState(true);
-
 
     const [namaLengkap, setNamaLengkap] = useState('');
     const [email, setEmail] = useState('');
@@ -162,15 +162,13 @@ const App = () => {
             setEmail('');
 
             // 3. Pindah langsung ke halaman Login
-            // Tidak perlu setTimeout yang lama, karena tidak ada Alert yang harus ditunggu
             setCurrentPage('Login');
 
         } catch (error) {
             console.error('Logout error:', error);
-            // Jika perlu notifikasi kesalahan, gunakan UI komponen buatan sendiri (CustomAlert)
-            // Jangan gunakan Alert.alert() bawaan React Native di sini jika masih sering error
         }
     };
+
     // ==========================================
     // GLOBAL NAVIGATION HANDLER
     // ==========================================
@@ -192,7 +190,8 @@ const App = () => {
         } else if (page === 'ChatGuru') {
             setCurrentPage('Chat');
         } else if (page === 'ProfileGuru') {
-            setCurrentPage('Profile');
+            // MODIFIKASI: Arahkan ke halaman khusus profile guru buatan kita
+            setCurrentPage('RealProfileGuru');
         } else {
             setCurrentPage(page);
         }
@@ -234,6 +233,16 @@ const App = () => {
     if (currentPage === 'PageGuru') {
         return (
             <PageGuru
+                guruData={profileData}
+                onNavigate={handleGlobalNavigate}
+            />
+        );
+    }
+
+    // TAMBAHKAN ROUTE BERIKUT UNTUK HALAMAN PROFIL GURU BARU
+    if (currentPage === 'RealProfileGuru') {
+        return (
+            <ProfileGuruPage
                 guruData={profileData}
                 onNavigate={handleGlobalNavigate}
             />
@@ -343,7 +352,7 @@ const App = () => {
             <ProfilePage
                 profileData={profileData}
                 onNavigate={(page) => setCurrentPage(page)}
-                onLogout={handleLogout} // <--- TAMBAHKAN BARIS INI
+                onLogout={handleLogout}
             />
         );
     }
@@ -400,16 +409,14 @@ const App = () => {
 
     if (currentPage === 'Chat') {
         return (
-        <ChatPage
-            userId={profileData.id} // <--- Tambahkan ini
-            userRole={(profileData.role || 'murid').toLowerCase()} // <--- Tambahkan ini
-            onNavigate={(page, tab) => handleGlobalNavigate(page, tab)} // Update agar sesuai handleGlobalNavigate
-            onChatPress={chatData => {
-                setSelectedChatUser(chatData);
-                setCurrentPage('ChatRoom');
-            }}
-        />
-    );
+            <ChatPage
+                onNavigate={page => setCurrentPage(page)}
+                onChatPress={chatData => {
+                    setSelectedChatUser(chatData);
+                    setCurrentPage('ChatRoom');
+                }}
+            />
+        );
     }
 
     if (currentPage === 'ChatRoom') {
