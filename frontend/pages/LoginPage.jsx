@@ -155,7 +155,7 @@ const LoginPage = ({
                 { fontSize: width * 0.055, lineHeight: width * 0.075 },
               ]}
             >
-              Humanity in action,{'\n'}Learning in motion
+              No Pressure{'\n'}just progress.
             </Text>
           </View>
 
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
   },
   logoWrapper: { marginBottom: 12 },
   titleText: {
-    fontWeight: 'bold',
+    fontFamily: 'SF-Pro-Display-Bold',
     color: '#FFF',
     textAlign: 'center',
     marginBottom: 5,
@@ -317,26 +317,32 @@ const styles = StyleSheet.create({
     paddingBottom: height * 0.04,
     marginHorizontal: width * 0.05,
     marginBottom: height * 0.03,
-    elevation: 8, // Samakan elevasi
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.1,
-    shadowRadius: 10,
+    shadowRadius: 16,
+    elevation: 0, // Samakan elevasi
   },
   formCardTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
+    fontFamily: 'SF-Pro-Display-Bold',
+    fontSize: 30,
     color: '#333',
     textAlign: 'center',
-    marginBottom: 4,
   },
   switchModeContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 20,
   },
-  switchModeText: { fontSize: 13, color: '#888' },
-  switchModeLink: { fontSize: 13, color: '#4285F4', fontWeight: 'bold' },
+  switchModeText: {
+    fontFamily: 'SF-Pro-Display-Regular',
+    fontSize: 13, color: '#888'
+
+  },
+  switchModeLink: {
+    fontFamily: 'SF-Pro-Display-Bold',
+    fontSize: 13, color: '#4285F4',
+  },
   inputWrapper: {
     borderWidth: 1,
     borderColor: '#E0E0E0',
@@ -358,7 +364,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     zIndex: 1,
   },
-  inputField: { fontSize: 14, color: '#333', height: '100%' },
+  inputField: {
+    fontFamily: 'SF-Pro-Display-Regular',
+    fontSize: 14, color: '#333',
+    height: '100%'
+  },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -393,7 +403,7 @@ const styles = StyleSheet.create({
   checkboxText: { fontSize: 13, color: '#666' },
   forgotPasswordText: { fontSize: 13, color: '#4285F4', fontWeight: '600' },
   submitButton: {
-    backgroundColor: '#B5CB68',
+    backgroundColor: '#3A7D6B',
     borderRadius: 25,
     height: height * 0.06, // <-- Samakan nilai ini
     justifyContent: 'center',

@@ -28,6 +28,14 @@
     {
       "path": "assets/fonts/DarkerGrotesque-SemiBold.ttf",
       "sha1": "56cc339669174095e225fdc8a498ca0308b39889"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Display-Bold.otf",
+      "sha1": "20817650465bd09f9ed0bf339531b13b78489052"
+    },
+    {
+      "path": "assets/fonts/SF-Pro-Display-Regular.otf",
+      "sha1": "c29dda2311e19f638f32c2dffc3c04c7b2ec5bcc"
     }
   ]
 }
