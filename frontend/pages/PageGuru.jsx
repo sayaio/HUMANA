@@ -1,272 +1,349 @@
-import React from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
-  TouchableOpacity, 
-  StatusBar, 
-  useWindowDimensions 
+import React, { useState, useEffect } from 'react';
+import {
+    StyleSheet,
+    Text,
+    View,
+    ScrollView,
+    TouchableOpacity,
+    StatusBar,
+    useWindowDimensions,
+    ActivityIndicator,
+    Alert
 } from 'react-native';
-// Pastikan library lucide-react-native sudah sinkron di semua laptop tim ya!
 import { Calendar, BookOpen, Wallet, MousePointerClick, MapPin, MessageSquare, Home, Activity, MessageCircle, User } from 'lucide-react-native';
 
-const PageGuru = () => {
-  const { width } = useWindowDimensions();
+// Import service yang sudah diperbarui
 
-  return (
-    <View style={styles.container}>
-      {/* 1. STATUS BAR */}
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+import { fetchPermintaanBaru, terimaPermintaanSesiAPI, fetchSesiDikonfirmasi } from '../services/matchingService';
+const PageGuru = ({ guruData, onNavigate }) => {
+    const { width } = useWindowDimensions();
 
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        
-        {/* 2. HEADER BLUE BACKGROUND */}
-        <View style={styles.headerBackground}>
-          <Text style={styles.welcomeText}>Halo,</Text>
-          <Text style={styles.nameText}>Ahmad Pambudi!</Text>
+    const [permintaan, setPermintaan] = useState([]);
+    const [sesiDikonfirmasi, setSesiDikonfirmasi] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    // Hardcode koordinat sementara (Sesuai lokasi Sukapura/Telkom University)
+    const LAT_GURU_MOCK = -6.9744;
+    const LNG_GURU_MOCK = 107.6303;
+
+    const loadPermintaan = async () => {
+        if (!guruData || !guruData.id) {
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+
+        // 1. Ambil data permintaan baru (Broadcast)
+        const resultReq = await fetchPermintaanBaru(guruData.id, LAT_GURU_MOCK, LNG_GURU_MOCK);
+        if (resultReq && resultReq.success) {
+            setPermintaan(resultReq.data);
+        } else {
+            setPermintaan([]);
+        }
+
+        // 2. Ambil data sesi yang sudah dikonfirmasi
+        const resultSesi = await fetchSesiDikonfirmasi(guruData.id);
+        if (resultSesi && resultSesi.success && resultSesi.data) {
+            setSesiDikonfirmasi(resultSesi.data); // Menyimpan objek sesi dikonfirmasi
+        } else {
+            setSesiDikonfirmasi(null);
+        }
+
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        loadPermintaan();
+    }, [guruData]);
+
+    // HANDLER AKSI: TERIMA SESI
+    const handleTerimaSesi = async (item) => {
+        Alert.alert(
+            "Konfirmasi Terima",
+            `Apakah Anda yakin ingin menerima permintaan mengajar dari ${item.nama_murid}?`,
+            [
+                { text: "Batal", style: "cancel" },
+                {
+                    text: "Terima",
+                    onPress: async () => {
+                        setLoading(true);
+                        const res = await terimaPermintaanSesiAPI(item.id_pemesanan, guruData.id, item.harga_total);
+
+                        if (res && res.success) {
+                            Alert.alert("Sukses", "Sesi berhasil dikonfirmasi!");
+                            // Hapus data dari daftar list permintaan secara real-time
+                            setPermintaan(prev => prev.filter(p => p.id_pemesanan !== item.id_pemesanan));
+                        } else {
+                            Alert.alert("Gagal", res.message || "Terjadi kesalahan sistem.");
+                        }
+                        setLoading(false);
+                    }
+                }
+            ]
+        );
+    };
+
+    // HANDLER AKSI: TOLAK SESI
+    const handleTolakSesi = (item) => {
+        Alert.alert(
+            "Tolak Permintaan",
+            `Abaikan permintaan dari ${item.nama_murid}? Sesi akan dihapus dari daftar pantauan Anda.`,
+            [
+                { text: "Batal", style: "cancel" },
+                {
+                    text: "Tolak",
+                    style: "destructive",
+                    onPress: () => {
+                        // Sifat menolak pesanan bertipe 'broadcast' (p.id_guru IS NULL) cukup dengan menyembunyikannya dari UI lokal guru tersebut
+                        setPermintaan(prev => prev.filter(p => p.id_pemesanan !== item.id_pemesanan));
+                    }
+                }
+            ]
+        );
+    };
+
+    const formatRupiah = (number) => {
+        if (!number) return 'Rp 0';
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+    };
+
+    return (
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+            <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+
+                <View style={styles.headerBackground}>
+                    <Text style={styles.welcomeText}>Halo,</Text>
+                    <Text style={styles.nameText}>{guruData?.nama || 'Guru'}!</Text>
+                </View>
+
+                {/* CARD: SESI HARI INI (Statis) */}
+                <View style={styles.mainCard}>
+                    <Text style={styles.cardSectionTitle}>SESI DIKONFIRMASI / TERDEKAT</Text>
+
+                    {sesiDikonfirmasi ? (
+                        <>
+                            <View style={styles.profileRow}>
+                                <View style={styles.avatarCircle}>
+                                    <Text style={styles.avatarText}>
+                                        {sesiDikonfirmasi.nama_murid ? sesiDikonfirmasi.nama_murid.substring(0, 2).toUpperCase() : 'SR'}
+                                    </Text>
+                                </View>
+                                <View style={styles.profileInfo}>
+                                    <Text style={styles.studentName}>{sesiDikonfirmasi.nama_murid}</Text>
+                                    <Text style={styles.subjectText}>{sesiDikonfirmasi.nama_materi}</Text>
+                                </View>
+                                <View style={[styles.badgeSegera, { backgroundColor: '#D1E7DD' }]}>
+                                    <Text style={[styles.badgeTextSegera, { color: '#0F5132' }]}>• Siap</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.detailGrid}>
+                                <View style={styles.detailItem}>
+                                    <Text style={styles.detailLabel}>Waktu</Text>
+                                    {/* Jika string waktu mentah dari DB, bisa gunakan format substring atau field bentukan backend */}
+                                    <Text style={styles.detailValue}>{sesiDikonfirmasi.waktu_string || 'Sesi Terjadwal'}</Text>
+                                </View>
+                                <View style={styles.detailItem}>
+                                    <Text style={styles.detailLabel}>Lokasi</Text>
+                                    <Text style={styles.detailValue} numberOfLines={2}>{sesiDikonfirmasi.lokasi_sesi}</Text>
+                                </View>
+                                <View style={styles.detailItem}>
+                                    <Text style={styles.detailLabel}>Bayaran</Text>
+                                    <Text style={styles.detailValue}>{formatRupiah(sesiDikonfirmasi.harga_total)}</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.actionButtonRow}>
+                                <TouchableOpacity style={[styles.btnAction, styles.btnPrimary]}>
+                                    <Text style={styles.btnTextWhite}>Lihat Rute</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.btnAction, styles.btnSecondary]}>
+                                    <Text style={styles.btnTextBlue}>Chat Murid</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </>
+                    ) : (
+                        <View style={{ padding: 25, alignItems: 'center' }}>
+                            <Text style={{ color: '#888', fontSize: 13 }}>Belum ada sesi mengajar yang dikonfirmasi.</Text>
+                        </View>
+                    )}
+                </View>
+
+                {/* GRID MENU BUTTONS */}
+                <View style={styles.menuGridContainer}>
+                    <View style={styles.menuRow}>
+                        <TouchableOpacity style={styles.menuItemButton}>
+                            <View style={styles.iconContainer}><Calendar color="#2D6A61" size={28} /></View>
+                            <Text style={styles.menuButtonText}>Jadwal Saya</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.menuItemButton}>
+                            <View style={styles.iconContainer}><BookOpen color="#2D6A61" size={28} /></View>
+                            <Text style={styles.menuButtonText}>Materi</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.menuItemButton}>
+                            <View style={styles.iconContainer}><Wallet color="#2D6A61" size={28} /></View>
+                            <Text style={styles.menuButtonText}>Pendapatan</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.menuItemButton}>
+                            <View style={styles.iconContainer}><MousePointerClick color="#2D6A61" size={28} /></View>
+                            <Text style={styles.menuButtonText}>Permintaan</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                <View style={styles.divider} />
+
+                {/* SECTION: PERMINTAAN BARU */}
+                <View style={styles.sectionHeaderRow}>
+                    <Text style={styles.sectionTitleText}>PERMINTAAN BARU</Text>
+                    <TouchableOpacity onPress={loadPermintaan}>
+                        <Text style={styles.linkText}>Refresh Data</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* RENDER DATA PERMINTAAN BARU DINAMIS */}
+                {loading ? (
+                    <ActivityIndicator size="large" color="#284B7A" style={{ marginTop: 30 }} />
+                ) : permintaan.length === 0 ? (
+                    <View style={{ padding: 30, alignItems: 'center' }}>
+                        <Text style={{ color: '#888' }}>Belum ada permintaan mengajar saat ini.</Text>
+                    </View>
+                ) : (
+                    permintaan.map((item) => (
+                        <View key={item.id_pemesanan} style={styles.requestCard}>
+                            <View style={styles.profileRow}>
+                                <View style={[styles.avatarCircle, { backgroundColor: '#284B7A' }]}>
+                                    <Text style={styles.avatarText}>
+                                        {item.nama_murid ? item.nama_murid.substring(0, 2).toUpperCase() : 'SN'}
+                                    </Text>
+                                </View>
+                                <View style={styles.profileInfo}>
+                                    <Text style={styles.studentName}>{item.nama_murid}</Text>
+                                    <Text style={styles.subjectText}>{item.nama_materi}</Text>
+                                </View>
+                                <View style={styles.badgeBaru}><Text style={styles.badgeTextBaru}>• Baru</Text></View>
+                            </View>
+
+                            <View style={styles.detailGrid}>
+                                <View style={styles.detailItem}>
+                                    <Text style={styles.detailLabel}>Waktu</Text>
+                                    {/* SEKARANG LANGSUNG MEMANGGIL STRING BENTUKAN BACKEND */}
+                                    <Text style={styles.detailValue}>{item.waktu_string}</Text>
+                                </View>
+                                <View style={styles.detailItem}>
+                                    <Text style={styles.detailLabel}>Lokasi</Text>
+                                    {/* SUDAH SESUAI DENGAN FORMAT JSON YANG BARU */}
+                                    <Text style={styles.detailValue} numberOfLines={2}>{item.lokasi_sesi}</Text>
+                                </View>
+                                <View style={styles.detailItem}>
+                                    <Text style={styles.detailLabel}>Bayaran</Text>
+                                    <Text style={styles.detailValue}>{formatRupiah(item.harga_total)}</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.actionButtonRow}>
+                                <TouchableOpacity
+                                    style={[styles.btnAction, styles.btnDanger]}
+                                    onPress={() => handleTolakSesi(item)}
+                                >
+                                    <Text style={styles.btnTextWhite}>Tolak</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.btnAction, styles.btnPrimary]}
+                                    onPress={() => handleTerimaSesi(item)}
+                                >
+                                    <Text style={styles.btnTextWhite}>Terima</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    ))
+                )}
+
+                <View style={{ height: 100 }} />
+            </ScrollView>
+
+            {/* BOTTOM NAVIGATION BAR */}
+            <View style={styles.bottomTabContainer}>
+                <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('HomeGuru')}>
+                    <Home color="#284B7A" size={24} />
+                    <Text style={[styles.tabLabel, styles.activeTabLabel]}>Home</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('ActivityGuru')}>
+                    <Activity color="#666" size={24} />
+                    <Text style={styles.tabLabel}>Activity</Text>
+                </TouchableOpacity>
+
+                <View style={styles.centerTabWrapper}>
+                    <TouchableOpacity style={styles.centerTabButton}>
+                        <Text style={styles.centerLogoText}>H</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.centerTabLabel}>Permintaan</Text>
+                </View>
+
+                <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('ChatGuru')}>
+                    <MessageCircle color="#666" size={24} />
+                    <Text style={styles.tabLabel}>Chat</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('ProfileGuru')}>
+                    <User color="#666" size={24} />
+                    <Text style={styles.tabLabel}>Profile</Text>
+                </TouchableOpacity>
+            </View>
         </View>
-
-        {/* 3. CARD: SESI HARI INI */}
-        <View style={styles.mainCard}>
-          <Text style={styles.cardSectionTitle}>SESI HARI INI</Text>
-          
-          <View style={styles.profileRow}>
-            <View style={styles.avatarCircle}><Text style={styles.avatarText}>MA</Text></View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.studentName}>Mario Arkan</Text>
-              <Text style={styles.subjectText}>Matematika — Relasi & Fungsi</Text>
-            </View>
-            <View style={styles.badgeSegera}><Text style={styles.badgeTextSegera}>• Segera</Text></View>
-          </View>
-
-          {/* Detail Waktu, Lokasi, Bayaran */}
-          <View style={styles.detailGrid}>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Waktu</Text>
-              <Text style={styles.detailValue}>06.30 – 09.30</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Lokasi</Text>
-              <Text style={styles.detailValue} numberOfLines={2}>Jl. Cihampelas No.12</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Bayaran</Text>
-              <Text style={styles.detailValue}>Rp 34.000</Text>
-            </View>
-          </View>
-
-          {/* Tombol Aksi Sesi */}
-          <View style={styles.actionButtonRow}>
-            <TouchableOpacity style={[styles.btnAction, styles.btnPrimary]}>
-              <Text style={styles.btnTextWhite}>Lihat Rute</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.btnAction, styles.btnSecondary]}>
-              <Text style={styles.btnTextBlue}>Chat Murid</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* 4. GRID MENU BUTTONS */}
-        <View style={styles.menuGridContainer}>
-          <View style={styles.menuRow}>
-            <TouchableOpacity style={styles.menuItemButton}>
-              <View style={styles.iconContainer}><Calendar color="#2D6A61" size={28} /></View>
-              <Text style={styles.menuButtonText}>Jadwal Saya</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItemButton}>
-              <View style={styles.iconContainer}><BookOpen color="#2D6A61" size={28} /></View>
-              <Text style={styles.menuButtonText}>Materi</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItemButton}>
-              <View style={styles.iconContainer}><Wallet color="#2D6A61" size={28} /></View>
-              <Text style={styles.menuButtonText}>Pendapatan</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItemButton}>
-              <View style={styles.iconContainer}><MousePointerClick color="#2D6A61" size={28} /></View>
-              <Text style={styles.menuButtonText}>Permintaan</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.divider} />
-
-        {/* 5. SECTION: PERMINTAAN BARU */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitleText}>PERMINTAAN BARU</Text>
-          <TouchableOpacity><Text style={styles.linkText}>Lihat Semua</Text></TouchableOpacity>
-        </View>
-
-        {/* Card Permintaan Baru */}
-        <View style={styles.requestCard}>
-          <View style={styles.profileRow}>
-            <View style={[styles.avatarCircle, { backgroundColor: '#284B7A' }]}><Text style={styles.avatarText}>SN</Text></View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.studentName}>Sandres Naufal</Text>
-              <Text style={styles.subjectText}>Matematika — Relasi & Fungsi</Text>
-            </View>
-            <View style={styles.badgeBaru}><Text style={styles.badgeTextBaru}>• Baru</Text></View>
-          </View>
-
-          <View style={styles.detailGrid}>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Waktu</Text>
-              <Text style={styles.detailValue}>06.30 – 09.30</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Lokasi</Text>
-              <Text style={styles.detailValue} numberOfLines={2}>Jl. Cihampelas No.12</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Bayaran</Text>
-              <Text style={styles.detailValue}>Rp 34.000</Text>
-            </View>
-          </View>
-
-          <View style={styles.actionButtonRow}>
-            <TouchableOpacity style={[styles.btnAction, styles.btnDanger]}>
-              <Text style={styles.btnTextWhite}>Tolak</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.btnAction, styles.btnPrimary]}>
-              <Text style={styles.btnTextWhite}>Terima</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Tambahan Space di bawah ScrollView agar tidak tertutup Bottom Tab */}
-        <View style={{ height: 100 }} />
-      </ScrollView>
-
-      {/* 6. BOTTOM NAVIGATION BAR (MOCKUP VISUAL) */}
-      <View style={styles.bottomTabContainer}>
-        <TouchableOpacity style={styles.tabItem}>
-          <Home color="#284B7A" size={24} />
-          <Text style={[styles.tabLabel, styles.activeTabLabel]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem}>
-          <Activity color="#666" size={24} />
-          <Text style={styles.tabLabel}>Activity</Text>
-        </TouchableOpacity>
-        
-        {/* Floating Center Button */}
-        <View style={styles.centerTabWrapper}>
-          <TouchableOpacity style={styles.centerTabButton}>
-            {/* Menggunakan inisial logo Humana buatan sendiri */}
-            <Text style={styles.centerLogoText}>H</Text>
-          </TouchableOpacity>
-          <Text style={styles.centerTabLabel}>Permintaan</Text>
-        </View>
-
-        <TouchableOpacity style={styles.tabItem}>
-          <MessageCircle color="#666" size={24} />
-          <Text style={styles.tabLabel}>Chat</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem}>
-          <User color="#666" size={24} />
-          <Text style={styles.tabLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
 };
 
+// ... Gaya penulisan layout/styles di bawah tetap dipertahankan seperti milikmu ...
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF' },
-  scrollContainer: { flex: 1 },
-  
-  // Header Blue Styling
-  headerBackground: {
-    backgroundColor: '#284B7A',
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 70,
-    borderBottomLeftRadius: 35,
-    borderBottomRightRadius: 35,
-  },
-  welcomeText: { color: '#FFF', fontSize: 28, fontWeight: '400' },
-  nameText: { color: '#FFF', fontSize: 32, fontWeight: 'bold', marginTop: 4 },
-
-  // Main Card Sesi Hari Ini
-  mainCard: {
-    backgroundColor: '#FFF',
-    marginHorizontal: 24,
-    borderRadius: 24,
-    padding: 20,
-    marginTop: -50, // Membuat card menumpuk ke area biru di atasnya
-    elevation: 8,   // Shadow untuk Android
-    shadowColor: '#000', // Shadow untuk iOS
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-  },
-  cardSectionTitle: { fontSize: 13, fontWeight: 'bold', color: '#999', marginBottom: 12 },
-  profileRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  avatarCircle: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#333', justifyContent: 'center', alignItems: 'center' },
-  avatarText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
-  profileInfo: { flex: 1, marginLeft: 12 },
-  studentName: { fontSize: 18, fontWeight: 'bold', color: '#1A335E' },
-  subjectText: { fontSize: 13, color: '#666', marginTop: 2 },
-  
-  // Badges
-  badgeSegera: { backgroundColor: '#C1F4D3', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
-  badgeTextSegera: { color: '#25A244', fontSize: 12, fontWeight: 'bold' },
-  badgeBaru: { backgroundColor: '#FFE6A3', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
-  badgeTextBaru: { color: '#D4A017', fontSize: 12, fontWeight: 'bold' },
-
-  // Detail Info Grid
-  detailGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  detailItem: { flex: 1, marginRight: 8 },
-  detailLabel: { fontSize: 12, color: '#999', fontWeight: 'bold' },
-  detailValue: { fontSize: 14, fontWeight: 'bold', color: '#333', marginTop: 4 },
-
-  // Buttons Action
-  actionButtonRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  btnAction: { flex: 1, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginHorizontal: 4 },
-  btnPrimary: { backgroundColor: '#284B7A' },
-  btnSecondary: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#DDD' },
-  btnDanger: { backgroundColor: '#FF8A8A' },
-  btnTextWhite: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
-  btnTextBlue: { color: '#284B7A', fontWeight: 'bold', fontSize: 14 },
-
-  // Grid Menu Buttons Middle
-  menuGridContainer: { paddingHorizontal: 24, marginTop: 24 },
-  menuRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  menuItemButton: { alignItems: 'center', width: '22%' },
-  iconContainer: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#E4F0EC', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-  menuButtonText: { fontSize: 12, fontWeight: 'bold', color: '#222', textAlign: 'center' },
-  
-  divider: { height: 6, backgroundColor: '#F0F2F5', marginTop: 24 },
-
-  // Section Permintaan Baru
-  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 24, marginTop: 20, alignItems: 'center' },
-  sectionTitleText: { fontSize: 14, fontWeight: 'bold', color: '#888' },
-  linkText: { fontSize: 14, fontWeight: 'bold', color: '#3A7BD5' },
-  requestCard: { backgroundColor: '#FFF', marginHorizontal: 24, borderRadius: 24, padding: 20, marginTop: 12, borderWidth: 1, borderColor: '#ECEFF1' },
-
-  // Bottom Navigation Bar Custom Look
-  bottomTabContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 70,
-    backgroundColor: '#FFF',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#EEE',
-    paddingBottom: 10,
-  },
-  tabItem: { alignItems: 'center', justifyContent: 'center' },
-  tabLabel: { fontSize: 11, color: '#666', marginTop: 4 },
-  activeTabLabel: { color: '#284B7A', fontWeight: 'bold' },
-  
-  // Center Floating Tab Button Style
-  centerTabWrapper: { alignItems: 'center', marginTop: -30 },
-  centerTabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', borderWhiteWidth: 4, borderColor: '#FFF', elevation: 4 },
-  centerLogoText: { color: '#FFF', fontSize: 24, fontWeight: 'bold' },
-  centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
+    container: { flex: 1, backgroundColor: '#FFF' },
+    scrollContainer: { flex: 1 },
+    headerBackground: { backgroundColor: '#284B7A', paddingTop: 60, paddingHorizontal: 24, paddingBottom: 70, borderBottomLeftRadius: 35, borderBottomRightRadius: 35 },
+    welcomeText: { color: '#FFF', fontSize: 28, fontWeight: '400' },
+    nameText: { color: '#FFF', fontSize: 32, fontWeight: 'bold', marginTop: 4 },
+    mainCard: { backgroundColor: '#FFF', marginHorizontal: 24, borderRadius: 24, padding: 20, marginTop: -50, elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 },
+    cardSectionTitle: { fontSize: 13, fontWeight: 'bold', color: '#999', marginBottom: 12 },
+    profileRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+    avatarCircle: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#333', justifyContent: 'center', alignItems: 'center' },
+    avatarText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
+    profileInfo: { flex: 1, marginLeft: 12 },
+    studentName: { fontSize: 18, fontWeight: 'bold', color: '#1A335E' },
+    subjectText: { fontSize: 13, color: '#666', marginTop: 2 },
+    badgeSegera: { backgroundColor: '#C1F4D3', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
+    badgeTextSegera: { color: '#25A244', fontSize: 12, fontWeight: 'bold' },
+    badgeBaru: { backgroundColor: '#FFE6A3', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
+    badgeTextBaru: { color: '#D4A017', fontSize: 12, fontWeight: 'bold' },
+    detailGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+    detailItem: { flex: 1, marginRight: 8 },
+    detailLabel: { fontSize: 12, color: '#999', fontWeight: 'bold' },
+    detailValue: { fontSize: 14, fontWeight: 'bold', color: '#333', marginTop: 4 },
+    actionButtonRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    btnAction: { flex: 1, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginHorizontal: 4 },
+    btnPrimary: { backgroundColor: '#284B7A' },
+    btnSecondary: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#DDD' },
+    btnDanger: { backgroundColor: '#FF8A8A' },
+    btnTextWhite: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
+    btnTextBlue: { color: '#284B7A', fontWeight: 'bold', fontSize: 14 },
+    menuGridContainer: { paddingHorizontal: 24, marginTop: 24 },
+    menuRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    menuItemButton: { alignItems: 'center', width: '22%' },
+    iconContainer: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#E4F0EC', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+    menuButtonText: { fontSize: 12, fontWeight: 'bold', color: '#222', textAlign: 'center' },
+    divider: { height: 6, backgroundColor: '#F0F2F5', marginTop: 24 },
+    sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 24, marginTop: 20, alignItems: 'center' },
+    sectionTitleText: { fontSize: 14, fontWeight: 'bold', color: '#888' },
+    linkText: { fontSize: 14, fontWeight: 'bold', color: '#3A7BD5' },
+    requestCard: { backgroundColor: '#FFF', marginHorizontal: 24, borderRadius: 24, padding: 20, marginTop: 12, borderWidth: 1, borderColor: '#ECEFF1' },
+    bottomTabContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 70, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEE', paddingBottom: 10 },
+    tabItem: { alignItems: 'center', justifyContent: 'center' },
+    tabLabel: { fontSize: 11, color: '#666', marginTop: 4 },
+    activeTabLabel: { color: '#284B7A', fontWeight: 'bold' },
+    centerTabWrapper: { alignItems: 'center', marginTop: -30 },
+    centerTabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', borderWidth: 4, borderColor: '#FFF', elevation: 4 },
+    centerLogoText: { color: '#FFF', fontSize: 24, fontWeight: 'bold' },
+    centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
 });
 
 export default PageGuru;

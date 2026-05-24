@@ -16,7 +16,7 @@ import { Eye, EyeOff } from 'lucide-react-native';
 import { registerUser } from '../services/registerService';
 import CustomAlert from '../components/CustomAlert';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
   const [namaLengkap, setNamaLengkap] = useState('');
@@ -304,22 +304,16 @@ const styles = StyleSheet.create({
   blueBackgroundTop: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    right: 0,
-    height: '65%',
+    width: '100%',
+    height: height * 0.45, // <--- SAMAKAN ANGKA INI (misal 0.45 di kedua file)
     backgroundColor: '#284B7A',
   },
   blueBackgroundTriangle: {
     position: 'absolute',
-    top: '65%',
-    left: 0,
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
+    top: height * 0.45,    // <--- HARUS SAMA DENGAN height di atas
     borderLeftWidth: width / 2,
     borderRightWidth: width / 2,
-    borderTopWidth: 60,
+    borderTopWidth: 50,    // <--- SAMAKAN JUGA ANGKA INI
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderTopColor: '#284B7A',
@@ -331,11 +325,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   safeArea: { flex: 1 },
-  scrollContainer: { flexGrow: 1, justifyContent: 'space-between' },
+  scrollContainer: { flexGrow: 1, justifyContent: 'center' },
   headerSection: {
     alignItems: 'center',
-    paddingHorizontal: 30,
-    paddingTop: 60,
+    paddingTop: height * 0.06, // <-- Samakan ini
     paddingBottom: 20,
   },
   logoWrapper: { marginBottom: 15 },
@@ -351,11 +344,11 @@ const styles = StyleSheet.create({
   formCard: {
     backgroundColor: '#FFF',
     borderRadius: 30,
-    paddingHorizontal: 25,
-    paddingTop: 35,
-    paddingBottom: 40,
-    marginHorizontal: 20,
-    marginBottom: 30,
+    paddingHorizontal: width * 0.06, // 6% dari lebar layar
+    paddingTop: height * 0.04,       // 4% dari tinggi layar
+    paddingBottom: height * 0.04,
+    marginHorizontal: width * 0.05,
+    marginBottom: height * 0.03,
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -380,8 +373,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     borderRadius: 12,
-    height: 55,
-    marginBottom: 25,
+    height: height * 0.065, // <-- Gunakan ini di KEDUA file
+    marginBottom: height * 0.02,
     justifyContent: 'center',
     paddingHorizontal: 15,
     backgroundColor: '#FFF',
@@ -437,10 +430,10 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: '#B5CB68',
     borderRadius: 25,
-    height: 50,
+    height: height * 0.06, // <-- Samakan nilai ini
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: height * 0.02,
   },
   submitButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   orDividerContainer: {

@@ -1,3 +1,6 @@
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, 'src/.env') });
+
 const express = require('express');
 const cors = require('cors');
 const apiRoutes = require('./appRouting');

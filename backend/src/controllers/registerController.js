@@ -10,9 +10,9 @@ const register = async (req, res) => {
         conn = await pool.getConnection();
 
         const checkQuery = `
-        SELECT email_guru as email FROM guru WHERE email_guru = ?
+        SELECT email_guru as email FROM Guru WHERE email_guru = ?
         UNION
-        SELECT email FROM murid WHERE email = ?
+        SELECT email FROM Murid WHERE email = ?
     `;
 
         // HAPUS kurung siku di sini
@@ -28,14 +28,14 @@ const register = async (req, res) => {
         let newUserInstance;
 
         if (role === 'Guru') {
-            const queryGuru = `INSERT INTO guru (nama_guru, email_guru, password, username) VALUES (?, ?, ?, ?)`;
+            const queryGuru = `INSERT INTO Guru (nama_guru, email_guru, password, username) VALUES (?, ?, ?, ?)`;
             const result = await conn.query(queryGuru, [namaLengkap, email, password, namaLengkap]); // SEMENTARA USERNAME KARENA BLM ADA INPUTAN JADINYA ISI NAMALENGKAP DULU
 
             const insertedId = Number(result.insertId); // Pastikan jadi number
             newUserInstance = new Guru(username, email, password, namaLengkap, insertedId);
 
         } else if (role === 'Murid') {
-            const queryMurid = `INSERT INTO murid (nama_murid, email, password, username) VALUES (?, ?, ?, ?)`;
+            const queryMurid = `INSERT INTO Murid (nama_murid, email, password, username) VALUES (?, ?, ?, ?)`;
             const result = await conn.query(queryMurid, [namaLengkap, email, password, namaLengkap]); // SEMENTARA USERNAME KARENA BLM ADA INPUTAN JADINYA ISI NAMALENGKAP DULU
 
             const insertedId = Number(result.insertId);

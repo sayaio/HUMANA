@@ -7,7 +7,7 @@ const submitFeedback = async (req, res) => {
     try {
         // Query disesuaikan dengan kolom di database Anda: id_sesi, komentar, rating
         await pool.query(
-            'INSERT INTO feedback (id_sesi, komentar, rating) VALUES (?, ?, ?)',
+            'INSERT INTO Feedback (id_sesi, komentar, rating) VALUES (?, ?, ?)',
             [id_sesi, komentar, rating]
         );
 

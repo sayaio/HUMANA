@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import SplashScreen from './pages/SplashScreen';
 import LoginPage from './pages/LoginPage';
@@ -15,252 +17,415 @@ import EditAcademicProfilePage from './pages/EditAcademicProfilePage';
 import ChatPage from './pages/ChatPage';
 import ChatRoomPage from './pages/ChatRoomPage';
 import PageGuru from './pages/PageGuru';
+import PesanSesiPage from './pages/PesanSesiPage';
 
 const App = () => {
-  const [currentPage, setCurrentPage] = useState('Splash');
+    // 1. Tambahkan state isLoading murni untuk mengunci Splash Screen saat startup
+    const [currentPage, setCurrentPage] = useState('Splash');
+    const [isAppLoading, setIsAppLoading] = useState(true);
 
-  const [namaLengkap, setNamaLengkap] = useState('');
-  const [email, setEmail] = useState('');
 
-  const [profileData, setProfileData] = useState({
-    id: null,
-    role: '-',
-    name: '-',
-    email: '-',
-    username: '-',
-    phone: '-',
-    gender: '-',
-    domicile: '-',
-    education: '-',
-    major: '-',
-  });
-
-  const [selectedSubject, setSelectedSubject] = useState(null);
-  const [selectedChapter, setSelectedChapter] = useState(null);
-  const [activityTab, setActivityTab] = useState('aktif');
-  const [selectedChatUser, setSelectedChatUser] = useState(null);
-
-  const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
-
-  const [selectedSession, setSelectedSession] = useState(null);
-
-  const handleLoginSuccess = (userData, loggedInEmail) => {
-    const namaDariDB =
-      userData?.nama_murid ||
-      userData?.namaLengkap ||
-      userData?.name ||
-      loggedInEmail.split('@')[0];
-    const usernameDariDB =
-      userData?.username || namaDariDB.toLowerCase().replace(/\s/g, '');
-    const roleDariDB = (
-      userData?.role ||
-      userData?.id_role ||
-      'murid'
-    ).toLowerCase();
-    setNamaLengkap(namaDariDB);
-    setEmail(loggedInEmail);
-    setProfileData({
-      id: userData?.id,
-      role: userData?.role || '-',
-      name: namaDariDB || '-',
-      email: loggedInEmail || '-',
-      username: usernameDariDB || '-',
-
-      // 🛠️ FIX DOUBLE KEY: Supaya dibaca di EditProfile DAN ProfilePage
-      phone: userData?.no_telepon || userData?.phone || '-',
-      no_telepon: userData?.no_telepon || userData?.phone || '-', // Dipakai ProfilePage
-
-      gender: userData?.jenis_kelamin || userData?.gender || '-',
-      jenis_kelamin: userData?.jenis_kelamin || userData?.gender || '-', // Dipakai ProfilePage
-
-      domicile:
-        userData?.domisili || userData?.domicile || userData?.alamat || '-',
-      domisili:
-        userData?.domisili || userData?.domicile || userData?.alamat || '-',
-      alamat:
-        userData?.domisili || userData?.domicile || userData?.alamat || '-', // Dipakai ProfilePage
-
-      education: userData?.jenjang_pendidikan || userData?.education || '-',
-      jenjang_pendidikan:
-        userData?.jenjang_pendidikan || userData?.education || '-',
-
-      major:
-        userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
-      kelas_jurusan:
-        userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
+    const [namaLengkap, setNamaLengkap] = useState('');
+    const [email, setEmail] = useState('');
+    const [profileData, setProfileData] = useState({
+        id: null,
+        role: '-',
+        name: '-',
+        email: '-',
+        username: '-',
+        phone: '-',
+        gender: '-',
+        domicile: '-',
+        education: '-',
+        major: '-',
     });
+    const [selectedSubject, setSelectedSubject] = useState(null);
+    const [selectedChapter, setSelectedChapter] = useState(null);
+    const [activityTab, setActivityTab] = useState('aktif');
+    const [selectedChatUser, setSelectedChatUser] = useState(null);
+    const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
+    const [selectedSession, setSelectedSession] = useState(null);
+    const [bookingSessionData, setBookingSessionData] = useState(null);
 
-    if (roleDariDB === 'guru') {
-      setCurrentPage('PageGuru'); // Jika Guru, lempar ke Dashboard Guru
-    } else {
-      setCurrentPage('Home'); // Jika Murid/Lainnya, ke Home biasa
+    // ==========================================
+    // PENGECEKAN SESI AKTIF SAAT APLIKASI DIWAKILI AWAL
+    // ==========================================
+    useEffect(() => {
+        const checkLoginSession = async () => {
+            try {
+                // Ambil data session dari AsyncStorage
+                const savedSession = await AsyncStorage.getItem('user_session');
+
+                if (savedSession) {
+                    const { userData, email: loggedInEmail } = JSON.parse(savedSession);
+                    console.log('🔄 [App.jsx] Sesi ditemukan untuk:', loggedInEmail);
+
+                    // Isi state global terlebih dahulu
+                    const namaDariDB = userData?.nama_murid || userData?.namaLengkap || userData?.name || loggedInEmail.split('@')[0];
+                    const usernameDariDB = userData?.username || namaDariDB.toLowerCase().replace(/\s/g, '');
+                    const roleDariDB = (userData?.role || userData?.id_role || 'murid').toLowerCase();
+
+                    setNamaLengkap(namaDariDB);
+                    setEmail(loggedInEmail);
+                    setProfileData({
+                        id: userData?.id,
+                        role: userData?.role || '-',
+                        name: namaDariDB || '-',
+                        email: loggedInEmail || '-',
+                        username: usernameDariDB || '-',
+                        phone: userData?.no_telepon || userData?.phone || '-',
+                        no_telepon: userData?.no_telepon || userData?.phone || '-',
+                        gender: userData?.jenis_kelamin || userData?.gender || '-',
+                        jenis_kelamin: userData?.jenis_kelamin || userData?.gender || '-',
+                        domicile: userData?.domisili || userData?.domicile || userData?.alamat || '-',
+                        domisili: userData?.domisili || userData?.domicile || userData?.alamat || '-',
+                        alamat: userData?.domisili || userData?.domicile || userData?.alamat || '-',
+                        education: userData?.jenjang_pendidikan || userData?.education || '-',
+                        jenjang_pendidikan: userData?.jenjang_pendidikan || userData?.education || '-',
+                        major: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
+                        kelas_jurusan: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
+                    });
+
+                    // Tentukan halaman berdasarkan role secara langsung
+                    if (roleDariDB === 'guru') {
+                        setCurrentPage('PageGuru');
+                    } else {
+                        setCurrentPage('Home');
+                    }
+                } else {
+                    console.log('ℹ️ [App.jsx] Tidak ada sesi aktif. Tetap di Login Page.');
+                    setCurrentPage('Login');
+                }
+            } catch (error) {
+                console.error('❌ Error mendeteksi sesi login:', error);
+                setCurrentPage('Login');
+            } finally {
+                setIsAppLoading(false);
+            }
+        };
+
+        checkLoginSession();
+    }, []); // Array dependency kosong [] menjamin fungsi ini HANYA jalan 1x saat aplikasi baru dibuka
+
+    const handleLoginSuccess = (userData, loggedInEmail) => {
+        const namaDariDB = userData?.nama_murid || userData?.namaLengkap || userData?.name || loggedInEmail.split('@')[0];
+        const usernameDariDB = userData?.username || namaDariDB.toLowerCase().replace(/\s/g, '');
+        const roleDariDB = (userData?.role || userData?.id_role || 'murid').toLowerCase();
+
+        setNamaLengkap(namaDariDB);
+        setEmail(loggedInEmail);
+        setProfileData({
+            id: userData?.id,
+            role: userData?.role || '-',
+            name: namaDariDB || '-',
+            email: loggedInEmail || '-',
+            username: usernameDariDB || '-',
+            phone: userData?.no_telepon || userData?.phone || '-',
+            no_telepon: userData?.no_telepon || userData?.phone || '-',
+            gender: userData?.jenis_kelamin || userData?.gender || '-',
+            jenis_kelamin: userData?.jenis_kelamin || userData?.gender || '-',
+            domicile: userData?.domisili || userData?.domicile || userData?.alamat || '-',
+            domisili: userData?.domisili || userData?.domicile || userData?.alamat || '-',
+            alamat: userData?.domisili || userData?.domicile || userData?.alamat || '-',
+            education: userData?.jenjang_pendidikan || userData?.education || '-',
+            jenjang_pendidikan: userData?.jenjang_pendidikan || userData?.education || '-',
+            major: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
+            kelas_jurusan: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
+        });
+
+        if (roleDariDB === 'guru') {
+            setCurrentPage('PageGuru');
+        } else {
+            setCurrentPage('Home');
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            // 1. Hapus data sesi dari penyimpanan lokal
+            await AsyncStorage.removeItem('user_session');
+
+            // 2. Reset state data pengguna agar bersih saat berpindah halaman
+            setProfileData({
+                id: null,
+                role: '-',
+                name: '-',
+                email: '-',
+                username: '-',
+                phone: '-',
+                gender: '-',
+                domicile: '-',
+                education: '-',
+                major: '-',
+            });
+            setNamaLengkap('');
+            setEmail('');
+
+            // 3. Pindah langsung ke halaman Login
+            // Tidak perlu setTimeout yang lama, karena tidak ada Alert yang harus ditunggu
+            setCurrentPage('Login');
+
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Jika perlu notifikasi kesalahan, gunakan UI komponen buatan sendiri (CustomAlert)
+            // Jangan gunakan Alert.alert() bawaan React Native di sini jika masih sering error
+        }
+    };
+    // ==========================================
+    // GLOBAL NAVIGATION HANDLER
+    // ==========================================
+    const handleGlobalNavigate = (page, tab) => {
+        console.log(`🧭 [App.jsx] Global Navigate to: ${page}, tab: ${tab}`);
+        if (tab) setActivityTab(tab);
+
+        const currentRole = (profileData.role || 'murid').toLowerCase();
+
+        if (page === 'Home' && currentRole === 'guru') {
+            setCurrentPage('PageGuru');
+            return;
+        }
+
+        if (page === 'HomeGuru') {
+            setCurrentPage('PageGuru');
+        } else if (page === 'ActivityGuru') {
+            setCurrentPage('Activity');
+        } else if (page === 'ChatGuru') {
+            setCurrentPage('Chat');
+        } else if (page === 'ProfileGuru') {
+            setCurrentPage('Profile');
+        } else {
+            setCurrentPage(page);
+        }
+    };
+
+    // ==========================================
+    // ROUTER SYSTEM (DENGAN LOCK STRATEGY)
+    // ==========================================
+
+    // JIKA MASIH PROSES LOADING AWAL, TAMPILKAN SPLASH SCREEN SECARA ABSOLUT
+    if (isAppLoading) {
+        return <SplashScreen />;
     }
-  };
 
-  const handleLogout = () => {
-    setShowLoginSuccessAlert(false);
-    setCurrentPage('Login');
-  };
-
-  if (currentPage === 'Splash')
-    return <SplashScreen onFinish={() => setCurrentPage('Login')} />;
-  if (currentPage === 'Login')
-    return (
-      <LoginPage
-        onLoginSuccess={handleLoginSuccess}
-        onNavigateToRegister={() => setCurrentPage('Register')}
-        onForgotPassword={() => setCurrentPage('ResetPassword')}
-      />
-    );
-  if (currentPage === 'Register')
-    return (
-      <RegisterPage
-        onRegisterSuccess={() => setCurrentPage('Login')}
-        onNavigateToLogin={() => setCurrentPage('Login')}
-      />
-    );
-  if (currentPage === 'ResetPassword')
-    return <ResetPasswordPage onBack={() => setCurrentPage('Login')} />;
-  if (currentPage === 'PageGuru') {
+    // Jika loading selesai, jalankan routing normal di bawah ini:
+    if (currentPage === 'Login') {
         return (
-            <PageGuru 
-                namaLengkap={namaLengkap}
-                email={email}
-                onLogout={handleLogout}
-                onNavigate={(page, tab) => { if (tab) setActivityTab(tab); setCurrentPage(page); }}
+            <LoginPage
+                onLoginSuccess={handleLoginSuccess}
+                onNavigateToRegister={() => setCurrentPage('Register')}
+                onForgotPassword={() => setCurrentPage('ResetPassword')}
             />
         );
     }
 
-  if (currentPage === 'Home') {
-    return (
-      <HomePage
-        namaLengkap={namaLengkap}
-        email={email}
-        onLogout={handleLogout}
-        onSelectSubject={subjectData => {
-          setSelectedSubject(subjectData);
-          setCurrentPage('Materi');
-        }}
-        onNavigate={(page, tab) => {
-          if (tab) setActivityTab(tab);
-          setCurrentPage(page);
-        }}
-        showSuccessAlert={showLoginSuccessAlert}
-        onAlertClose={() => setShowLoginSuccessAlert(false)}
-        // ---> INI TAMBAHAN BARUNYA AGAR HOME BISA FETCH JADWAL AKTIF <---
-        userId={profileData.id}
-        userRole={(profileData.role || 'murid').toLowerCase()}
-      />
-    );
-  }
+    if (currentPage === 'Register') {
+        return (
+            <RegisterPage
+                onRegisterSuccess={() => setCurrentPage('Login')}
+                onNavigateToLogin={() => setCurrentPage('Login')}
+            />
+        );
+    }
 
-  if (currentPage === 'Activity') {
-    return (
-      <ActivityPage
-        initialTab={activityTab}
-        onNavigate={page => setCurrentPage(page)}
-        onDetailClick={item => {
-          // TAMBAHKAN 'item'
-          setSelectedSession(item); // SIMPAN data yang diklik
-          setCurrentPage('SessionDetail');
-        }}
-        userId={profileData.id}
-        userRole={(profileData.role || 'murid').toLowerCase()}
-      />
-    );
-  }
+    if (currentPage === 'ResetPassword') {
+        return <ResetPasswordPage onBack={() => setCurrentPage('Login')} />;
+    }
 
-  // Pastikan juga bagian ini mengirim selectedSession
-  if (currentPage === 'SessionDetail') {
-    return (
-      <SessionDetailPage
-        onBack={() => setCurrentPage('Activity')}
-        sessionData={selectedSession} // KIRIM data ke halaman detail
-        userId={profileData.id}
-      />
-    );
-  }
+    if (currentPage === 'PageGuru') {
+        return (
+            <PageGuru
+                guruData={profileData}
+                onNavigate={handleGlobalNavigate}
+            />
+        );
+    }
 
-  if (currentPage === 'Profile')
-    return (
-      <ProfilePage
-        profileData={profileData}
-        onNavigate={page => setCurrentPage(page)}
-      />
-    );
+    if (currentPage === 'Home') {
+        return (
+            <HomePage
+                namaLengkap={namaLengkap}
+                email={email}
+                onLogout={handleLogout}
+                onSelectSubject={subjectData => {
+                    setSelectedSubject(subjectData);
+                    setCurrentPage('Materi');
+                }}
+                onNavigate={(page, tab) => {
+                    if (tab) setActivityTab(tab);
+                    setCurrentPage(page);
+                }}
+                showSuccessAlert={showLoginSuccessAlert}
+                onAlertClose={() => setShowLoginSuccessAlert(false)}
+                userId={profileData.id}
+                userRole={(profileData.role || 'murid').toLowerCase()}
+            />
+        );
+    }
 
-  if (currentPage === 'EditBasicProfile')
-    return (
-      <EditBasicProfilePage
-        profileData={profileData}
-        onCancel={() => setCurrentPage('Profile')}
-        onSave={updatedData => {
-          setProfileData(updatedData);
-          setNamaLengkap(updatedData.name);
-          setCurrentPage('Profile');
-        }}
-      />
-    );
-  if (currentPage === 'EditAcademicProfile')
-    return (
-      <EditAcademicProfilePage
-        profileData={profileData}
-        onCancel={() => setCurrentPage('Profile')}
-        onSave={updatedData => {
-          setProfileData(updatedData);
-          setCurrentPage('Profile');
-        }}
-      />
-    );
+    if (currentPage === 'PesanSesi') {
+        return (
+            <PesanSesiPage
+                onBack={() => setCurrentPage('Home')}
+                onConfirmOrder={(data) => {
+                    setBookingSessionData(data);
+                    setCurrentPage('MencariPengajar');
+                }}
+            />
+        );
+    }
 
-  if (currentPage === 'Materi') {
-    return (
-      <MateriPage
-        id_mapel={selectedSubject?.id_mapel}
-        subjectName={selectedSubject?.subjectName}
-        onBack={() => setCurrentPage('Home')}
-        onChapterSelect={materiData => {
-          setSelectedChapter(materiData);
-          setCurrentPage('Detail');
-        }}
-      />
-    );
-  }
+    if (currentPage === 'MencariPengajar') {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF' }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>🔍 Mencari Pengajar...</Text>
+                <Text style={{ color: '#888', marginBottom: 30 }}>Halaman ini sedang dalam pengembangan</Text>
+                <TouchableOpacity
+                    style={{ backgroundColor: '#1DB954', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 20 }}
+                    onPress={() => setCurrentPage('DetailPembayaran')}
+                >
+                    <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Simulasi: Pengajar Ditemukan →</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{ marginTop: 15 }} onPress={() => setCurrentPage('PesanSesi')}>
+                    <Text style={{ color: '#666' }}>← Kembali</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
 
-  if (currentPage === 'Detail')
-    return (
-      <DetailMateriPage
-        chapterData={selectedChapter}
-        onBack={() => setCurrentPage('Materi')}
-      />
-    );
+    if (currentPage === 'DetailPembayaran') {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF' }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>💳 Detail Pembayaran</Text>
+                <Text style={{ color: '#888', marginBottom: 30 }}>Halaman ini sedang dalam pengembangan</Text>
+                <TouchableOpacity
+                    style={{ backgroundColor: '#1DB954', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 20 }}
+                    onPress={() => {
+                        alert('Pembayaran Berhasil! Sesi belajar berhasil dijadwalkan.');
+                        setCurrentPage('Home');
+                    }}
+                >
+                    <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Simulasi: Bayar Sekarang</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{ marginTop: 15 }} onPress={() => setCurrentPage('PesanSesi')}>
+                    <Text style={{ color: '#666' }}>← Kembali</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
 
-  if (currentPage === 'Chat')
-    return (
-      <ChatPage
-        onNavigate={page => setCurrentPage(page)}
-        onChatPress={chatData => {
-          setSelectedChatUser(chatData);
-          setCurrentPage('ChatRoom');
-        }}
-      />
-    );
-  if (currentPage === 'ChatRoom')
-    return (
-      <ChatRoomPage
-        chatData={selectedChatUser}
-        onBack={() => setCurrentPage('Chat')}
-      />
-    );
+    if (currentPage === 'Activity') {
+        return (
+            <ActivityPage
+                initialTab={activityTab}
+                onNavigate={page => setCurrentPage(page)}
+                onDetailClick={item => {
+                    setSelectedSession(item);
+                    setCurrentPage('SessionDetail');
+                }}
+                userId={profileData.id}
+                userRole={(profileData.role || 'murid').toLowerCase()}
+            />
+        );
+    }
 
-  return (
-    <LoginPage
-      onLoginSuccess={handleLoginSuccess}
-      onNavigateToRegister={() => setCurrentPage('Register')}
-      onForgotPassword={() => setCurrentPage('ResetPassword')}
-    />
-  );
+    if (currentPage === 'SessionDetail') {
+        return (
+            <SessionDetailPage
+                onBack={() => setCurrentPage('Activity')}
+                sessionData={selectedSession}
+                userId={profileData.id}
+            />
+        );
+    }
+
+    if (currentPage === 'Profile') {
+        return (
+            <ProfilePage
+                profileData={profileData}
+                onNavigate={(page) => setCurrentPage(page)}
+                onLogout={handleLogout} // <--- TAMBAHKAN BARIS INI
+            />
+        );
+    }
+
+    if (currentPage === 'EditBasicProfile') {
+        return (
+            <EditBasicProfilePage
+                profileData={profileData}
+                onCancel={() => setCurrentPage('Profile')}
+                onSave={updatedData => {
+                    setProfileData(updatedData);
+                    setNamaLengkap(updatedData.name);
+                    setCurrentPage('Profile');
+                }}
+            />
+        );
+    }
+
+    if (currentPage === 'EditAcademicProfile') {
+        return (
+            <EditAcademicProfilePage
+                profileData={profileData}
+                onCancel={() => setCurrentPage('Profile')}
+                onSave={updatedData => {
+                    setProfileData(updatedData);
+                    setCurrentPage('Profile');
+                }}
+            />
+        );
+    }
+
+    if (currentPage === 'Materi') {
+        return (
+            <MateriPage
+                id_mapel={selectedSubject?.id_mapel}
+                subjectName={selectedSubject?.subjectName}
+                onBack={() => setCurrentPage('Home')}
+                onChapterSelect={materiData => {
+                    setSelectedChapter(materiData);
+                    setCurrentPage('Detail');
+                }}
+            />
+        );
+    }
+
+    if (currentPage === 'Detail') {
+        return (
+            <DetailMateriPage
+                chapterData={selectedChapter}
+                onBack={() => setCurrentPage('Materi')}
+            />
+        );
+    }
+
+    if (currentPage === 'Chat') {
+        return (
+            <ChatPage
+                onNavigate={page => setCurrentPage(page)}
+                onChatPress={chatData => {
+                    setSelectedChatUser(chatData);
+                    setCurrentPage('ChatRoom');
+                }}
+            />
+        );
+    }
+
+    if (currentPage === 'ChatRoom') {
+        return (
+            <ChatRoomPage
+                chatData={selectedChatUser}
+                onBack={() => setCurrentPage('Chat')}
+            />
+        );
+    }
+
+    return (
+        <LoginPage
+            onLoginSuccess={handleLoginSuccess}
+            onNavigateToRegister={() => setCurrentPage('Register')}
+            onForgotPassword={() => setCurrentPage('ResetPassword')}
+        />
+    );
 };
 
 export default App;

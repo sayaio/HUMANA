@@ -18,7 +18,7 @@ const getMateriBySubject = async (req, res) => {
   try {
     const rows = await pool.query(
       `SELECT id_materi AS id, nama_materi AS namaMateri, kelas, jurusan, deskripsi AS deskripsiMateri
-       FROM materi
+       FROM Materi
        WHERE id_mapel = ?
        ORDER BY id_materi ASC`,
       [id_mapel]
@@ -45,7 +45,7 @@ const getAllMateri = async (req, res) => {
   try {
     const rows = await pool.query(`
         SELECT id_mapel, nama_mapel
-        FROM matapelajaran
+        FROM MataPelajaran
         ORDER BY id_mapel ASC
     `);
 
@@ -70,7 +70,7 @@ const getAllMapel = async (req, res) => {
   try {
     const rows = await pool.query(
       `SELECT id_mapel, nama_mapel
-       FROM matapelajaran
+       FROM MataPelajaran
        ORDER BY id_mapel ASC`
     );
 

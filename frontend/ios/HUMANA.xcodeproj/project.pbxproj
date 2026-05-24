@@ -18,6 +18,8 @@
 		197AD8E9DB4A43ABA70BD645 /* DarkerGrotesque-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7015449F431C49EBBCF74844 /* DarkerGrotesque-Medium.ttf */; };
 		151FA24EEC014109AAEBE982 /* DarkerGrotesque-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 218778D9D3714AF582F03441 /* DarkerGrotesque-Regular.ttf */; };
 		C1619FDC378741D99E07FD14 /* DarkerGrotesque-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3F87ECCF29914317A6EA9D21 /* DarkerGrotesque-SemiBold.ttf */; };
+		DC6C24BC335A4AF8B18A7579 /* SF-Pro-Display-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = AAD27DA4257E4DA5995BA0C1 /* SF-Pro-Display-Bold.otf */; };
+		8C16A6F730324A36B26E051B /* SF-Pro-Display-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 6462C51C1ACB41379D8151F0 /* SF-Pro-Display-Regular.otf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +40,8 @@
 		7015449F431C49EBBCF74844 /* DarkerGrotesque-Medium.ttf */ = {isa = PBXFileReference; name = "DarkerGrotesque-Medium.ttf"; path = "../assets/fonts/DarkerGrotesque-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		218778D9D3714AF582F03441 /* DarkerGrotesque-Regular.ttf */ = {isa = PBXFileReference; name = "DarkerGrotesque-Regular.ttf"; path = "../assets/fonts/DarkerGrotesque-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		3F87ECCF29914317A6EA9D21 /* DarkerGrotesque-SemiBold.ttf */ = {isa = PBXFileReference; name = "DarkerGrotesque-SemiBold.ttf"; path = "../assets/fonts/DarkerGrotesque-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		AAD27DA4257E4DA5995BA0C1 /* SF-Pro-Display-Bold.otf */ = {isa = PBXFileReference; name = "SF-Pro-Display-Bold.otf"; path = "../assets/fonts/SF-Pro-Display-Bold.otf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		6462C51C1ACB41379D8151F0 /* SF-Pro-Display-Regular.otf */ = {isa = PBXFileReference; name = "SF-Pro-Display-Regular.otf"; path = "../assets/fonts/SF-Pro-Display-Regular.otf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -122,6 +126,8 @@
 				7015449F431C49EBBCF74844 /* DarkerGrotesque-Medium.ttf */,
 				218778D9D3714AF582F03441 /* DarkerGrotesque-Regular.ttf */,
 				3F87ECCF29914317A6EA9D21 /* DarkerGrotesque-SemiBold.ttf */,
+				AAD27DA4257E4DA5995BA0C1 /* SF-Pro-Display-Bold.otf */,
+				6462C51C1ACB41379D8151F0 /* SF-Pro-Display-Regular.otf */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -196,6 +202,8 @@
 				197AD8E9DB4A43ABA70BD645 /* DarkerGrotesque-Medium.ttf in Resources */,
 				151FA24EEC014109AAEBE982 /* DarkerGrotesque-Regular.ttf in Resources */,
 				C1619FDC378741D99E07FD14 /* DarkerGrotesque-SemiBold.ttf in Resources */,
+				DC6C24BC335A4AF8B18A7579 /* SF-Pro-Display-Bold.otf in Resources */,
+				8C16A6F730324A36B26E051B /* SF-Pro-Display-Regular.otf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

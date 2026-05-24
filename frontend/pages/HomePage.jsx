@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     StyleSheet, Text, View, Image, TouchableOpacity,
-    StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator
+    StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator,Animated,PanResponder
 } from 'react-native';
 
 import CustomAlert from '../components/CustomAlert';
@@ -36,6 +36,59 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
     const firstName = namaLengkap ? namaLengkap.split(' ')[0] : (role === 'guru' ? 'Guru' : 'Murid');
     
     const [isMateriVisible, setIsMateriVisible] = useState(false);
+    const [slideAnim] = useState(new Animated.Value(height));
+
+    // Logika membuka bottom sheet secara halus saat isMateriVisible bernilai true
+    useEffect(() => {
+        if (isMateriVisible) {
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
+        }
+    }, [isMateriVisible]);
+
+    // Fungsi penutup: Menurunkan sheet ke bawah layar terlebih dahulu, baru menutup modal
+    const closeMateriSheet = () => {
+        Animated.timing(slideAnim, {
+            toValue: height,
+            duration: 250,
+            useNativeDriver: true,
+        }).start(() => {
+            setIsMateriVisible(false);
+        });
+    };
+
+    // Logika sensor usap/swipe ke bawah (Wipe Down)
+    const panResponder = useState(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: (_, gestureState) => {
+                // Hanya aktif jika user menggeser ke bawah (jarak geser vertikal > 5)
+                return gestureState.dy > 5;
+            },
+            onPanResponderMove: (_, gestureState) => {
+                // Mengikuti gerakan jari ke bawah secara real-time
+                if (gestureState.dy > 0) {
+                    slideAnim.setValue(gestureState.dy);
+                }
+            },
+            onPanResponderRelease: (_, gestureState) => {
+                // Jika ditarik ke bawah lebih dari 120 pixel, tutup window materi
+                if (gestureState.dy > 120 || gestureState.vy > 0.5) {
+                    closeMateriSheet();
+                } else {
+                    // Jika dilepas sebelum melewati batas, kembalikan posisi sheet ke atas
+                    Animated.spring(slideAnim, {
+                        toValue: 0,
+                        useNativeDriver: true,
+                    }).start();
+                }
+            },
+        })
+    )[0];
+
     const [allSubjects, setAllSubjects] = useState([]);
     const [loadingMapel, setLoadingMapel] = useState(false);
     const [activeSessions, setActiveSessions] = useState([]);
@@ -107,7 +160,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                 key={subject.id_mapel || Math.random()}
                 style={styles.subjectItemContainer}
                 onPress={() => {
-                    setIsMateriVisible(false);
+                    closeMateriSheet();
                     if (onSelectSubject) onSelectSubject({ id_mapel: subject.id_mapel, subjectName: subject.nama_mapel });
                 }}
             >
@@ -248,7 +301,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                         </>
                     ) : (
                         <>
-                            <TouchableOpacity style={styles.emeraldMenuItem}>
+                            <TouchableOpacity style={styles.emeraldMenuItem} onPress={() => onNavigate && onNavigate('PesanSesi')}>
                                 <View style={styles.emeraldIconBox}><Search color="#FFF" size={24} /></View>
                                 <Text style={styles.emeraldMenuText} numberOfLines={1}>Pesan Sesi</Text>
                             </TouchableOpacity>
@@ -317,7 +370,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                             <View style={styles.pesanLagiContent}>
                                 <Text style={styles.pesanLagiSubtitle}>Lanjutkan sesi favoritmu</Text>
                                 <Text style={styles.pesanLagiTitle} numberOfLines={2}><Text style={{ fontWeight: 'bold' }}>Matematika</Text> - Relasi & Fungsi</Text>
-                                <TouchableOpacity style={styles.pesanSesiBtn}><Text style={styles.pesanSesiBtnText}>Pesan Sesi →</Text></TouchableOpacity>
+                                <TouchableOpacity style={styles.pesanSesiBtn} onPress={() => onNavigate && onNavigate('PesanSesi')}><Text style={styles.pesanSesiBtnText}>Pesan Sesi →</Text></TouchableOpacity>
                             </View>
                             <View style={styles.pesanLagiGraphic}><Text style={styles.mathSymbols}>+ ={"\n"}- x</Text></View>
                         </View>
@@ -336,7 +389,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                                 <Text style={styles.rekomendasiCardSubtitle} numberOfLines={1}>Sekolah Menengah Atas</Text>
                             </View>
                             <TouchableOpacity style={styles.lihatMateriBtn} onPress={() => setIsMateriVisible(true)}>
-                                <Text style={styles.lihatMateriBtnText}>Lihat</Text>
+                                <Text style={styles.lihatMateriBtnText}>Lihat Materi</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -361,7 +414,14 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                 </TouchableOpacity>
 
                 <View style={styles.centerFabContainer}>
-                    <TouchableOpacity style={styles.centerFabButton}>
+                    <TouchableOpacity 
+                        style={styles.centerFabButton} 
+                        onPress={() => {
+                            if (onNavigate) {
+                                onNavigate(role === 'guru' ? 'Activity' : 'PesanSesi');
+                            }
+                        }}
+                    >
                         <Image source={LOGO_SOURCE} style={styles.centerFabLogoIcon} resizeMode="contain" />
                     </TouchableOpacity>
                     <Text style={styles.centerFabLabelText}>
@@ -381,12 +441,32 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
 
             <CustomAlert visible={alertConfig.visible} type={alertConfig.type} title={alertConfig.title} message={alertConfig.message} onClose={handleCloseAlert} />
 
-            {/* Modal Bottom Sheet */}
-            <Modal visible={isMateriVisible} animationType="slide" transparent={true}>
+           {/* Modal Bottom Sheet */}
+            <Modal 
+                visible={isMateriVisible} 
+                animationType="fade" 
+                transparent={true} 
+                onRequestClose={closeMateriSheet}
+                // TAMBAHKAN 2 PROPERTI DI BAWAH INI UNTUK MENABRAK NAVBAR BAWAH HP
+                statusBarTranslucent={true}
+                presentationStyle="overFullScreen"
+            >
                 <View style={styles.modalOverlay}>
-                    <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsMateriVisible(false)} />
-                    <View style={styles.bottomSheetContainer}>
-                        <View style={styles.sheetHandle} />
+                    {/* Area Gelap di Luar Kotak */}
+                    <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={closeMateriSheet} />
+                    
+                    {/* Jendela Pelajaran */}
+                    <Animated.View 
+                        style={[
+                            styles.bottomSheetContainer, 
+                            { transform: [{ translateY: slideAnim }] }
+                        ]}
+                    >
+                        {/* Area Handle Garis Abu-abu */}
+                        <View style={{ width: '100%', alignItems: 'center', paddingVertical: 12 }} {...panResponder.panHandlers}>
+                            <View style={styles.sheetHandle} />
+                        </View>
+
                         {loadingMapel ? (
                             <View style={styles.loadingContainer}>
                                 <ActivityIndicator size="large" color="#284B7A" />
@@ -402,7 +482,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
                                 </View>
                             </ScrollView>
                         )}
-                    </View>
+                    </Animated.View>
                 </View>
             </Modal>
         </View>
@@ -416,10 +496,10 @@ const styles = StyleSheet.create({
     top: 0, 
     left: 0, 
     right: 0, 
-    height: 280, // Tambahkan sedikit tinggi agar lebih proporsional
+    height: 280, 
     backgroundColor: '#284B7A', 
-    borderBottomLeftRadius: 50,  // Tambahkan ini (kiri)
-    borderBottomRightRadius: 50, // Sesuaikan ini (kanan)
+    borderBottomLeftRadius: 50,  
+    borderBottomRightRadius: 50, 
     overflow: 'hidden' 
 },
     headerWatermark: { position: 'absolute', right: -30, top: -10, width: 260, height: 260, tintColor: '#FFFFFF', opacity: 0.05 },
@@ -442,29 +522,23 @@ const styles = StyleSheet.create({
     badgeBaru: { backgroundColor: '#FFF9C4', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 12 },
     badgeBaruText: { color: '#FBC02D', fontSize: 11, fontWeight: 'bold' },
 
-    // =========================================================
-    // FIX LAYOUT BREAKING: Strategi Kombinasi Grid & Wrap Dinamis
-    // =========================================================
     scheduleDetailsGrid: { 
         flexDirection: 'row', 
-        flexWrap: 'wrap', // Biarkan membungkus ke bawah kalau space tidak cukup di hp kecil
+        flexWrap: 'wrap', 
         justifyContent: 'space-between', 
         alignItems: 'flex-start',
         marginTop: 15, 
         width: '100%' 
     },
-    // Kalau role Guru: bagi 3 kolom sama rata (dikurangi sedikit gap aman)
     gridDetailItemTigaKolom: { 
         width: '30%', 
         minWidth: 80 
     },
-    // Kalau role Murid: bagi 2 kolom saja agar space jauh lebih lega
     gridDetailItemDuaKolom: { 
         width: '45%' 
     },
     scheduleLabel: { fontSize: 11, color: '#A9A9A9', marginBottom: 4 },
     scheduleValue: { fontSize: 13, color: '#222', fontWeight: 'bold', lineHeight: 16 },
-    // =========================================================
 
     guruActionCardButtons: { flexDirection: 'row', gap: 12, marginTop: 20 },
     btnLihatRute: { flex: 1, backgroundColor: '#284B7A', height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
@@ -517,7 +591,18 @@ const styles = StyleSheet.create({
     centerFabLabelText: { fontSize: 9, color: '#284B7A', textAlign: 'center', marginTop: 4, fontWeight: '600' },
 
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
-    bottomSheetContainer: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 20, paddingBottom: 40, paddingTop: 15, maxHeight: '85%' },
+    bottomSheetContainer: { 
+        backgroundColor: '#FFF', 
+        borderTopLeftRadius: 30, 
+        borderTopRightRadius: 30, 
+        paddingHorizontal: 20, 
+        paddingTop: 15, 
+        maxHeight: '85%',
+        
+        // Ganti paddingBottom asli (40) dengan kombinasi ini:
+        paddingBottom: 100, // Memberikan buntut putih ekstra ke bawah agar melewati navbar
+        marginBottom: -60,  // Menarik buntut tersebut agar pas bersembunyi di balik layar
+    },
     sheetHandle: { width: 50, height: 5, backgroundColor: '#E0E0E0', borderRadius: 3, alignSelf: 'center', marginBottom: 20 },
     sheetSectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 15 },
     subjectGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' },
