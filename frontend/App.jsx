@@ -400,14 +400,16 @@ const App = () => {
 
     if (currentPage === 'Chat') {
         return (
-            <ChatPage
-                onNavigate={page => setCurrentPage(page)}
-                onChatPress={chatData => {
-                    setSelectedChatUser(chatData);
-                    setCurrentPage('ChatRoom');
-                }}
-            />
-        );
+        <ChatPage
+            userId={profileData.id} // <--- Tambahkan ini
+            userRole={(profileData.role || 'murid').toLowerCase()} // <--- Tambahkan ini
+            onNavigate={(page, tab) => handleGlobalNavigate(page, tab)} // Update agar sesuai handleGlobalNavigate
+            onChatPress={chatData => {
+                setSelectedChatUser(chatData);
+                setCurrentPage('ChatRoom');
+            }}
+        />
+    );
     }
 
     if (currentPage === 'ChatRoom') {
