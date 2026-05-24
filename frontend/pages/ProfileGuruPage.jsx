@@ -8,9 +8,13 @@ import {
     StatusBar,
     TextInput,
     Switch,
-    Alert
+    Alert,
+    Image // Tambahkan import Image untuk asset logo
 } from 'react-native';
 import { Settings, Edit2, Briefcase, Plus, Trash2, Home, Activity, MessageCircle, User } from 'lucide-react-native';
+
+// Import asset logo yang sama dengan HomePage.jsx
+const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const ProfileGuruPage = ({ guruData, onNavigate }) => {
     // State untuk toggle Status Aktif (Sesuai di gambar Figma)
@@ -201,7 +205,7 @@ const ProfileGuruPage = ({ guruData, onNavigate }) => {
                 <View style={{ height: 120 }} />
             </ScrollView>
 
-            {/* BOTTOM NAVIGATION BAR (Persis Struktur Penamaan PageGuru) */}
+            {/* BOTTOM NAVIGATION BAR */}
             <View style={styles.bottomTabContainer}>
                 <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('HomeGuru')}>
                     <Home color="#666" size={24} />
@@ -212,9 +216,10 @@ const ProfileGuruPage = ({ guruData, onNavigate }) => {
                     <Text style={styles.tabLabel}>Aktivitas</Text>
                 </TouchableOpacity>
 
+                {/* MODIFIKASI LOGO DI TENGAH: Menggunakan aset logo_humana.png */}
                 <View style={styles.centerTabWrapper}>
                     <TouchableOpacity style={styles.centerTabButton} onPress={() => onNavigate && onNavigate('HomeGuru')}>
-                        <Text style={styles.centerLogoText}>H</Text>
+                        <Image source={LOGO_SOURCE} style={styles.centerLogoImage} resizeMode="contain" />
                     </TouchableOpacity>
                     <Text style={styles.centerTabLabel}>Permintaan</Text>
                 </View>
@@ -225,7 +230,7 @@ const ProfileGuruPage = ({ guruData, onNavigate }) => {
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('ProfileGuru')}>
                     <User color="#284B7A" size={24} />
-                    <Text style={[styles.tabLabel, styles.activeTabLabel]}>Profil</Text>
+                    <Text style={[styles.tabLabel, styles.activeTabLabel]}>Profile</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -284,14 +289,14 @@ const styles = StyleSheet.create({
     saveBtn: { backgroundColor: '#284B7A', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
     saveBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
 
-    // Layout Bottom Tab Navbar Bawaan Proyek
+    // Layout Bottom Tab Navbar
     bottomTabContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 70, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEE', paddingBottom: 10 },
-    tabItem: { alignItems: 'center', center: 'center' },
+    tabItem: { alignItems: 'center', justifyContent: 'center' },
     tabLabel: { fontSize: 11, color: '#666', marginTop: 4 },
     activeTabLabel: { color: '#284B7A', fontWeight: 'bold' },
     centerTabWrapper: { alignItems: 'center', marginTop: -30 },
     centerTabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', borderWidth: 4, borderColor: '#FFF', elevation: 4 },
-    centerLogoText: { color: '#FFF', fontSize: 24, fontWeight: 'bold' },
+    centerLogoImage: { width: 32, height: 32 }, // Penyesuaian ukuran gambar logo
     centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
 });
 

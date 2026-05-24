@@ -8,12 +8,16 @@ import {
     StatusBar,
     useWindowDimensions,
     ActivityIndicator,
-    Alert
+    Alert,
+    Image // Tambahkan import Image untuk asset logo
 } from 'react-native';
 import { Calendar, BookOpen, Wallet, MousePointerClick, Home, Activity, MessageCircle, User } from 'lucide-react-native';
 
 // Import service yang sudah diperbarui
 import { fetchPermintaanBaru, terimaPermintaanSesiAPI, fetchSesiDikonfirmasi } from '../services/matchingService';
+
+// Import asset logo yang sama dengan HomePage.jsx
+const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const PageGuru = ({ guruData, onNavigate }) => {
     const { width } = useWindowDimensions();
@@ -266,16 +270,17 @@ const PageGuru = ({ guruData, onNavigate }) => {
             <View style={styles.bottomTabContainer}>
                 <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('HomeGuru')}>
                     <Home color="#284B7A" size={24} />
-                    <Text style={[styles.tabLabel, styles.activeTabLabel]}>Home</Text>
+                    <Text style={[styles.tabLabel, styles.activeTabLabel]}>Beranda</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('ActivityGuru')}>
                     <Activity color="#666" size={24} />
-                    <Text style={styles.tabLabel}>Activity</Text>
+                    <Text style={styles.tabLabel}>Aktivitas</Text>
                 </TouchableOpacity>
 
+                {/* MODIFIKASI LOGO DI TENGAH: Menggunakan aset logo_humana.png */}
                 <View style={styles.centerTabWrapper}>
-                    <TouchableOpacity style={styles.centerTabButton}>
-                        <Text style={styles.centerLogoText}>H</Text>
+                    <TouchableOpacity style={styles.centerTabButton} onPress={() => onNavigate && onNavigate('HomeGuru')}>
+                        <Image source={LOGO_SOURCE} style={styles.centerLogoImage} resizeMode="contain" />
                     </TouchableOpacity>
                     <Text style={styles.centerTabLabel}>Permintaan</Text>
                 </View>
@@ -338,7 +343,7 @@ const styles = StyleSheet.create({
     activeTabLabel: { color: '#284B7A', fontWeight: 'bold' },
     centerTabWrapper: { alignItems: 'center', marginTop: -30 },
     centerTabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', borderWidth: 4, borderColor: '#FFF', elevation: 4 },
-    centerLogoText: { color: '#FFF', fontSize: 24, fontWeight: 'bold' },
+    centerLogoImage: { width: 32, height: 32 }, // Penyesuaian ukuran gambar logo
     centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
 });
 
