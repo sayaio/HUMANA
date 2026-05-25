@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import {
     StyleSheet, Text, View, Image, TouchableOpacity,
-    StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator,Animated,PanResponder
+    StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator, Animated, PanResponder
 } from 'react-native';
 
 import CustomAlert from '../components/CustomAlert';
+import BottomNavbar from '../components/BottomNavbar';
 import { fetchAllMapel } from '../services/MateriService';
 import { getActiveSchedule } from '../services/historyService';
 
-// Import Ikon Lucide untuk kebutuhan UI Menu Kotak & Bottom Nav baru
+
 import { Calendar, BookOpen, Wallet, FileText, Search, MessageSquare, User, Home } from 'lucide-react-native';
 
-// Ambil dimensi layar untuk kalkulasi responsive
 const { width, height } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
@@ -26,125 +26,101 @@ const SUBJECT_ICONS = {
     'Bahasa Inggris': require('../assets/inggris.png'),
 };
 
+const FONTS = {
+    bold: 'SF-Pro-Display-Bold',
+    regular: 'SF-Pro-Display-Regular',
+};
+
 const formatRupiah = (angka) => {
     if (!angka) return 'Rp 0';
     return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
 };
 
-const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, showSuccessAlert, onAlertClose, userId, userRole }) => {
+const HomePage = ({
+    namaLengkap, email, onLogout, onSelectSubject,
+    onNavigate, showSuccessAlert, onAlertClose, userId, userRole
+}) => {
     const role = userRole ? userRole.toLowerCase() : 'murid';
-    const firstName = namaLengkap ? namaLengkap.split(' ')[0] : (role === 'guru' ? 'Guru' : 'Murid');
-    
+
     const [isMateriVisible, setIsMateriVisible] = useState(false);
     const [slideAnim] = useState(new Animated.Value(height));
+    const [allSubjects, setAllSubjects] = useState([]);
+    const [loadingMapel, setLoadingMapel] = useState(false);
+    const [activeSessions, setActiveSessions] = useState([]);
+    const [loadingSessions, setLoadingSessions] = useState(false);
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false, type: 'success', title: '', message: ''
+    });
 
-    // Logika membuka bottom sheet secara halus saat isMateriVisible bernilai true
     useEffect(() => {
         if (isMateriVisible) {
             Animated.timing(slideAnim, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver: true,
+                toValue: 0, duration: 300, useNativeDriver: true,
             }).start();
         }
     }, [isMateriVisible]);
 
-    // Fungsi penutup: Menurunkan sheet ke bawah layar terlebih dahulu, baru menutup modal
     const closeMateriSheet = () => {
         Animated.timing(slideAnim, {
-            toValue: height,
-            duration: 250,
-            useNativeDriver: true,
-        }).start(() => {
-            setIsMateriVisible(false);
-        });
+            toValue: height, duration: 250, useNativeDriver: true,
+        }).start(() => setIsMateriVisible(false));
     };
 
-    // Logika sensor usap/swipe ke bawah (Wipe Down)
     const panResponder = useState(
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
-            onMoveShouldSetPanResponder: (_, gestureState) => {
-                // Hanya aktif jika user menggeser ke bawah (jarak geser vertikal > 5)
-                return gestureState.dy > 5;
-            },
-            onPanResponderMove: (_, gestureState) => {
-                // Mengikuti gerakan jari ke bawah secara real-time
-                if (gestureState.dy > 0) {
-                    slideAnim.setValue(gestureState.dy);
-                }
-            },
-            onPanResponderRelease: (_, gestureState) => {
-                // Jika ditarik ke bawah lebih dari 120 pixel, tutup window materi
-                if (gestureState.dy > 120 || gestureState.vy > 0.5) {
+            onMoveShouldSetPanResponder: (_, g) => g.dy > 5,
+            onPanResponderMove: (_, g) => { if (g.dy > 0) slideAnim.setValue(g.dy); },
+            onPanResponderRelease: (_, g) => {
+                if (g.dy > 120 || g.vy > 0.5) {
                     closeMateriSheet();
                 } else {
-                    // Jika dilepas sebelum melewati batas, kembalikan posisi sheet ke atas
-                    Animated.spring(slideAnim, {
-                        toValue: 0,
-                        useNativeDriver: true,
-                    }).start();
+                    Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
                 }
             },
         })
     )[0];
 
-    const [allSubjects, setAllSubjects] = useState([]);
-    const [loadingMapel, setLoadingMapel] = useState(false);
-    const [activeSessions, setActiveSessions] = useState([]);
-    const [loadingSessions, setLoadingSessions] = useState(false);
-
-    const [alertConfig, setAlertConfig] = useState({
-        visible: false, type: 'success', title: '', message: ''
-    });
-
-    // Load Mapel
     useEffect(() => {
-        if (isMateriVisible) {
-            const loadMapel = async () => {
-                setLoadingMapel(true);
-                try {
-                    const data = await fetchAllMapel();
-                    setAllSubjects(Array.isArray(data) ? data : (data ? [data] : []));
-                } catch (err) {
-                    console.error('[HomePage] Gagal fetch mapel:', err);
-                } finally {
-                    setLoadingMapel(false);
-                }
-            };
-            loadMapel();
-        }
+        if (!isMateriVisible) return;
+        const load = async () => {
+            setLoadingMapel(true);
+            try {
+                const data = await fetchAllMapel();
+                setAllSubjects(Array.isArray(data) ? data : (data ? [data] : []));
+            } catch (err) {
+                console.error('[HomePage] Gagal fetch mapel:', err);
+            } finally {
+                setLoadingMapel(false);
+            }
+        };
+        load();
     }, [isMateriVisible]);
 
-    // Load Jadwal Aktif
     useEffect(() => {
-        const fetchActiveSessions = async () => {
-            if (!userId || !userRole || userRole === '-') return;
+        if (!userId || !userRole || userRole === '-') return;
+        const load = async () => {
             setLoadingSessions(true);
             try {
                 const result = await getActiveSchedule(userRole, userId);
-                if (result && result.success) {
-                    const rawData = result.data;
-                    setActiveSessions(Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []));
+                if (result?.success) {
+                    const raw = result.data;
+                    setActiveSessions(Array.isArray(raw) ? raw : (raw ? [raw] : []));
                 } else {
                     setActiveSessions([]);
                 }
-            } catch (error) {
-                console.log("Error fetch active sessions di Home:", error);
+            } catch (e) {
                 setActiveSessions([]);
             } finally {
                 setLoadingSessions(false);
             }
         };
-        fetchActiveSessions();
+        load();
     }, [userId, userRole]);
 
-    // Alert Login Sukses
     useEffect(() => {
         if (showSuccessAlert) {
-            setAlertConfig({
-                visible: true, type: 'success', title: 'Sukses!', message: 'Berhasil masuk ke akun kamu.'
-            });
+            setAlertConfig({ visible: true, type: 'success', title: 'Sukses!', message: 'Berhasil masuk ke akun kamu.' });
         }
     }, [showSuccessAlert]);
 
@@ -152,6 +128,7 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
         setAlertConfig(prev => ({ ...prev, visible: false }));
         if (onAlertClose) onAlertClose();
     };
+
 
     const renderSubjectItem = (subject) => {
         const icon = SUBJECT_ICONS[subject.nama_mapel] || LOGO_SOURCE;
@@ -172,11 +149,174 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
         );
     };
 
+    // ── Render card sesi ─────────────────────────────────────────────────────
+    // ── 1. RENDER ITEM UNTUK TIAP CARD SESI ───────────────────────────────────
+    const renderSessionItem = ({ item: s }) => {
+        const rawMulai = s.waktu_mulai || s.jam_mulai;
+        const rawSelesai = s.waktu_selesai || s.jam_selesai;
+
+        let waktu = '–';
+
+        if (rawMulai && rawSelesai) {
+            try {
+                const formatTimeStr = (rawStr) => {
+                    if (typeof rawStr !== 'string') return '–';
+                    if (rawStr.includes('-') || rawStr.includes('T')) {
+                        const dateObj = new Date(rawStr);
+                        const formatZero = (num) => String(num).padStart(2, '0');
+                        return `${formatZero(dateObj.getHours())}:${formatZero(dateObj.getMinutes())}`;
+                    } else {
+                        return rawStr.substring(0, 5).replace('.', ':');
+                    }
+                };
+                waktu = `${formatTimeStr(rawMulai)} – ${formatTimeStr(rawSelesai)}`;
+            } catch (error) {
+                console.error("Gagal parsing waktu:", error);
+                waktu = '–';
+            }
+        }
+
+        const lokasi = s.lokasi || s.alamat || 'Alamat tidak tersedia';
+        const bayaran = formatRupiah(s.tarif || s.bayaran || s.total_harga || 0);
+        const gridStyle = role === 'guru' ? styles.gridCol3 : styles.gridCol2;
+
+        // Lebar card murni dihitung dinamis agar card kedua sedikit mengintip secara estetis
+        const cardWidth = width - 56;
+
+        return (
+            // Jarak antar-card (gap) diatur langsung menggunakan marginRight di sini
+            <View style={{ width: cardWidth, marginRight: 16 }}>
+                <View style={[styles.sessionCard, { marginBottom: 0, marginRight: 0, width: '100%' }]}>
+                    <Text style={styles.cardLabel}>SESI HARI INI</Text>
+
+                    {role === 'guru' ? (
+                        <View style={styles.rowCenter}>
+                            <View style={styles.avatar}>
+                                <Text style={styles.avatarText}>
+                                    {(s.nama_murid || 'M').substring(0, 2).toUpperCase()}
+                                </Text>
+                            </View>
+                            <View style={{ flex: 1, marginLeft: 12 }}>
+                                <Text style={styles.sessionName} numberOfLines={1}>
+                                    {s.nama_murid || 'Nama Murid'}
+                                </Text>
+                                <Text style={styles.sessionSub} numberOfLines={1}>
+                                    {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'} — {s.materi?.nama_materi || s.nama_materi || 'Materi'}
+                                </Text>
+                            </View>
+                            <View style={styles.badgeGreen}>
+                                <Text style={styles.badgeGreenText}>• Segera</Text>
+                            </View>
+                        </View>
+                    ) : (
+                        <Text style={styles.sessionTitle} numberOfLines={2}>
+                            <Text style={{ fontFamily: FONTS.bold }}>
+                                {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'}
+                            </Text>
+                            {' – '}{s.materi?.nama_materi || s.nama_materi || 'Materi'}
+                        </Text>
+                    )}
+
+                    <View style={styles.detailGrid}>
+                        <View style={gridStyle}>
+                            <Text style={styles.detailLabel}>Waktu</Text>
+                            <Text style={styles.detailValue} numberOfLines={1}>{waktu}</Text>
+                        </View>
+                        <View style={gridStyle}>
+                            <Text style={styles.detailLabel}>{role === 'guru' ? 'Lokasi' : 'Guru'}</Text>
+                            <Text style={styles.detailValue} numberOfLines={2}>
+                                {role === 'guru' ? lokasi : (s.nama_guru || '–')}
+                            </Text>
+                        </View>
+                        {role === 'guru' && (
+                            <View style={gridStyle}>
+                                <Text style={styles.detailLabel}>Bayaran</Text>
+                                <Text style={styles.detailValue} numberOfLines={1}>{bayaran}</Text>
+                            </View>
+                        )}
+                    </View>
+
+                    {role === 'guru' && (
+                        <View style={styles.cardActions}>
+                            <TouchableOpacity style={styles.btnPrimary}>
+                                <Text style={styles.btnPrimaryText}>Lihat Rute</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.btnOutline}>
+                                <Text style={styles.btnOutlineText}>Chat Murid</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
+            </View>
+        );
+    };
+
+    // ── 2. WRAPPER UTAMA FLATLIST CAROUSEL SLIDER (EFEK CENTER STANDBY) ──
+    const renderSessionCard = () => {
+        if (loadingSessions) {
+            return (
+                <View style={[styles.sessionCard, styles.centerContent, { height: 160, marginHorizontal: 20 }]}>
+                    <ActivityIndicator size="small" color="#284B7A" />
+                    <Text style={styles.loadingText}>Mencari sesi hari ini...</Text>
+                </View>
+            );
+        }
+
+        if (activeSessions.length === 0) {
+            return (
+                <View style={[styles.sessionCard, styles.centerContent, { paddingVertical: 36, marginHorizontal: 20 }]}>
+                    <Text style={{ fontSize: 36, marginBottom: 8 }}>🏖️</Text>
+                    <Text style={[styles.detailValue, { color: '#999' }]}>Tidak ada sesi hari ini.</Text>
+                </View>
+            );
+        }
+
+        // Berdasarkan gambar image_baea26.png, jarak kanan-kiri card ke tepi layar adalah 20px
+        const SIDE_PADDING = 20;
+        const cardWidth = width - (SIDE_PADDING * 2); // Lebar card pas mengikuti sisa ruang screen
+        const gapSize = 12; // Jarak renggang antar card saat di-swipe
+
+        return (
+            <Animated.FlatList
+                data={activeSessions}
+                // Kirimkan lebar card yang baru ke renderItem secara inline jika diperlukan, 
+                // atau pastikan di renderSessionItem menggunakan `width: width - 40`
+                renderItem={({ item }) => (
+                    <View style={{ width: cardWidth, marginRight: gapSize }}>
+                        {/* Taruh seluruh isi renderSessionItem kamu di sini, pastikan komponen terluarnya width: '100%' */}
+                        {renderSessionItem({ item })}
+                    </View>
+                )}
+                keyExtractor={(item, index) => item.id_jadwal?.toString() || index.toString()}
+                horizontal
+
+                pagingEnabled={false}
+                // UBAH: snapToInterval sekarang murni menghitung total lebar satu komponen penuh + gap-nya
+                snapToInterval={cardWidth + gapSize}
+                // UBAH: Set alignment ke 'center' agar ketika standby, card yang aktif berada tepat di tengah
+                snapToAlignment="center"
+                decelerationRate="fast"
+                disableIntervalMomentum={true}
+                showsHorizontalScrollIndicator={false}
+
+                contentContainerStyle={{
+                    // Padding kiri disesuaikan agar card pertama pas presisi di tengah layar saat pertama dimuat
+                    paddingLeft: SIDE_PADDING,
+                    // Padding kanan disisakan sedikit space agar card terakhir bisa berhenti dengan manis
+                    paddingRight: SIDE_PADDING - gapSize,
+                    paddingVertical: 4
+                }}
+            />
+        );
+    };
     return (
         <View style={styles.homeContainer}>
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {/* BAGIAN ATAS — TIDAK IKUT SCROLL                               */}
+            {/* ══════════════════════════════════════════════════════════════ */}
+            <View>
                 {/* Header Background */}
                 <View style={styles.headerBackground}>
                     <Image source={LOGO_SOURCE} style={styles.headerWatermark} resizeMode="contain" />
@@ -184,301 +324,169 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
 
                 {/* Greeting */}
                 <View style={styles.greetingContainer}>
-                    {role === 'guru' ? (
-                        <Text style={styles.homeGreetingText}>Halo,{"\n"}{namaLengkap}!</Text>
-                    ) : (
-                        <Text style={styles.homeGreetingText}>Selamat datang,{"\n"}{firstName} !</Text>
-                    )}
+                    <Text style={styles.greetingLabel}>
+                        {role === 'guru' ? 'Halo,' : 'Selamat datang,'}
+                    </Text>
+                    <Text style={styles.greetingName}>{namaLengkap} </Text>
                 </View>
 
-                {/* ========================================================= */}
-                {/* CARD UTAMA / CARD SESI HARI INI */}
-                {/* ========================================================= */}
-                <View style={styles.scheduleContainer}>
-                    {loadingSessions ? (
-                        <View style={[styles.mainSessionCard, { justifyContent: 'center', alignItems: 'center', height: 160 }]}>
-                            <ActivityIndicator size="small" color="#284B7A" />
-                            <Text style={{ marginTop: 10, color: '#888', fontSize: 12 }}>Mencari sesi hari ini...</Text>
-                        </View>
-                    ) : activeSessions.length > 0 ? (
-                        (() => {
-                            const currentSession = activeSessions[0];
-                            
-                            const waktuSesi = currentSession.jam_mulai && currentSession.jam_selesai 
-                                ? `${currentSession.jam_mulai.substring(0, 5)} – ${currentSession.jam_selesai.substring(0, 5)}`
-                                : '06.30 – 09.30';
-                                
-                            const lokasiSesi = currentSession.lokasi || currentSession.alamat || 'Alamat tidak tersedia';
-                            const bayaranSesi = formatRupiah(currentSession.tarif || currentSession.bayaran || currentSession.total_harga || 34000);
-
-                            // Mengatur jumlah kolom grid detail secara dinamis berdasarkan role
-                            const gridItemStyle = role === 'guru' ? styles.gridDetailItemTigaKolom : styles.gridDetailItemDuaKolom;
-
-                            return (
-                                <View style={styles.mainSessionCard}>
-                                    <Text style={styles.scheduleSubHeader}>SESI HARI INI</Text>
-                                    
-                                    {role === 'guru' ? (
-                                        <View style={styles.guruUserHeaderRow}>
-                                            <View style={styles.avatarCircle}>
-                                                <Text style={styles.avatarText}>
-                                                    {(currentSession.nama_murid || 'Murid').substring(0, 2).toUpperCase()}
-                                                </Text>
-                                            </View>
-                                            <View style={{ flex: 1, marginLeft: 12 }}>
-                                                <Text style={styles.sessionTargetName} numberOfLines={1}>{currentSession.nama_murid || 'Nama Murid'}</Text>
-                                                <Text style={styles.sessionSubjectSub} numberOfLines={1}>{currentSession.mata_pelajaran?.nama_mapel || currentSession.nama_mapel || 'Matematika'} — {currentSession.materi?.nama_materi || currentSession.nama_materi || 'Relasi & Fungsi'}</Text>
-                                            </View>
-                                            <View style={styles.badgeSegera}><Text style={styles.badgeSegeraText}>• Segera</Text></View>
-                                        </View>
-                                    ) : (
-                                        <Text style={styles.scheduleTitle} numberOfLines={2}>
-                                            <Text style={{ fontWeight: 'bold' }}>
-                                                {currentSession.mata_pelajaran?.nama_mapel || currentSession.nama_mapel || 'Matematika'}
-                                            </Text> - {currentSession.materi?.nama_materi || currentSession.nama_materi || 'Relasi & Fungsi'}
-                                        </Text>
-                                    )}
-
-                                    {/* RESPONSIVE DETAIL GRID */}
-                                    <View style={styles.scheduleDetailsGrid}>
-                                        <View style={gridItemStyle}>
-                                            <Text style={styles.scheduleLabel}>Waktu</Text>
-                                            <Text style={styles.scheduleValue} numberOfLines={1} adjustsFontSizeToFit>{waktuSesi}</Text>
-                                        </View>
-                                        <View style={gridItemStyle}>
-                                            <Text style={styles.scheduleLabel}>{role === 'guru' ? 'Lokasi' : 'Guru'}</Text>
-                                            <Text style={styles.scheduleValue} numberOfLines={2} adjustsFontSizeToFit>
-                                                {role === 'guru' ? lokasiSesi : (currentSession.nama_guru || 'Ahmad Pambudi, S.Pd.')}
-                                            </Text>
-                                        </View>
-                                        {role === 'guru' && (
-                                            <View style={gridItemStyle}>
-                                                <Text style={styles.scheduleLabel}>Bayaran</Text>
-                                                <Text style={styles.scheduleValue} numberOfLines={1} adjustsFontSizeToFit>{bayaranSesi}</Text>
-                                            </View>
-                                        )}
-                                    </View>
-
-                                    {role === 'guru' && (
-                                        <View style={styles.guruActionCardButtons}>
-                                            <TouchableOpacity style={styles.btnLihatRute}><Text style={styles.btnLihatRuteText}>Lihat Rute</Text></TouchableOpacity>
-                                            <TouchableOpacity style={styles.btnChatTarget}><Text style={styles.btnChatTargetText}>Chat Murid</Text></TouchableOpacity>
-                                        </View>
-                                    )}
-                                </View>
-                            );
-                        })()
-                    ) : (
-                        <View style={[styles.mainSessionCard, { justifyContent: 'center', alignItems: 'center', paddingVertical: 30 }]}>
-                            <Text style={{ fontSize: 35, marginBottom: 5 }}>🏖️</Text>
-                            <Text style={{ color: '#888', fontSize: 13, fontWeight: 'bold' }}>Tidak ada sesi hari ini.</Text>
-                        </View>
-                    )}
+                {/* Card Sesi Hari Ini */}
+                <View style={styles.sectionPadding}>
+                    {renderSessionCard()}
                 </View>
 
-                {/* ========================================================= */}
-                {/* GRID MENU KOTAK */}
-                {/* ========================================================= */}
-                <View style={styles.emeraldMenuGrid}>
+                {/* Menu Grid */}
+                <View style={styles.menuGrid}>
                     {role === 'guru' ? (
                         <>
-                            <TouchableOpacity style={styles.emeraldMenuItem} onPress={() => onNavigate && onNavigate('Activity', 'aktif')}>
-                                <View style={styles.emeraldIconBox}><Calendar color="#FFF" size={24} /></View>
-                                <Text style={styles.emeraldMenuText} numberOfLines={1}>Jadwal Saya</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.emeraldMenuItem} onPress={() => setIsMateriVisible(true)}>
-                                <View style={styles.emeraldIconBox}><BookOpen color="#FFF" size={24} /></View>
-                                <Text style={styles.emeraldMenuText} numberOfLines={1}>Materi</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.emeraldMenuItem}>
-                                <View style={styles.emeraldIconBox}><Wallet color="#FFF" size={24} /></View>
-                                <Text style={styles.emeraldMenuText} numberOfLines={1}>Pendapatan</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.emeraldMenuItem}>
-                                <View style={styles.emeraldIconBox}><FileText color="#FFF" size={24} /></View>
-                                <Text style={styles.emeraldMenuText} numberOfLines={1}>Permintaan</Text>
-                            </TouchableOpacity>
+                            <MenuItem icon={<Calendar color="#FFF" size={22} />} label="Jadwal Saya" onPress={() => onNavigate?.('Activity', 'aktif')} />
+                            <MenuItem icon={<BookOpen color="#FFF" size={22} />} label="Materi" onPress={() => setIsMateriVisible(true)} />
+                            <MenuItem icon={<Wallet color="#FFF" size={22} />} label="Pendapatan" />
+                            <MenuItem icon={<FileText color="#FFF" size={22} />} label="Permintaan" />
                         </>
                     ) : (
                         <>
-                            <TouchableOpacity style={styles.emeraldMenuItem} onPress={() => onNavigate && onNavigate('PesanSesi')}>
-                                <View style={styles.emeraldIconBox}><Search color="#FFF" size={24} /></View>
-                                <Text style={styles.emeraldMenuText} numberOfLines={1}>Pesan Sesi</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.emeraldMenuItem} onPress={() => setIsMateriVisible(true)}>
-                                <View style={styles.emeraldIconBox}><BookOpen color="#FFF" size={24} /></View>
-                                <Text style={styles.emeraldMenuText} numberOfLines={1}>Materi</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.emeraldMenuItem} onPress={() => onNavigate && onNavigate('Activity', 'aktif')}>
-                                <View style={styles.emeraldIconBox}><Calendar color="#FFF" size={24} /></View>
-                                <Text style={styles.emeraldMenuText} numberOfLines={1}>Jadwal Saya</Text>
-                            </TouchableOpacity>
+                            <MenuItem icon={<Image source={require('../assets/pesansesi.png')} style={{ width: 37, height: 40, tintColor: '#FFF' }} />} label="Pesan Sesi" onPress={() => onNavigate?.('PesanSesi')} />
+                            <MenuItem icon={<Image source={require('../assets/materi.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Materi" onPress={() => setIsMateriVisible(true)} />
+                            <MenuItem icon={<Image source={require('../assets/kalender.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Jadwal Saya" onPress={() => onNavigate?.('Activity', 'aktif')} />
                         </>
                     )}
                 </View>
 
-                <View style={styles.horizontalDivider} />
+                <View style={styles.divider} />
+            </View>
 
-                {/* ========================================================= */}
-                {/* AREA BAWAH COMPONENT (PERMINTAAN GURU / REKOMENDASI MURID) */}
-                {/* ========================================================= */}
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {/* BAGIAN BAWAH — BISA DI-SCROLL                                 */}
+            {/* ══════════════════════════════════════════════════════════════ */}
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 110 }}
+            >
                 {role === 'guru' ? (
-                    <View style={styles.bottomSectionContainer}>
-                        <View style={styles.sectionHeaderRow}>
-                            <Text style={styles.sectionTitleHeader}>PERMINTAAN BARU</Text>
-                            <TouchableOpacity><Text style={styles.linkLihatSemua}>Lihat Semua</Text></TouchableOpacity>
+                    <View style={styles.sectionPadding}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>PERMINTAAN BARU</Text>
+                            <TouchableOpacity><Text style={styles.linkText}>Lihat Semua</Text></TouchableOpacity>
                         </View>
-
-                        <View style={styles.requestCard}>
-                            <View style={styles.guruUserHeaderRow}>
-                                <View style={[styles.avatarCircle, { backgroundColor: '#1E3A8A' }]}>
+                        <View style={styles.sessionCard}>
+                            <View style={styles.rowCenter}>
+                                <View style={[styles.avatar, { backgroundColor: '#1E3A8A' }]}>
                                     <Text style={styles.avatarText}>SN</Text>
                                 </View>
                                 <View style={{ flex: 1, marginLeft: 12 }}>
-                                    <Text style={styles.sessionTargetName} numberOfLines={1}>Sandres Naufal</Text>
-                                    <Text style={styles.sessionSubjectSub} numberOfLines={1}>Matematika — Relasi & Fungsi</Text>
+                                    <Text style={styles.sessionName} numberOfLines={1}>Sandres Naufal</Text>
+                                    <Text style={styles.sessionSub} numberOfLines={1}>Matematika — Relasi & Fungsi</Text>
                                 </View>
-                                <View style={styles.badgeBaru}><Text style={styles.badgeBaruText}>• Baru</Text></View>
-                            </View>
-                            
-                            {/* RESPONSIVE GRID UNTUK REQUEST CARD */}
-                            <View style={styles.scheduleDetailsGrid}>
-                                <View style={styles.gridDetailItemTigaKolom}>
-                                    <Text style={styles.scheduleLabel}>Waktu</Text>
-                                    <Text style={styles.scheduleValue} numberOfLines={1} adjustsFontSizeToFit>13.00 – 15.00</Text>
-                                </View>
-                                <View style={styles.gridDetailItemTigaKolom}>
-                                    <Text style={styles.scheduleLabel}>Lokasi</Text>
-                                    <Text style={styles.scheduleValue} numberOfLines={2} adjustsFontSizeToFit>Jl. Cihampelas No.12</Text>
-                                </View>
-                                <View style={styles.gridDetailItemTigaKolom}>
-                                    <Text style={styles.scheduleLabel}>Bayaran</Text>
-                                    <Text style={styles.scheduleValue} numberOfLines={1} adjustsFontSizeToFit>{formatRupiah(34000)}</Text>
+                                <View style={styles.badgeYellow}>
+                                    <Text style={styles.badgeYellowText}>• Baru</Text>
                                 </View>
                             </View>
-                            
-                            <View style={styles.requestActionButtonsRow}>
-                                <TouchableOpacity style={styles.btnTolak}><Text style={styles.btnTolakText}>Tolak</Text></TouchableOpacity>
-                                <TouchableOpacity style={styles.btnTerima}><Text style={styles.btnTerimaText}>Terima</Text></TouchableOpacity>
+                            <View style={styles.detailGrid}>
+                                <View style={styles.gridCol3}>
+                                    <Text style={styles.detailLabel}>Waktu</Text>
+                                    <Text style={styles.detailValue}>13.00 – 15.00</Text>
+                                </View>
+                                <View style={styles.gridCol3}>
+                                    <Text style={styles.detailLabel}>Lokasi</Text>
+                                    <Text style={styles.detailValue}>Jl. Cihampelas No.12</Text>
+                                </View>
+                                <View style={styles.gridCol3}>
+                                    <Text style={styles.detailLabel}>Bayaran</Text>
+                                    <Text style={styles.detailValue}>{formatRupiah(34000)}</Text>
+                                </View>
+                            </View>
+                            <View style={styles.cardActions}>
+                                <TouchableOpacity style={styles.btnDanger}>
+                                    <Text style={styles.btnDangerText}>Tolak</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.btnPrimary}>
+                                    <Text style={styles.btnPrimaryText}>Terima</Text>
+                                </TouchableOpacity>
                             </View>
                         </View>
                     </View>
                 ) : (
-                    <View style={styles.bottomSectionContainer}>
-                        <Text style={styles.sectionTitleHeader}>PESAN LAGI</Text>
+                    <View style={styles.sectionPadding}>
+                        <Text style={styles.sectionTitle}>PESAN LAGI</Text>
                         <View style={styles.pesanLagiCard}>
-                            <View style={styles.pesanLagiContent}>
-                                <Text style={styles.pesanLagiSubtitle}>Lanjutkan sesi favoritmu</Text>
-                                <Text style={styles.pesanLagiTitle} numberOfLines={2}><Text style={{ fontWeight: 'bold' }}>Matematika</Text> - Relasi & Fungsi</Text>
-                                <TouchableOpacity style={styles.pesanSesiBtn} onPress={() => onNavigate && onNavigate('PesanSesi')}><Text style={styles.pesanSesiBtnText}>Pesan Sesi →</Text></TouchableOpacity>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.pesanLagiSub}>Lanjutkan sesi favoritmu</Text>
+                                <Text style={styles.pesanLagiTitle} numberOfLines={2}>
+                                    <Text style={{ fontFamily: FONTS.bold }}>Matematika</Text> - Relasi & Fungsi
+                                </Text>
+                                <TouchableOpacity style={styles.pesanBtn} onPress={() => onNavigate?.('PesanSesi')}>
+                                    <Text style={styles.pesanBtnText}>Pesan Sesi →</Text>
+                                </TouchableOpacity>
                             </View>
-                            <View style={styles.pesanLagiGraphic}><Text style={styles.mathSymbols}>+ ={"\n"}- x</Text></View>
+                            <View style={styles.pesanDecor}>
+                                <Text style={styles.mathSymbols}>+ ={"\n"}- x</Text>
+                            </View>
                         </View>
 
-                        <View style={[styles.sectionHeaderRow, { marginTop: 25 }]}>
-                            <Text style={styles.sectionTitleHeader}>REKOMENDASI MATERI</Text>
-                            <TouchableOpacity><Text style={styles.linkLihatSemua}>Lihat Semua</Text></TouchableOpacity>
+                        <View style={[styles.sectionHeader, { marginTop: 28 }]}>
+                            <Text style={styles.sectionTitle}>REKOMENDASI MATERI</Text>
+                            <TouchableOpacity><Text style={styles.linkText}>Lihat Semua</Text></TouchableOpacity>
                         </View>
-
                         <View style={styles.rekomendasiCard}>
-                            <View style={styles.rekomendasiIconWrapper}>
-                                <BookOpen color="#333" size={24} />
+                            <View style={styles.rekomendasiIcon}>
+                                <BookOpen color="#284B7A" size={22} />
                             </View>
-                            <View style={styles.rekomendasiTextContainer}>
-                                <Text style={styles.rekomendasiCardTitle} numberOfLines={1}>Aljabar Linear</Text>
-                                <Text style={styles.rekomendasiCardSubtitle} numberOfLines={1}>Sekolah Menengah Atas</Text>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.rekomendasiTitle} numberOfLines={1}>Aljabar Linear</Text>
+                                <Text style={styles.rekomendasiSub} numberOfLines={1}>Sekolah Menengah Atas</Text>
                             </View>
-                            <TouchableOpacity style={styles.lihatMateriBtn} onPress={() => setIsMateriVisible(true)}>
-                                <Text style={styles.lihatMateriBtnText}>Lihat Materi</Text>
+                            <TouchableOpacity style={styles.btnPrimary} onPress={() => setIsMateriVisible(true)}>
+                                <Text style={styles.btnPrimaryText}>Lihat</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
                 )}
             </ScrollView>
 
-            {/* ========================================================= */}
-            {/* BOTTOM NAVBAR */}
-            {/* ========================================================= */}
-            <View style={styles.customBottomNavbar}>
-                <TouchableOpacity style={styles.navBarItem}>
-                    <Home color="#284B7A" size={22} />
-                    <Text style={[styles.navBarLabel, { color: '#284B7A', fontWeight: 'bold' }]}>
-                        {role === 'guru' ? 'Home' : 'Beranda'}
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate && onNavigate('Activity', 'aktif')}>
-                    <Calendar color="#A9A9A9" size={22} />
-                    <Text style={styles.navBarLabel}>
-                        {role === 'guru' ? 'Activity' : 'Aktivitas'}
-                    </Text>
-                </TouchableOpacity>
+            {/* ── Bottom Navbar ─────────────────────────────────────────── */}
+            <BottomNavbar
+                currentScreen="Home"
+                onNavigate={onNavigate}
+                userRole={userRole}
+            />
 
-                <View style={styles.centerFabContainer}>
-                    <TouchableOpacity 
-                        style={styles.centerFabButton} 
-                        onPress={() => {
-                            if (onNavigate) {
-                                onNavigate(role === 'guru' ? 'Activity' : 'PesanSesi');
-                            }
-                        }}
-                    >
-                        <Image source={LOGO_SOURCE} style={styles.centerFabLogoIcon} resizeMode="contain" />
-                    </TouchableOpacity>
-                    <Text style={styles.centerFabLabelText}>
-                        {role === 'guru' ? 'Permintaan' : 'Pesan Sesi'}
-                    </Text>
-                </View>
+            <CustomAlert
+                visible={alertConfig.visible}
+                type={alertConfig.type}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                onClose={handleCloseAlert}
+            />
 
-                <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate && onNavigate('Chat')}>
-                    <MessageSquare color="#A9A9A9" size={22} />
-                    <Text style={styles.navBarLabel}>Chat</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate && onNavigate('Profile')}>
-                    <User color="#A9A9A9" size={22} />
-                    <Text style={styles.navBarLabel}>Profile</Text>
-                </TouchableOpacity>
-            </View>
-
-            <CustomAlert visible={alertConfig.visible} type={alertConfig.type} title={alertConfig.title} message={alertConfig.message} onClose={handleCloseAlert} />
-
-           {/* Modal Bottom Sheet */}
-            <Modal 
-                visible={isMateriVisible} 
-                animationType="fade" 
-                transparent={true} 
+            {/* ── Bottom Sheet Materi ───────────────────────────────────── */}
+            <Modal
+                visible={isMateriVisible}
+                animationType="fade"
+                transparent
                 onRequestClose={closeMateriSheet}
-                // TAMBAHKAN 2 PROPERTI DI BAWAH INI UNTUK MENABRAK NAVBAR BAWAH HP
-                statusBarTranslucent={true}
+                statusBarTranslucent
                 presentationStyle="overFullScreen"
             >
                 <View style={styles.modalOverlay}>
-                    {/* Area Gelap di Luar Kotak */}
                     <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={closeMateriSheet} />
-                    
-                    {/* Jendela Pelajaran */}
-                    <Animated.View 
-                        style={[
-                            styles.bottomSheetContainer, 
-                            { transform: [{ translateY: slideAnim }] }
-                        ]}
-                    >
-                        {/* Area Handle Garis Abu-abu */}
-                        <View style={{ width: '100%', alignItems: 'center', paddingVertical: 12 }} {...panResponder.panHandlers}>
+                    <Animated.View style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}>
+                        <View style={styles.sheetHandleArea} {...panResponder.panHandlers}>
                             <View style={styles.sheetHandle} />
                         </View>
-
                         {loadingMapel ? (
-                            <View style={styles.loadingContainer}>
+                            <View style={[styles.centerContent, { paddingVertical: 40 }]}>
                                 <ActivityIndicator size="large" color="#284B7A" />
                                 <Text style={styles.loadingText}>Memuat pelajaran...</Text>
                             </View>
                         ) : (
                             <ScrollView showsVerticalScrollIndicator={false}>
-                                <Text style={styles.sheetSectionTitle}>Semua Pelajaran</Text>
+                                <Text style={styles.sheetTitle}>Semua Pelajaran</Text>
                                 <View style={styles.subjectGrid}>
-                                    {allSubjects.length > 0 ? allSubjects.map(renderSubjectItem) : (
-                                        <Text style={{color: '#888', marginLeft: 10}}>Tidak ada data mata pelajaran.</Text>
-                                    )}
+                                    {allSubjects.length > 0
+                                        ? allSubjects.map(renderSubjectItem)
+                                        : <Text style={styles.emptyText}>Tidak ada data mata pelajaran.</Text>
+                                    }
                                 </View>
                             </ScrollView>
                         )}
@@ -489,129 +497,209 @@ const HomePage = ({ namaLengkap, email, onLogout, onSelectSubject, onNavigate, s
     );
 };
 
+const MenuItem = ({ icon, label, onPress }) => (
+    <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+        <View style={styles.menuIconBox}>{icon}</View>
+        <Text style={styles.menuLabel} numberOfLines={1}>{label}</Text>
+    </TouchableOpacity>
+);
+
 const styles = StyleSheet.create({
-    homeContainer: { flex: 1, backgroundColor: '#FAFAFA' },
-    headerBackground: { 
-    position: 'absolute', 
-    top: 0, 
-    left: 0, 
-    right: 0, 
-    height: 280, 
-    backgroundColor: '#284B7A', 
-    borderBottomLeftRadius: 50,  
-    borderBottomRightRadius: 50, 
-    overflow: 'hidden' 
-},
-    headerWatermark: { position: 'absolute', right: -30, top: -10, width: 260, height: 260, tintColor: '#FFFFFF', opacity: 0.05 },
-    greetingContainer: { marginTop: 65, paddingHorizontal: 25 },
-    homeGreetingText: { fontSize: 30, fontWeight: 'bold', color: '#FFF', lineHeight: 38 },
-    
-    scheduleContainer: { marginTop: 25, paddingHorizontal: 20 },
-    mainSessionCard: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 },
-    scheduleSubHeader: { fontSize: 11, color: '#A9A9A9', fontWeight: 'bold', marginBottom: 12, letterSpacing: 0.5 },
-    scheduleTitle: { fontSize: 18, color: '#222', marginBottom: 15, fontWeight: '500' },
-    
-    guruUserHeaderRow: { flexDirection: 'row', alignItems: 'center' },
-    avatarCircle: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center' },
-    avatarText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
-    sessionTargetName: { fontSize: 16, fontWeight: 'bold', color: '#222' },
-    sessionSubjectSub: { fontSize: 12, color: '#666', marginTop: 2 },
-    
-    badgeSegera: { backgroundColor: '#E8F5E9', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 12 },
-    badgeSegeraText: { color: '#4CAF50', fontSize: 11, fontWeight: 'bold' },
-    badgeBaru: { backgroundColor: '#FFF9C4', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 12 },
-    badgeBaruText: { color: '#FBC02D', fontSize: 11, fontWeight: 'bold' },
+    homeContainer: { flex: 1, backgroundColor: '#F5F7FA' },
+    sectionPadding: { paddingHorizontal: 20, marginBottom: 4 },
+    centerContent: { justifyContent: 'center', alignItems: 'center' },
 
-    scheduleDetailsGrid: { 
-        flexDirection: 'row', 
-        flexWrap: 'wrap', 
-        justifyContent: 'space-between', 
-        alignItems: 'flex-start',
-        marginTop: 15, 
-        width: '100%' 
+    headerBackground: {
+        position: 'absolute', top: 0, left: 0, right: 0,
+        height: 290, backgroundColor: '#284B7A',
+        borderBottomLeftRadius: 40, borderBottomRightRadius: 40, overflow: 'hidden',
     },
-    gridDetailItemTigaKolom: { 
-        width: '30%', 
-        minWidth: 80 
+    headerWatermark: {
+        position: 'absolute', right: -20, top: -10,
+        width: 240, height: 240, tintColor: '#FFF', opacity: 0.06,
     },
-    gridDetailItemDuaKolom: { 
-        width: '45%' 
+
+    greetingContainer: { marginTop: 100, paddingHorizontal: 35, marginBottom: 24 },
+    greetingLabel: {
+        fontFamily: 'SF-Pro-Display-Regular',
+        fontSize: 16, color: 'rgba(255,255,255,0.75)', marginBottom: 2,
     },
-    scheduleLabel: { fontSize: 11, color: '#A9A9A9', marginBottom: 4 },
-    scheduleValue: { fontSize: 13, color: '#222', fontWeight: 'bold', lineHeight: 16 },
-
-    guruActionCardButtons: { flexDirection: 'row', gap: 12, marginTop: 20 },
-    btnLihatRute: { flex: 1, backgroundColor: '#284B7A', height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    btnLihatRuteText: { color: '#FFF', fontSize: 13, fontWeight: 'bold' },
-    btnChatTarget: { flex: 1, backgroundColor: '#FFF', height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#E0E0E0' },
-    btnChatTargetText: { color: '#284B7A', fontSize: 13, fontWeight: 'bold' },
-
-    emeraldMenuGrid: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 5, marginTop: 30 },
-    emeraldMenuItem: { alignItems: 'center', width: '22%' },
-    emeraldIconBox: { width: 50, height: 50, backgroundColor: '#2D6A4F', borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-    emeraldMenuText: { fontSize: 11, color: '#222', fontWeight: 'bold', textAlign: 'center' },
-
-    horizontalDivider: { height: 1, backgroundColor: '#F0F0F0', marginHorizontal: 20, marginTop: 25, marginBottom: 20 },
-
-    bottomSectionContainer: { paddingHorizontal: 20, marginBottom: 15 },
-    sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-    sectionTitleHeader: { fontSize: 12, color: '#777', fontWeight: 'bold', letterSpacing: 0.5 },
-    linkLihatSemua: { fontSize: 12, color: '#284B7A', fontWeight: 'bold' },
-
-    requestCard: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#F0F0F0', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 },
-    requestActionButtonsRow: { flexDirection: 'row', gap: 12, marginTop: 20 },
-    btnTolak: { flex: 1, backgroundColor: '#FF8A8A', height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    btnTolakText: { color: '#FFF', fontSize: 13, fontWeight: 'bold' },
-    btnTerima: { flex: 1, backgroundColor: '#284B7A', height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    btnTerimaText: { color: '#FFF', fontSize: 13, fontWeight: 'bold' },
-
-    pesanLagiCard: { backgroundColor: '#284B7A', borderRadius: 20, padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' },
-    pesanLagiContent: { flex: 1 },
-    pesanLagiSubtitle: { color: '#D0E1F9', fontSize: 12, marginBottom: 5 },
-    pesanLagiTitle: { color: '#FFF', fontSize: 15, marginBottom: 15 },
-    pesanSesiBtn: { backgroundColor: '#FFF', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 20, alignSelf: 'flex-start' },
-    pesanSesiBtnText: { color: '#284B7A', fontSize: 12, fontWeight: 'bold' },
-    pesanLagiGraphic: { position: 'absolute', right: -10, bottom: -10 },
-    mathSymbols: { fontSize: 45, fontWeight: 'bold', color: 'rgba(255,255,255,0.1)', lineHeight: 45 },
-
-    rekomendasiCard: { backgroundColor: '#FFF', borderRadius: 18, padding: 15, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#F0F0F0' },
-    rekomendasiIconWrapper: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#F0F4F8', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-    rekomendasiTextContainer: { flex: 1 },
-    rekomendasiCardTitle: { fontSize: 15, fontWeight: 'bold', color: '#333', marginBottom: 2 },
-    rekomendasiCardSubtitle: { fontSize: 12, color: '#888' },
-    lihatMateriBtn: { backgroundColor: '#284B7A', paddingVertical: 8, paddingHorizontal: 18, borderRadius: 10 },
-    lihatMateriBtnText: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
-
-    customBottomNavbar: { position: 'absolute', bottom: 0, width: '100%', height: 75, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderColor: '#EEF0F2', paddingHorizontal: 10 },
-    navBarItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
-    navBarLabel: { fontSize: 10, color: '#A9A9A9', marginTop: 4 },
-    centerFabContainer: { alignItems: 'center', width: 75, height: 80, top: -16 },
-    centerFabButton: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#284B7A', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 4 },
-    centerFabLogoIcon: { width: 24, height: 24, tintColor: '#FFF' },
-    centerFabLabelText: { fontSize: 9, color: '#284B7A', textAlign: 'center', marginTop: 4, fontWeight: '600' },
-
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
-    bottomSheetContainer: { 
-        backgroundColor: '#FFF', 
-        borderTopLeftRadius: 30, 
-        borderTopRightRadius: 30, 
-        paddingHorizontal: 20, 
-        paddingTop: 15, 
-        maxHeight: '85%',
-        
-        // Ganti paddingBottom asli (40) dengan kombinasi ini:
-        paddingBottom: 100, // Memberikan buntut putih ekstra ke bawah agar melewati navbar
-        marginBottom: -60,  // Menarik buntut tersebut agar pas bersembunyi di balik layar
+    greetingName: {
+        fontFamily: 'SF-Pro-Display-Bold',
+        fontSize: 32, color: '#FFF', lineHeight: 38,
     },
-    sheetHandle: { width: 50, height: 5, backgroundColor: '#E0E0E0', borderRadius: 3, alignSelf: 'center', marginBottom: 20 },
-    sheetSectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+
+    sessionCard: {
+        backgroundColor: '#FFF', borderRadius: 20, padding: 14, paddingLeft: 20,
+        elevation: 1, shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12,
+        marginBottom: 8,
+    },
+    cardLabel: {
+        fontFamily: 'SF-Pro-Display-Bold',
+        fontSize: 10, color: '#A9A9A9', letterSpacing: 1.2, marginBottom: 8,
+    },
+    sessionTitle: {
+        fontFamily: 'SF-Pro-Display-Regular',
+        fontSize: 17, color: '#1A1A2E', marginBottom: 8, lineHeight: 22,
+    },
+    sessionName: {
+        fontFamily: 'SF-Pro-Display-Bold',
+        fontSize: 15, color: '#1A1A2E',
+    },
+    sessionSub: {
+        fontFamily: 'SF-Pro-Display-Regular',
+        fontSize: 12, color: '#777', marginTop: 1,
+    },
+
+    rowCenter: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+
+    avatar: {
+        width: 44, height: 44, borderRadius: 22,
+        backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center',
+    },
+    avatarText: { fontFamily: 'SF-Pro-Display-Bold', color: '#FFF', fontSize: 13 },
+
+    badgeGreen: { backgroundColor: '#E8F5E9', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 10 },
+    badgeGreenText: { fontFamily: 'SF-Pro-Display-Bold', color: '#4CAF50', fontSize: 11 },
+    badgeYellow: { backgroundColor: '#FFFDE7', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 10 },
+    badgeYellowText: { fontFamily: 'SF-Pro-Display-Bold', color: '#F9A825', fontSize: 11 },
+
+    detailGrid: {
+        flexDirection: 'row', flexWrap: 'wrap',
+        justifyContent: 'space-between', marginTop: 16,
+    },
+    gridCol3: { width: '30%', minWidth: 76 },
+    gridCol2: { width: '45%' },
+    detailLabel: {
+        fontFamily: 'SF-Pro-Display-Regular',
+        fontSize: 10, color: '#ABABAB', marginBottom: 4,
+    },
+    detailValue: {
+        fontFamily: 'SF-Pro-Display-Bold',
+        fontSize: 13, color: '#1A1A2E', lineHeight: 17,
+    },
+
+    cardActions: { flexDirection: 'row', gap: 10, marginTop: 18 },
+    btnPrimary: {
+        flex: 1, backgroundColor: '#284B7A', height: 42,
+        borderRadius: 12, justifyContent: 'center', alignItems: 'center',
+    },
+    btnPrimaryText: { fontFamily: 'SF-Pro-Display-Bold', color: '#FFF', fontSize: 13 },
+    btnOutline: {
+        flex: 1, backgroundColor: '#FFF', height: 42,
+        borderRadius: 12, justifyContent: 'center', alignItems: 'center',
+        borderWidth: 1.5, borderColor: '#E0E5ED',
+    },
+    btnOutlineText: { fontFamily: 'SF-Pro-Display-Bold', color: '#284B7A', fontSize: 13 },
+    btnDanger: {
+        flex: 1, backgroundColor: '#FFEEEE', height: 42,
+        borderRadius: 12, justifyContent: 'center', alignItems: 'center',
+    },
+    btnDangerText: { fontFamily: 'SF-Pro-Display-Bold', color: '#E53935', fontSize: 13 },
+
+    menuGrid: {
+        flexDirection: 'row', justifyContent: 'space-around',
+        paddingHorizontal: 25, marginTop: 28, marginBottom: 0,
+    },
+    menuItem: { alignItems: 'center', width: '22%' },
+    menuIconBox: {
+        width: 65, height: 65, backgroundColor: '#3A7D6B',
+        borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 8,
+    },
+    menuLabel: {
+        fontFamily: 'SF-Pro-Display-Bold',
+        fontSize: 11, color: '#333', textAlign: 'center',
+    },
+
+    divider: {
+        height: 1,
+        backgroundColor: '#EAEEF3',
+        marginHorizontal: 20,
+        marginTop: 16,    // 👈 Atur jarak tipis antara teks menu dengan garis
+        marginBottom: 0   // 👈 Ubah jadi 0 supaya menempel langsung dengan area ScrollView di bawahnya
+    },
+
+    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+    sectionTitle: {
+        fontFamily: 'SF-Pro-Display-Bold',
+        fontSize: 11, color: '#ABABAB', letterSpacing: 1, marginBottom: 10,
+    },
+    linkText: { fontFamily: 'SF-Pro-Display-Bold', fontSize: 12, color: '#284B7A' },
+
+    pesanLagiCard: {
+        backgroundColor: '#284B7A', borderRadius: 20, padding: 22,
+        flexDirection: 'row', alignItems: 'center', overflow: 'hidden',
+    },
+    pesanLagiSub: {
+        fontFamily: 'SF-Pro-Display-Regular',
+        color: 'rgba(255,255,255,0.65)', fontSize: 12, marginBottom: 6,
+    },
+    pesanLagiTitle: {
+        fontFamily: 'SF-Pro-Display-Regular',
+        color: '#FFF', fontSize: 15, marginBottom: 16, lineHeight: 21,
+    },
+    pesanBtn: {
+        backgroundColor: '#FFF', paddingVertical: 8, paddingHorizontal: 16,
+        borderRadius: 20, alignSelf: 'flex-start',
+    },
+    pesanBtnText: { fontFamily: 'SF-Pro-Display-Bold', color: '#284B7A', fontSize: 12 },
+    pesanDecor: { position: 'absolute', right: -8, bottom: -8 },
+    mathSymbols: {
+        fontSize: 48, fontFamily: 'SF-Pro-Display-Bold',
+        color: 'rgba(255,255,255,0.08)', lineHeight: 48,
+    },
+
+    rekomendasiCard: {
+        marginTop: 1, backgroundColor: '#FFF', borderRadius: 16, padding: 14,
+        flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#EAEEF3',
+    },
+    rekomendasiIcon: {
+        width: 44, height: 44, borderRadius: 12,
+        backgroundColor: '#EBF0F8', justifyContent: 'center', alignItems: 'center', marginRight: 14,
+    },
+    rekomendasiTitle: { fontFamily: 'SF-Pro-Display-Bold', fontSize: 14, color: '#1A1A2E', marginBottom: 2 },
+    rekomendasiSub: { fontFamily: 'SF-Pro-Display-Regular', fontSize: 12, color: '#999' },
+
+    navbar: {
+        position: 'absolute', bottom: 0, width: '100%', height: 72,
+        backgroundColor: '#FFF', flexDirection: 'row',
+        justifyContent: 'space-between', alignItems: 'center',
+        borderTopWidth: 1, borderColor: '#EAEEF3', paddingHorizontal: 10,
+    },
+    navItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
+    navLabel: { fontFamily: 'SF-Pro-Display-Regular', fontSize: 10, color: '#A9A9A9', marginTop: 4 },
+    navLabelActive: { fontFamily: 'SF-Pro-Display-Bold', color: '#284B7A' },
+    fabContainer: { alignItems: 'center', width: 72, height: 78, top: -14 },
+    fab: {
+        width: 52, height: 52, borderRadius: 26, backgroundColor: '#284B7A',
+        justifyContent: 'center', alignItems: 'center',
+        elevation: 6, shadowColor: '#284B7A',
+        shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 6,
+    },
+    fabIcon: { width: 24, height: 24, tintColor: '#FFF' },
+    fabLabel: { fontFamily: 'SF-Pro-Display-Bold', fontSize: 9, color: '#284B7A', textAlign: 'center', marginTop: 4 },
+
+    loadingText: { fontFamily: 'SF-Pro-Display-Regular', marginTop: 10, color: '#999', fontSize: 12 },
+
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+    bottomSheet: {
+        backgroundColor: '#FFF', borderTopLeftRadius: 28, borderTopRightRadius: 28,
+        paddingHorizontal: 20, paddingTop: 8, maxHeight: '85%',
+        paddingBottom: 100, marginBottom: -60,
+    },
+    sheetHandleArea: { width: '100%', alignItems: 'center', paddingVertical: 12 },
+    sheetHandle: { width: 44, height: 4, backgroundColor: '#DDE2EA', borderRadius: 2 },
+    sheetTitle: { fontFamily: 'SF-Pro-Display-Bold', fontSize: 17, color: '#1A1A2E', marginBottom: 16 },
     subjectGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' },
     subjectItemContainer: { width: '25%', alignItems: 'center', marginBottom: 20 },
-    subjectIconBox: { width: 60, height: 60, borderRadius: 15, justifyContent: 'center', alignItems: 'center', marginBottom: 8, backgroundColor: '#F5F5F5' },
-    subjectIconImage: { width: 50, height: 50, borderRadius: 12 },
-    subjectItemText: { fontSize: 11, color: '#333', fontWeight: '500', textAlign: 'center' },
-    loadingContainer: { alignItems: 'center', paddingVertical: 40, gap: 12 },
-    loadingText: { fontSize: 13, color: '#888' },
+    subjectIconBox: {
+        width: 58, height: 58, borderRadius: 14,
+        justifyContent: 'center', alignItems: 'center', marginBottom: 8, backgroundColor: '#F0F3F8',
+    },
+    subjectIconImage: { width: 48, height: 48, borderRadius: 10 },
+    subjectItemText: { fontFamily: 'SF-Pro-Display-Regular', fontSize: 11, color: '#444', textAlign: 'center' },
+    emptyText: { fontFamily: 'SF-Pro-Display-Regular', color: '#999', marginLeft: 10 },
 });
 
 export default HomePage;

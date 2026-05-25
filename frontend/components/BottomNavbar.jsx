@@ -1,14 +1,15 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Home, Calendar, MessageSquare, User } from 'lucide-react-native';
 
+const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
     const role = userRole ? userRole.toLowerCase() : 'murid';
 
     return (
-        <View style={styles.customBottomNavbar}>
+        <View style={styles.container}>
             {/* BERANDA / HOME */}
             <TouchableOpacity 
                 style={styles.navBarItem} 
@@ -31,18 +32,13 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
                 </Text>
             </TouchableOpacity>
 
-            {/* CENTER FAB */}
-            <TouchableOpacity 
-                style={styles.centerFabContainer}
-                onPress={() => onNavigate && onNavigate('PesanSesi')}
-            >
-                <View style={styles.centerFabButton}>
-                    <Image source={LOGO_SOURCE} style={styles.centerFabLogoIcon} resizeMode="contain" />
-                </View>
-                <Text style={styles.centerFabLabelText}>
+            {/* PLACEHOLDER (Biar space kosong di tengah pas untuk FAB melayang) */}
+            <View style={styles.navBarItem} pointerEvents="none">
+                <View style={{ height: 22 }} />
+                <Text style={[styles.navBarLabel, { color: '#284B7A', fontWeight: '600', fontSize: 9 }]}>
                     {role === 'guru' ? 'Permintaan' : 'Pesan Sesi'}
                 </Text>
-            </TouchableOpacity>
+            </View>
 
             {/* CHAT */}
             <TouchableOpacity 
@@ -65,45 +61,60 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
                     Profile
                 </Text>
             </TouchableOpacity>
+
+            {/* REAL ABSOLUTE FAB BUTTON (Melayang kokoh di tengah tanpa merusak layout) */}
+            <TouchableOpacity 
+                style={styles.centerFabAbsolute}
+                onPress={() => onNavigate && onNavigate('PesanSesi')}
+                activeOpacity={0.8}
+            >
+                <Image source={LOGO_SOURCE} style={styles.centerFabLogoIcon} resizeMode="contain" />
+            </TouchableOpacity>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    customBottomNavbar: { 
+    container: { 
         position: 'absolute', 
         bottom: 0, 
         width: '100%', 
-        height: 75, 
+        height: 85, 
         backgroundColor: '#FFF', 
         flexDirection: 'row', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
         borderTopWidth: 1, 
         borderColor: '#EEF0F2', 
-        paddingHorizontal: 10,
-        zIndex: 1000
+        zIndex: 1000,
+        paddingBottom: 12, // Aman untuk gesture navigation bar Android/iOS
     },
-    navBarItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
+    navBarItem: { 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        flex: 1,
+        height: '100%'
+    },
     navBarLabel: { fontSize: 10, color: '#A9A9A9', marginTop: 4 },
     activeLabel: { color: '#284B7A', fontWeight: 'bold' },
     
-    centerFabContainer: { alignItems: 'center', width: 75, height: 80, top: -16 },
-    centerFabButton: { 
-        width: 52, 
-        height: 52, 
-        borderRadius: 26, 
+    centerFabAbsolute: { 
+        position: 'absolute',
+        left: width / 2 - 27, // Pas di tengah layar secara horizontal (lebar button 54 / 2)
+        top: -18, // Konsisten melayang keluar dari navbar
+        width: 54, 
+        height: 54, 
+        borderRadius: 27, 
         backgroundColor: '#284B7A', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        elevation: 4, 
+        elevation: 5, 
         shadowColor: '#284B7A', 
         shadowOffset: { width: 0, height: 3 }, 
         shadowOpacity: 0.3, 
         shadowRadius: 4 
     },
     centerFabLogoIcon: { width: 24, height: 24, tintColor: '#FFF' },
-    centerFabLabelText: { fontSize: 9, color: '#284B7A', textAlign: 'center', marginTop: 4, fontWeight: '600' },
 });
 
 export default BottomNavbar;
