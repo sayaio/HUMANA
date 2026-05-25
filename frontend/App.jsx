@@ -262,6 +262,7 @@ const App = () => {
             <ProfileGuruPage
                 guruData={profileData}
                 onNavigate={handleGlobalNavigate}
+                onLogout={handleLogout}
             />
         );
     }
