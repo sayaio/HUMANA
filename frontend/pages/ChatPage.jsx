@@ -6,13 +6,13 @@ import {
   StatusBar, ScrollView, TextInput, Image
 } from 'react-native';
 
-// Import Ikon Lucide agar seragam dengan HomePage
-import { Calendar, MessageSquare, User, Home } from 'lucide-react-native';
+// Import Ikon Lucide agar seragam dengan HomePage & PageGuru
+import { Calendar, MessageSquare, User, Home, Activity } from 'lucide-react-native';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
-  console.log("PROPS ChatPage - userId:", userId, "| userRole:", userRole); // tambah ini
+  console.log("PROPS ChatPage - userId:", userId, "| userRole:", userRole);
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const role = userRole ? userRole.toLowerCase() : 'murid';
@@ -42,8 +42,9 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
       }
     };
 
-    fetchData(); // ← ini harus di LUAR async function, tapi masih di DALAM useEffect
+    fetchData();
   }, [userId, role]);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#284B7A" translucent={false} />
@@ -66,7 +67,6 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
           {Array.isArray(chats) && chats.length > 0 ? (
             chats.map((chat, index) => {
-              // 1. Ambil nama berdasarkan role dengan fallback yang aman
               const displayName = role === 'guru' ? (chat?.nama_murid || "Murid") : (chat?.nama_guru || "Guru");
               const firstLetter = displayName.charAt(0).toUpperCase();
 
@@ -85,7 +85,6 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
                       {chat?.isi_pesan || "Tidak ada pesan terbaru"}
                     </Text>
                   </View>
-                  {/* Bagian meta untuk waktu */}
                   <View style={styles.chatMeta}>
                     <Text style={styles.chatTime}>
                       {chat?.timestamp ? chat.timestamp.split(' ')[1]?.substring(0, 5) : ''}
@@ -107,26 +106,35 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
         </ScrollView>
       </View>
 
-      {/* SAMAKAN BOTTOM NAVBAR DENGAN HOMEPAGE */}
+      {/* BOTTOM NAVBAR KONDISIONAL BERDASARKAN ROLE GURU / MURID */}
       <View style={styles.customBottomNavbar}>
-        <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate('Home')}>
+        {/* BUTTON 1: BERANDA / HOME */}
+        <TouchableOpacity 
+          style={styles.navBarItem} 
+          onPress={() => onNavigate(role === 'guru' ? 'HomeGuru' : 'Home')}
+        >
           <Home color="#A9A9A9" size={22} />
           <Text style={styles.navBarLabel}>{role === 'guru' ? 'Home' : 'Beranda'}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate('Activity', 'aktif')}>
-          <Calendar color="#A9A9A9" size={22} />
+        {/* BUTTON 2: AKTIVITAS / ACTIVITY */}
+        <TouchableOpacity 
+          style={styles.navBarItem} 
+          onPress={() => onNavigate(role === 'guru' ? 'ActivityGuru' : 'Activity', 'aktif')}
+        >
+          {role === 'guru' ? (
+            <Activity color="#A9A9A9" size={22} />
+          ) : (
+            <Calendar color="#A9A9A9" size={22} />
+          )}
           <Text style={styles.navBarLabel}>{role === 'guru' ? 'Activity' : 'Aktivitas'}</Text>
         </TouchableOpacity>
 
+        {/* BUTTON 3: CENTER FAB BUTTON (LOGO HUMANA) */}
         <View style={styles.centerFabContainer}>
           <TouchableOpacity
             style={styles.centerFabButton}
-            onPress={() => {
-              if (onNavigate) {
-                onNavigate(role === 'guru' ? 'Activity' : 'PesanSesi');
-              }
-            }}
+            onPress={() => onNavigate(role === 'guru' ? 'HomeGuru' : 'PesanSesi')}
           >
             <Image source={LOGO_SOURCE} style={styles.centerFabLogoIcon} resizeMode="contain" />
           </TouchableOpacity>
@@ -135,12 +143,17 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
           </Text>
         </View>
 
+        {/* BUTTON 4: CHAT ACTIVE STATE */}
         <TouchableOpacity style={styles.navBarItem}>
           <MessageSquare color="#284B7A" size={22} />
           <Text style={[styles.navBarLabel, { color: '#284B7A', fontWeight: 'bold' }]}>Chat</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate('Profile')}>
+        {/* BUTTON 5: PROFILE */}
+        <TouchableOpacity 
+          style={styles.navBarItem} 
+          onPress={() => onNavigate(role === 'guru' ? 'ProfileGuru' : 'Profile')}
+        >
           <User color="#A9A9A9" size={22} />
           <Text style={styles.navBarLabel}>Profile</Text>
         </TouchableOpacity>
@@ -165,14 +178,12 @@ const styles = StyleSheet.create({
   avatarText: { color: '#FFF', fontSize: 20, fontWeight: 'bold' },
   chatInfo: { flex: 1, borderBottomWidth: 1, borderBottomColor: '#F0F0F0', paddingBottom: 10, marginRight: 10 },
   chatName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
-  chatSubject: { fontSize: 12, color: '#888', fontStyle: 'italic', marginBottom: 3 },
   chatMessage: { fontSize: 13, color: '#555' },
   chatMeta: { alignItems: 'flex-end', borderBottomWidth: 1, borderBottomColor: '#F0F0F0', paddingBottom: 10, height: '100%' },
   chatTime: { fontSize: 10, color: '#888', marginBottom: 5 },
   unreadBadge: { backgroundColor: '#284B7A', width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   unreadText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
 
-  // STYLE SINKRONISASI HOMEPAGE NAVBAR
   customBottomNavbar: { position: 'absolute', bottom: 0, width: '100%', height: 75, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderColor: '#EEF0F2', paddingHorizontal: 10 },
   navBarItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   navBarLabel: { fontSize: 10, color: '#A9A9A9', marginTop: 4 },
