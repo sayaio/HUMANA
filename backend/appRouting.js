@@ -29,6 +29,7 @@ router.put('/sesi/bayar-simulasi', bankerController.bayarSimulasi);
 const pemesananController = require('./src/controllers/pemesananController');
 router.get('/pemesanan/materi', pemesananController.getMateriDropdown);
 router.post('/pemesanan/tambah', pemesananController.tambahPemesanan);
+router.get('/pemesanan/mapel', pemesananController.getMapelByJenjang);
 
 const matchingController = require('./src/controllers/matchingController');
 router.get('/permintaan-baru', matchingController.getPermintaanBaru);
