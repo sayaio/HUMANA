@@ -12,29 +12,31 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
   const [messages, setMessages] = useState([]); // State untuk menampung chat dari DB
 
   // Fungsi ambil chat dari API
+  // Fungsi ambil chat dari API
   const fetchMessages = async () => {
     const { id_guru, id_murid } = chatData;
-
-    // Pastikan kita membersihkan URL dari duplikasi /api/
-    // Jika API_URL Anda sudah ada /api, jangan tambahkan /api lagi
-    const baseUrl = API_URL.endsWith('/api') ? API_URL.replace('/api', '') : API_URL;
-    const url = `${baseUrl}/api/chats/messages/${id_guru}/${id_murid}`;
-
     try {
-      const response = await axios.get(url);
-      setMessages(response.data);
+      const response = await axios.get(`${API_URL}/chats/messages/${id_guru}/${id_murid}`);
+      console.log("Messages response:", JSON.stringify(response.data, null, 2));
+
+      // FIX 1: ambil response.data.data bukan response.data
+      const data = response.data.data || response.data;
+      setMessages(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Gagal ambil chat dari URL:", url, error);
+      console.error("Gagal ambil chat:", error.response?.data || error.message);
     }
   };
+
   // Fungsi kirim chat
   const sendMessage = async () => {
     if (!message.trim()) return;
 
     try {
+      // FIX 2: payload sesuai controller
       const payload = {
-        id_chat: chatData.id_chat,
-        pengirim_id: userId,
+        id_guru: chatData.id_guru,
+        id_murid: chatData.id_murid,
+        pengirim_role: userRole,
         isi_pesan: message
       };
 
@@ -42,7 +44,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
       setMessage('');
       fetchMessages();
     } catch (error) {
-      console.error("Gagal kirim chat:", error);
+      console.error("Gagal kirim chat:", error.response?.data || error.message);
     }
   };
   useEffect(() => {
@@ -98,12 +100,13 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
           contentContainerStyle={styles.chatArea}
         >
           {messages.length > 0 ? (
+            // FIX 3: pakai pengirim_role bukan pengirim_id
             messages.map((item, index) => (
               <View
-                key={item.id_pesan || index}
-                style={item.pengirim_id === userId ? styles.bubbleRight : styles.bubbleLeft}
+                key={item.id_chat || index}
+                style={item.pengirim_role === userRole ? styles.bubbleRight : styles.bubbleLeft}
               >
-                <Text style={item.pengirim_id === userId ? styles.textRight : styles.textLeft}>
+                <Text style={item.pengirim_role === userRole ? styles.textRight : styles.textLeft}>
                   {item.isi_pesan}
                 </Text>
               </View>

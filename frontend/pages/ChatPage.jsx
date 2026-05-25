@@ -12,37 +12,38 @@ import { Calendar, MessageSquare, User, Home } from 'lucide-react-native';
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
+  console.log("PROPS ChatPage - userId:", userId, "| userRole:", userRole); // tambah ini
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const role = userRole ? userRole.toLowerCase() : 'murid';
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/chats`, { params: { userId, role } });
+      if (!userId || !userRole) {
+        console.warn("userId atau userRole belum tersedia");
+        setLoading(false);
+        return;
+      }
 
-        // DEBUG: Lihat apa yang diterima
+      try {
+        console.log("Fetching URL:", `${API_URL}/chats`, "params:", { userId, role });
+        const response = await axios.get(`${API_URL}/chats`, {
+          params: { userId, role }
+        });
         console.log("ISI RESPONSE API:", JSON.stringify(response.data, null, 2));
 
         const data = response.data.data;
-
-        if (Array.isArray(data)) {
-          setChats(data);
-        } else if (data) {
-          setChats([data]);
-        } else {
-          setChats([]);
-        }
+        setChats(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error("Gagal mengambil chat:", error);
+        console.error("Gagal mengambil chat:", error.response?.data || error.message);
         setChats([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+
+    fetchData(); // ← ini harus di LUAR async function, tapi masih di DALAM useEffect
   }, [userId, role]);
-  // ... sisa komponen
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#284B7A" translucent={false} />
@@ -89,6 +90,11 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
                     <Text style={styles.chatTime}>
                       {chat?.timestamp ? chat.timestamp.split(' ')[1]?.substring(0, 5) : ''}
                     </Text>
+                    {chat.is_read === 0 && chat.pengirim_role !== role && (
+                      <View style={styles.unreadBadge}>
+                        <Text style={styles.unreadText}>1</Text>
+                      </View>
+                    )}
                   </View>
                 </TouchableOpacity>
               );

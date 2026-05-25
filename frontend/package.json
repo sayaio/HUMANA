@@ -15,6 +15,7 @@
     "@react-native/new-app-screen": "0.85.0",
     "axios": "^1.16.1",
     "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "lucide-react-native": "^1.16.0",
     "mariadb": "^3.5.2",

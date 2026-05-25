@@ -1,13 +1,9 @@
 const chatService = require('../services/chatService');
 
-/**
- * Mengambil daftar chat terakhir untuk User (Guru/Murid)
- */
 exports.getChatList = async (req, res) => {
     try {
         const { userId, role } = req.query;
 
-        // Validasi input
         if (!userId || !role) {
             return res.status(400).json({
                 success: false,
@@ -16,10 +12,7 @@ exports.getChatList = async (req, res) => {
         }
 
         const data = await chatService.getLatestChatList(userId, role);
-
-        // Memastikan hasil selalu berupa array
         const formattedData = Array.isArray(data) ? data : (data ? [data] : []);
-
         res.status(200).json({ success: true, data: formattedData });
     } catch (error) {
         console.error("Error di getChatList:", error);
@@ -27,47 +20,40 @@ exports.getChatList = async (req, res) => {
     }
 };
 
-/**
- * Mengambil semua pesan di dalam satu ruang chat
- */
 exports.getMessages = async (req, res) => {
     try {
-        const { id_guru, id_murid } = req.params; // Mengambil dua parameter
+        const { id_guru, id_murid } = req.params;
+        console.log("getMessages dipanggil - id_guru:", id_guru, "| id_murid:", id_murid); // tambah ini
+
         const messages = await chatService.getAllMessagesByChatId(id_guru, id_murid);
-        res.status(200).json(messages);
+        console.log("Hasil query messages:", messages); // tambah ini
+
+        await chatService.markAsRead(id_guru, id_murid);
+        res.status(200).json({ success: true, data: messages });
     } catch (error) {
+        console.error("Error di getMessages:", error); // ubah ini agar tampil detail
         res.status(500).json({ success: false, message: "Gagal memuat pesan" });
     }
 };
 
-/**
- * Mengirim pesan baru ke database
- */
 exports.sendMessage = async (req, res) => {
     try {
-        const { id_chat, pengirim_id, pengirim_role, isi_pesan } = req.body;
+        const { id_guru, id_murid, pengirim_role, isi_pesan } = req.body;
+        console.log("sendMessage payload:", req.body);
 
-        // Validasi data
-        if (!id_chat || !pengirim_id || !isi_pesan || !isi_pesan.trim()) {
-            return res.status(400).json({
-                success: false,
-                message: "Data pesan tidak lengkap atau kosong"
-            });
+        if (!id_guru || !id_murid || !pengirim_role || !isi_pesan || !isi_pesan.trim()) {
+            return res.status(400).json({ success: false, message: "Data pesan tidak lengkap" });
         }
 
-        // Validasi role sederhana
         const validRoles = ['guru', 'murid'];
-        if (pengirim_role && !validRoles.includes(pengirim_role)) {
+        if (!validRoles.includes(pengirim_role)) {
             return res.status(400).json({ success: false, message: "Role tidak valid" });
         }
 
-        const newMessage = await chatService.saveMessage(id_chat, pengirim_id, pengirim_role, isi_pesan);
+        await chatService.saveMessage(id_guru, id_murid, pengirim_role, isi_pesan);
 
-        res.status(201).json({
-            success: true,
-            message: "Pesan berhasil dikirim",
-            data: newMessage
-        });
+        // Langsung return success, tidak perlu cek hasil insert
+        res.status(201).json({ success: true, message: "Pesan berhasil dikirim" });
     } catch (error) {
         console.error("Error di sendMessage:", error);
         res.status(500).json({ success: false, message: "Gagal mengirim pesan" });

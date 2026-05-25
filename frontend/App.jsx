@@ -407,14 +407,17 @@ const App = () => {
         );
     }
 
+    // FIX:
     if (currentPage === 'Chat') {
         return (
             <ChatPage
-                onNavigate={page => setCurrentPage(page)}
+                onNavigate={handleGlobalNavigate}
                 onChatPress={chatData => {
                     setSelectedChatUser(chatData);
                     setCurrentPage('ChatRoom');
                 }}
+                userId={profileData.id}
+                userRole={(profileData.role || 'murid').toLowerCase()}
             />
         );
     }
@@ -424,6 +427,8 @@ const App = () => {
             <ChatRoomPage
                 chatData={selectedChatUser}
                 onBack={() => setCurrentPage('Chat')}
+                userId={profileData.id}
+                userRole={(profileData.role || 'murid').toLowerCase()}
             />
         );
     }

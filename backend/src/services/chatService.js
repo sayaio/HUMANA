@@ -1,9 +1,7 @@
+// Ambil daftar chat terbaru per pasangan guru-murid
 const db = require('../database');
-
 const getLatestChatList = async (userId, role) => {
   const field = role === 'murid' ? 'id_murid' : 'id_guru';
-
-  // Kita gunakan Subquery untuk mengambil ID chat terbaru per pasangan Guru-Murid
   const query = `
     SELECT c.*, G.nama_guru, M.nama_murid
     FROM Chat c
@@ -12,32 +10,49 @@ const getLatestChatList = async (userId, role) => {
     WHERE c.id_chat IN (
       SELECT MAX(id_chat) 
       FROM Chat 
+      WHERE ${field} = ?
       GROUP BY id_guru, id_murid
     )
-    AND c.${field} = ?
-    ORDER BY c.id_chat DESC
+    ORDER BY c.timestamp DESC
   `;
-
-  const [rows] = await db.execute(query, [userId]);
+  const rows = await db.query(query, [userId]); // pakai query(), bukan execute()
   return rows;
 };
 
-// Mengambil pesan dalam satu percakapan antara guru dan murid
+// Ambil semua pesan dalam satu percakapan
 const getAllMessagesByChatId = async (id_guru, id_murid) => {
-  const query = "SELECT * FROM Chat WHERE id_guru = ? AND id_murid = ? ORDER BY id_chat ASC";
-  const [rows] = await db.execute(query, [id_guru, id_murid]);
+  const query = `
+    SELECT * FROM Chat 
+    WHERE id_guru = ? AND id_murid = ? 
+    ORDER BY timestamp ASC
+  `;
+  const rows = await db.query(query, [id_guru, id_murid]);
   return rows;
 };
 
-// Menyimpan pesan baru ke tabel Chat
-const saveMessage = async (id_guru, id_murid, isi_pesan) => {
-  const query = "INSERT INTO Chat (id_guru, id_murid, isi_pesan) VALUES (?, ?, ?)";
-  const [result] = await db.execute(query, [id_guru, id_murid, isi_pesan]);
+// Simpan pesan baru
+const saveMessage = async (id_guru, id_murid, pengirim_role, isi_pesan) => {
+  const query = `
+    INSERT INTO Chat (id_guru, id_murid, pengirim_role, isi_pesan, timestamp) 
+    VALUES (?, ?, ?, ?, NOW())
+  `;
+  const result = await db.query(query, [id_guru, id_murid, pengirim_role, isi_pesan]);
+  return result;
+};
+
+// Tandai pesan sebagai sudah dibaca
+const markAsRead = async (id_guru, id_murid) => {
+  const query = `
+    UPDATE Chat SET is_read = 1 
+    WHERE id_guru = ? AND id_murid = ?
+  `;
+  const result = await db.query(query, [id_guru, id_murid]);
   return result;
 };
 
 module.exports = {
   getLatestChatList,
-  getAllMessagesByChatId,
-  saveMessage
+  getAllMessagesByChatId,  // ← pastikan ada ini
+  saveMessage,
+  markAsRead
 };
