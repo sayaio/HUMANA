@@ -1,5 +1,6 @@
-// controllers/HistoryController.js
+// controllers/historyController.js
 const pool = require('../database');
+const PemesananSesi = require('../classes/PemesananSesi');
 
 const getHistory = async (req, res) => {
     const { role, id } = req.params;
@@ -16,9 +17,6 @@ const getHistory = async (req, res) => {
     try {
         const whereClause = userRole === 'murid' ? 'murid.id_murid' : 'guru.id_guru';
 
-        // --- QUERY DIPERBAIKI ---
-        // 1. Menambahkan SELECT yang dibutuhkan frontend
-        // 2. Menambahkan LEFT JOIN untuk mata_pelajaran
         const query = `
             SELECT 
                 pemesanan.id_pemesanan,
@@ -61,39 +59,45 @@ const getHistory = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Belum ada riwayat pemesanan.' });
         }
 
-        const data = rows.map(row => ({
-            id_pemesanan: row.id_pemesanan,
-            status_pemesanan: row.status_pemesanan,
-            waktu_mulai: row.waktu_mulai,
-            waktu_selesai: row.waktu_selesai,
-            lokasi_sesi: row.lokasi_sesi,
+        const data = rows.map(row => {
+            const sesi = new PemesananSesi(
+                row.nama_murid,   // murid
+                row.nama_guru,    // guru
+                row.nama_materi,  // materi
+                row.waktu_mulai,  // waktuMulai
+                row.waktu_selesai, // waktuSelesai
+                row.lokasi_sesi   // lokasiSesi
+            );
 
-            murid: {
-                id_murid: row.id_murid,
-                nama_murid: row.nama_murid,
-                email: row.email_murid,
-                kelas: row.kelas_murid,
-            },
-            guru: {
-                id_guru: row.id_guru,
-                nama_guru: row.nama_guru,
-                email_guru: row.email_guru,
-            },
-            mata_pelajaran: {
-                id_mapel: row.id_mapel,
-                nama_mapel: row.nama_mapel,
-            },
-            materi: {
-                id_materi: row.id_materi,
-                nama_materi: row.nama_materi,
-                kelas: row.kelas_materi,
-                jurusan: row.jurusan,
-            },
-            // Abaikan sesi, pembayaran, feedback untuk sekarang jika belum di JOIN di SQL atas
-            sesi: null,
-            pembayaran: null,
-            feedback: null
-        }));
+            sesi.id_pemesanan = row.id_pemesanan;
+            sesi.statusPemesanan = row.status_pemesanan;
+
+            return {
+                ...sesi.toJSON(),
+                murid: {
+                    id_murid: row.id_murid,
+                    email: row.email_murid,
+                    kelas: row.kelas_murid,
+                },
+                guru: {
+                    id_guru: row.id_guru,
+                    nama_guru: row.nama_guru,
+                    email_guru: row.email_guru,
+                },
+                mata_pelajaran: {
+                    id_mapel: row.id_mapel,
+                    nama_mapel: row.nama_mapel,
+                },
+                materi: {
+                    id_materi: row.id_materi,
+                    kelas: row.kelas_materi,
+                    jurusan: row.jurusan,
+                },
+                sesi: null,
+                pembayaran: null,
+                feedback: null
+            };
+        });
 
         return res.status(200).json({ success: true, data });
 
