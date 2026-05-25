@@ -29,7 +29,8 @@ const LoginPage = ({
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  // UBAH: Set default menjadi true agar otomatis menyimpan sesi login
+  const [rememberMe] = useState(true); 
   const [showPassword, setShowPassword] = useState(false);
 
   const [alertConfig, setAlertConfig] = useState({
@@ -41,7 +42,6 @@ const LoginPage = ({
   });
 
   const LOGO_SOURCE = require('../assets/logo_humana.png');
-  // Disarankan mengganti EYE_ICON dengan icon mata asli jika sudah ada di assets
 
   const GOOGLE_ICON = {
     uri: 'https://img.icons8.com/color/48/google-logo.png',
@@ -74,19 +74,17 @@ const LoginPage = ({
       if (result.success === true || result.token || result.status === 200) {
         const userData =
           result.profile || result.data || result.user || result || {};
+        
+        // Fungsi ini akan selalu berjalan karena rememberMe bernilai true
         if (rememberMe) {
-          // Kita satukan data user dan email ke dalam satu objek
           const sessionData = {
             userData: userData,
             email: email,
           };
-          // Cukup simpan 1 key 'user_session' berbentuk string JSON
           await AsyncStorage.setItem('user_session', JSON.stringify(sessionData));
-          console.log('Sesi login berhasil disimpan ke user_session!');
-        } else {
-          // Jika tidak dicentang, hapus key 'user_session' agar bersih
-          await AsyncStorage.removeItem('user_session');
+          console.log('Sesi login berhasil disimpan ke user_session secara otomatis!');
         }
+        
         onLoginSuccess(userData, email);
       } else {
         showAlert(
@@ -104,9 +102,8 @@ const LoginPage = ({
     }
   };
 
-  // Kalkulasi dimensi dinamis berbasis ukuran layar HP
-  const dynamicBackgroundHeight = height * 0.55; // Mengurangi tinggi background biru agar aman di HP pendek
-  const dynamicLogoSize = width * 0.22; // Logo berukuran 22% dari lebar layar
+  const dynamicBackgroundHeight = height * 0.55;
+  const dynamicLogoSize = width * 0.22;
 
   return (
     <KeyboardAvoidingView
@@ -119,7 +116,6 @@ const LoginPage = ({
         backgroundColor="transparent"
       />
 
-      {/* Background dekoratif diposisikan secara dinamis */}
       <View
         style={[styles.blueBackgroundTop, { height: dynamicBackgroundHeight }]}
       />
@@ -164,7 +160,7 @@ const LoginPage = ({
             <Text style={styles.formCardTitle}>Masuk</Text>
 
             <View style={styles.switchModeContainer}>
-              <Text style={styles.switchModeText}>Belum memiliki akun? </Text>
+              <Text style={styles.switchModeText}>Belum memiliki akun?</Text>
               <TouchableOpacity onPress={onNavigateToRegister}>
                 <Text style={styles.switchModeLink}>Daftar</Text>
               </TouchableOpacity>
@@ -200,7 +196,6 @@ const LoginPage = ({
                   onPress={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-
                     <Eye size={22} color="#284B7A" />
                   ) : (
                     <EyeOff size={22} color="#D3D3D3" />
@@ -209,20 +204,9 @@ const LoginPage = ({
               </View>
             </View>
 
-            {/* Remember Me & Lupa Password */}
+            {/* Remember Me diubah menjadi row Lupa Password saja */}
             <View style={styles.rememberForgotRow}>
-              <TouchableOpacity
-                style={styles.checkboxContainer}
-                onPress={() => setRememberMe(!rememberMe)}
-              >
-                <View
-                  style={[styles.checkbox, rememberMe && styles.checkboxActive]}
-                >
-                  {rememberMe && <Text style={styles.checkboxCheck}>✓</Text>}
-                </View>
-                <Text style={styles.checkboxText}>Remember me</Text>
-              </TouchableOpacity>
-
+              <View /> 
               <TouchableOpacity onPress={onForgotPassword}>
                 <Text style={styles.forgotPasswordText}>Lupa password ?</Text>
               </TouchableOpacity>
@@ -270,6 +254,7 @@ const LoginPage = ({
     </KeyboardAvoidingView>
   );
 };
+
 const { width, height } = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
@@ -283,11 +268,9 @@ const styles = StyleSheet.create({
     top: 0,
     width: '100%',
     backgroundColor: '#284B7A',
-    // HAPUS: height: height * 0.45
   },
   blueBackgroundTriangle: {
     position: 'absolute',
-    // HAPUS: top: height * 0.45
     borderLeftWidth: width / 2,
     borderRightWidth: width / 2,
     borderTopWidth: 50,
@@ -299,7 +282,7 @@ const styles = StyleSheet.create({
   scrollContainer: { flexGrow: 1, justifyContent: 'center' },
   headerSection: {
     alignItems: 'center',
-    paddingTop: height * 0.06, // <-- Samakan ini
+    paddingTop: height * 0.06,
     paddingBottom: 20,
   },
   logoWrapper: { marginBottom: 12 },
@@ -311,7 +294,7 @@ const styles = StyleSheet.create({
   },
   formCard: {
     backgroundColor: '#FFF',
-    borderRadius: 30, // Samakan dengan Register
+    borderRadius: 30,
     paddingHorizontal: width * 0.06,
     paddingTop: height * 0.04,
     paddingBottom: height * 0.04,
@@ -321,7 +304,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
-    elevation: 0, // Samakan elevasi
+    elevation: 0,
   },
   formCardTitle: {
     fontFamily: 'SF-Pro-Display-Bold',
@@ -337,7 +320,6 @@ const styles = StyleSheet.create({
   switchModeText: {
     fontFamily: 'SF-Pro-Display-Regular',
     fontSize: 13, color: '#888'
-
   },
   switchModeLink: {
     fontFamily: 'SF-Pro-Display-Bold',
@@ -347,7 +329,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     borderRadius: 12,
-    height: height * 0.065, // <-- Gunakan ini di KEDUA file
+    height: height * 0.065,
     marginBottom: height * 0.02,
     justifyContent: 'center',
     paddingHorizontal: 15,
@@ -375,13 +357,13 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   passwordField: { flex: 1, fontSize: 14, color: '#333', height: '100%' },
-  eyeIcon: { width: 22, height: 22, tintColor: '#D3D3D3' },
   rememberForgotRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
   },
+  // Catatan: Style checkbox yang lama sengaja tidak dihapus agar file stylesheet Anda tidak error jika masih mereferensikannya di file lain.
   checkboxContainer: { flexDirection: 'row', alignItems: 'center' },
   checkbox: {
     width: 18,
@@ -405,7 +387,7 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: '#3A7D6B',
     borderRadius: 25,
-    height: height * 0.06, // <-- Samakan nilai ini
+    height: height * 0.06,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: height * 0.02,

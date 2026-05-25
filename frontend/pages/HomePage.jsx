@@ -283,7 +283,7 @@ const HomePage = ({
                 // atau pastikan di renderSessionItem menggunakan `width: width - 40`
                 renderItem={({ item }) => (
                     <View style={{ width: cardWidth, marginRight: gapSize }}>
-                        {/* Taruh seluruh isi renderSessionItem kamu di sini, pastikan komponen terluarnya width: '100%' */}
+
                         {renderSessionItem({ item })}
                     </View>
                 )}
@@ -327,7 +327,7 @@ const HomePage = ({
                     <Text style={styles.greetingLabel}>
                         {role === 'guru' ? 'Halo,' : 'Selamat datang,'}
                     </Text>
-                    <Text style={styles.greetingName}>{namaLengkap} </Text>
+                    <Text style={styles.greetingName}>{namaLengkap}</Text>
                 </View>
 
                 {/* Card Sesi Hari Ini */}
