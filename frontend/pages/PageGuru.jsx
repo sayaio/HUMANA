@@ -9,14 +9,13 @@ import {
     useWindowDimensions,
     ActivityIndicator,
     Alert,
-    Image // Tambahkan import Image untuk asset logo
+    Image
 } from 'react-native';
 import { Calendar, BookOpen, Wallet, MousePointerClick, Home, Activity, MessageCircle, User } from 'lucide-react-native';
 
 // Import service yang sudah diperbarui
 import { fetchPermintaanBaru, terimaPermintaanSesiAPI, fetchSesiDikonfirmasi } from '../services/matchingService';
 
-// Import asset logo yang sama dengan HomePage.jsx
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const PageGuru = ({ guruData, onNavigate }) => {
@@ -26,7 +25,6 @@ const PageGuru = ({ guruData, onNavigate }) => {
     const [sesiDikonfirmasi, setSesiDikonfirmasi] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Hardcode koordinat sementara (Sesuai lokasi Sukapura/Telkom University)
     const LAT_GURU_MOCK = -6.9744;
     const LNG_GURU_MOCK = 107.6303;
 
@@ -37,8 +35,6 @@ const PageGuru = ({ guruData, onNavigate }) => {
         }
 
         setLoading(true);
-
-        // 1. Ambil data permintaan baru (Broadcast)
         const resultReq = await fetchPermintaanBaru(guruData.id, LAT_GURU_MOCK, LNG_GURU_MOCK);
         if (resultReq && resultReq.success) {
             setPermintaan(resultReq.data);
@@ -46,14 +42,12 @@ const PageGuru = ({ guruData, onNavigate }) => {
             setPermintaan([]);
         }
 
-        // 2. Ambil data sesi yang sudah dikonfirmasi
         const resultSesi = await fetchSesiDikonfirmasi(guruData.id);
         if (resultSesi && resultSesi.success && resultSesi.data) {
-            setSesiDikonfirmasi(resultSesi.data); // Menyimpan objek sesi dikonfirmasi
+            setSesiDikonfirmasi(resultSesi.data);
         } else {
             setSesiDikonfirmasi(null);
         }
-
         setLoading(false);
     };
 
@@ -61,7 +55,6 @@ const PageGuru = ({ guruData, onNavigate }) => {
         loadPermintaan();
     }, [guruData]);
 
-    // HANDLER AKSI: TERIMA SESI
     const handleTerimaSesi = async (item) => {
         Alert.alert(
             "Konfirmasi Terima",
@@ -73,10 +66,8 @@ const PageGuru = ({ guruData, onNavigate }) => {
                     onPress: async () => {
                         setLoading(true);
                         const res = await terimaPermintaanSesiAPI(item.id_pemesanan, guruData.id, item.harga_total);
-
                         if (res && res.success) {
                             Alert.alert("Sukses", "Sesi berhasil dikonfirmasi!");
-                            // Hapus data dari daftar list permintaan secara real-time
                             setPermintaan(prev => prev.filter(p => p.id_pemesanan !== item.id_pemesanan));
                         } else {
                             Alert.alert("Gagal", res.message || "Terjadi kesalahan sistem.");
@@ -88,7 +79,6 @@ const PageGuru = ({ guruData, onNavigate }) => {
         );
     };
 
-    // HANDLER AKSI: TOLAK SESI
     const handleTolakSesi = (item) => {
         Alert.alert(
             "Tolak Permintaan",
@@ -99,7 +89,6 @@ const PageGuru = ({ guruData, onNavigate }) => {
                     text: "Tolak",
                     style: "destructive",
                     onPress: () => {
-                        // Sifat menolak pesanan bertipe 'broadcast' (p.id_guru IS NULL) cukup dengan menyembunyikannya dari UI lokal guru tersebut
                         setPermintaan(prev => prev.filter(p => p.id_pemesanan !== item.id_pemesanan));
                     }
                 }
@@ -117,16 +106,14 @@ const PageGuru = ({ guruData, onNavigate }) => {
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
             <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-
                 <View style={styles.headerBackground}>
                     <Text style={styles.welcomeText}>Halo,</Text>
                     <Text style={styles.nameText}>{guruData?.nama || 'Guru'}!</Text>
                 </View>
 
-                {/* CARD: SESI HARI INI (Statis) */}
+                {/* CARD: SESI HARI INI */}
                 <View style={styles.mainCard}>
                     <Text style={styles.cardSectionTitle}>SESI DIKONFIRMASI / TERDEKAT</Text>
-
                     {sesiDikonfirmasi ? (
                         <>
                             <View style={styles.profileRow}>
@@ -178,7 +165,7 @@ const PageGuru = ({ guruData, onNavigate }) => {
                 {/* GRID MENU BUTTONS */}
                 <View style={styles.menuGridContainer}>
                     <View style={styles.menuRow}>
-                        <TouchableOpacity style={styles.menuItemButton}>
+                        <TouchableOpacity style={styles.menuItemButton} onPress={() => onNavigate && onNavigate('ActivityGuru')}>
                             <View style={styles.iconContainer}><Calendar color="#2D6A61" size={28} /></View>
                             <Text style={styles.menuButtonText}>Jadwal Saya</Text>
                         </TouchableOpacity>
@@ -190,7 +177,7 @@ const PageGuru = ({ guruData, onNavigate }) => {
                             <View style={styles.iconContainer}><Wallet color="#2D6A61" size={28} /></View>
                             <Text style={styles.menuButtonText}>Pendapatan</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.menuItemButton}>
+                        <TouchableOpacity style={styles.menuItemButton} onPress={() => onNavigate && onNavigate('ActivityGuru')}>
                             <View style={styles.iconContainer}><MousePointerClick color="#2D6A61" size={28} /></View>
                             <Text style={styles.menuButtonText}>Permintaan</Text>
                         </TouchableOpacity>
@@ -207,7 +194,6 @@ const PageGuru = ({ guruData, onNavigate }) => {
                     </TouchableOpacity>
                 </View>
 
-                {/* RENDER DATA PERMINTAAN BARU DINAMIS */}
                 {loading ? (
                     <ActivityIndicator size="large" color="#284B7A" style={{ marginTop: 30 }} />
                 ) : permintaan.length === 0 ? (
@@ -246,23 +232,16 @@ const PageGuru = ({ guruData, onNavigate }) => {
                             </View>
 
                             <View style={styles.actionButtonRow}>
-                                <TouchableOpacity
-                                    style={[styles.btnAction, styles.btnDanger]}
-                                    onPress={() => handleTolakSesi(item)}
-                                >
+                                <TouchableOpacity style={[styles.btnAction, styles.btnDanger]} onPress={() => handleTolakSesi(item)}>
                                     <Text style={styles.btnTextWhite}>Tolak</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.btnAction, styles.btnPrimary]}
-                                    onPress={() => handleTerimaSesi(item)}
-                                >
+                                <TouchableOpacity style={[styles.btnAction, styles.btnPrimary]} onPress={() => handleTerimaSesi(item)}>
                                     <Text style={styles.btnTextWhite}>Terima</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
                     ))
                 )}
-
                 <View style={{ height: 100 }} />
             </ScrollView>
 
@@ -270,14 +249,13 @@ const PageGuru = ({ guruData, onNavigate }) => {
             <View style={styles.bottomTabContainer}>
                 <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('HomeGuru')}>
                     <Home color="#284B7A" size={24} />
-                    <Text style={[styles.tabLabel, styles.activeTabLabel]}>Beranda</Text>
+                    <Text style={[styles.tabLabel, styles.activeTabLabel]}>Home</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.tabItem} onPress={() => onNavigate && onNavigate('ActivityGuru')}>
                     <Activity color="#666" size={24} />
-                    <Text style={styles.tabLabel}>Aktivitas</Text>
+                    <Text style={styles.tabLabel}>Activity</Text>
                 </TouchableOpacity>
 
-                {/* MODIFIKASI LOGO DI TENGAH: Menggunakan aset logo_humana.png */}
                 <View style={styles.centerTabWrapper}>
                     <TouchableOpacity style={styles.centerTabButton} onPress={() => onNavigate && onNavigate('HomeGuru')}>
                         <Image source={LOGO_SOURCE} style={styles.centerLogoImage} resizeMode="contain" />
@@ -324,7 +302,6 @@ const styles = StyleSheet.create({
     btnAction: { flex: 1, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginHorizontal: 4 },
     btnPrimary: { backgroundColor: '#284B7A' },
     btnSecondary: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#DDD' },
-    btnDanger: { backgroundColor: '#FF8A8A' },
     btnTextWhite: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
     btnTextBlue: { color: '#284B7A', fontWeight: 'bold', fontSize: 14 },
     menuGridContainer: { paddingHorizontal: 24, marginTop: 24 },
@@ -343,7 +320,7 @@ const styles = StyleSheet.create({
     activeTabLabel: { color: '#284B7A', fontWeight: 'bold' },
     centerTabWrapper: { alignItems: 'center', marginTop: -30 },
     centerTabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', borderWidth: 4, borderColor: '#FFF', elevation: 4 },
-    centerLogoImage: { width: 32, height: 32 }, // Penyesuaian ukuran gambar logo
+    centerLogoImage: { width: 32, height: 32 },
     centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
 });
 
