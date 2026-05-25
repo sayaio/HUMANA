@@ -16,7 +16,7 @@ import { Settings, Edit2, Briefcase, Plus, Trash2, Home, Activity, MessageCircle
 // Import asset logo yang sama dengan HomePage.jsx
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
-const ProfileGuruPage = ({ guruData, onNavigate }) => {
+const ProfileGuruPage = ({ guruData, onNavigate, onLogout }) => {
     // State untuk toggle Status Aktif (Sesuai di gambar Figma)
     const [isAktif, setIsAktif] = useState(true);
 
@@ -61,7 +61,7 @@ const ProfileGuruPage = ({ guruData, onNavigate }) => {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
-            
+
             {/* Top Header - Sesuai gambar Figma dengan icon Settings */}
             <View style={styles.topHeader}>
                 <View style={{ width: 24 }} />
@@ -71,7 +71,7 @@ const ProfileGuruPage = ({ guruData, onNavigate }) => {
             </View>
 
             <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-                
+
                 {/* 1. CARD UTAMA: Foto Profil & Info Dasar */}
                 <View style={styles.profileMainCard}>
                     <View style={styles.avatarCircle}>
@@ -200,7 +200,26 @@ const ProfileGuruPage = ({ guruData, onNavigate }) => {
                         </View>
                     ))}
                 </View>
+                {/* Tombol Logout */}
+                <View style={{ paddingHorizontal: 24, marginTop: 10 }}>
+                    <TouchableOpacity
+                        style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: '#FFF1F1',
+                            borderWidth: 1,
+                            borderColor: '#FFAAAA',
+                            borderRadius: 15,
+                            paddingVertical: 14,
+                        }}
+                        onPress={onLogout}
+                    >
+                        <Text style={{ fontSize: 15, color: '#FF4D4D', fontWeight: 'bold' }}>Keluar dari Akun</Text>
+                    </TouchableOpacity>
+                </View>
 
+                <View style={{ height: 120 }} />
                 {/* Spacer agar konten tidak tertutup bottom tab navbar */}
                 <View style={{ height: 120 }} />
             </ScrollView>
@@ -241,7 +260,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFF' },
     topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 40, height: 80 },
     scrollContainer: { flex: 1 },
-    
+
     // Layout Profile Card Atas
     profileMainCard: { backgroundColor: '#FFF', marginHorizontal: 24, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#F0F2F5', marginBottom: 16 },
     avatarCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#9BB1C9', justifyContent: 'center', alignItems: 'center' },
@@ -249,7 +268,7 @@ const styles = StyleSheet.create({
     profileMetaInfo: { marginLeft: 20, flex: 1 },
     guruName: { fontSize: 22, fontWeight: 'bold', color: '#000' },
     guruEmail: { fontSize: 13, color: '#666', marginTop: 4 },
-    
+
     // Layout Status Card (Persis Figma Box)
     statusCard: { backgroundColor: '#FFF', marginHorizontal: 24, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#ECEFF1', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, marginBottom: 24 },
     statusSectionLabel: { fontSize: 12, fontWeight: 'bold', color: '#999', letterSpacing: 1, marginBottom: 16 },
