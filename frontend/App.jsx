@@ -17,11 +17,11 @@ import EditAcademicProfilePage from './pages/EditAcademicProfilePage';
 import ChatPage from './pages/ChatPage';
 import ChatRoomPage from './pages/ChatRoomPage';
 import PageGuru from './pages/PageGuru';
-import ProfileGuruPage from './pages/ProfileGuruPage'; // Impor berkas baru profil guru
+import ProfileGuruPage from './pages/ProfileGuruPage'; 
+import ActivityGuruPage from './pages/ActivityGuruPage'; // Memastikan berkas Aktivitas Guru terdaftar
 import PesanSesiPage from './pages/PesanSesiPage';
 
 const App = () => {
-    // 1. Tambahkan state isLoading murni untuk mengunci Splash Screen saat startup
     const [currentPage, setCurrentPage] = useState('Splash');
     const [isAppLoading, setIsAppLoading] = useState(true);
 
@@ -53,14 +53,12 @@ const App = () => {
     useEffect(() => {
         const checkLoginSession = async () => {
             try {
-                // Ambil data session dari AsyncStorage
                 const savedSession = await AsyncStorage.getItem('user_session');
 
                 if (savedSession) {
                     const { userData, email: loggedInEmail } = JSON.parse(savedSession);
                     console.log('🔄 [App.jsx] Sesi ditemukan untuk:', loggedInEmail);
 
-                    // Isi state global terlebih dahulu
                     const namaDariDB = userData?.nama_murid || userData?.namaLengkap || userData?.name || loggedInEmail.split('@')[0];
                     const usernameDariDB = userData?.username || namaDariDB.toLowerCase().replace(/\s/g, '');
                     const roleDariDB = (userData?.role || userData?.id_role || 'murid').toLowerCase();
@@ -86,7 +84,6 @@ const App = () => {
                         kelas_jurusan: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
                     });
 
-                    // Tentukan halaman berdasarkan role secara langsung
                     if (roleDariDB === 'guru') {
                         setCurrentPage('PageGuru');
                     } else {
@@ -105,7 +102,7 @@ const App = () => {
         };
 
         checkLoginSession();
-    }, []); // Array dependency kosong [] menjamin fungsi ini HANYA jalan 1x saat aplikasi baru dibuka
+    }, []);
 
     const handleLoginSuccess = (userData, loggedInEmail) => {
         const namaDariDB = userData?.nama_murid || userData?.namaLengkap || userData?.name || loggedInEmail.split('@')[0];
@@ -142,10 +139,7 @@ const App = () => {
 
     const handleLogout = async () => {
         try {
-            // 1. Hapus data sesi dari penyimpanan lokal
             await AsyncStorage.removeItem('user_session');
-
-            // 2. Reset state data pengguna agar bersih saat berpindah halaman
             setProfileData({
                 id: null,
                 role: '-',
@@ -160,17 +154,14 @@ const App = () => {
             });
             setNamaLengkap('');
             setEmail('');
-
-            // 3. Pindah langsung ke halaman Login
             setCurrentPage('Login');
-
         } catch (error) {
             console.error('Logout error:', error);
         }
     };
 
     // ==========================================
-    // GLOBAL NAVIGATION HANDLER
+    // GLOBAL NAVIGATION HANDLER (DIPERBAIKI)
     // ==========================================
     const handleGlobalNavigate = (page, tab) => {
         console.log(`🧭 [App.jsx] Global Navigate to: ${page}, tab: ${tab}`);
@@ -186,27 +177,20 @@ const App = () => {
         if (page === 'HomeGuru') {
             setCurrentPage('PageGuru');
         } else if (page === 'ActivityGuru') {
-            setCurrentPage('Activity');
+            setCurrentPage('RealActivityGuru'); // Dialihkan ke route komponen ActivityGuruPage baru
         } else if (page === 'ChatGuru') {
             setCurrentPage('Chat');
         } else if (page === 'ProfileGuru') {
-            // MODIFIKASI: Arahkan ke halaman khusus profile guru buatan kita
             setCurrentPage('RealProfileGuru');
         } else {
             setCurrentPage(page);
         }
     };
 
-    // ==========================================
-    // ROUTER SYSTEM (DENGAN LOCK STRATEGY)
-    // ==========================================
-
-    // JIKA MASIH PROSES LOADING AWAL, TAMPILKAN SPLASH SCREEN SECARA ABSOLUT
     if (isAppLoading) {
         return <SplashScreen />;
     }
 
-    // Jika loading selesai, jalankan routing normal di bawah ini:
     if (currentPage === 'Login') {
         return (
             <LoginPage
@@ -230,6 +214,9 @@ const App = () => {
         return <ResetPasswordPage onBack={() => setCurrentPage('Login')} />;
     }
 
+    // ==========================================
+    // ROUTE KHUSUS GURU
+    // ==========================================
     if (currentPage === 'PageGuru') {
         return (
             <PageGuru
@@ -239,7 +226,6 @@ const App = () => {
         );
     }
 
-    // TAMBAHKAN ROUTE BERIKUT UNTUK HALAMAN PROFIL GURU BARU
     if (currentPage === 'RealProfileGuru') {
         return (
             <ProfileGuruPage
@@ -249,6 +235,18 @@ const App = () => {
         );
     }
 
+    if (currentPage === 'RealActivityGuru') {
+        return (
+            <ActivityGuruPage
+                guruData={profileData}
+                onNavigate={handleGlobalNavigate}
+            />
+        );
+    }
+
+    // ==========================================
+    // ROUTE KHUSUS MURID / UMUM
+    // ==========================================
     if (currentPage === 'Home') {
         return (
             <HomePage
@@ -407,7 +405,6 @@ const App = () => {
         );
     }
 
-    // FIX:
     if (currentPage === 'Chat') {
         return (
             <ChatPage

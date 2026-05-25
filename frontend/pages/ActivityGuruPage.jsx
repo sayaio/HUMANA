@@ -19,7 +19,7 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
     const [selectedSesi, setSelectedSesi] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
 
-    // Mock Data sesuai dengan Gambar Figma kamu
+    // Mock Data diselaraskan dengan teks di Gambar Figma kamu
     const [permintaanData, setPermintaanData] = useState([
         { id: 'P1', nama_murid: 'Sandres Naufal', materi: 'Informatika — Implementasi Perangkat Lunak', waktu: '06.30 – 09.30', harga: 34000, tipe: 'Permintaan' },
         { id: 'P2', nama_murid: 'Sandres Naufal', materi: 'Informatika — Implementasi Perangkat Lunak', waktu: '06.30 – 09.30', harga: 34000, tipe: 'Permintaan' },
@@ -141,11 +141,11 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
                 <View style={{ height: 120 }} />
             </ScrollView>
 
-            {/* POP-UP MODAL DI TENGAH LAYAR (UBAH DI SINI) */}
+            {/* POP-UP MODAL DI TENGAH LAYAR */}
             <Modal
                 transparent={true}
                 visible={modalVisible}
-                animationType="fade" // Diubah ke fade agar pop up mulus di tengah
+                animationType="fade"
                 onRequestClose={() => setModalVisible(false)}
             >
                 <View style={styles.modalOverlayBackground}>
@@ -314,16 +314,16 @@ const styles = StyleSheet.create({
     modalOverlayBackground: { 
         flex: 1, 
         backgroundColor: 'rgba(0,0,0,0.5)', 
-        justifyContent: 'center', // Membuat modal berada di tengah secara vertikal
-        alignItems: 'center'      // Membuat modal berada di tengah secara horizontal
+        justifyContent: 'center', 
+        alignItems: 'center'      
     },
     modalContentSheet: { 
         backgroundColor: '#FFF', 
-        borderRadius: 24,         // Rounded keliling karena melayang di tengah
+        borderRadius: 24,         
         paddingHorizontal: 24, 
         paddingTop: 20, 
         paddingBottom: 24, 
-        width: '85%',             // Lebar kotak box melayang
+        width: '85%',             
         maxHeight: '75%',
         elevation: 10,
         shadowColor: '#000',
