@@ -229,7 +229,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
   
   const handleConfirm = async () => {
     console.log('Validasi:', {
-    idMurid,
     tanggal,
     waktuMulai,
     waktuSelesai,
@@ -239,7 +238,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
     selectedMateriId,
     locationAddress
   });
-    // 1. Validasi: Tambahkan !idMurid di depan agar memastikan user sudah login
+    // 1. Validasi: Tambahkan  di depan agar memastikan user sudah login
     if (!userId || !tanggal || !waktuMulai || !waktuSelesai || !jenjang || !kelas || !mataPelajaran || !selectedMateriId || !locationAddress) {
       Alert.alert('Form Belum Lengkap', 'Mohon lengkapi semua field atau pastikan Anda sudah login kembali.');
       return;
@@ -254,7 +253,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
       const waktuMulaiFormatted = `${tglDb} ${waktuMulai}:00`;
       const waktuSelesaiFormatted = `${tglDb} ${waktuSelesai}:00`;
       
-      // 2. dataPemesanan sekarang menggunakan state idMurid yang benar
+      // 2. dataPemesanan sekarang menggunakan state yang benar
       const dataPemesanan = {
         id_murid: userId,
         id_materi: selectedMateriId, 
