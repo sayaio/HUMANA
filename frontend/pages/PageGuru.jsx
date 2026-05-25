@@ -189,8 +189,9 @@ const PageGuru = ({ guruData, onNavigate }) => {
                 {/* SECTION: PERMINTAAN BARU */}
                 <View style={styles.sectionHeaderRow}>
                     <Text style={styles.sectionTitleText}>PERMINTAAN BARU</Text>
-                    <TouchableOpacity onPress={loadPermintaan}>
-                        <Text style={styles.linkText}>Refresh Data</Text>
+                    {/* Mengubah Refresh Data menjadi Lihat Semua */}
+                    <TouchableOpacity onPress={() => onNavigate && onNavigate('ActivityGuru')}>
+                        <Text style={styles.linkText}>Lihat Semua</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -201,7 +202,8 @@ const PageGuru = ({ guruData, onNavigate }) => {
                         <Text style={{ color: '#888' }}>Belum ada permintaan mengajar saat ini.</Text>
                     </View>
                 ) : (
-                    permintaan.map((item) => (
+                    // Melakukan slice(0, 2) untuk membatasi tampilan hanya 2 card teratas
+                    permintaan.slice(0, 2).map((item) => (
                         <View key={item.id_pemesanan} style={styles.requestCard}>
                             <View style={styles.profileRow}>
                                 <View style={[styles.avatarCircle, { backgroundColor: '#284B7A' }]}>
@@ -322,6 +324,7 @@ const styles = StyleSheet.create({
     centerTabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', borderWidth: 4, borderColor: '#FFF', elevation: 4 },
     centerLogoImage: { width: 32, height: 32 },
     centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
+    btnDanger: { backgroundColor: '#DC3545' } // Menambahkan fallback style untuk btnDanger jika belum ada
 });
 
 export default PageGuru;

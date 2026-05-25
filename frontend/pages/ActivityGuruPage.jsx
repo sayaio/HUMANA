@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     StyleSheet,
     Text,
@@ -8,42 +8,128 @@ import {
     StatusBar,
     Modal,
     Image,
-    Alert
+    Alert,
+    ActivityIndicator // Tambahan untuk loading indicator yang rapi
 } from 'react-native';
 import { Home, Activity, MessageCircle, User, Star, X, Clock, DollarSign } from 'lucide-react-native';
+
+// IMPORT SERVICE YANG SUDAH DIBUAT
+import {
+    fetchPermintaanBaru,
+    terimaPermintaanSesiAPI,
+    fetchSesiDikonfirmasi
+} from '../services/matchingService'; // Sesuaikan path jika berbeda
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const ActivityGuruPage = ({ guruData, onNavigate }) => {
+    const idGuru = guruData?.id_guru || 1; // Fallback jika guruData belum ter-inject sempurna
+
     const [activeTab, setActiveTab] = useState('Permintaan');
     const [selectedSesi, setSelectedSesi] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
 
-    // Mock Data diselaraskan dengan teks di Gambar Figma kamu
-    const [permintaanData, setPermintaanData] = useState([
-        { id: 'P1', nama_murid: 'Sandres Naufal', materi: 'Informatika — Implementasi Perangkat Lunak', waktu: '06.30 – 09.30', harga: 34000, tipe: 'Permintaan' },
-        { id: 'P2', nama_murid: 'Sandres Naufal', materi: 'Informatika — Implementasi Perangkat Lunak', waktu: '06.30 – 09.30', harga: 34000, tipe: 'Permintaan' },
-        { id: 'P3', nama_murid: 'Sandres Naufal', materi: 'Informatika — Implementasi Perangkat Lunak', waktu: '06.30 – 09.30', harga: 34000, tipe: 'Permintaan' }
-    ]);
-
-    const [jadwalAktifData, setJadwalAktifData] = useState([
-        { id: 'A1', nama_murid: 'Mario Arkan', materi: 'Matematika — Relasi & Fungsi', waktu: '06.30 – 09.30', harga: 34000, tipe: 'Aktif' },
-        { id: 'A2', nama_murid: 'Mario Arkan', materi: 'Matematika — Relasi & Fungsi', waktu: '06.30 – 09.30', harga: 34000, tipe: 'Aktif' }
-    ]);
-
+    // State untuk menampung data riil dari database
+    const [permintaanData, setPermintaanData] = useState([]);
+    const [jadwalAktifData, setJadwalAktifData] = useState([]);
     const [riwayatData, setRiwayatData] = useState([
+        // Riwayat disisipkan mock data dulu karena endpoint riwayat belum dibuat di backend
         { id: 'R1', nama_murid: 'Naufal Arkan', materi: 'Algoritma — Merge Sort Java', waktu: 'Sabtu, 23 Mei 2026', harga: 34000, tipe: 'Riwayat', rating: 5, ulasan: 'Penjelasan mas Mario sangat terstruktur dan mudah dipahami!' }
     ]);
+
+    // State pendukung untuk loading dan koordinat GPS
+    const [loading, setLoading] = useState(true);
+    const [koordinat, setKoordinat] = useState({ lat: -6.973416, lng: 107.630406 }); // Default koordinat (Surabaya) jika GPS mati
+
+    // 1. Ambil lokasi terkini Guru sewaktu halaman dibuka
+    useEffect(() => {
+        // Menggunakan navigator.geolocation bawaan React Native/Web Sandbox
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setKoordinat({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                },
+                (error) => console.log("Gagal mendapatkan GPS, menggunakan default koordinat.", error),
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+            );
+        }
+    }, []);
+
+    // 2. Fungsi Utama untuk menarik data dari API Backend
+    const muatUlangDataAktivitas = async () => {
+        setLoading(true);
+        try {
+            // Mengambil Permintaan Baru (GET) & Sesi Dikonfirmasi (GET) secara paralel
+            const [resPermintaan, resKonfirmasi] = await Promise.all([
+                fetchPermintaanBaru(idGuru, koordinat.lat, koordinat.lng),
+                fetchSesiDikonfirmasi(idGuru)
+            ]);
+
+            // Map data dari backend agar strukturnya sesuai dengan UI card yang kamu buat
+            if (resPermintaan.success && resPermintaan.data) {
+                const mappedPermintaan = resPermintaan.data.map(item => ({
+                    id: item.id_pemesanan, // Mapping id_pemesanan ke id
+                    nama_murid: item.nama_murid,
+                    materi: item.nama_materi,
+                    waktu: item.waktu_string || `${new Date(item.waktu_mulai).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} - Selesai`,
+                    harga: item.harga_total, // Tarif flat contoh dari Figma kamu
+                    tipe: 'Permintaan'
+                }));
+                setPermintaanData(mappedPermintaan);
+            }
+
+            if (resKonfirmasi.success && resKonfirmasi.data) {
+                // Backend mengembalikan satu objek atau null untuk getSesiDikonfirmasi (LIMIT 1)
+                const item = resKonfirmasi.data;
+                const mappedAktif = [{
+                    id: item.id_pemesanan,
+                    nama_murid: item.nama_murid,
+                    materi: item.nama_materi,
+                    waktu: item.waktu_string || 'Jam Terjadwal',
+                    harga: item.harga_total || 34000,
+                    tipe: 'Aktif'
+                }];
+                setJadwalAktifData(mappedAktif);
+            } else {
+                setJadwalAktifData([]); // Kosongkan jika backend me-return data: null
+            }
+
+        } catch (err) {
+            console.error("Gagal menarik data aktivitas guru:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Jalankan fetch data setiap kali idGuru atau koordinat GPS berubah
+    useEffect(() => {
+        muatUlangDataAktivitas();
+    }, [idGuru, koordinat]);
 
     const openDetailModal = (sesi) => {
         setSelectedSesi(sesi);
         setModalVisible(true);
     };
 
-    const handleTerimaPermintaan = (id) => {
-        Alert.alert('Sukses', 'Anda telah menerima permintaan mengajar ini!');
-        setPermintaanData(prev => prev.filter(item => item.id !== id));
-        setModalVisible(false);
+    // 3. INTEGRASI TOMBOL TERIMA DENGAN API POST
+    const handleTerimaPermintaan = async (id) => {
+        try {
+            const totalPembayaranFinal = selectedSesi?.harga;
+            const result = await terimaPermintaanSesiAPI(id, idGuru, totalPembayaranFinal);
+
+            if (result.success) {
+                Alert.alert('Sukses', 'Anda telah menerima permintaan mengajar ini!');
+                setModalVisible(false);
+                muatUlangDataAktivitas(); // Auto-refresh data biar UI langsung sinkron dengan DB
+            } else {
+                Alert.alert('Gagal', result.message || 'Gagal menerima permintaan.');
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Terjadi masalah jaringan saat menyetujui sesi.');
+        }
     };
 
     const handleTolakPermintaan = (id) => {
@@ -84,7 +170,7 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
                         </View>
                     )}
                     <View style={{ flex: 1 }} />
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.btnLihatDetailKecil}
                         onPress={() => openDetailModal(item)}
                         activeOpacity={0.7}
@@ -99,7 +185,7 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
-            
+
             {/* Header Title */}
             <View style={styles.topHeaderTitleArea}>
                 <Text style={styles.pageMainTitle}>Aktivitas</Text>
@@ -120,26 +206,33 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
                 ))}
             </View>
 
-            {/* List Body Konten */}
-            <ScrollView style={styles.listScrollBody} showsVerticalScrollIndicator={false}>
-                <View style={{ paddingHorizontal: 24, paddingTop: 4 }}>
-                    {activeTab === 'Permintaan' && (
-                        permintaanData.length > 0 ? permintaanData.map(renderCardItem) : 
-                        <Text style={styles.emptyTextState}>Belum ada permintaan masuk.</Text>
-                    )}
-
-                    {activeTab === 'Jadwal Aktif' && (
-                        jadwalAktifData.length > 0 ? jadwalAktifData.map(renderCardItem) : 
-                        <Text style={styles.emptyTextState}>Tidak ada jadwal kelas aktif terdekat.</Text>
-                    )}
-
-                    {activeTab === 'Riwayat Sesi' && (
-                        riwayatData.length > 0 ? riwayatData.map(renderCardItem) : 
-                        <Text style={styles.emptyTextState}>Belum ada riwayat sesi yang diselesaikan.</Text>
-                    )}
+            {/* List Body Konten dengan loading status */}
+            {loading ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color="#284B7A" />
+                    <Text style={{ marginTop: 10, color: '#666' }}>Sinkronisasi data...</Text>
                 </View>
-                <View style={{ height: 120 }} />
-            </ScrollView>
+            ) : (
+                <ScrollView style={styles.listScrollBody} showsVerticalScrollIndicator={false}>
+                    <View style={{ paddingHorizontal: 24, paddingTop: 4 }}>
+                        {activeTab === 'Permintaan' && (
+                            permintaanData.length > 0 ? permintaanData.map(renderCardItem) :
+                                <Text style={styles.emptyTextState}>Belum ada permintaan masuk.</Text>
+                        )}
+
+                        {activeTab === 'Jadwal Aktif' && (
+                            jadwalAktifData.length > 0 ? jadwalAktifData.map(renderCardItem) :
+                                <Text style={styles.emptyTextState}>Tidak ada jadwal kelas aktif terdekat.</Text>
+                        )}
+
+                        {activeTab === 'Riwayat Sesi' && (
+                            riwayatData.length > 0 ? riwayatData.map(renderCardItem) :
+                                <Text style={styles.emptyTextState}>Belum ada riwayat sesi yang diselesaikan.</Text>
+                        )}
+                    </View>
+                    <View style={{ height: 120 }} />
+                </ScrollView>
+            )}
 
             {/* POP-UP MODAL DI TENGAH LAYAR */}
             <Modal
@@ -162,7 +255,7 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
                                 <View style={styles.modalIdentityBox}>
                                     <View style={styles.modalAvatarBig}>
                                         <Text style={styles.modalAvatarBigText}>
-                                            {selectedSesi.nama_murid.substring(0,2).toUpperCase()}
+                                            {selectedSesi.nama_murid.substring(0, 2).toUpperCase()}
                                         </Text>
                                     </View>
                                     <Text style={styles.modalStudentName}>{selectedSesi.nama_murid}</Text>
@@ -191,11 +284,11 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
                                         <Text style={styles.reviewCardTitle}>Ulasan & Rating Siswa</Text>
                                         <View style={styles.modalStarsRow}>
                                             {[...Array(5)].map((_, i) => (
-                                                <Star 
-                                                    key={i} 
-                                                    size={18} 
-                                                    color="#FFB800" 
-                                                    fill={i < selectedSesi.rating ? "#FFB800" : "transparent"} 
+                                                <Star
+                                                    key={i}
+                                                    size={18}
+                                                    color="#FFB800"
+                                                    fill={i < selectedSesi.rating ? "#FFB800" : "transparent"}
                                                     style={{ marginRight: 4 }}
                                                 />
                                             ))}
@@ -206,13 +299,13 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
 
                                 {selectedSesi.tipe === 'Permintaan' && (
                                     <View style={styles.modalActionButtonsRow}>
-                                        <TouchableOpacity 
+                                        <TouchableOpacity
                                             style={[styles.modalBtnBase, styles.modalBtnReject]}
                                             onPress={() => handleTolakPermintaan(selectedSesi.id)}
                                         >
                                             <Text style={styles.modalBtnTextReject}>Tolak</Text>
                                         </TouchableOpacity>
-                                        <TouchableOpacity 
+                                        <TouchableOpacity
                                             style={[styles.modalBtnBase, styles.modalBtnAccept]}
                                             onPress={() => handleTerimaPermintaan(selectedSesi.id)}
                                         >
@@ -222,7 +315,7 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
                                 )}
 
                                 {selectedSesi.tipe === 'Aktif' && (
-                                    <TouchableOpacity 
+                                    <TouchableOpacity
                                         style={styles.modalBtnSingleRoute}
                                         onPress={() => setModalVisible(false)}
                                     >
@@ -266,11 +359,12 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
     );
 };
 
+// ... Gaya (Styles) tetap utuh di bawah sesuai file asli Anda
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFF' },
     topHeaderTitleArea: { paddingTop: 50, paddingHorizontal: 24, paddingBottom: 10 },
     pageMainTitle: { fontSize: 24, fontWeight: 'bold', color: '#000' },
-    
+
     tabSliderContainer: { flexDirection: 'row', marginHorizontal: 24, backgroundColor: '#F0F2F5', borderRadius: 14, padding: 4, marginBottom: 16 },
     tabButtonElement: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
     tabButtonElementActive: { backgroundColor: '#FFF', elevation: 1, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 },
@@ -280,7 +374,6 @@ const styles = StyleSheet.create({
     listScrollBody: { flex: 1 },
     emptyTextState: { textAlign: 'center', color: '#999', marginTop: 40, fontSize: 13 },
 
-    // Card Sesi Tampilan List
     sesiCard: { backgroundColor: '#FFF', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#ECEFF1', elevation: 3, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6 },
     cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
     avatarCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center' },
@@ -288,7 +381,7 @@ const styles = StyleSheet.create({
     cardMainMeta: { flex: 1, marginLeft: 14 },
     studentName: { fontSize: 16, fontWeight: 'bold', color: '#000' },
     materiText: { fontSize: 12, color: '#777', marginTop: 2 },
-    
+
     cardGridInfo: { flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 16, paddingLeft: 2 },
     gridInfoBox: { width: '45%' },
     infoLabel: { fontSize: 11, color: '#999', marginBottom: 4 },
@@ -300,7 +393,6 @@ const styles = StyleSheet.create({
     ratingBadgeRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF9E6', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
     ratingTextBadge: { fontSize: 12, fontWeight: 'bold', color: '#FFB800', marginLeft: 4 },
 
-    // Navbar Tab Panel
     bottomTabContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 70, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEE', paddingBottom: 10 },
     tabItem: { alignItems: 'center', justifyContent: 'center' },
     tabLabel: { fontSize: 11, color: '#666', marginTop: 4 },
@@ -310,20 +402,19 @@ const styles = StyleSheet.create({
     centerLogoImage: { width: 32, height: 32 },
     centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
 
-    // MODIFIKASI MODAL: Posisikan konten tepat di tengah layar dengan margin aman
-    modalOverlayBackground: { 
-        flex: 1, 
-        backgroundColor: 'rgba(0,0,0,0.5)', 
-        justifyContent: 'center', 
-        alignItems: 'center'      
+    modalOverlayBackground: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center'
     },
-    modalContentSheet: { 
-        backgroundColor: '#FFF', 
-        borderRadius: 24,         
-        paddingHorizontal: 24, 
-        paddingTop: 20, 
-        paddingBottom: 24, 
-        width: '85%',             
+    modalContentSheet: {
+        backgroundColor: '#FFF',
+        borderRadius: 24,
+        paddingHorizontal: 24,
+        paddingTop: 20,
+        paddingBottom: 24,
+        width: '85%',
         maxHeight: '75%',
         elevation: 10,
         shadowColor: '#000',
