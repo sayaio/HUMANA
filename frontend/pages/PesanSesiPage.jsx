@@ -14,8 +14,10 @@ import {
   Alert,
 } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { pemesananService } from '../services/pemesananService';
 const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
+  const BASE_API_URL = 'http://10.0.2.2:3000'
   const [tanggal, setTanggal] = useState(null);
   const [waktuMulai, setWaktuMulai] = useState('');
   const [waktuSelesai, setWaktuSelesai] = useState('');
@@ -23,6 +25,16 @@ const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
   const [kelas, setKelas] = useState('');
   const [mataPelajaran, setMataPelajaran] = useState('');
   const [materi, setMateri] = useState('');
+
+  // State DB
+  const [daftarMapelDB, setDaftarMapelDB] = useState([]);
+  const [daftarMateriDB, setDaftarMateriDB] = useState([]);
+  const [loadingMapel, setLoadingMapel] = useState(false);
+  const [loadingMateri, setLoadingMateri] = useState(false);
+
+  // State untuk simpan object terpilih (untuk ambil id-nya)
+  const [mapelSelected, setMapelSelected] = useState(null);   // { id, namaMapel, jenjang }
+  const [materiSelected, setMateriSelected] = useState(null); // { id_materi, nama_materi }
 
   const [openWaktuMulai, setOpenWaktuMulai] = useState(false);
   const [openWaktuSelesai, setOpenWaktuSelesai] = useState(false);
@@ -39,6 +51,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
 
+  const [selectedMateriId, setSelectedMateriId] = useState(null);
   // === DATA OPTIONS ===
   const generateTimeSlots = () => {
     const slots = [];
@@ -65,30 +78,72 @@ const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
     return [];
   };
 
-  const mapelOptions = [
-    'Matematika', 'Fisika', 'Kimia', 'Biologi',
-    'Bahasa Inggris', 'Bahasa Indonesia', 'Ekonomi', 'Sejarah',
-    'IPA', 'IPS', 'PKN', 'Seni Budaya',
-  ];
-
-  const materiOptions = [
-    'Aljabar Linear', 'Kalkulus Diferensial', 'Trigonometri',
-    'Statistika', 'Geometri', 'Persamaan Kuadrat',
-    'Termodinamika', 'Kinematika', 'Optik',
-  ];
-
   const closeAllDropdowns = (except = '') => {
-    if (except !== 'waktuMulai') setOpenWaktuMulai(false);
-    if (except !== 'waktuSelesai') setOpenWaktuSelesai(false);
-    if (except !== 'jenjang') setOpenJenjang(false);
-    if (except !== 'kelas') setOpenKelas(false);
-    if (except !== 'mapel') setOpenMapel(false);
-    if (except !== 'materi') setOpenMateri(false);
+    const ex = except.toLowerCase();
+    if (ex !== 'waktumulai') setOpenWaktuMulai(false);
+    if (ex !== 'waktuselesai') setOpenWaktuSelesai(false);
+    if (ex !== 'jenjang') setOpenJenjang(false);
+    if (ex !== 'kelas') setOpenKelas(false);
+    if (ex !== 'mata pelajaran') setOpenMapel(false);
+    if (ex !== 'materi') setOpenMateri(false);
   };
 
   // === LOCATION ===
   useEffect(() => { requestLocation(); }, []);
 
+const [idMurid, setIdMurid] = useState(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const session = await AsyncStorage.getItem('user_session'); // ← ganti 'user' → 'user_session'
+        if (session) {
+          const parsed = JSON.parse(session);
+          console.log('Parsed session:', parsed); // ← cek struktur datanya
+          const user = parsed.userData; // ← ambil dari userData dulu
+          setIdMurid(user?.id_murid || user?.id || null); // ← coba kedua kemungkinan field
+        }
+      } catch (e) {
+        console.log('Gagal load user:', e);
+      }
+    };
+    loadUser();
+  }, []);
+  useEffect(() => {
+    if (!jenjang) { setDaftarMapelDB([]); setMapelSelected(null); setMataPelajaran(''); return; }
+    const fetchMapel = async () => {
+      setLoadingMapel(true);
+      try {
+        const data = await pemesananService.getDaftarMapel(jenjang);
+        console.log('Data mapel diterima:', JSON.stringify(data)); // ← tambah ini
+        console.log('Jumlah data:', data.length); // ← dan ini
+        setDaftarMapelDB(data);
+      } catch (error) {
+        console.log('Error mapel:', error.message); // ← dan ini
+        Alert.alert("Error", "Gagal memuat daftar mata pelajaran");
+      } finally {
+        setLoadingMapel(false);
+      }
+    };
+    fetchMapel();
+  }, [jenjang]);
+
+  useEffect(() => {
+  if (!mapelSelected || !kelas) { setDaftarMateriDB([]); setMateriSelected(null); setMateri(''); return; }
+  const fetchMateri = async () => {
+    setLoadingMateri(true);
+    try {
+      const kelasAngka = getKelasNumber(jenjang, kelas); // konversi 'Kelas 1' → 10
+      const data = await pemesananService.getDaftarMateri(mapelSelected.id, kelasAngka);
+      setDaftarMateriDB(data);
+    } catch (error) {
+      Alert.alert("Error", "Gagal memuat daftar materi");
+    } finally {
+      setLoadingMateri(false);
+    }
+  };
+  fetchMateri();
+}, [mapelSelected, kelas]); // ← trigger saat mapel atau kelas berubah
   const requestLocation = async () => {
     setLoadingLocation(true);
     try {
@@ -183,20 +238,85 @@ const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
   const formatTanggal = (date) =>
     date ? `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}` : '';
 
+    // Kelas 1 SMA → 10, Kelas 2 SMA → 11, dst
+  const getKelasNumber = (jenjang, kelas) => {
+    const num = parseInt(kelas.replace('Kelas ', ''));
+    if (jenjang === 'SD') return num;
+    if (jenjang === 'SMP') return num + 6;
+    if (jenjang === 'SMA') return num + 9;
+    return num;
+  };
   // === KONFIRMASI ===
-  const handleConfirm = () => {
-    if (!tanggal || !waktuMulai || !waktuSelesai || !jenjang || !kelas || !mataPelajaran || !materi) {
-      Alert.alert('Form Belum Lengkap', 'Mohon lengkapi semua field sebelum mengkonfirmasi pesanan.');
+// === KONFIRMASI PESANAN (SUDAH DIPERBAIKI) ===
+  const handleConfirm = async () => {
+    console.log('Validasi:', {
+    idMurid,
+    tanggal,
+    waktuMulai,
+    waktuSelesai,
+    jenjang,
+    kelas,
+    mataPelajaran,
+    selectedMateriId,
+    locationAddress
+  });
+    // 1. Validasi: Tambahkan !idMurid di depan agar memastikan user sudah login
+    if (!idMurid || !tanggal || !waktuMulai || !waktuSelesai || !jenjang || !kelas || !mataPelajaran || !selectedMateriId || !locationAddress) {
+      Alert.alert('Form Belum Lengkap', 'Mohon lengkapi semua field atau pastikan Anda sudah login kembali.');
       return;
     }
-    if (onConfirmOrder) onConfirmOrder({
-      tanggal: formatTanggal(tanggal),
-      waktuSesi: `${waktuMulai} - ${waktuSelesai}`,
-      jenjang: `${jenjang} - ${kelas}`,
-      mataPelajaran, materi,
-      lokasi: locationAddress,
-      koordinat: userLocation,
-    });
+
+    try {
+      const tahun = tanggal.getFullYear();
+      const bulan = String(tanggal.getMonth() + 1).padStart(2, '0');
+      const hari = String(tanggal.getDate()).padStart(2, '0');
+      const tglDb = `${tahun}-${bulan}-${hari}`; 
+
+      const waktuMulaiFormatted = `${tglDb} ${waktuMulai}:00`;
+      const waktuSelesaiFormatted = `${tglDb} ${waktuSelesai}:00`;
+      
+      // 2. dataPemesanan sekarang menggunakan state idMurid yang benar
+      const dataPemesanan = {
+        id_murid: idMurid, // 🌟 Diubah dari id_murid menjadi idMurid
+        id_materi: selectedMateriId, 
+        waktu_mulai: waktuMulaiFormatted,
+        waktu_selesai: waktuSelesaiFormatted,
+        lokasi_sesi: locationAddress 
+      };
+
+      // 4. Kirim data ke Backend menggunakan method POST
+      const response = await fetch(`${BASE_API_URL}/api/pemesanan/tambah`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataPemesanan),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        Alert.alert('Sukses 🎉', 'Pemesanan sesi berhasil disimpan ke database!');
+        
+        if (onConfirmOrder) {
+          onConfirmOrder({
+            tanggal: formatTanggal(tanggal),
+            waktuSesi: `${waktuMulai} - ${waktuSelesai}`,
+            jenjang: `${jenjang} - ${kelas}`,
+            mataPelajaran, 
+            materi,
+            lokasi: locationAddress,
+            koordinat: userLocation,
+          });
+        }
+      } else {
+        Alert.alert('Gagal Menyimpan', result.message || 'Terjadi kesalahan pada server.');
+      }
+
+    } catch (error) {
+      console.error("Error saat mengirim data pemesanan:", error);
+      Alert.alert('Error Koneksi', 'Gagal terhubung ke server backend.');
+    }
   };
 
   // === KONSTANTA DROPDOWN ===
@@ -213,7 +333,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
     const listHeight = Math.min(filtered.length * ITEM_HEIGHT, MAX_VISIBLE * ITEM_HEIGHT);
 
     return (
-      <View style={[styles.fieldContainer, { zIndex }]}>
+      <View style={[styles.fieldContainer, { zIndex, elevation: zIndex }]}>
         <Text style={styles.fieldLabel}>{label}</Text>
         <TouchableOpacity
           style={[styles.dropdownBox, isOpen && styles.dropdownBoxOpen]}
@@ -449,8 +569,16 @@ const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
           label="Jenjang" value={jenjang} placeholder="Pilih Jenjang"
           options={jenjangOptions} isOpen={openJenjang}
           onToggle={(val) => { closeAllDropdowns('Jenjang'); setOpenJenjang(val); }}
-          onSelect={(val) => { setJenjang(val); setKelas(''); setOpenJenjang(false); }}
-          zIndex={90}
+          onSelect={(val) => {
+            setJenjang(val);
+            setKelas('');
+            setMataPelajaran('');
+            setMateri('');
+            setMapelSelected(null);
+            setSelectedMateriId(null);
+            setOpenJenjang(false);
+          }}
+          zIndex={90}  // ← TAMBAH INI
         />
 
         {/* Kelas */}
@@ -459,26 +587,58 @@ const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
             label="Kelas" value={kelas} placeholder="Pilih Kelas"
             options={getKelasOptions()} isOpen={openKelas}
             onToggle={(val) => { closeAllDropdowns('Kelas'); setOpenKelas(val); }}
-            onSelect={(val) => { setKelas(val); setOpenKelas(false); }}
+            onSelect={(val) => {
+              setKelas(val);
+              setMateri('');
+              setSelectedMateriId(null);
+              setOpenKelas(false);
+            }}
             zIndex={80}
           />
         )}
 
         {/* Mata Pelajaran */}
         <FloatingDropdown
-          label="Mata Pelajaran" value={mataPelajaran} placeholder="Pilih Mata Pelajaran"
-          options={mapelOptions} isOpen={openMapel}
-          onToggle={(val) => { closeAllDropdowns('Mata Pelajaran'); setOpenMapel(val); }}
-          onSelect={(val) => { setMataPelajaran(val); setOpenMapel(false); }}
+          label="Mata Pelajaran"
+          value={mataPelajaran}
+          placeholder={loadingMapel ? "Memuat mapel..." : !jenjang ? "Pilih Jenjang dulu" : "Pilih Mata Pelajaran"}
+          options={daftarMapelDB.map(m => m.namaMapel)} // ← dari DB
+          isOpen={openMapel}
+          onToggle={(val) => {
+            if (!jenjang) { Alert.alert('Pilih Jenjang', 'Pilih jenjang terlebih dahulu.'); return; }
+            closeAllDropdowns('Mata Pelajaran');
+            setOpenMapel(val);
+          }}
+          onSelect={(val) => {
+            const found = daftarMapelDB.find(m => m.namaMapel === val);
+            setMataPelajaran(val);
+            setMapelSelected(found ? { id: found.id, namaMapel: found.namaMapel } : null);
+            // Reset materi saat mapel berubah
+            setMateri('');
+            setMateriSelected(null);
+            setOpenMapel(false);
+          }}
           zIndex={70}
         />
-
         {/* Materi */}
         <FloatingDropdown
-          label="Materi" value={materi} placeholder="Pilih Materi"
-          options={materiOptions} isOpen={openMateri}
-          onToggle={(val) => { closeAllDropdowns('Materi'); setOpenMateri(val); }}
-          onSelect={(val) => { setMateri(val); setOpenMateri(false); }}
+          label="Materi"
+          value={materi}
+          placeholder={loadingMateri ? "Memuat materi..." : !mapelSelected || !kelas ? "Pilih Mapel & Kelas dulu" : "Pilih Materi"}
+          options={daftarMateriDB.map(m => m.nama_materi)} // ← dari DB
+          isOpen={openMateri}
+          onToggle={(val) => {
+            if (!mapelSelected || !kelas) { Alert.alert('Belum Lengkap', 'Pilih mata pelajaran dan kelas terlebih dahulu.'); return; }
+            closeAllDropdowns('Materi');
+            setOpenMateri(val);
+          }}
+          onSelect={(val) => {
+            const found = daftarMateriDB.find(m => m.nama_materi === val);
+            setMateri(val);
+            setMateriSelected(found || null);
+            setSelectedMateriId(found?.id_materi || null); // ← TAMBAH INI, tanpa ini handleConfirm selalu gagal validasi
+            setOpenMateri(false);
+          }}
           zIndex={60}
         />
 
@@ -621,12 +781,11 @@ const styles = StyleSheet.create({
     borderColor: '#284B7A',
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
-    elevation: 8,
+    elevation: 999,        // ← naikan sangat tinggi
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
-    overflow: 'hidden',
   },
 
   // Search bar dalam dropdown
@@ -700,12 +859,12 @@ const styles = StyleSheet.create({
     borderColor: '#284B7A',
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
-    elevation: 10,
+    elevation: 999,        // ← naikan
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
-    overflow: 'hidden',
+    // HAPUS: overflow: 'hidden'
   },
 
   // Search bar kecil untuk waktu

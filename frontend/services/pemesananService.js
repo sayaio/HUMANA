@@ -28,5 +28,25 @@ export const pemesananService = {
       console.error("Service Error:", error);
       throw error; // Melempar error agar bisa ditangkap oleh UI (Alert)
     }
-  }
+  },
+    // ← TAMBAH: fetch mapel dari DB berdasarkan jenjang
+  async getDaftarMapel(jenjang) {
+    const url = `${API_URL}/pemesanan/mapel${jenjang ? `?jenjang=${jenjang}` : ''}`;
+    const response = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+    const result = await response.json();
+    console.log('Response mapel:', JSON.stringify(result)); // ← tambah ini
+    if (!response.ok) throw new Error(result.message || 'Gagal mengambil data mapel');
+    return Array.isArray(result.data) ? result.data : [];
+  },
+    // ← TAMBAH: fetch materi dari DB berdasarkan id_mapel dan kelas
+  async getDaftarMateri(id_mapel, kelas) {
+    let url = `${API_URL}/pemesanan/materi?`;
+    if (id_mapel) url += `id_mapel=${id_mapel}&`;
+    if (kelas) url += `kelas=${kelas}`;
+    console.log('Fetching materi URL:', url); // ← sementara untuk debug
+    const response = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || 'Gagal mengambil data materi');
+    return Array.isArray(result.data) ? result.data : [];
+  },
 };
