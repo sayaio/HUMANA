@@ -304,6 +304,7 @@ const App = () => {
         return (
             <PesanSesiPage
                 onBack={() => setCurrentPage('Home')}
+                userId={profileData.id}  // ← TAMBAH INI
                 onConfirmOrder={(data) => {
                     setBookingSessionData(data);
                     setCurrentPage('MencariPengajar');
