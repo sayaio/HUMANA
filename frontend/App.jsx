@@ -48,7 +48,7 @@ const App = () => {
     const [bookingSessionData, setBookingSessionData] = useState(null);
 
     // ==========================================
-    // PENGECEKAN SESI AKTIF SAAT APLIKASI DIWAKILI AWAL
+    // PENGECEKAN SESI AKTIF SAAT APLIKASI DIBUKA
     // ==========================================
     useEffect(() => {
         const checkLoginSession = async () => {
@@ -104,14 +104,12 @@ const App = () => {
         checkLoginSession();
     }, []);
 
-    const handleLoginSuccess = (userData, loggedInEmail) => {
+    const handleLoginSuccess = async (userData, loggedInEmail) => {
         const namaDariDB = userData?.nama_murid || userData?.namaLengkap || userData?.name || loggedInEmail.split('@')[0];
         const usernameDariDB = userData?.username || namaDariDB.toLowerCase().replace(/\s/g, '');
         const roleDariDB = (userData?.role || userData?.id_role || 'murid').toLowerCase();
 
-        setNamaLengkap(namaDariDB);
-        setEmail(loggedInEmail);
-        setProfileData({
+        const newProfile = {
             id: userData?.id,
             role: userData?.role || '-',
             name: namaDariDB || '-',
@@ -128,7 +126,22 @@ const App = () => {
             jenjang_pendidikan: userData?.jenjang_pendidikan || userData?.education || '-',
             major: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
             kelas_jurusan: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
-        });
+        };
+
+        setNamaLengkap(namaDariDB);
+        setEmail(loggedInEmail);
+        setProfileData(newProfile);
+
+        try {
+            const sessionData = {
+                userData: userData,
+                email: loggedInEmail,
+            };
+            await AsyncStorage.setItem('user_session', JSON.stringify(sessionData));
+            console.log('💾 [App.jsx] Berhasil memastikan sesi tersimpan!');
+        } catch (error) {
+            console.error('❌ Gagal mengamankan sesi di App.jsx:', error);
+        }
 
         if (roleDariDB === 'guru') {
             setCurrentPage('PageGuru');
@@ -137,6 +150,9 @@ const App = () => {
         }
     };
 
+    // ==========================================
+    // FUNGSI LOGOUT (BARU DITAMBAHKAN)
+    // ==========================================
     const handleLogout = async () => {
         try {
             await AsyncStorage.removeItem('user_session');
@@ -154,9 +170,21 @@ const App = () => {
             });
             setNamaLengkap('');
             setEmail('');
+            console.log('🚪 [App.jsx] Sesi berhasil dihapus. Keluar...');
+            
+            // Reset State Global ke kondisi awal
+            setNamaLengkap('');
+            setEmail('');
+            setProfileData({
+                id: null, role: '-', name: '-', email: '-', username: '-',
+                phone: '-', gender: '-', domicile: '-', education: '-', major: '-',
+            });
+            
+            // Lempar kembali ke halaman Login
             setCurrentPage('Login');
         } catch (error) {
-            console.error('Logout error:', error);
+            console.error('❌ Gagal melakukan logout:', error);
+            Alert.alert('Error', 'Gagal keluar dari akun. Silakan coba lagi.');
         }
     };
 
@@ -186,6 +214,9 @@ const App = () => {
             setCurrentPage(page);
         }
     };
+    // ==========================================
+    // ROUTER SYSTEM (DENGAN LOCK STRATEGY)
+    // ==========================================
 
     if (isAppLoading) {
         return <SplashScreen />;
@@ -252,7 +283,7 @@ const App = () => {
             <HomePage
                 namaLengkap={namaLengkap}
                 email={email}
-                onLogout={handleLogout}
+                onLogout={handleLogout} // <-- Sekarang aman digunakan
                 onSelectSubject={subjectData => {
                     setSelectedSubject(subjectData);
                     setCurrentPage('Materi');
@@ -273,6 +304,7 @@ const App = () => {
         return (
             <PesanSesiPage
                 onBack={() => setCurrentPage('Home')}
+                userId={profileData.id}  // ← TAMBAH INI
                 onConfirmOrder={(data) => {
                     setBookingSessionData(data);
                     setCurrentPage('MencariPengajar');
@@ -350,7 +382,7 @@ const App = () => {
             <ProfilePage
                 profileData={profileData}
                 onNavigate={(page) => setCurrentPage(page)}
-                onLogout={handleLogout}
+                onLogout={handleLogout} // <-- Sekarang aman digunakan
             />
         );
     }
@@ -360,9 +392,21 @@ const App = () => {
             <EditBasicProfilePage
                 profileData={profileData}
                 onCancel={() => setCurrentPage('Profile')}
-                onSave={updatedData => {
+                onSave={async (updatedData) => {
                     setProfileData(updatedData);
                     setNamaLengkap(updatedData.name);
+
+                    try {
+                        const savedSession = await AsyncStorage.getItem('user_session');
+                        if (savedSession) {
+                            const parsed = JSON.parse(savedSession);
+                            parsed.userData = { ...parsed.userData, ...updatedData };
+                            await AsyncStorage.setItem('user_session', JSON.stringify(parsed));
+                        }
+                    } catch (e) {
+                        console.log('Gagal memperbarui simpanan profil:', e);
+                    }
+
                     setCurrentPage('Profile');
                 }}
             />
@@ -374,14 +418,26 @@ const App = () => {
             <EditAcademicProfilePage
                 profileData={profileData}
                 onCancel={() => setCurrentPage('Profile')}
-                onSave={updatedData => {
+                onSave={async (updatedData) => {
                     setProfileData(updatedData);
+
+                    try {
+                        const savedSession = await AsyncStorage.getItem('user_session');
+                        if (savedSession) {
+                            const parsed = JSON.parse(savedSession);
+                            parsed.userData = { ...parsed.userData, ...updatedData };
+                            await AsyncStorage.setItem('user_session', JSON.stringify(parsed));
+                        }
+                    } catch (e) {
+                        console.log('Gagal memperbarui simpanan profil akademik:', e);
+                    }
+
                     setCurrentPage('Profile');
                 }}
             />
         );
     }
-
+    
     if (currentPage === 'Materi') {
         return (
             <MateriPage

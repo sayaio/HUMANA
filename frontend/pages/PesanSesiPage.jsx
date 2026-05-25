@@ -14,10 +14,10 @@ import {
   Alert,
 } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pemesananService } from '../services/pemesananService';
-const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
-  const BASE_API_URL = 'http://10.0.2.2:3000'
+import { API_URL } from '../src/config';
+const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
+    // === STATE FORM ===
   const [tanggal, setTanggal] = useState(null);
   const [waktuMulai, setWaktuMulai] = useState('');
   const [waktuSelesai, setWaktuSelesai] = useState('');
@@ -25,17 +25,17 @@ const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
   const [kelas, setKelas] = useState('');
   const [mataPelajaran, setMataPelajaran] = useState('');
   const [materi, setMateri] = useState('');
+  const [selectedMateriId, setSelectedMateriId] = useState(null);
 
-  // State DB
+    // === STATE DB ===
   const [daftarMapelDB, setDaftarMapelDB] = useState([]);
   const [daftarMateriDB, setDaftarMateriDB] = useState([]);
   const [loadingMapel, setLoadingMapel] = useState(false);
   const [loadingMateri, setLoadingMateri] = useState(false);
+  const [mapelSelected, setMapelSelected] = useState(null);
+  const [materiSelected, setMateriSelected] = useState(null);
 
-  // State untuk simpan object terpilih (untuk ambil id-nya)
-  const [mapelSelected, setMapelSelected] = useState(null);   // { id, namaMapel, jenjang }
-  const [materiSelected, setMateriSelected] = useState(null); // { id_materi, nama_materi }
-
+    // === STATE DROPDOWN ===
   const [openWaktuMulai, setOpenWaktuMulai] = useState(false);
   const [openWaktuSelesai, setOpenWaktuSelesai] = useState(false);
   const [openJenjang, setOpenJenjang] = useState(false);
@@ -43,15 +43,52 @@ const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
   const [openMapel, setOpenMapel] = useState(false);
   const [openMateri, setOpenMateri] = useState(false);
 
+    // === STATE LOKASI ===
   const [userLocation, setUserLocation] = useState(null);
   const [locationAddress, setLocationAddress] = useState('Mengambil lokasi...');
   const [loadingLocation, setLoadingLocation] = useState(false);
 
+    // === STATE KALENDER ===
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
 
-  const [selectedMateriId, setSelectedMateriId] = useState(null);
+    // === FETCH LOKASI ===
+  useEffect(() => { requestLocation(); }, []);
+
+    // === FETCH MAPEL saat jenjang berubah ===
+  useEffect(() => {
+    if (!jenjang) { setDaftarMapelDB([]); setMapelSelected(null); setMataPelajaran(''); return; }
+    const fetchMapel = async () => {
+      setLoadingMapel(true);
+      try {
+        const data = await pemesananService.getDaftarMapel(jenjang);
+        setDaftarMapelDB(data);
+      } catch (error) {
+        Alert.alert('Error', 'Gagal memuat daftar mata pelajaran');
+      } finally { setLoadingMapel(false); }
+    };
+    fetchMapel();
+  }, [jenjang]);
+
+  // === FETCH MATERI saat mapel/kelas berubah ===
+  useEffect(() => {
+    if (!mapelSelected || !kelas) { setDaftarMateriDB([]); setMateriSelected(null); setMateri(''); return; }
+    const fetchMateri = async () => {
+      setLoadingMateri(true);
+      try {
+        const kelasAngka = getKelasNumber(jenjang, kelas); // konversi 'Kelas 1' → 10
+        const data = await pemesananService.getDaftarMateri(mapelSelected.id, kelasAngka);
+        setDaftarMateriDB(data);
+      } catch (error) {
+        Alert.alert("Error", "Gagal memuat daftar materi");
+      } finally {
+        setLoadingMateri(false);
+      }
+    };
+    fetchMateri();
+  }, [mapelSelected, kelas]);
+  
   // === DATA OPTIONS ===
   const generateTimeSlots = () => {
     const slots = [];
@@ -78,6 +115,14 @@ const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
     return [];
   };
 
+  const getKelasNumber = (jenjang, kelas) => {
+    const num = parseInt(kelas.replace('Kelas ', ''));
+    if (jenjang === 'SD') return num;
+    if (jenjang === 'SMP') return num + 6;
+    if (jenjang === 'SMA') return num + 9;
+    return num;
+  };
+
   const closeAllDropdowns = (except = '') => {
     const ex = except.toLowerCase();
     if (ex !== 'waktumulai') setOpenWaktuMulai(false);
@@ -88,62 +133,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder }) => {
     if (ex !== 'materi') setOpenMateri(false);
   };
 
-  // === LOCATION ===
-  useEffect(() => { requestLocation(); }, []);
-
-const [idMurid, setIdMurid] = useState(null);
-
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const session = await AsyncStorage.getItem('user_session'); // ← ganti 'user' → 'user_session'
-        if (session) {
-          const parsed = JSON.parse(session);
-          console.log('Parsed session:', parsed); // ← cek struktur datanya
-          const user = parsed.userData; // ← ambil dari userData dulu
-          setIdMurid(user?.id_murid || user?.id || null); // ← coba kedua kemungkinan field
-        }
-      } catch (e) {
-        console.log('Gagal load user:', e);
-      }
-    };
-    loadUser();
-  }, []);
-  useEffect(() => {
-    if (!jenjang) { setDaftarMapelDB([]); setMapelSelected(null); setMataPelajaran(''); return; }
-    const fetchMapel = async () => {
-      setLoadingMapel(true);
-      try {
-        const data = await pemesananService.getDaftarMapel(jenjang);
-        console.log('Data mapel diterima:', JSON.stringify(data)); // ← tambah ini
-        console.log('Jumlah data:', data.length); // ← dan ini
-        setDaftarMapelDB(data);
-      } catch (error) {
-        console.log('Error mapel:', error.message); // ← dan ini
-        Alert.alert("Error", "Gagal memuat daftar mata pelajaran");
-      } finally {
-        setLoadingMapel(false);
-      }
-    };
-    fetchMapel();
-  }, [jenjang]);
-
-  useEffect(() => {
-  if (!mapelSelected || !kelas) { setDaftarMateriDB([]); setMateriSelected(null); setMateri(''); return; }
-  const fetchMateri = async () => {
-    setLoadingMateri(true);
-    try {
-      const kelasAngka = getKelasNumber(jenjang, kelas); // konversi 'Kelas 1' → 10
-      const data = await pemesananService.getDaftarMateri(mapelSelected.id, kelasAngka);
-      setDaftarMateriDB(data);
-    } catch (error) {
-      Alert.alert("Error", "Gagal memuat daftar materi");
-    } finally {
-      setLoadingMateri(false);
-    }
-  };
-  fetchMateri();
-}, [mapelSelected, kelas]); // ← trigger saat mapel atau kelas berubah
   const requestLocation = async () => {
     setLoadingLocation(true);
     try {
@@ -237,17 +226,7 @@ const [idMurid, setIdMurid] = useState(null);
 
   const formatTanggal = (date) =>
     date ? `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}` : '';
-
-    // Kelas 1 SMA → 10, Kelas 2 SMA → 11, dst
-  const getKelasNumber = (jenjang, kelas) => {
-    const num = parseInt(kelas.replace('Kelas ', ''));
-    if (jenjang === 'SD') return num;
-    if (jenjang === 'SMP') return num + 6;
-    if (jenjang === 'SMA') return num + 9;
-    return num;
-  };
-  // === KONFIRMASI ===
-// === KONFIRMASI PESANAN (SUDAH DIPERBAIKI) ===
+  
   const handleConfirm = async () => {
     console.log('Validasi:', {
     idMurid,
@@ -261,7 +240,7 @@ const [idMurid, setIdMurid] = useState(null);
     locationAddress
   });
     // 1. Validasi: Tambahkan !idMurid di depan agar memastikan user sudah login
-    if (!idMurid || !tanggal || !waktuMulai || !waktuSelesai || !jenjang || !kelas || !mataPelajaran || !selectedMateriId || !locationAddress) {
+    if (!userId || !tanggal || !waktuMulai || !waktuSelesai || !jenjang || !kelas || !mataPelajaran || !selectedMateriId || !locationAddress) {
       Alert.alert('Form Belum Lengkap', 'Mohon lengkapi semua field atau pastikan Anda sudah login kembali.');
       return;
     }
@@ -277,7 +256,7 @@ const [idMurid, setIdMurid] = useState(null);
       
       // 2. dataPemesanan sekarang menggunakan state idMurid yang benar
       const dataPemesanan = {
-        id_murid: idMurid, // 🌟 Diubah dari id_murid menjadi idMurid
+        id_murid: userId,
         id_materi: selectedMateriId, 
         waktu_mulai: waktuMulaiFormatted,
         waktu_selesai: waktuSelesaiFormatted,
@@ -285,7 +264,7 @@ const [idMurid, setIdMurid] = useState(null);
       };
 
       // 4. Kirim data ke Backend menggunakan method POST
-      const response = await fetch(`${BASE_API_URL}/api/pemesanan/tambah`, {
+      const response = await fetch(`${API_URL}/pemesanan/tambah`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
