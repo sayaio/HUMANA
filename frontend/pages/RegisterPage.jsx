@@ -129,16 +129,14 @@ const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
           bounces={false}
         >
           <View style={styles.headerSection}>
-            <View style={styles.logoWrapper}>
+            <View style={styles.logoRow}>
               <Image
                 source={LOGO_SOURCE}
                 style={styles.logoImage}
                 resizeMode="contain"
               />
+              <Text style={styles.logoText}>Humana.</Text>
             </View>
-            <Text style={styles.titleText}>
-              Humanity in action,{'\n'}Learning in motion
-            </Text>
           </View>
 
           <View style={styles.formCard}>
@@ -332,7 +330,17 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   logoWrapper: { marginBottom: 15 },
-  logoImage: { width: 100, height: 100 },
+  logoImage: { width: 50, height: 100 },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoText: {
+    fontSize: 50,
+    fontFamily: 'DarkerGrotesque-Bold',
+    color: '#FFFFFF',
+    marginLeft: 10,
+  },
   titleText: {
     fontSize: 24,
     fontWeight: 'bold',

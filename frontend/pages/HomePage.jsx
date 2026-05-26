@@ -181,7 +181,7 @@ const HomePage = ({
         const gridStyle = role === 'guru' ? styles.gridCol3 : styles.gridCol2;
 
         // Lebar card murni dihitung dinamis agar card kedua sedikit mengintip secara estetis
-        const cardWidth = width - 56;
+        const cardWidth = width - 40;
 
         return (
             // Jarak antar-card (gap) diatur langsung menggunakan marginRight di sini
@@ -273,7 +273,7 @@ const HomePage = ({
 
         // Berdasarkan gambar image_baea26.png, jarak kanan-kiri card ke tepi layar adalah 20px
         const SIDE_PADDING = 20;
-        const cardWidth = width - (SIDE_PADDING * 2); // Lebar card pas mengikuti sisa ruang screen
+        const cardWidth = width - 40; // Lebar card pas mengikuti sisa ruang screen
         const gapSize = 12; // Jarak renggang antar card saat di-swipe
 
         return (
@@ -294,7 +294,7 @@ const HomePage = ({
                 // UBAH: snapToInterval sekarang murni menghitung total lebar satu komponen penuh + gap-nya
                 snapToInterval={cardWidth + gapSize}
                 // UBAH: Set alignment ke 'center' agar ketika standby, card yang aktif berada tepat di tengah
-                snapToAlignment="center"
+                snapToAlignment="start"
                 decelerationRate="fast"
                 disableIntervalMomentum={true}
                 showsHorizontalScrollIndicator={false}
@@ -303,7 +303,7 @@ const HomePage = ({
                     // Padding kiri disesuaikan agar card pertama pas presisi di tengah layar saat pertama dimuat
                     paddingLeft: SIDE_PADDING,
                     // Padding kanan disisakan sedikit space agar card terakhir bisa berhenti dengan manis
-                    paddingRight: SIDE_PADDING - gapSize,
+                    paddingRight: SIDE_PADDING,
                     paddingVertical: 4
                 }}
             />
@@ -331,7 +331,7 @@ const HomePage = ({
                 </View>
 
                 {/* Card Sesi Hari Ini */}
-                <View style={styles.sectionPadding}>
+                <View >
                     {renderSessionCard()}
                 </View>
 

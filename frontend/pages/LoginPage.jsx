@@ -148,10 +148,10 @@ const LoginPage = ({
             <Text
               style={[
                 styles.titleText,
-                { fontSize: width * 0.055, lineHeight: width * 0.075 },
+                { fontSize: width * 0.065, lineHeight: width * 0.070 },
               ]}
             >
-              No Pressure{'\n'}just progress.
+              Humanity in action,{'\n'}Learning in motion.
             </Text>
           </View>
 
@@ -352,11 +352,12 @@ const styles = StyleSheet.create({
     height: '100%'
   },
   passwordContainer: {
+    fontFamily: 'SF-Pro-Display-Regular',
     flexDirection: 'row',
     alignItems: 'center',
     height: '100%',
   },
-  passwordField: { flex: 1, fontSize: 14, color: '#333', height: '100%' },
+  passwordField: { fontFamily: 'SF-Pro-Display-Regular',flex: 1, fontSize: 14, color: '#333', height: '100%' },
   rememberForgotRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -383,7 +384,7 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   checkboxText: { fontSize: 13, color: '#666' },
-  forgotPasswordText: { fontSize: 13, color: '#4285F4', fontWeight: '600' },
+  forgotPasswordText: { fontSize: 13, color: '#4285F4', fontFamily: 'SF-Pro-Display-Bold'},
   submitButton: {
     backgroundColor: '#3A7D6B',
     borderRadius: 25,
@@ -392,13 +393,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: height * 0.02,
   },
-  submitButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  submitButtonText: { color: '#FFF', fontSize: 16, fontFamily: 'SF-Pro-Display-Bold' },
   orDividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 15,
   },
-  orLine: { flex: 1, height: 1, backgroundColor: '#E0E0E0' },
+  orLine: { fontFamily: 'SF-Pro-Display-Regular', flex: 1, height: 1, backgroundColor: '#E0E0E0' },
   orText: { marginHorizontal: 12, fontSize: 12, color: '#A9A9A9' },
   googleButton: {
     flexDirection: 'row',
@@ -411,9 +412,9 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   googleButtonText: {
+    fontFamily: 'SF-Pro-Display-Bold',
     color: '#333',
     fontSize: 14,
-    fontWeight: 'bold',
     marginRight: 10,
   },
   googleIconRight: { width: 18, height: 18 },
