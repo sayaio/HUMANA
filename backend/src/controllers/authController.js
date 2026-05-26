@@ -3,7 +3,7 @@ const Guru = require('../classes/Guru');
 const Murid = require('../classes/Murid');
 
 const login = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body; // 'email' field bisa berisi email atau username
     let conn;
 
     try {
@@ -38,10 +38,11 @@ const login = async (req, res) => {
             alamat,
             kelas,
             jurusan
-        FROM Murid WHERE email = ?
+        FROM Murid WHERE email = ? OR username = ?
         `;
 
-        const rows = await conn.query(query, [email, email]);
+        // Guru hanya bisa login via email, Murid bisa email atau username
+        const rows = await conn.query(query, [email, email, email]);
 
         if (rows.length > 0) {
             const dataDB = rows[0];
@@ -51,10 +52,10 @@ const login = async (req, res) => {
                 userAktif = new Guru(dataDB.nama_lengkap, dataDB.email, dataDB.password, dataDB.nama_user, dataDB.id);
             } else if (dataDB.role === 'Murid') {
                 userAktif = new Murid(
-                    dataDB.username,      // Menggunakan username asli dari DB
+                    dataDB.username,
                     dataDB.email,
                     dataDB.password,
-                    dataDB.nama_lengkap,  // nama_user
+                    dataDB.nama_lengkap,
                     dataDB.id,
                     dataDB.kelas,
                     dataDB.no_telepon,
@@ -64,8 +65,11 @@ const login = async (req, res) => {
                 );
             }
 
-
-            const isLoginValid = userAktif.login(email, password);
+            // Cek password langsung — bandingkan input dengan hash/plain di DB
+            // Login input bisa berupa email atau username, jadi kita bypass cek identifier
+            // dan hanya validasi password
+            const isLoginValid = password === dataDB.password;
+            // Kalau pakai bcrypt: const isLoginValid = await bcrypt.compare(password, dataDB.password);
 
             if (isLoginValid) {
                 res.json({

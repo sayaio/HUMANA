@@ -168,13 +168,13 @@ const LoginPage = ({
 
             {/* Input Email */}
             <View style={styles.inputWrapper}>
-              <Text style={styles.floatingLabel}>Email</Text>
+              <Text style={styles.floatingLabel}>Email atau Username </Text>
               <TextInput
                 style={styles.inputField}
                 placeholder="someone@domain.com"
                 value={email}
                 onChangeText={setEmail}
-                keyboardType="email-address"
+                keyboardType="default"
                 autoCapitalize="none"
                 placeholderTextColor="#A9A9A9"
               />
