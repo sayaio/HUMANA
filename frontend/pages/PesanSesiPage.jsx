@@ -16,8 +16,10 @@ import {
 import Geolocation from '@react-native-community/geolocation';
 import { pemesananService } from '../services/pemesananService';
 import { API_URL } from '../src/config';
+import BackIconSvg from '../components/BackIconSvg';
+
 const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
-    // === STATE FORM ===
+  // === STATE FORM ===
   const [tanggal, setTanggal] = useState(null);
   const [waktuMulai, setWaktuMulai] = useState('');
   const [waktuSelesai, setWaktuSelesai] = useState('');
@@ -27,7 +29,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
   const [materi, setMateri] = useState('');
   const [selectedMateriId, setSelectedMateriId] = useState(null);
 
-    // === STATE DB ===
+  // === STATE DB ===
   const [daftarMapelDB, setDaftarMapelDB] = useState([]);
   const [daftarMateriDB, setDaftarMateriDB] = useState([]);
   const [loadingMapel, setLoadingMapel] = useState(false);
@@ -35,7 +37,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
   const [mapelSelected, setMapelSelected] = useState(null);
   const [materiSelected, setMateriSelected] = useState(null);
 
-    // === STATE DROPDOWN ===
+  // === STATE DROPDOWN ===
   const [openWaktuMulai, setOpenWaktuMulai] = useState(false);
   const [openWaktuSelesai, setOpenWaktuSelesai] = useState(false);
   const [openJenjang, setOpenJenjang] = useState(false);
@@ -43,20 +45,20 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
   const [openMapel, setOpenMapel] = useState(false);
   const [openMateri, setOpenMateri] = useState(false);
 
-    // === STATE LOKASI ===
+  // === STATE LOKASI ===
   const [userLocation, setUserLocation] = useState(null);
   const [locationAddress, setLocationAddress] = useState('Mengambil lokasi...');
   const [loadingLocation, setLoadingLocation] = useState(false);
 
-    // === STATE KALENDER ===
+  // === STATE KALENDER ===
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
 
-    // === FETCH LOKASI ===
+  // === FETCH LOKASI ===
   useEffect(() => { requestLocation(); }, []);
 
-    // === FETCH MAPEL saat jenjang berubah ===
+  // === FETCH MAPEL saat jenjang berubah ===
   useEffect(() => {
     if (!jenjang) { setDaftarMapelDB([]); setMapelSelected(null); setMataPelajaran(''); return; }
     const fetchMapel = async () => {
@@ -88,7 +90,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
     };
     fetchMateri();
   }, [mapelSelected, kelas]);
-  
+
   // === DATA OPTIONS ===
   const generateTimeSlots = () => {
     const slots = [];
@@ -226,18 +228,18 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
 
   const formatTanggal = (date) =>
     date ? `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}` : '';
-  
+
   const handleConfirm = async () => {
     console.log('Validasi:', {
-    tanggal,
-    waktuMulai,
-    waktuSelesai,
-    jenjang,
-    kelas,
-    mataPelajaran,
-    selectedMateriId,
-    locationAddress
-  });
+      tanggal,
+      waktuMulai,
+      waktuSelesai,
+      jenjang,
+      kelas,
+      mataPelajaran,
+      selectedMateriId,
+      locationAddress
+    });
     // 1. Validasi: Tambahkan  di depan agar memastikan user sudah login
     if (!userId || !tanggal || !waktuMulai || !waktuSelesai || !jenjang || !kelas || !mataPelajaran || !selectedMateriId || !locationAddress) {
       Alert.alert('Form Belum Lengkap', 'Mohon lengkapi semua field atau pastikan Anda sudah login kembali.');
@@ -248,18 +250,18 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
       const tahun = tanggal.getFullYear();
       const bulan = String(tanggal.getMonth() + 1).padStart(2, '0');
       const hari = String(tanggal.getDate()).padStart(2, '0');
-      const tglDb = `${tahun}-${bulan}-${hari}`; 
+      const tglDb = `${tahun}-${bulan}-${hari}`;
 
       const waktuMulaiFormatted = `${tglDb} ${waktuMulai}:00`;
       const waktuSelesaiFormatted = `${tglDb} ${waktuSelesai}:00`;
-      
+
       // 2. dataPemesanan sekarang menggunakan state yang benar
       const dataPemesanan = {
         id_murid: userId,
-        id_materi: selectedMateriId, 
+        id_materi: selectedMateriId,
         waktu_mulai: waktuMulaiFormatted,
         waktu_selesai: waktuSelesaiFormatted,
-        lokasi_sesi: locationAddress 
+        lokasi_sesi: locationAddress
       };
 
       // 4. Kirim data ke Backend menggunakan method POST
@@ -275,13 +277,13 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
 
       if (result.success) {
         Alert.alert('Sukses 🎉', 'Pemesanan sesi berhasil disimpan ke database!');
-        
+
         if (onConfirmOrder) {
           onConfirmOrder({
             tanggal: formatTanggal(tanggal),
             waktuSesi: `${waktuMulai} - ${waktuSelesai}`,
             jenjang: `${jenjang} - ${kelas}`,
-            mataPelajaran, 
+            mataPelajaran,
             materi,
             lokasi: locationAddress,
             koordinat: userLocation,
@@ -478,8 +480,9 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Text style={styles.backText}>{'< Kembali'}</Text>
+        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+          <BackIconSvg size={10} color="#000000" />
+          <Text style={styles.backText}>Kembali</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pesan Sesi</Text>
         <View style={{ width: 70 }} />
@@ -723,8 +726,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 56 : 24, paddingBottom: 16,
     borderBottomWidth: 1, borderBottomColor: '#E8E8E8', backgroundColor: '#FFFFFF',
   },
-  backButton: { paddingVertical: 4 },
-  backText: { fontSize: 14, color: '#333', fontWeight: '500' },
+    backBtn: {
+    flexDirection: 'row',    // Membuat ikon dan teks berjejer ke samping
+    alignItems: 'center',    // Membuat ikon dan teks lurus sejajar secara vertikal
+    paddingVertical: 5,
+    paddingHorizontal: 5,
+  },
+  backText: {
+    fontSize: 15,            // Ukuran teks 'Kembali'
+    color: '#000000',        // Warna teks hitam disamakan dengan ikon
+    marginLeft: 6,           // Memberikan jarak antara ikon panah dan teks
+    fontFamily: 'SF-Pro-Display-Bold',       // Membuat teks sedikit lebih tegas (opsional)
+  },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
   scrollContent: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   rowContainer: { flexDirection: 'row', marginBottom: 4 },

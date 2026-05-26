@@ -164,7 +164,7 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#284B7A' },
-  header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 30, backgroundColor: '#284B7A', position: 'relative', overflow: 'hidden' },
+  header: { paddingHorizontal: 20, paddingTop: 45, paddingBottom: 30, backgroundColor: '#284B7A', position: 'relative', overflow: 'hidden' },
   headerWatermark: { position: 'absolute', right: -40, top: 0, width: 200, height: 200, tintColor: '#FFF', opacity: 0.1 },
   headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#FFF', marginBottom: 15 },
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 10, paddingHorizontal: 15, height: 45 },

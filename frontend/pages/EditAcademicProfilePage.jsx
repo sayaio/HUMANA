@@ -3,7 +3,7 @@ import {
     StyleSheet, Text, View, TouchableOpacity, SafeAreaView,
     StatusBar, ScrollView, TextInput, ActivityIndicator, Alert
 } from 'react-native';
-
+import BackIconSvg from '../components/BackIconSvg';
 // Import API dari file service kamu
 import { updateAcademicProfile } from '../services/editProfileService';
 
@@ -80,8 +80,9 @@ const EditAcademicProfilePage = ({ profileData, onSave, onCancel }) => {
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={false} />
 
             <View style={styles.header}>
-                <TouchableOpacity onPress={onCancel} style={styles.backBtn} disabled={isLoading}>
-                    <Text style={styles.backIcon}>{'❮'}</Text>
+                <TouchableOpacity onPress={onCancel} style={styles.backBtn}>
+                    <BackIconSvg size={10} color="#000000" />
+                    <Text style={styles.backText}>Kembali</Text>
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Edit Academic Profile</Text>
                 <View style={{ width: 40 }} />
@@ -110,8 +111,19 @@ const EditAcademicProfilePage = ({ profileData, onSave, onCancel }) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFF' },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 15, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
-    backBtn: { padding: 10, marginLeft: -10 },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 35, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+    backBtn: {
+        flexDirection: 'row',    // Membuat ikon dan teks berjejer ke samping
+        alignItems: 'center',    // Membuat ikon dan teks lurus sejajar secara vertikal
+        paddingVertical: 5,
+        paddingHorizontal: 5,
+    },
+    backText: {
+        fontSize: 15,            // Ukuran teks 'Kembali'
+        color: '#000000',        // Warna teks hitam disamakan dengan ikon
+        marginLeft: 6,           // Memberikan jarak antara ikon panah dan teks
+        fontFamily: 'SF-Pro-Display-Bold',       // Membuat teks sedikit lebih tegas (opsional)
+    },
     backIcon: { fontSize: 20, color: '#000', fontWeight: 'bold' },
     headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#000' },
 

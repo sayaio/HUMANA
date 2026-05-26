@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 
-import { 
-  StyleSheet, Text, View, TouchableOpacity, StatusBar, 
-  ScrollView, TextInput, Alert, ActivityIndicator, 
-  useWindowDimensions, KeyboardAvoidingView, Platform 
-} from 'react-native'; 
+import {
+  StyleSheet, Text, View, TouchableOpacity, StatusBar,
+  ScrollView, TextInput, Alert, ActivityIndicator,
+  useWindowDimensions, KeyboardAvoidingView, Platform
+} from 'react-native';
 
 // Import SafeAreaView yang dari library khusus tetap biarkan di bawahnya:
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { postFeedback } from '../services/feedbackService'; 
-
+import { postFeedback } from '../services/feedbackService';
+import BackIconSvg from '../components/BackIconSvg';
 const SessionDetailPage = ({ onBack, sessionData, userId }) => {
   // Mengambil lebar (width) dan tinggi (height) layar HP secara real-time
   const { width, height } = useWindowDimensions();
@@ -41,7 +41,7 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
       const result = await postFeedback(payload);
       if (result.success) {
         setTimeout(() => {
-            Alert.alert("Berhasil", "Terima kasih atas ulasan Anda!");
+          Alert.alert("Berhasil", "Terima kasih atas ulasan Anda!");
         }, 100);
         setIsSubmitted(true);
       } else {
@@ -63,7 +63,7 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
-      
+
       {/* Agar inputan teks tidak tertutup oleh keyboard otomatis */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -71,14 +71,15 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-            <Text style={styles.backIcon}>{'❮'}</Text>
+            <BackIconSvg size={10} color="#000000" />
+            <Text style={styles.backText}>Kembali</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Session Detail</Text>
           <View style={{ width: 40 }} />
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: width * 0.05, paddingBottom: 30 }}>
-          
+
           {/* Info Top */}
           <View style={styles.infoRow}>
             <View style={[styles.iconBox, { width: width * 0.15, height: width * 0.15 }]}>
@@ -92,7 +93,7 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
               </Text>
               <Text style={[styles.subtitle, { fontSize: dynamicFontSizeSubtitle }]}>
                 {sessionData?.waktu_mulai ? new Date(sessionData.waktu_mulai).toLocaleString('id-ID', {
-                    day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit'
+                  day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit'
                 }) : "Waktu tidak tersedia"}
               </Text>
               <Text style={[styles.subtitle, { fontSize: dynamicFontSizeSubtitle }]}>No. Sesi: {sessionData?.id_pemesanan || "-"}</Text>
@@ -117,9 +118,9 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
           <Text style={[styles.guruText, { fontSize: dynamicFontSizeTitle }]}>👤 {sessionData?.guru?.nama_guru || sessionData?.nama_guru || "Guru"}</Text>
 
           {/* Feedback Section */}
-          <TextInput 
-            style={[styles.feedbackInput, { height: height * 0.1 }]} 
-            placeholder="Masukkan Feedback..." 
+          <TextInput
+            style={[styles.feedbackInput, { height: height * 0.1 }]}
+            placeholder="Masukkan Feedback..."
             placeholderTextColor="#A9A9A9"
             multiline
             value={feedback}
@@ -130,11 +131,11 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
           <Text style={[styles.ratingText, { fontSize: dynamicFontSizeTitle }]}>Berikan Rating Anda</Text>
           <View style={styles.starsContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity 
-                  key={star} 
-                  onPress={() => !isSubmitted && !isSubmitting && setRating(star)} 
-                  activeOpacity={isSubmitted ? 1 : 0.7}
-                  style={{ paddingHorizontal: 4 }}
+              <TouchableOpacity
+                key={star}
+                onPress={() => !isSubmitted && !isSubmitting && setRating(star)}
+                activeOpacity={isSubmitted ? 1 : 0.7}
+                style={{ paddingHorizontal: 4 }}
               >
                 <Text style={{ fontSize: dynamicStarSize, color: star <= rating ? '#FFC107' : '#E0E0E0' }}>★</Text>
               </TouchableOpacity>
@@ -142,9 +143,9 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
           </View>
 
           {/* Tombol Kirim */}
-          <TouchableOpacity 
-            style={[styles.submitBtn, (isSubmitted || isSubmitting) && styles.submitBtnDisabled]} 
-            onPress={handleSubmit} 
+          <TouchableOpacity
+            style={[styles.submitBtn, (isSubmitted || isSubmitting) && styles.submitBtnDisabled]}
+            onPress={handleSubmit}
             disabled={isSubmitted || isSubmitting}
           >
             {isSubmitting ? (
@@ -163,40 +164,48 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#FFF' 
+  container: {
+    flex: 1,
+    backgroundColor: '#FFF'
   },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    paddingHorizontal: 20, 
-    
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+
     // --- UBAH BAGIAN INI ---
     paddingTop: 0,         // Pres ke angka 0 agar mepet ke atas
     marginTop: -15,        // BERIKAN MINUS (-) agar komponen dipaksa naik mendekati kamera
     paddingBottom: 10      // Jarak bawah ke konten tetap aman
     // -----------------------
   },
-  backBtn: { 
-    padding: 10, 
-    marginLeft: -10 
+  backBtn: {
+    flexDirection: 'row',    // Membuat ikon dan teks berjejer ke samping
+    alignItems: 'center',    // Membuat ikon dan teks lurus sejajar secara vertikal
+    paddingVertical: 5,
+    paddingHorizontal: 5,
   },
-  backIcon: { 
-    fontSize: 20, 
-    color: '#000', 
-    fontWeight: 'bold' 
+  backText: {
+    fontSize: 15,            // Ukuran teks 'Kembali'
+    color: '#000000',        // Warna teks hitam disamakan dengan ikon
+    marginLeft: 6,           // Memberikan jarak antara ikon panah dan teks
+    fontFamily: 'SF-Pro-Display-Bold',       // Membuat teks sedikit lebih tegas (opsional)
   },
-  headerTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold', 
-    color: '#000' 
+  backIcon: {
+    fontSize: 20,
+    color: '#000',
+    fontWeight: 'bold'
   },
-  infoRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginBottom: 20 
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000'
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20
   },
   // ... sisa style di bawahnya tetap sama
   iconBox: { backgroundColor: '#387C65', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },

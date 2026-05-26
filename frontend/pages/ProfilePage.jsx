@@ -6,7 +6,7 @@ import {
 
 // Import Ikon Lucide (Calendar, MessageSquare, User, Home, dan LogOut)
 import { Calendar, MessageSquare, User, Home, LogOut } from 'lucide-react-native';
-
+import EditIconSvg from '../components/EditIconSvg'; // <-- Sesuaikan path ke folder komponenmu
 // Ambil lebar layar untuk kalkulasi responsive
 const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
@@ -58,9 +58,9 @@ const ProfilePage = ({ profileData, onNavigate, onLogout }) => {
                 <View style={styles.sectionContainer}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Basic</Text>
-                        <TouchableOpacity onPress={() => onNavigate('EditBasicProfile')}>
-                            <Text style={styles.editIcon}>📝</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity onPress={() => onNavigate('EditBasicProfile')}>
+                                <EditIconSvg size={20} />
+                            </TouchableOpacity>
                     </View>
                     <View style={styles.cardBox}>
                         <DataRow label="Username" value={profileData.username || '-'} />
@@ -78,7 +78,7 @@ const ProfilePage = ({ profileData, onNavigate, onLogout }) => {
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Academic</Text>
                         <TouchableOpacity onPress={() => onNavigate('EditAcademicProfile')}>
-                            <Text style={styles.editIcon}>📝</Text>
+                            <EditIconSvg size={20} />
                         </TouchableOpacity>
                     </View>
                     <View style={styles.cardBox}>
@@ -92,7 +92,7 @@ const ProfilePage = ({ profileData, onNavigate, onLogout }) => {
                 <View style={styles.sectionContainer}>
                     <TouchableOpacity
                         style={styles.logoutButton}
-                        onPress={onLogout} 
+                        onPress={onLogout}
                         activeOpacity={0.6}
                     >
                         <LogOut color="#FF4D4D" size={20} style={styles.logoutIcon} />

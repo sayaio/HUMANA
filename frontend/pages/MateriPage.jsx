@@ -5,15 +5,16 @@ import {
   Image, ActivityIndicator
 } from 'react-native';
 import { fetchMateriBySubject } from '../services/MateriService';
+import BackIconSvg from '../components/BackIconSvg';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
-  const [materiList, setMateriList]     = useState([]);
-  const [filtered, setFiltered]         = useState([]);
-  const [searchQuery, setSearchQuery]   = useState('');
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState(null);
+  const [materiList, setMateriList] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadMateri = async () => {
@@ -110,7 +111,8 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
 
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={styles.backIcon}>{'❮'}</Text>
+          <BackIconSvg size={10} color="#ffffff" />
+          <Text style={styles.backText}>Kembali</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{subjectName}</Text>
         <View style={{ width: 40 }} />
@@ -145,7 +147,18 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#284B7A' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 30, paddingHorizontal: 20 },
-  backBtn: { padding: 10, marginLeft: -10 },
+  backBtn: {
+    flexDirection: 'row',    // Membuat ikon dan teks berjejer ke samping
+    alignItems: 'center',    // Membuat ikon dan teks lurus sejajar secara vertikal
+    paddingVertical: 5,
+    paddingHorizontal: 5,
+  },
+  backText: {
+    fontSize: 15,            // Ukuran teks 'Kembali'
+    color: '#ffffff',        // Warna teks hitam disamakan dengan ikon
+    marginLeft: 6,           // Memberikan jarak antara ikon panah dan teks
+    fontFamily: 'SF-Pro-Display-Bold',       // Membuat teks sedikit lebih tegas (opsional)
+  },
   backIcon: { fontSize: 24, color: '#FFF', fontWeight: 'bold' },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
   contentContainer: { flex: 1, backgroundColor: '#FAFAFA', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 20, paddingTop: 25 },

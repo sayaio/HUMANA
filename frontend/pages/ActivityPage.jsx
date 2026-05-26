@@ -223,7 +223,7 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FAFAFA' },
-    header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 15, backgroundColor: '#FFF' },
+    header: { paddingHorizontal: 20, paddingTop: 35, paddingBottom: 15, backgroundColor: '#FFF' },
     headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#000' },
     tabContainer: { flexDirection: 'row', backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EEE' },
     tabBtn: { flex: 1, paddingVertical: 15, alignItems: 'center' },

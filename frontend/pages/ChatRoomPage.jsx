@@ -5,7 +5,7 @@ import {
   StyleSheet, Text, View, TouchableOpacity, SafeAreaView,
   StatusBar, ScrollView, TextInput, KeyboardAvoidingView, Platform, Image
 } from 'react-native';
-
+import BackIconSvg from '../components/BackIconSvg'; // <-- Sesuaikan dengan path foldermu
 const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
   const scrollViewRef = useRef();
   const [message, setMessage] = useState('');
@@ -63,10 +63,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
       {/* Header Biru dengan tambahan aman dari Notch */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Image
-            source={require('../assets/back.png')}
-            style={styles.backIconImage}
-          />
+          <BackIconSvg size={16} color="#FFF" />
         </TouchableOpacity>
 
         <View style={[styles.avatar, { backgroundColor: color }]}>
@@ -158,7 +155,6 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 44
   },
   backBtn: { padding: 5, marginRight: 10 },
-  backIcon: { fontSize: 22, color: '#FFF', fontWeight: 'bold' },
   avatar: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   avatarText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   headerInfo: { flex: 1 },
