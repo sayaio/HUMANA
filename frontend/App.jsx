@@ -17,7 +17,7 @@ import EditAcademicProfilePage from './pages/EditAcademicProfilePage';
 import ChatPage from './pages/ChatPage';
 import ChatRoomPage from './pages/ChatRoomPage';
 import PageGuru from './pages/PageGuru';
-import ProfileGuruPage from './pages/ProfileGuruPage'; 
+import ProfileGuruPage from './pages/ProfileGuruPage';
 import ActivityGuruPage from './pages/ActivityGuruPage'; // Memastikan berkas Aktivitas Guru terdaftar
 import PesanSesiPage from './pages/PesanSesiPage';
 
@@ -38,6 +38,7 @@ const App = () => {
         domicile: '-',
         education: '-',
         major: '-',
+        is_active: false
     });
     const [selectedSubject, setSelectedSubject] = useState(null);
     const [selectedChapter, setSelectedChapter] = useState(null);
@@ -82,6 +83,7 @@ const App = () => {
                         jenjang_pendidikan: userData?.jenjang_pendidikan || userData?.education || '-',
                         major: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
                         kelas_jurusan: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
+                        is_active: userData?.is_active ?? 0
                     });
 
                     if (roleDariDB === 'guru') {
@@ -126,6 +128,7 @@ const App = () => {
             jenjang_pendidikan: userData?.jenjang_pendidikan || userData?.education || '-',
             major: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
             kelas_jurusan: userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
+            is_active: userData?.is_active ?? 0
         };
 
         setNamaLengkap(namaDariDB);
@@ -171,7 +174,7 @@ const App = () => {
             setNamaLengkap('');
             setEmail('');
             console.log('🚪 [App.jsx] Sesi berhasil dihapus. Keluar...');
-            
+
             // Reset State Global ke kondisi awal
             setNamaLengkap('');
             setEmail('');
@@ -179,7 +182,7 @@ const App = () => {
                 id: null, role: '-', name: '-', email: '-', username: '-',
                 phone: '-', gender: '-', domicile: '-', education: '-', major: '-',
             });
-            
+
             // Lempar kembali ke halaman Login
             setCurrentPage('Login');
         } catch (error) {
@@ -263,6 +266,10 @@ const App = () => {
                 guruData={profileData}
                 onNavigate={handleGlobalNavigate}
                 onLogout={handleLogout}
+                onRefreshData={(newData) => {
+                    console.log("🔄 [App.jsx] Memperbarui profileData dari child:", newData);
+                    setProfileData(newData);
+                }}
             />
         );
     }
@@ -438,7 +445,7 @@ const App = () => {
             />
         );
     }
-    
+
     if (currentPage === 'Materi') {
         return (
             <MateriPage

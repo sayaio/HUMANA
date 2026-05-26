@@ -63,4 +63,25 @@ const updateAcademic = async (req, res) => {
     }
 };
 
-module.exports = { updateBasic, updateAcademic };
+const updateAvailability = async (req, res) => {
+    const { id_guru, is_active } = req.body;
+
+    try {
+        const statusDb = is_active ? 1 : 0;
+
+        const dbResult = await pool.query(
+            `UPDATE Guru SET is_active = ? WHERE id_guru = ?`,
+            [statusDb, id_guru]
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: `Status ketersediaan guru berhasil diubah menjadi ${is_active ? 'Aktif' : 'Nonaktif'}.`
+        });
+    } catch (error) {
+        console.error("🔴 [BACKEND] ERROR EXECUTING QUERY:", error);
+        return res.status(500).json({ success: false, message: 'Gagal memperbarui status ketersediaan.' });
+    }
+};
+
+module.exports = { updateBasic, updateAcademic, updateAvailability };

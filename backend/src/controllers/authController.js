@@ -16,13 +16,14 @@ SELECT
     email_guru AS email, 
     password, 
     'Guru' AS role,
-    username,           -- ← sekarang sudah ada kolomnya
+    username,
     no_telepon,
     jenis_kelamin,
     alamat,
+    is_active,
     NULL AS kelas,
     NULL AS jurusan
-FROM Guru WHERE email_guru = ? OR username = ?   -- ← tambah OR username
+FROM Guru WHERE email_guru = ? OR username = ?
 
 UNION ALL
 
@@ -36,19 +37,34 @@ SELECT
     no_telepon,
     jenis_kelamin,
     alamat,
+    NULL AS is_active,   -- ← Diisi NULL sebagai penyeimbang struktur UNION tabel Murid
     kelas,
     jurusan
 FROM Murid WHERE email = ? OR username = ?
 `;
 
-        // Update params jadi 4
+        // Eksekusi kueri dengan 4 parameter pengikat (binding parameters)
         const rows = await conn.query(query, [email, email, email, email]);
+
         if (rows.length > 0) {
             const dataDB = rows[0];
             let userAktif;
 
             if (dataDB.role === 'Guru') {
-                userAktif = new Guru(dataDB.nama_lengkap, dataDB.email, dataDB.password, dataDB.nama_user, dataDB.id);
+                // Konversi tinyint (0/1) dari DB menjadi Boolean murni (false/true)
+                const statusToggleBoolean = dataDB.is_active == 1;
+                console.log(statusToggleBoolean);
+                // Menyesuaikan dengan parameter constructor Guru:
+                // constructor(username, email, password, nama_user, id, isActive)
+                userAktif = new Guru(
+                    dataDB.username,
+                    dataDB.email,
+                    dataDB.password,
+                    dataDB.nama_lengkap, // Menjadi nama_user di internal class
+                    dataDB.id,
+                    statusToggleBoolean
+                );
+                console.log(userAktif);
             } else if (dataDB.role === 'Murid') {
                 userAktif = new Murid(
                     dataDB.username,
@@ -64,11 +80,8 @@ FROM Murid WHERE email = ? OR username = ?
                 );
             }
 
-            // Cek password langsung — bandingkan input dengan hash/plain di DB
-            // Login input bisa berupa email atau username, jadi kita bypass cek identifier
-            // dan hanya validasi password
+            // Validasi kecocokan password teks biasa (Plain Text)
             const isLoginValid = password === dataDB.password;
-            // Kalau pakai bcrypt: const isLoginValid = await bcrypt.compare(password, dataDB.password);
 
             if (isLoginValid) {
                 res.json({

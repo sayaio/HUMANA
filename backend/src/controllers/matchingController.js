@@ -33,6 +33,39 @@ const getPermintaanBaru = async (req, res) => {
         const guruLat = Number(lat_guru);
         const guruLng = Number(lng_guru);
 
+        // =========================================================================
+        // STEP 1: CEK STATUS KEAKTIFAN GURU TERLEBIH DAHULU (PISAH DARI QUERY UTAMA)
+        // =========================================================================
+        const guruCheck = await pool.query(
+            `SELECT is_active FROM Guru WHERE id_guru = ?`,
+            [id_guru]
+        );
+
+        // Jika data guru tidak ditemukan di database
+        if (guruCheck.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Data Guru tidak ditemukan dalam sistem."
+            });
+        }
+
+        const isTeacherActive = guruCheck[0].is_active;
+
+        // KUNCI UX: Jika guru NONAKTIF (is_active === 0), langsung potong kompas di sini.
+        // Kirim flag is_active: false dan data array kosong agar frontend bisa membedakan tampilannya.
+        if (isTeacherActive === 0 || isTeacherActive === false) {
+            return res.status(200).json({
+                success: true,
+                is_active: false, // Flag krusial untuk conditional rendering frontend
+                message: "Status Anda saat ini sedang Nonaktif.",
+                data: []
+            });
+        }
+
+        // =========================================================================
+        // STEP 2: JALANKAN QUERY UTAMA JIKA GURU BERSTATUS AKTIF (is_active === 1)
+        // =========================================================================
+        // Catatan: Klausa AND g.is_active = 1 SUDAH DIHAPUS agar tidak memicu Unknown Column error
         const rows = await pool.query(`
             SELECT 
                 p.id_pemesanan, 
@@ -44,11 +77,14 @@ const getPermintaanBaru = async (req, res) => {
             FROM Pemesanan p
             JOIN Murid m ON p.id_murid = m.id_murid
             JOIN Materi mat ON p.id_materi = mat.id_materi
+            JOIN MateriGuru mg ON p.id_materi = mg.id_materi
             WHERE p.id_guru IS NULL 
+              AND mg.id_guru = ?
               AND LOWER(p.status_pemesanan) = 'menunggu konfirmasi'
             ORDER BY p.waktu_mulai ASC
-        `);
+        `, [id_guru]); // Menggunakan placeholder binding agar query lebih aman dan presisi
 
+        // Pemetaan data ke class objek dan kalkulasi jarak (Tetap dipertahankan seperti aslinya)
         const daftarSesiObjek = rows.map(row => {
             const sesiPemesanan = new PemesananSesi(
                 row.nama_murid,
@@ -56,28 +92,32 @@ const getPermintaanBaru = async (req, res) => {
                 row.nama_materi,
                 row.waktu_mulai,
                 row.waktu_selesai,
-                row.lokasi_sesi // Alamat string dilempar dengan aman ke constructor class
+                row.lokasi_sesi
             );
             sesiPemesanan.id_pemesanan = row.id_pemesanan;
 
-            // SAFETU CHECK: Lakukan bypass kalkulasi jarak jika lokasi_sesi bukan koordinat GPS
+            // SAFETY CHECK: Jalankan kalkulasi Haversine jika lokasi berupa koordinat
             if (row.lokasi_sesi && row.lokasi_sesi.includes(',')) {
                 const [muridLat, muridLng] = row.lokasi_sesi.split(',').map(Number);
 
-                // Cek apakah hasil splitting valid menghasilkan angka, bukan NaN
                 if (!isNaN(muridLat) && !isNaN(muridLng)) {
                     sesiPemesanan.jarak_km = hitungJarak(guruLat, guruLng, muridLat, muridLng);
                 } else {
-                    sesiPemesanan.jarak_km = 0; // fallback jika bukan angka koordinat
+                    sesiPemesanan.jarak_km = 0;
                 }
             } else {
-                sesiPemesanan.jarak_km = 0; // fallback jika isinya murni teks seperti 'Jl. AWOKAOWK'
+                sesiPemesanan.jarak_km = 0;
             }
 
             return sesiPemesanan;
         });
 
-        res.status(200).json({ success: true, data: daftarSesiObjek });
+        // Jika guru aktif, kembalikan response sukses lengkap dengan flag is_active: true
+        res.status(200).json({
+            success: true,
+            is_active: true,
+            data: daftarSesiObjek
+        });
 
     } catch (error) {
         console.error("Error pada getPermintaanBaruUntukGuru:", error);
@@ -149,7 +189,7 @@ const getSesiDikonfirmasi = async (req, res) => {
         }
 
         const row = rows[0];
-        
+
         // Memetakan ke struktur kelas PemesananSesi agar seragam dengan frontend
         const sesiDikonfirmasi = new PemesananSesi(
             row.nama_murid,
@@ -160,10 +200,10 @@ const getSesiDikonfirmasi = async (req, res) => {
             row.lokasi_sesi
         );
         sesiDikonfirmasi.id_pemesanan = row.id_pemesanan;
-        
+
         // Menyisipkan properti tambahan untuk keperluan UI
-        sesiDikonfirmasi.harga_total = row.harga_total || 0; 
-        
+        sesiDikonfirmasi.harga_total = row.harga_total || 0;
+
         // Membuat string format waktu kustom (contoh: 08:30 - 10:30)
         if (row.waktu_mulai && row.waktu_selesai) {
             const opsiJam = { hour: '2-digit', minute: '2-digit', hour12: false };

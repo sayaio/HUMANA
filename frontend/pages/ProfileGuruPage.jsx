@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     StyleSheet,
     Text,
@@ -12,13 +12,68 @@ import {
     Image // Tambahkan import Image untuk asset logo
 } from 'react-native';
 import { Settings, Edit2, Briefcase, Plus, Trash2, Home, Activity, MessageCircle, User } from 'lucide-react-native';
+import { updateAvailabilityProfile } from '../services/editProfileService';
 
 // Import asset logo yang sama dengan HomePage.jsx
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
-const ProfileGuruPage = ({ guruData, onNavigate, onLogout }) => {
-    // State untuk toggle Status Aktif (Sesuai di gambar Figma)
-    const [isAktif, setIsAktif] = useState(true);
+const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
+    const [isAktif, setIsAktif] = useState(guruData?.is_active === 1 || guruData?.is_active === true || guruData?.isActive === 1 || guruData?.isActive === true);
+
+    useEffect(() => {
+        if (guruData) {
+            setIsAktif(guruData.is_active === 1 || guruData.is_active === true);
+        }
+    }, [guruData]);
+
+    const handleToggleAvailability = async (newValue) => {
+        const idGuruTerpilih = guruData?.id || guruData?.id_guru; // Pastikan penamaan properti ID sesuai data login kamu
+
+        console.log("=== [FRONTEND] TRIGGER TOGGLE ===");
+        console.log("ID Guru Terdeteksi:", idGuruTerpilih);
+        console.log("Nilai Toggle Baru (boolean):", newValue);
+        console.log("Isi guruData asli:", guruData);
+
+        if (!idGuruTerpilih) {
+            Alert.alert('Data Tidak Valid', 'Gagal memperbarui database. ID Guru tidak ditemukan.');
+            return;
+        }
+
+        // Optimistic update di UI
+        setIsAktif(newValue);
+
+        // Tembak service API
+        const result = await updateAvailabilityProfile(idGuruTerpilih, newValue);
+
+        console.log("=== [FRONTEND] RESPONSE FROM SERVICE ===");
+        console.log("Result Object:", result);
+        console.log("Apakah result.success bernilai true?:", !!result?.success);
+
+        if (result && result.success) {
+
+            setIsAktif(newValue);
+
+            // update parent state
+            if (onRefreshData) {
+                onRefreshData({
+                    ...guruData,
+                    is_active: newValue
+                });
+            }
+
+            Alert.alert(
+                'Sukses',
+                `Status Anda kini ${newValue
+                    ? 'Aktif menerima murid'
+                    : 'Nonaktif'
+                }.`
+            );
+        } else {
+            console.log("⚠️ Masuk ke blok ELSE (Gagal/Mental Balik)");
+            setIsAktif(!newValue);
+            Alert.alert('Eror', 'Gagal mengubah status di server. Coba lagi nanti.');
+        }
+    };
 
     // State untuk manajemen data Portofolio tambahan
     const [portofolios, setPortofolios] = useState([
@@ -105,7 +160,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout }) => {
                             </Text>
                             <Switch
                                 value={isAktif}
-                                onValueChange={(value) => setIsAktif(value)}
+                                onValueChange={handleToggleAvailability} // ← DIARAHKAN KE HANDLER API, BUKAN SETISAKTIF LANGSUNG
                                 trackColor={{ false: '#767577', true: '#C1F4D3' }}
                                 thumbColor={isAktif ? '#25A244' : '#f4f3f4'}
                             />

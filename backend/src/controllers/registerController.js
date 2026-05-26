@@ -28,11 +28,11 @@ const register = async (req, res) => {
         let newUserInstance;
 
         if (role === 'Guru') {
-            const queryGuru = `INSERT INTO Guru (nama_guru, email_guru, password, username) VALUES (?, ?, ?, ?)`;
+            const queryGuru = `INSERT INTO Guru (nama_guru, email_guru, password, username, is_active) VALUES (?, ?, ?, ?, 0)`;
             const result = await conn.query(queryGuru, [namaLengkap, email, password, namaLengkap]); // SEMENTARA USERNAME KARENA BLM ADA INPUTAN JADINYA ISI NAMALENGKAP DULU
 
             const insertedId = Number(result.insertId); // Pastikan jadi number
-            newUserInstance = new Guru(username, email, password, namaLengkap, insertedId);
+            newUserInstance = new Guru(username, email, password, namaLengkap, insertedId, 0);
 
         } else if (role === 'Murid') {
             const queryMurid = `INSERT INTO Murid (nama_murid, email, password, username) VALUES (?, ?, ?, ?)`;
