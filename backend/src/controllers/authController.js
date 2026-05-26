@@ -10,40 +10,39 @@ const login = async (req, res) => {
         conn = await pool.getConnection();
 
         const query = `
-        SELECT
-            id_guru AS id, 
-            nama_guru AS nama_lengkap, 
-            email_guru AS email, 
-            password, 
-            'Guru' AS role,
-            NULL AS username, 
-            no_telepon,
-            jenis_kelamin,
-            alamat,
-            NULL AS kelas,
-            NULL AS jurusan
-        FROM Guru WHERE email_guru = ?
+SELECT
+    id_guru AS id, 
+    nama_guru AS nama_lengkap, 
+    email_guru AS email, 
+    password, 
+    'Guru' AS role,
+    username,           -- ← sekarang sudah ada kolomnya
+    no_telepon,
+    jenis_kelamin,
+    alamat,
+    NULL AS kelas,
+    NULL AS jurusan
+FROM Guru WHERE email_guru = ? OR username = ?   -- ← tambah OR username
 
-        UNION ALL
+UNION ALL
 
-        SELECT 
-            id_murid AS id, 
-            nama_murid AS nama_lengkap, 
-            email, 
-            password, 
-            'Murid' AS role,
-            username,       
-            no_telepon,
-            jenis_kelamin,
-            alamat,
-            kelas,
-            jurusan
-        FROM Murid WHERE email = ? OR username = ?
-        `;
+SELECT 
+    id_murid AS id, 
+    nama_murid AS nama_lengkap, 
+    email, 
+    password, 
+    'Murid' AS role,
+    username,       
+    no_telepon,
+    jenis_kelamin,
+    alamat,
+    kelas,
+    jurusan
+FROM Murid WHERE email = ? OR username = ?
+`;
 
-        // Guru hanya bisa login via email, Murid bisa email atau username
-        const rows = await conn.query(query, [email, email, email]);
-
+        // Update params jadi 4
+        const rows = await conn.query(query, [email, email, email, email]);
         if (rows.length > 0) {
             const dataDB = rows[0];
             let userAktif;
