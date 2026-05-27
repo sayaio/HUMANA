@@ -19,6 +19,7 @@ router.get('/mapel', materiController.getAllMapel);
 
 const feedbackController = require('./src/controllers/feedbackController');
 router.post('/feedback', feedbackController.submitFeedback);
+router.get('/profile-guru/:id_guru', feedbackController.getGuruRating);
 
 const historyController = require('./src/controllers/historyController');
 router.get('/history/:role/:id', historyController.getHistory);

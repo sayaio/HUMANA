@@ -3,6 +3,7 @@ import {
     StyleSheet, Text, View, TouchableOpacity, SafeAreaView,
     StatusBar, ScrollView, TextInput, ActivityIndicator, Alert
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import BackIconSvg from '../components/BackIconSvg';
 // Import API dari file service kamu
 import { updateBasicProfile } from '../services/editProfileService';
@@ -25,6 +26,7 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
                 id: profileData.id,
                 id_user: profileData.id,
                 email: profileData.email,
+                role: profileData.role,
                 username: username,
                 phone: phone,
                 no_telepon: phone,
@@ -39,7 +41,7 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
             // Mengecek apakah respons sukses
             if (result.success === true || result.status === 200) {
                 // Jika berhasil, perbarui data di App.jsx dan kembali ke Profile
-                onSave({
+                const updatedFields = {
                     ...profileData,
                     username,
                     phone,
@@ -49,7 +51,22 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
                     domicile,
                     alamat: domicile,
                     domisili: domicile
-                });
+                };
+
+                try {
+                    const savedSession = await AsyncStorage.getItem('user_session');
+                    if (savedSession) {
+                        const parsed = JSON.parse(savedSession);
+                        parsed.userData = { ...parsed.userData, ...updatedFields };
+                        await AsyncStorage.setItem('user_session', JSON.stringify(parsed));
+                    }
+                } catch (e) {
+                    console.log('Gagal memperbarui simpanan profil di local storage:', e);
+                }
+
+                // Setelah lokal beres, panggil onSave milik App.jsx untuk sinkronisasi state global
+                onSave(updatedFields);
+
             } else {
                 Alert.alert("Gagal Menyimpan", result.message || "Pastikan data sudah benar.");
             }

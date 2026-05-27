@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     StyleSheet,
     Text,
@@ -9,10 +9,12 @@ import {
     TextInput,
     Switch,
     Alert,
-    Image // Tambahkan import Image untuk asset logo
+    Image,
+    RefreshControl
 } from 'react-native';
 import { Settings, Edit2, Briefcase, Plus, Trash2, Home, Activity, MessageCircle, User } from 'lucide-react-native';
 import { updateAvailabilityProfile } from '../services/editProfileService';
+import { fetchGuruRating } from '../services/feedbackService';
 
 // Import asset logo yang sama dengan HomePage.jsx
 const LOGO_SOURCE = require('../assets/logo_humana.png');
@@ -20,11 +22,37 @@ const LOGO_SOURCE = require('../assets/logo_humana.png');
 const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
     const [isAktif, setIsAktif] = useState(guruData?.is_active === 1 || guruData?.is_active === true || guruData?.isActive === 1 || guruData?.isActive === true);
 
+    const idGuru = guruData?.id || guruData?.id_guru;
+
+    // Fungsi untuk memuat data profil murni dari database
+    const loadLatestProfileData = useCallback(async () => {
+        if (!idGuru) return;
+
+        const response = await fetchGuruRating(idGuru);
+        if (response && response.success) {
+            // Sinkronisasikan data ke Parent State/Context utama aplikasi
+            if (onRefreshData) {
+                onRefreshData(response.data);
+            }
+        }
+    }, [idGuru, onRefreshData]);
+
+    // 1. Ambil data segar dari DB saat halaman pertama kali dibuka
+    useEffect(() => {
+        loadLatestProfileData();
+    }, []);
+
     useEffect(() => {
         if (guruData) {
             setIsAktif(guruData.is_active === 1 || guruData.is_active === true);
         }
     }, [guruData]);
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        await loadLatestProfileData();
+        setRefreshing(false);
+    };
 
     const handleToggleAvailability = async (newValue) => {
         const idGuruTerpilih = guruData?.id || guruData?.id_guru; // Pastikan penamaan properti ID sesuai data login kamu
@@ -126,7 +154,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                     </View>
                     <View style={styles.profileMetaInfo}>
                         <Text style={styles.guruName}>{guruData?.name || 'Ahmad Muhsin'}</Text>
-                        <Text style={styles.guruEmail}>{guruData?.email || 'ahmadmuhsin@gmail.com'}</Text>
+                        <Text style={styles.guruEmail}>{guruData?.email_guru || 'ahmadmuhsin@gmail.com'}</Text>
                     </View>
                 </View>
 
@@ -140,7 +168,10 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                         </View>
                         <View style={styles.statusDivider} />
                         <View style={styles.statusSubBox}>
-                            <Text style={styles.statusValueBlue}>4,9</Text>
+                            {/* 🌟 DISINI: Menampilkan rating yang dikirim langsung dari getRating() backend */}
+                            <Text style={styles.statusValueBlue}>
+                                {guruData?.rating ? Number(guruData.rating).toFixed(1) : '0.0'}
+                            </Text>
                             <Text style={styles.statusSubLabel}>Rating</Text>
                         </View>
                         <View style={styles.statusDivider} />
@@ -161,7 +192,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                 {/* 3. SECTION: Data Pribadi (Persis Tampilan Layout Figma) */}
                 <View style={styles.dataPribadiHeaderRow}>
                     <Text style={styles.sectionTitleMain}>Data Pribadi</Text>
-                    <TouchableOpacity onPress={() => Alert.alert('Info', 'Edit Data Pribadi')}>
+                    <TouchableOpacity onPress={() => onNavigate('EditBasicProfile')}>
                         <Edit2 size={18} color="#284B7A" />
                     </TouchableOpacity>
                 </View>
@@ -169,19 +200,24 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                 <View style={styles.dataPribadiContainer}>
                     <View style={styles.dataItemField}>
                         <Text style={styles.fieldLabel}>Nama Pengguna</Text>
-                        <Text style={styles.fieldValue}>{guruData?.username || 'ahmadganteng88'}</Text>
+                        {/* Menggunakan username, jika kosong pakai fallback name tanpa spasi */}
+                        <Text style={styles.fieldValue}>
+                            {guruData?.username && guruData.username !== '-'
+                                ? guruData.username
+                                : (guruData?.name?.toLowerCase().replace(/\s/g, '') || '-')}
+                        </Text>
                     </View>
                     <View style={styles.dataItemField}>
                         <Text style={styles.fieldLabel}>No. Telepon</Text>
-                        <Text style={styles.fieldValue}>{guruData?.phone || '+6281234567890'}</Text>
+                        <Text style={styles.fieldValue}>{guruData?.phone || guruData?.no_telepon || '-'}</Text>
                     </View>
                     <View style={styles.dataItemField}>
                         <Text style={styles.fieldLabel}>Jenis Kelamin</Text>
-                        <Text style={styles.fieldValue}>{guruData?.gender || 'Laki-laki'}</Text>
+                        <Text style={styles.fieldValue}>{guruData?.gender || guruData?.jenis_kelamin || '-'}</Text>
                     </View>
                     <View style={styles.dataItemField}>
                         <Text style={styles.fieldLabel}>Domisili</Text>
-                        <Text style={styles.fieldValue}>{guruData?.domicile || 'Kab. Bandung'}</Text>
+                        <Text style={styles.fieldValue}>{guruData?.domicile || guruData?.alamat || '-'}</Text>
                     </View>
                 </View>
 

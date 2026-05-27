@@ -2,7 +2,7 @@
 const pool = require('../database');
 
 const updateBasic = async (req, res) => {
-    const { email, username, phone, gender, domicile } = req.body; // domicile di sini adalah Alamat Lengkap
+    const { email, username, phone, gender, domicile, role } = req.body;
 
     try {
         let genderDb = null;
@@ -14,10 +14,20 @@ const updateBasic = async (req, res) => {
                 genderDb = 'P';
             }
         }
-        await pool.query(
-            `UPDATE Murid SET username = ?, no_telepon = ?, jenis_kelamin = ?, alamat = ? WHERE email = ?`,
-            [username, phone, genderDb, domicile, email]
-        );
+
+        const userRole = role ? role.toLowerCase() : 'murid';
+
+        if (userRole === 'guru') {
+            await pool.query(
+                `UPDATE Guru SET username = ?, no_telepon = ?, jenis_kelamin = ?, alamat = ? WHERE email_guru = ?`,
+                [username, phone, genderDb, domicile, email]
+            );
+        } else {
+            await pool.query(
+                `UPDATE Murid SET username = ?, no_telepon = ?, jenis_kelamin = ?, alamat = ? WHERE email = ?`,
+                [username, phone, genderDb, domicile, email]
+            );
+        }
 
         return res.status(200).json({ success: true, message: 'Profil dasar berhasil diperbarui.' });
     } catch (error) {

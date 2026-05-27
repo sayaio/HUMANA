@@ -203,6 +203,9 @@ const App = () => {
         if (page === 'Home' && currentRole === 'guru') {
             setCurrentPage('PageGuru');
             return;
+        } else if (page === 'EditBasicProfilePage' && currentRole === 'guru') {
+            setCurrentPage('EditBasicProfile');
+            return;
         }
 
         if (page === 'HomeGuru') {
@@ -270,9 +273,35 @@ const App = () => {
                 guruData={profileData}
                 onNavigate={handleGlobalNavigate}
                 onLogout={handleLogout}
-                onRefreshData={(newData) => {
-                    console.log("🔄 [App.jsx] Memperbarui profileData dari child:", newData);
+                onRefreshData={async (newData) => {
+                    console.log("🔄 [App.jsx] Memperbarui profileData & AsyncStorage dari child:", newData);
+
+                    // 1. Update State React agar UI langsung berubah secara realtime
                     setProfileData(newData);
+
+                    // 2. Selaraskan ke AsyncStorage agar perubahan permanen saat aplikasi dibuka lagi
+                    try {
+                        const savedSession = await AsyncStorage.getItem('user_session');
+                        if (savedSession) {
+                            const parsedSession = JSON.parse(savedSession);
+
+                            // Gabungkan data lama dengan field yang baru diperbarui (seperti rating atau is_active)
+                            const updatedSession = {
+                                ...parsedSession,
+                                userData: {
+                                    ...parsedSession.userData,
+                                    ...newData, // berisi rating baru atau is_active baru
+                                    nama_guru: newData.name, // sesuaikan mapping field database Anda
+                                    is_active: newData.is_active ? 1 : 0
+                                }
+                            };
+
+                            await AsyncStorage.setItem('user_session', JSON.stringify(updatedSession));
+                            console.log('💾 [App.jsx] AsyncStorage berhasil disinkronisasi dengan data baru.');
+                        }
+                    } catch (err) {
+                        console.error('❌ Gagal menyelaraskan data baru ke AsyncStorage:', err);
+                    }
                 }}
             />
         );
@@ -403,23 +432,16 @@ const App = () => {
         return (
             <EditBasicProfilePage
                 profileData={profileData}
-                onCancel={() => setCurrentPage('Profile')}
-                onSave={async (updatedData) => {
+                onCancel={() => {
+                    const currentRole = (profileData.role || 'murid').toLowerCase();
+                    setCurrentPage(currentRole === 'guru' ? 'RealProfileGuru' : 'Profile');
+                }}
+                onSave={(updatedData) => {
                     setProfileData(updatedData);
-                    setNamaLengkap(updatedData.name);
+                    setNamaLengkap(updatedData.name || updatedData.username);
 
-                    try {
-                        const savedSession = await AsyncStorage.getItem('user_session');
-                        if (savedSession) {
-                            const parsed = JSON.parse(savedSession);
-                            parsed.userData = { ...parsed.userData, ...updatedData };
-                            await AsyncStorage.setItem('user_session', JSON.stringify(parsed));
-                        }
-                    } catch (e) {
-                        console.log('Gagal memperbarui simpanan profil:', e);
-                    }
-
-                    setCurrentPage('Profile');
+                    const currentRole = (profileData.role || 'murid').toLowerCase();
+                    setCurrentPage(currentRole === 'guru' ? 'RealProfileGuru' : 'Profile');
                 }}
             />
         );
@@ -430,20 +452,8 @@ const App = () => {
             <EditAcademicProfilePage
                 profileData={profileData}
                 onCancel={() => setCurrentPage('Profile')}
-                onSave={async (updatedData) => {
+                onSave={(updatedData) => {
                     setProfileData(updatedData);
-
-                    try {
-                        const savedSession = await AsyncStorage.getItem('user_session');
-                        if (savedSession) {
-                            const parsed = JSON.parse(savedSession);
-                            parsed.userData = { ...parsed.userData, ...updatedData };
-                            await AsyncStorage.setItem('user_session', JSON.stringify(parsed));
-                        }
-                    } catch (e) {
-                        console.log('Gagal memperbarui simpanan profil akademik:', e);
-                    }
-
                     setCurrentPage('Profile');
                 }}
             />

@@ -3,6 +3,7 @@ import {
     StyleSheet, Text, View, TouchableOpacity, SafeAreaView,
     StatusBar, ScrollView, TextInput, ActivityIndicator, Alert
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import BackIconSvg from '../components/BackIconSvg';
 // Import API dari file service kamu
 import { updateAcademicProfile } from '../services/editProfileService';
@@ -44,13 +45,25 @@ const EditAcademicProfilePage = ({ profileData, onSave, onCancel }) => {
                 }
 
                 // Kembalikan data yang sudah diperbarui ke App.jsx
-                onSave({
+                const updatedFields = {
                     ...profileData,
-                    education: jenjangBaru,             // properti english
-                    jenjang_pendidikan: jenjangBaru,    // properti indonesia
-                    major: major,                       // properti english
-                    kelas_jurusan: major                // properti indonesia
-                });
+                    education: jenjangBaru,
+                    jenjang_pendidikan: jenjangBaru,
+                    major: major,
+                    kelas_jurusan: major
+                };
+
+                try {
+                    const savedSession = await AsyncStorage.getItem('user_session');
+                    if (savedSession) {
+                        const parsed = JSON.parse(savedSession);
+                        parsed.userData = { ...parsed.userData, ...updatedFields };
+                        await AsyncStorage.setItem('user_session', JSON.stringify(parsed));
+                    }
+                } catch (e) {
+                    console.log('Gagal memperbarui simpanan profil akademik di local storage:', e);
+                }
+                onSave(updatedFields);
 
             } else {
                 Alert.alert("Gagal Menyimpan", result.message || "Pastikan data sudah benar.");

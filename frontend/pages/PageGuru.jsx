@@ -194,7 +194,7 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
             <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
                 <View style={styles.headerBackground}>
                     <Text style={styles.welcomeText}>Halo,</Text>
-                    <Text style={styles.nameText}>{guruData?.nama || 'Guru'}!</Text>
+                    <Text style={styles.nameText}>{guruData?.name || 'Guru'}!</Text>
                 </View>
 
                 {/* CARD: SESI HARI INI */}

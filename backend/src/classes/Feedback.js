@@ -1,19 +1,20 @@
 class Feedback {
-  #idFeedback;
-  #rating;
-  #komentar;
-  constructor(rating, komentar) {
-    this._rating      = rating;        
-    this._komentar    = komentar;
-  }
+    #idFeedback;
+    #rating;
+    #komentar;
 
-  getRating() {
-    return this.#rating
-  }
- 
-  getKomentar() {
-    return this.#komentar
-  }
+    constructor(rating, komentar) {
+        this.#rating = rating ? Number(rating) : 0;
+        this.#komentar = komentar;
+    }
+
+    getRating() {
+        return this.#rating;
+    }
+
+    getKomentar() {
+        return this.#komentar;
+    }
 }
 
 module.exports = Feedback;

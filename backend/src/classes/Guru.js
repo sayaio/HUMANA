@@ -9,17 +9,22 @@ class Guru extends User {
     #daftarPesanan;
     #daftarFeedback;
     #isActive;
+    #noTelepon;
+    #jenisKelamin;
+    #alamat;
 
-    constructor(username, email, password, nama_user, id, isActive) {
+    constructor(username, email, password, nama_user, id, isActive, no_telepon = '', jenis_kelamin = '', alamat = '') {
         super(username, email, password, nama_user, id);
 
-        // Inisialisasi variabel sesuai deklarasi private di atas
         this.#portofolio = [];
         this.#daftarMateri = [];
         this.#riwayatSesi = [];
         this.#daftarPesanan = [];
         this.#daftarFeedback = [];
         this.#isActive = isActive;
+        this.#noTelepon = no_telepon;
+        this.setJenisKelamin(jenis_kelamin);
+        this.#alamat = alamat;
     }
 
     getRole() {
@@ -78,7 +83,6 @@ class Guru extends User {
         // Validasi sederhana untuk memastikan yang dimasukkan adalah objek feedback
         if (feedback instanceof Feedback) {
             this.#daftarFeedback.push(feedback);
-            console.log(`Feedback baru berhasil ditambahkan untuk ${this.namaUser}.`);
             return true;
         } else {
             console.error("Gagal: Data yang dimasukkan bukan objek Feedback.");
@@ -94,19 +98,27 @@ class Guru extends User {
         this.#isActive = value;
     }
 
+    setJenisKelamin(jenisKelamin) {
+        if (jenisKelamin === 'L') this.#jenisKelamin = 'Laki-laki';
+        else if (jenisKelamin === 'P') this.#jenisKelamin = 'Perempuan';
+        else this.#jenisKelamin = jenisKelamin;
+    }
+
     // 🛠️ TAMBAHKAN INI DI DALAM CLASS GURU 🛠️
     getProfile() {
         const baseProfile = super.getProfile();
-
-        // Ambil nama dari baseProfile (antisipasi perbedaan key backend/frontend)
         const currentName = baseProfile.name || baseProfile.nama || baseProfile.nama_user || '-';
 
         return {
             ...baseProfile,
-            name: currentName,                  // Untuk kebutuhan komponen Frontend
-            nama: currentName,                  // Untuk kebutuhan internal Backend
-            role: this.getRole(),               // Memastikan role-nya "Guru"
-            is_active: this.#isActive,  
+            name: currentName,
+            nama: currentName,
+            role: this.getRole(),
+            is_active: this.#isActive,
+            // 🛠️ Ekspos data baru ke frontend agar tidak bernilai undefined/kosong
+            no_telepon: this.#noTelepon || '-',
+            jenis_kelamin: this.#jenisKelamin || '-',
+            alamat: this.#alamat || '-',
             portofolio: this.#portofolio,
             daftarMateri: this.#daftarMateri,
             riwayatSesi: this.#riwayatSesi

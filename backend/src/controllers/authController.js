@@ -8,40 +8,39 @@ const login = async (req, res) => {
 
     try {
         conn = await pool.getConnection();
-
         const query = `
-SELECT
-    id_guru AS id, 
-    nama_guru AS nama_lengkap, 
-    email_guru AS email, 
-    password, 
-    'Guru' AS role,
-    username,
-    no_telepon,
-    jenis_kelamin,
-    alamat,
-    is_active,
-    NULL AS kelas,
-    NULL AS jurusan
-FROM Guru WHERE email_guru = ? OR username = ?
+        SELECT
+            id_guru AS id, 
+            nama_guru AS nama_lengkap, 
+            email_guru AS email, 
+            password, 
+            'Guru' AS role,
+            username,
+            no_telepon,
+            jenis_kelamin,
+            alamat,
+            is_active,
+            NULL AS kelas,
+            NULL AS jurusan
+        FROM Guru WHERE email_guru = ? OR username = ?
 
-UNION ALL
+        UNION ALL
 
-SELECT 
-    id_murid AS id, 
-    nama_murid AS nama_lengkap, 
-    email, 
-    password, 
-    'Murid' AS role,
-    username,       
-    no_telepon,
-    jenis_kelamin,
-    alamat,
-    NULL AS is_active,   -- ← Diisi NULL sebagai penyeimbang struktur UNION tabel Murid
-    kelas,
-    jurusan
-FROM Murid WHERE email = ? OR username = ?
-`;
+        SELECT 
+            id_murid AS id, 
+            nama_murid AS nama_lengkap, 
+            email, 
+            password, 
+            'Murid' AS role,
+            username,       
+            no_telepon,
+            jenis_kelamin,
+            alamat,
+            NULL AS is_active,   -- ← Diisi NULL sebagai penyeimbang struktur UNION tabel Murid
+            kelas,
+            jurusan
+        FROM Murid WHERE email = ? OR username = ?
+        `;
 
         // Eksekusi kueri dengan 4 parameter pengikat (binding parameters)
         const rows = await conn.query(query, [email, email, email, email]);
@@ -60,11 +59,14 @@ FROM Murid WHERE email = ? OR username = ?
                     dataDB.username,
                     dataDB.email,
                     dataDB.password,
-                    dataDB.nama_lengkap, // Menjadi nama_user di internal class
+                    dataDB.nama_lengkap,
                     dataDB.id,
-                    statusToggleBoolean
+                    statusToggleBoolean,
+                    dataDB.no_telepon,   
+                    dataDB.jenis_kelamin,  
+                    dataDB.alamat        
                 );
-                console.log(userAktif);
+                console.log("Objek Guru Berhasil Dibuat:", userAktif.getProfile());
             } else if (dataDB.role === 'Murid') {
                 userAktif = new Murid(
                     dataDB.username,
