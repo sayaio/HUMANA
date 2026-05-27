@@ -28,12 +28,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
     const handleToggleAvailability = async (newValue) => {
         const idGuruTerpilih = guruData?.id || guruData?.id_guru; // Pastikan penamaan properti ID sesuai data login kamu
-
-        console.log("=== [FRONTEND] TRIGGER TOGGLE ===");
-        console.log("ID Guru Terdeteksi:", idGuruTerpilih);
-        console.log("Nilai Toggle Baru (boolean):", newValue);
-        console.log("Isi guruData asli:", guruData);
-
         if (!idGuruTerpilih) {
             Alert.alert('Data Tidak Valid', 'Gagal memperbarui database. ID Guru tidak ditemukan.');
             return;
@@ -44,10 +38,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
         // Tembak service API
         const result = await updateAvailabilityProfile(idGuruTerpilih, newValue);
-
-        console.log("=== [FRONTEND] RESPONSE FROM SERVICE ===");
-        console.log("Result Object:", result);
-        console.log("Apakah result.success bernilai true?:", !!result?.success);
 
         if (result && result.success) {
 

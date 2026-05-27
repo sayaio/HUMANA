@@ -23,7 +23,7 @@ import {
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const ActivityGuruPage = ({ guruData, onNavigate }) => {
-    const idGuru = guruData?.id_guru || 1; // Fallback jika guruData belum ter-inject sempurna
+    const idGuru = guruData?.id; // Fallback jika guruData belum ter-inject sempurna
 
     const [activeTab, setActiveTab] = useState('Permintaan');
     const [selectedSesi, setSelectedSesi] = useState(null);

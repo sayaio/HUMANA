@@ -79,7 +79,7 @@ const updateAvailability = async (req, res) => {
             message: `Status ketersediaan guru berhasil diubah menjadi ${is_active ? 'Aktif' : 'Nonaktif'}.`
         });
     } catch (error) {
-        console.error("🔴 [BACKEND] ERROR EXECUTING QUERY:", error);
+        console.error("[BACKEND] ERROR EXECUTING QUERY:", error);
         return res.status(500).json({ success: false, message: 'Gagal memperbarui status ketersediaan.' });
     }
 };

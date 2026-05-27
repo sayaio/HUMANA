@@ -156,8 +156,12 @@ const PageGuru = ({ guruData, onNavigate }) => {
                             </View>
                         </>
                     ) : (
-                        <View style={{ padding: 25, alignItems: 'center' }}>
-                            <Text style={{ color: '#888', fontSize: 13 }}>Belum ada sesi mengajar yang dikonfirmasi.</Text>
+                        /* UBAH: Tampilan card kosong disamakan konsepnya dengan murid (Center & Menggunakan Emoji) */
+                        <View style={{ paddingVertical: 36, alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ fontSize: 36, marginBottom: 8 }}>🏖️</Text>
+                            <Text style={{ fontSize: 14, color: '#999', fontFamily: 'SF-Pro-Display-Regular', textAlign: 'center' }}>
+                                Tidak ada sesi mengajar hari ini.
+                            </Text>
                         </View>
                     )}
                 </View>
