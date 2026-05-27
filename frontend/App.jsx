@@ -256,6 +256,10 @@ const App = () => {
             <PageGuru
                 guruData={profileData}
                 onNavigate={handleGlobalNavigate}
+                onSelectSubject={subjectData => {
+                    setSelectedSubject(subjectData);
+                    setCurrentPage('Materi');
+                }}
             />
         );
     }
@@ -451,7 +455,7 @@ const App = () => {
             <MateriPage
                 id_mapel={selectedSubject?.id_mapel}
                 subjectName={selectedSubject?.subjectName}
-                onBack={() => setCurrentPage('Home')}
+                onBack={() => handleGlobalNavigate('Home')}
                 onChapterSelect={materiData => {
                     setSelectedChapter(materiData);
                     setCurrentPage('Detail');

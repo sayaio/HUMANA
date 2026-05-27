@@ -3,22 +3,37 @@ import {
     StyleSheet,
     Text,
     View,
+    Image,
     ScrollView,
     TouchableOpacity,
     StatusBar,
     useWindowDimensions,
     ActivityIndicator,
     Alert,
-    Image
+    Animated,
+    Modal, Dimensions, PanResponder
 } from 'react-native';
 import { Calendar, BookOpen, Wallet, MousePointerClick, Home, Activity, MessageCircle, User } from 'lucide-react-native';
+const { width, height } = Dimensions.get('window');
 
 // Import service yang sudah diperbarui
 import { fetchPermintaanBaru, terimaPermintaanSesiAPI, fetchSesiDikonfirmasi } from '../services/matchingService';
+import { fetchAllMapel } from '../services/MateriService';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
-const PageGuru = ({ guruData, onNavigate }) => {
+const SUBJECT_ICONS = {
+    'Matematika': require('../assets/matematika.png'),
+    'Informatika': require('../assets/informatika.png'),
+    'Biologi': require('../assets/biologi.png'),
+    'Kimia': require('../assets/kimia.png'),
+    'Fisika': require('../assets/fisika.png'),
+    'Sejarah': require('../assets/sejarah.png'),
+    'Sosiologi': require('../assets/sosiologi.png'),
+    'Bahasa Inggris': require('../assets/inggris.png'),
+};
+
+const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
     const { width } = useWindowDimensions();
 
     const [permintaan, setPermintaan] = useState([]);
@@ -101,6 +116,77 @@ const PageGuru = ({ guruData, onNavigate }) => {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
     };
 
+    // Tes materi
+    const [isMateriVisible, setIsMateriVisible] = useState(false);
+    const [slideAnim] = useState(new Animated.Value(height));
+    const [allSubjects, setAllSubjects] = useState([]);
+    const [loadingMapel, setLoadingMapel] = useState(false);
+
+    useEffect(() => {
+        if (isMateriVisible) {
+            Animated.timing(slideAnim, {
+                toValue: 0, duration: 300, useNativeDriver: true,
+            }).start();
+        }
+    }, [isMateriVisible]);
+
+    const closeMateriSheet = () => {
+        Animated.timing(slideAnim, {
+            toValue: height, duration: 250, useNativeDriver: true,
+        }).start(() => setIsMateriVisible(false));
+    };
+
+    const panResponder = useState(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: (_, g) => g.dy > 5,
+            onPanResponderMove: (_, g) => { if (g.dy > 0) slideAnim.setValue(g.dy); },
+            onPanResponderRelease: (_, g) => {
+                if (g.dy > 120 || g.vy > 0.5) {
+                    closeMateriSheet();
+                } else {
+                    Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
+                }
+            },
+        })
+    )[0];
+
+    useEffect(() => {
+        if (!isMateriVisible) return;
+        const load = async () => {
+            setLoadingMapel(true);
+            try {
+                const data = await fetchAllMapel();
+                setAllSubjects(Array.isArray(data) ? data : (data ? [data] : []));
+            } catch (err) {
+                console.error('[HomePage] Gagal fetch mapel:', err);
+            } finally {
+                setLoadingMapel(false);
+            }
+        };
+        load();
+    }, [isMateriVisible]);
+
+    const renderSubjectItem = (subject) => {
+        const icon = SUBJECT_ICONS[subject.nama_mapel] || LOGO_SOURCE;
+        return (
+            <TouchableOpacity
+                key={subject.id_mapel || Math.random()}
+                style={styles.subjectItemContainer}
+                onPress={() => {
+                    closeMateriSheet();
+                    if (onSelectSubject) onSelectSubject({ id_mapel: subject.id_mapel, subjectName: subject.nama_mapel });
+                }}
+            >
+                <View style={styles.subjectIconBox}>
+                    <Image source={icon} style={styles.subjectIconImage} resizeMode="contain" />
+                </View>
+                <Text style={styles.subjectItemText}>{subject.nama_mapel}</Text>
+            </TouchableOpacity>
+        );
+    };
+
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
@@ -173,8 +259,8 @@ const PageGuru = ({ guruData, onNavigate }) => {
                             <View style={styles.iconContainer}><Calendar color="#2D6A61" size={28} /></View>
                             <Text style={styles.menuButtonText}>Jadwal Saya</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.menuItemButton}>
-                            <View style={styles.iconContainer}><BookOpen color="#2D6A61" size={28} /></View>
+                        <TouchableOpacity style={styles.menuItemButton} onPress={() => setIsMateriVisible(true)}>
+                            <View style={styles.iconContainer} ><BookOpen color="#2D6A61" size={28} /></View>
                             <Text style={styles.menuButtonText}>Materi</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.menuItemButton}>
@@ -278,6 +364,42 @@ const PageGuru = ({ guruData, onNavigate }) => {
                     <Text style={styles.tabLabel}>Profile</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* ── Bottom Sheet Materi ───────────────────────────────────── */}
+            <Modal
+                visible={isMateriVisible}
+                animationType="fade"
+                transparent
+                onRequestClose={closeMateriSheet}
+                statusBarTranslucent
+                presentationStyle="overFullScreen"
+            >
+                <View style={styles.modalOverlay}>
+                    <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={closeMateriSheet} />
+                    <Animated.View style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}>
+                        <View style={styles.sheetHandleArea} {...panResponder.panHandlers}>
+                            <View style={styles.sheetHandle} />
+                        </View>
+                        {loadingMapel ? (
+                            <View style={[styles.centerContent, { paddingVertical: 40 }]}>
+                                <ActivityIndicator size="large" color="#284B7A" />
+                                <Text style={styles.loadingText}>Memuat pelajaran...</Text>
+                            </View>
+                        ) : (
+                            <ScrollView showsVerticalScrollIndicator={false}>
+                                <Text style={styles.sheetTitle}>Semua Pelajaran</Text>
+                                <View style={styles.subjectGrid}>
+                                    {allSubjects.length > 0
+                                        ? allSubjects.map(renderSubjectItem)
+                                        : <Text style={styles.emptyText}>Tidak ada data mata pelajaran.</Text>
+                                    }
+                                </View>
+                            </ScrollView>
+                        )}
+                    </Animated.View>
+                </View>
+            </Modal>
+
         </View>
     );
 };
@@ -328,7 +450,27 @@ const styles = StyleSheet.create({
     centerTabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', borderWidth: 4, borderColor: '#FFF', elevation: 4 },
     centerLogoImage: { width: 32, height: 32 },
     centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
-    btnDanger: { backgroundColor: '#DC3545' } // Menambahkan fallback style untuk btnDanger jika belum ada
+    btnDanger: { backgroundColor: '#DC3545' }, // Menambahkan fallback style untuk btnDanger jika belum ada
+    loadingText: { fontFamily: 'SF-Pro-Display-Regular', marginTop: 10, color: '#999', fontSize: 12 },
+
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+    bottomSheet: {
+        backgroundColor: '#FFF', borderTopLeftRadius: 28, borderTopRightRadius: 28,
+        paddingHorizontal: 20, paddingTop: 8, maxHeight: '85%',
+        paddingBottom: 100, marginBottom: -60,
+    },
+    sheetHandleArea: { width: '100%', alignItems: 'center', paddingVertical: 12 },
+    sheetHandle: { width: 44, height: 4, backgroundColor: '#DDE2EA', borderRadius: 2 },
+    sheetTitle: { fontFamily: 'SF-Pro-Display-Bold', fontSize: 17, color: '#1A1A2E', marginBottom: 16 },
+    subjectGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' },
+    subjectItemContainer: { width: '25%', alignItems: 'center', marginBottom: 20 },
+    subjectIconBox: {
+        width: 58, height: 58, borderRadius: 14,
+        justifyContent: 'center', alignItems: 'center', marginBottom: 8, backgroundColor: '#F0F3F8',
+    },
+    subjectIconImage: { width: 48, height: 48, borderRadius: 10 },
+    subjectItemText: { fontFamily: 'SF-Pro-Display-Regular', fontSize: 11, color: '#444', textAlign: 'center' },
+    emptyText: { fontFamily: 'SF-Pro-Display-Regular', color: '#999', marginLeft: 10 },
 });
 
 export default PageGuru;
