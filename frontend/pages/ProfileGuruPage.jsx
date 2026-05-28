@@ -27,7 +27,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
     // Fungsi untuk memuat data profil murni dari database
     const loadLatestProfileData = useCallback(async () => {
         if (!idGuru) return;
-
+        console.log(idGuru);
         const response = await fetchGuruRating(idGuru);
         if (response && response.success) {
             // Sinkronisasikan data ke Parent State/Context utama aplikasi
@@ -149,12 +149,14 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                 <View style={styles.profileMainCard}>
                     <View style={styles.avatarCircle}>
                         <Text style={styles.avatarText}>
-                            {guruData?.name ? guruData.name.substring(0, 2).toUpperCase() : 'AM'}
+                            {guruData?.name ? guruData.name.substring(0, 2).toUpperCase() : 'RN'}
                         </Text>
                     </View>
                     <View style={styles.profileMetaInfo}>
-                        <Text style={styles.guruName}>{guruData?.name || 'Ahmad Muhsin'}</Text>
-                        <Text style={styles.guruEmail}>{guruData?.email_guru || 'ahmadmuhsin@gmail.com'}</Text>
+                        {/* Gunakan guruData.nama atau guruData.name */}
+                        <Text style={styles.guruName}>{guruData?.name || guruData?.nama || 'Nama Guru'}</Text>
+                        {/* Pastikan membaca .email sesuai payload dataResponse backend */}
+                        <Text style={styles.guruEmail}>{guruData?.email || 'email@humana.id'}</Text>
                     </View>
                 </View>
 

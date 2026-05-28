@@ -62,7 +62,7 @@ class Guru extends User {
 
     getRating() {
         if (this.#daftarFeedback.length === 0) return 0;
-
+        console.log(this.#daftarFeedback);
         const total = this.#daftarFeedback.reduce((acc, f) => {
             // Memanggil getter getRating() sesuai gambar class Feedback Anda
             return acc + f.getRating();
@@ -103,11 +103,10 @@ class Guru extends User {
         else if (jenisKelamin === 'P') this.#jenisKelamin = 'Perempuan';
         else this.#jenisKelamin = jenisKelamin;
     }
-
-    // 🛠️ TAMBAHKAN INI DI DALAM CLASS GURU 🛠️
+    
     getProfile() {
         const baseProfile = super.getProfile();
-        const currentName = baseProfile.name || baseProfile.nama || baseProfile.nama_user || '-';
+        const currentName = baseProfile.name || baseProfile.nama || baseProfile.nama_guru || '-';
 
         return {
             ...baseProfile,

@@ -3,19 +3,19 @@ const Guru = require('../classes/Guru');
 const Feedback = require('../classes/Feedback');
 
 const submitFeedback = async (req, res) => {
-    const { id_sesi, komentar, rating } = req.body;
+    const { id_pemesanan, komentar, rating } = req.body;
 
     try {
         // 1. Simpan feedback baru ke tabel Feedback
         await pool.query(
-            'INSERT INTO Feedback (id_sesi, komentar, rating) VALUES (?, ?, ?)',
-            [id_sesi, komentar, rating]
+            'INSERT INTO Feedback (id_pemesanan, komentar, rating) VALUES (?, ?, ?)',
+            [id_pemesanan, komentar, rating]
         );
 
         // 2. Cari tahu id_guru dari id_sesi ini (Asumsi tabel Sesi memiliki kolom id_guru)
-        const [sesiRows] = await pool.query(
-            'SELECT id_guru FROM Sesi WHERE id_sesi = ?',
-            [id_sesi]
+        const sesiRows = await pool.query(
+            'SELECT id_guru FROM Pemesanan WHERE id_pemesanan = ?',
+            [id_pemesanan]
         );
 
         if (sesiRows.length === 0) {
@@ -24,18 +24,18 @@ const submitFeedback = async (req, res) => {
         const id_guru = sesiRows[0].id_guru;
 
         // 3. Ambil data profil Guru untuk keperluan instansiasi Class Guru
-        const [guruRows] = await pool.query(
-            'SELECT * FROM Guru WHERE Guru.id_guru = ?',
+        const guruRows = await pool.query(
+            'SELECT * FROM Guru WHERE id_guru = ?',
             [id_guru]
         );
         const gData = guruRows[0];
 
         // 4. Ambil semua data feedback milik Guru ini dari database untuk dimasukkan ke objek
         // Asumsi: Kita join Feedback ke Sesi untuk tahu feedback mana saja yang ditujukan ke id_guru ini
-        const [allFeedbacks] = await pool.query(
+        const allFeedbacks = await pool.query(
             `SELECT f.* FROM Feedback f 
-             INNER JOIN Sesi s ON f.id_sesi = s.id_sesi 
-             WHERE s.id_guru = ?`,
+             INNER JOIN Pemesanan p ON f.id_pemesanan = p.id_pemesanan 
+             WHERE p.id_guru = ?`,
             [id_guru]
         );
         console.log(`Log Sistem: Menghitung feedback untuk Guru ID ${id_guru}`);
@@ -81,58 +81,76 @@ const getGuruRating = async (req, res) => {
     const { id_guru } = req.params;
 
     try {
-        // 1. Ambil data dasar Guru
+        // 1. Ambil data dasar Guru (Ambil kolom secara eksplisit agar aman)
         const guruRows = await pool.query(
-            'SELECT * FROM Guru WHERE id_guru = ?',
+            'SELECT id_guru, username, email_guru, password, nama_guru, is_active, no_telepon, jenis_kelamin, alamat FROM Guru WHERE id_guru = ?',
             [id_guru]
         );
 
-        if (guruRows.length === 0) {
+        // Menangani beberapa driver pack yang membungkus baris data di dalam array extra
+        const rows = guruRows.rows || guruRows;
+
+        if (!rows || rows.length === 0) {
             return res.status(444).json({ success: false, message: 'Guru tidak ditemukan' });
         }
-        const gData = guruRows[0];
+        const gData = rows[0];
 
         // 2. Ambil seluruh feedback untuk menghitung rating riil secara OOP
-        const allFeedbacks = await pool.query(
-            `SELECT f.* FROM Feedback f 
+        const feedbackRows = await pool.query(
+            `SELECT f.rating, f.komentar FROM Feedback f 
              INNER JOIN Pemesanan p ON f.id_pemesanan = p.id_pemesanan
              WHERE p.id_guru = ?`,
             [id_guru]
         );
+        const allFeedbacks = feedbackRows.rows || feedbackRows;
 
-        // 3. Instansiasi Objek Guru
+        // 3. Instansiasi Objek Guru (Samakan persis dengan di authController/login)
+        const statusToggleBoolean = gData.is_active == 1;
         const objekGuru = new Guru(
-            gData.username, gData.email, gData.password, gData.nama_user,
-            gData.id_guru, gData.is_active, gData.no_telepon, gData.jenis_kelamin, gData.alamat
+            gData.username,
+            gData.email_guru, // Gunakan email_guru sesuai database
+            gData.password,
+            gData.nama_guru,
+            gData.id_guru,
+            statusToggleBoolean,
+            gData.no_telepon,
+            gData.jenis_kelamin,
+            gData.alamat
         );
 
-        // 4. Masukkan kumpulan feedback ke dalam Objek Guru
-        allFeedbacks.forEach(fb => {
-            const objekFeedback = new Feedback(fb.rating, fb.komentar);
-            objekGuru.addFeedback(objekFeedback);
-        });
+        // 4. Masukkan kumpulan feedback ke dalam Objek Guru jika ada
+        if (allFeedbacks && allFeedbacks.length > 0) {
+            allFeedbacks.forEach(fb => {
+                const objekFeedback = new Feedback(Number(fb.rating), fb.komentar);
+                objekGuru.addFeedback(objekFeedback);
+            });
+        }
 
         // 5. Ambil data gabungan lewat getProfile()
         const profilLengkap = objekGuru.getProfile();
 
-        // 6. Tambahkan data rating dinamis hasil kalkulasi getRating() ke dalam response
+        // 6. HITUNG RATING secara OOP dari method class Guru!
+        const ratingKalkulasi = objekGuru.getRating();
+
+        // 7. Bentuk respons dengan key yang konsisten sesuai kebutuhan Frontend
         const dataResponse = {
             ...profilLengkap,
             id: gData.id_guru,
             id_guru: gData.id_guru,
             username: gData.username,
-            email: gData.email,             // <-- Ini yang bikin emailnya hilang kalau gak dikirim!
-            name: gData.nama_guru || gData.nama_user || gData.nama || profilLengkap.name, // Ambil langsung dari DB
-            nama: gData.nama_guru || gData.nama_user || gData.nama || profilLengkap.nama,
+            email: gData.email_guru,
+            name: gData.nama_guru,
+            nama: gData.nama_guru,
             no_telepon: gData.no_telepon,
-            jenis_kelamin: gData.jenis_kelamin,
+            jenis_kelamin: profilLengkap.jenis_kelamin, // Mengambil hasil yang sudah di-format oleh class Guru ('Perempuan')
             alamat: gData.alamat,
+            rating: ratingKalkulasi, // <--- SEKARANG RATING DINAMIS SUDAH MASUK!
             role: 'Guru'
         };
 
         return res.status(200).json({
             success: true,
-            data: dataResponse // <-- Kirim data yang sudah di-mapping dengan aman
+            data: dataResponse
         });
 
     } catch (error) {

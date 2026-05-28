@@ -33,7 +33,7 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
     setIsSubmitting(true);
     try {
       const payload = {
-        id_sesi: sessionData?.id_pemesanan || sessionData?.id_sesi,
+        id_pemesanan: sessionData?.id_pemesanan,
         komentar: feedback,
         rating: rating
       };
