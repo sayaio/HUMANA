@@ -4,6 +4,17 @@ const pool = require('../database');
 const updateBasic = async (req, res) => {
     const { email, username, phone, gender, domicile, role } = req.body;
 
+    // ==========================================
+    // === REVISI VALIDASI IMK: BACKEND GUARD ===
+    // ==========================================
+    if (phone && isNaN(phone)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Gagal memperbarui: Format nomor telepon harus berupa angka murni!'
+        });
+    }
+    // ==========================================
+
     try {
         let genderDb = null;
         if (gender) {

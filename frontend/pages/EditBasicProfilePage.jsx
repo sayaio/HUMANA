@@ -18,6 +18,20 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSave = async () => {
+
+        // ==========================================
+        // === REVISI VALIDASI IMK: ANGKA MURNI ===
+        // ==========================================
+        const numericRegex = /^[0-9]+$/;
+        if (!numericRegex.test(phone)) {
+            Alert.alert(
+                "Format Salah", 
+                "Nomor telepon tidak valid! Mohon masukkan angka murni (tidak boleh mengandung huruf atau karakter khusus)."
+            );
+            return; // Gagalkan proses pengiriman ke server
+        }
+        // ==========================================
+        
         setIsLoading(true);
         try {
             // Menyiapkan payload untuk dikirim ke backend

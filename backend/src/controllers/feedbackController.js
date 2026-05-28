@@ -5,6 +5,20 @@ const Feedback = require('../classes/Feedback');
 const submitFeedback = async (req, res) => {
     const { id_pemesanan, komentar, rating } = req.body;
 
+    // =========================================================================
+    // === REVISI VALIDASI IMK: DETEKSI SIMULASI SQL INJECTION RINGAN =======
+    // =========================================================================
+    // Memblokir karakter pemutus string SQL (') atau komentar SQL (--) demi keamanan tambahan
+    const sqlInjectionPattern = /['"-\/]/g;
+
+    if (komentar && sqlInjectionPattern.test(komentar)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Pengiriman feedback ditolak: Teks ulasan mengandung karakter simbol ilegal yang berpotensi membahayakan sistem!'
+        });
+    }
+    // =========================================================================
+
     try {
         // 1. Simpan feedback baru ke tabel Feedback
         await pool.query(
