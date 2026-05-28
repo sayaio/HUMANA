@@ -18,8 +18,11 @@ import ChatPage from './pages/ChatPage';
 import ChatRoomPage from './pages/ChatRoomPage';
 import PageGuru from './pages/PageGuru';
 import ProfileGuruPage from './pages/ProfileGuruPage';
-import ActivityGuruPage from './pages/ActivityGuruPage'; // Memastikan berkas Aktivitas Guru terdaftar
+import ActivityGuruPage from './pages/ActivityGuruPage'; 
 import PesanSesiPage from './pages/PesanSesiPage';
+import MencariPengajarPage from './pages/MencariPengajarPage';
+import DetailPembayaranPage from './pages/DetailPembayaranPage';
+import PembayaranPage from './pages/PembayaranPage';
 
 const App = () => {
     const [currentPage, setCurrentPage] = useState('Splash');
@@ -47,10 +50,10 @@ const App = () => {
     const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
     const [selectedSession, setSelectedSession] = useState(null);
     const [bookingSessionData, setBookingSessionData] = useState(null);
+    
+    // PERBAIKAN DI SINI: Mendaftarkan fungsi pengubah state agar navigasi bisa merubah data
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
 
-    // ==========================================
-    // PENGECEKAN SESI AKTIF SAAT APLIKASI DIBUKA
-    // ==========================================
     useEffect(() => {
         const checkLoginSession = async () => {
             try {
@@ -153,9 +156,6 @@ const App = () => {
         }
     };
 
-    // ==========================================
-    // FUNGSI LOGOUT (BARU DITAMBAHKAN)
-    // ==========================================
     const handleLogout = async () => {
         try {
             await AsyncStorage.removeItem('user_session');
@@ -175,7 +175,6 @@ const App = () => {
             setEmail('');
             console.log('🚪 [App.jsx] Sesi berhasil dihapus. Keluar...');
 
-            // Reset State Global ke kondisi awal
             setNamaLengkap('');
             setEmail('');
             setProfileData({
@@ -183,7 +182,6 @@ const App = () => {
                 phone: '-', gender: '-', domicile: '-', education: '-', major: '-',
             });
 
-            // Lempar kembali ke halaman Login
             setCurrentPage('Login');
         } catch (error) {
             console.error('❌ Gagal melakukan logout:', error);
@@ -191,9 +189,6 @@ const App = () => {
         }
     };
 
-    // ==========================================
-    // GLOBAL NAVIGATION HANDLER (DIPERBAIKI)
-    // ==========================================
     const handleGlobalNavigate = (page, tab) => {
         console.log(`🧭 [App.jsx] Global Navigate to: ${page}, tab: ${tab}`);
         if (tab) setActivityTab(tab);
@@ -211,7 +206,7 @@ const App = () => {
         if (page === 'HomeGuru') {
             setCurrentPage('PageGuru');
         } else if (page === 'ActivityGuru') {
-            setCurrentPage('RealActivityGuru'); // Dialihkan ke route komponen ActivityGuruPage baru
+            setCurrentPage('RealActivityGuru'); 
         } else if (page === 'ChatGuru') {
             setCurrentPage('Chat');
         } else if (page === 'ProfileGuru') {
@@ -220,9 +215,6 @@ const App = () => {
             setCurrentPage(page);
         }
     };
-    // ==========================================
-    // ROUTER SYSTEM (DENGAN LOCK STRATEGY)
-    // ==========================================
 
     if (isAppLoading) {
         return <SplashScreen />;
@@ -251,9 +243,6 @@ const App = () => {
         return <ResetPasswordPage onBack={() => setCurrentPage('Login')} />;
     }
 
-    // ==========================================
-    // ROUTE KHUSUS GURU
-    // ==========================================
     if (currentPage === 'PageGuru') {
         return (
             <PageGuru
@@ -275,27 +264,20 @@ const App = () => {
                 onLogout={handleLogout}
                 onRefreshData={async (newData) => {
                     console.log("🔄 [App.jsx] Memperbarui profileData & AsyncStorage dari child:", newData);
-
-                    // 1. Update State React agar UI langsung berubah secara realtime
                     setProfileData(newData);
-
-                    // 2. Selaraskan ke AsyncStorage agar perubahan permanen saat aplikasi dibuka lagi
                     try {
                         const savedSession = await AsyncStorage.getItem('user_session');
                         if (savedSession) {
                             const parsedSession = JSON.parse(savedSession);
-
-                            // Gabungkan data lama dengan field yang baru diperbarui (seperti rating atau is_active)
                             const updatedSession = {
                                 ...parsedSession,
                                 userData: {
                                     ...parsedSession.userData,
-                                    ...newData, // berisi rating baru atau is_active baru
-                                    nama_guru: newData.name, // sesuaikan mapping field database Anda
+                                    ...newData,
+                                    nama_guru: newData.name,
                                     is_active: newData.is_active ? 1 : 0
                                 }
                             };
-
                             await AsyncStorage.setItem('user_session', JSON.stringify(updatedSession));
                             console.log('💾 [App.jsx] AsyncStorage berhasil disinkronisasi dengan data baru.');
                         }
@@ -316,15 +298,12 @@ const App = () => {
         );
     }
 
-    // ==========================================
-    // ROUTE KHUSUS MURID / UMUM
-    // ==========================================
     if (currentPage === 'Home') {
         return (
             <HomePage
                 namaLengkap={namaLengkap}
                 email={email}
-                onLogout={handleLogout} // <-- Sekarang aman digunakan
+                onLogout={handleLogout}
                 onSelectSubject={subjectData => {
                     setSelectedSubject(subjectData);
                     setCurrentPage('Materi');
@@ -345,7 +324,7 @@ const App = () => {
         return (
             <PesanSesiPage
                 onBack={() => setCurrentPage('Home')}
-                userId={profileData.id}  // ← TAMBAH INI
+                userId={profileData.id} 
                 onConfirmOrder={(data) => {
                     setBookingSessionData(data);
                     setCurrentPage('MencariPengajar');
@@ -356,40 +335,45 @@ const App = () => {
 
     if (currentPage === 'MencariPengajar') {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF' }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>🔍 Mencari Pengajar...</Text>
-                <Text style={{ color: '#888', marginBottom: 30 }}>Halaman ini sedang dalam pengembangan</Text>
-                <TouchableOpacity
-                    style={{ backgroundColor: '#1DB954', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 20 }}
-                    onPress={() => setCurrentPage('DetailPembayaran')}
-                >
-                    <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Simulasi: Pengajar Ditemukan →</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={{ marginTop: 15 }} onPress={() => setCurrentPage('PesanSesi')}>
-                    <Text style={{ color: '#666' }}>← Kembali</Text>
-                </TouchableOpacity>
-            </View>
+            <MencariPengajarPage
+                sessionData={bookingSessionData}
+                onCancel={() => setCurrentPage('PesanSesi')}
+                onMatchSuccess={() => {
+                    setCurrentPage('DetailPembayaran');
+                }}
+                onMatchFailed={() => {
+                    setCurrentPage('PesanSesi');
+                }}
+            />
         );
     }
 
     if (currentPage === 'DetailPembayaran') {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF' }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>💳 Detail Pembayaran</Text>
-                <Text style={{ color: '#888', marginBottom: 30 }}>Halaman ini sedang dalam pengembangan</Text>
-                <TouchableOpacity
-                    style={{ backgroundColor: '#1DB954', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 20 }}
-                    onPress={() => {
-                        alert('Pembayaran Berhasil! Sesi belajar berhasil dijadwalkan.');
-                        setCurrentPage('Home');
-                    }}
-                >
-                    <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Simulasi: Bayar Sekarang</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={{ marginTop: 15 }} onPress={() => setCurrentPage('PesanSesi')}>
-                    <Text style={{ color: '#666' }}>← Kembali</Text>
-                </TouchableOpacity>
-            </View>
+            <DetailPembayaranPage
+                sessionData={bookingSessionData}
+                onBack={() => {
+                    // PERBAIKAN: Mengubah target halaman langsung ke Home
+                    setCurrentPage('Home');
+                }}
+                onPaymentSuccess={(method) => {
+                    setSelectedPaymentMethod(method);
+                    setCurrentPage('Pembayaran');
+                }}
+            />
+        );
+    }
+
+    if (currentPage === 'Pembayaran') {
+        return (
+            <PembayaranPage
+                sessionData={bookingSessionData}
+                method={selectedPaymentMethod}
+                onBack={() => setCurrentPage('DetailPembayaran')}
+                onFinishPayment={() => {
+                    setCurrentPage('Home');
+                }}
+            />
         );
     }
 
@@ -423,7 +407,7 @@ const App = () => {
             <ProfilePage
                 profileData={profileData}
                 onNavigate={(page) => setCurrentPage(page)}
-                onLogout={handleLogout} // <-- Sekarang aman digunakan
+                onLogout={handleLogout} 
             />
         );
     }

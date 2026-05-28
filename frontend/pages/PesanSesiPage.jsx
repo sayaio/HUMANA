@@ -722,21 +722,33 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 56 : 24, paddingBottom: 16,
-    borderBottomWidth: 1, borderBottomColor: '#E8E8E8', backgroundColor: '#FFFFFF',
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between',
+    paddingHorizontal: 16, 
+    // Menyesuaikan tinggi agar pas di bawah notch sesuai gambar
+    paddingTop: Platform.OS === 'ios' ? 60 : 40, 
+    paddingBottom: 16,
+    borderBottomWidth: 1, 
+    borderBottomColor: '#E8E8E8', 
+    backgroundColor: '#FFFFFF',
+    // PENTING: Menjamin Header berada di atas ScrollView
+    zIndex: 999, 
+    elevation: 5,
   },
     backBtn: {
-    flexDirection: 'row',    // Membuat ikon dan teks berjejer ke samping
-    alignItems: 'center',    // Membuat ikon dan teks lurus sejajar secara vertikal
-    paddingVertical: 5,
-    paddingHorizontal: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    // Memperbesar area klik (Hit Slop) agar mudah ditekan
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    marginLeft: -10,
   },
   backText: {
-    fontSize: 15,            // Ukuran teks 'Kembali'
-    color: '#000000',        // Warna teks hitam disamakan dengan ikon
-    marginLeft: 6,           // Memberikan jarak antara ikon panah dan teks
-    fontFamily: 'SF-Pro-Display-Bold',       // Membuat teks sedikit lebih tegas (opsional)
+    fontSize: 16,
+    color: '#000000',
+    marginLeft: 8,
+    fontWeight: '600',
   },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
   scrollContent: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },

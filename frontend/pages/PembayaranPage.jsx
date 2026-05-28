@@ -39,12 +39,12 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
         <View style={{ width: 60 }} />
       </View>
 
-      {/* ================= INFO MATERI (SINKRONISASI DATA FORMULIR) ================= */}
+      {/* ================= INFO MATERI ================= */}
       <View style={styles.materiSection}>
-        <Text style={styles.subjectTitle}>{sessionData?.mataPelajaran || sessionData?.mata_pelajaran || 'Matematika'}</Text>
+        <Text style={styles.subjectTitle}>{sessionData?.mataPelajaran || 'Matematika'}</Text>
         <Text style={styles.chapterText}>{sessionData?.materi || 'Relasi & Fungsi'}</Text>
         <View style={styles.divider} />
-        <Text style={styles.gradeText}>{sessionData?.jenjang || sessionData?.tingkatan || 'SMA - Kelas 12'}</Text>
+        <Text style={styles.gradeText}>{sessionData?.jenjang || 'SMA - Kelas 12'}</Text>
       </View>
 
       {/* ================= CARD 1: LOKASI & JADWAL ================= */}
@@ -68,7 +68,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
 
         <Text style={[styles.cardLabelTitle, { marginTop: 15 }]}>Durasi sesi</Text>
         <View style={styles.inputStyle}>
-          <Text style={styles.inputTextValue}>{sessionData?.waktuSesi || sessionData?.waktu_sesi || '07:00 - 09:00'}</Text>
+          <Text style={styles.inputTextValue}>{sessionData?.waktuSesi || '07:00 - 09:00'}</Text>
         </View>
       </View>
 
@@ -184,8 +184,8 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 3 },
   priceLabel: { fontSize: 13, color: '#555' },
   priceValue: { fontSize: 13, color: '#333', textAlign: 'right', minWidth: 90 },
-  totalLabel: { fontSize: 14, fontWeight: 'bold', color: '#000' },
-  totalValue: { fontSize: 14, fontWeight: 'bold', color: '#000', textAlign: 'right', minWidth: 90 },
+  totalLabel: { fontSize: 14, fontWeight: 'bold' },
+  totalValue: { fontSize: 14, fontWeight: 'bold' },
   payButton: { borderRadius: 25, paddingVertical: 16, alignItems: 'center', position: 'absolute', bottom: 35, left: 24, right: 24 },
   payButtonDisabled: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#000' },
   payButtonActive: { backgroundColor: '#3B7A57' },
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   notchIndicator: { width: 40, height: 4, backgroundColor: '#DDD', borderRadius: 2, alignSelf: 'center', marginBottom: 25 },
   methodOptionBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#F0F0F0', borderRadius: 16, padding: 16, marginBottom: 15 },
   optionIcon: { fontSize: 22, marginRight: 15 },
-  optionText: { fontSize: 16, fontWeight: 'bold', color: '#000' },
+  optionText: { fontSize: 16, fontWeight: 'bold' },
   dialogOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
   dialogBox: { width: '80%', backgroundColor: '#FFF', borderRadius: 20, padding: 25, alignItems: 'center' },
   dialogTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 25 },
