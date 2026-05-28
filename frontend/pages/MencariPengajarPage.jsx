@@ -147,7 +147,7 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
             {/* ================= AREA DETAIL (DIBUAT PAS DI BAWAH) ================= */}
             <View style={styles.detailSection}>
 
-                {/* Kartu Floating Diturunkan sesuai image_9f5328.png */}
+                {/* Kartu Floating */}
                 <View style={styles.floatingCard}>
                     <Animated.Image
                         source={require('../assets/mencari_icon.png')}
@@ -163,24 +163,36 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                 <View style={styles.contentWrapper}>
                     <Text style={styles.sectionTitle}>DETAIL PERMINTAAN</Text>
 
+                    {/* MATA PELAJARAN DINAMIS */}
                     <View style={styles.subjectBox}>
                         <View style={styles.subjectRow}>
                             <View>
                                 <Text style={styles.label}>Mata Pelajaran</Text>
-                                <Text style={styles.valueText}>{sessionData?.mata_pelajaran || 'Matematika'}</Text>
+                                <Text style={styles.valueText}>
+                                    {sessionData?.mata_pelajaran || sessionData?.nama_mapel || 'Mata Pelajaran'}
+                                </Text>
                             </View>
                             <Text style={styles.mathSymbol}>∑</Text>
                         </View>
                     </View>
 
                     <View style={styles.rowContainer}>
+                        {/* TINGKATAN DINAMIS */}
                         <View style={[styles.smallBox, { marginRight: 15 }]}>
                             <Text style={styles.label}>Tingkatan</Text>
-                            <Text style={styles.smallValueText}>{sessionData?.tingkatan || 'SMA Kelas 12'}</Text>
+                            <Text style={styles.smallValueText}>
+                                {sessionData?.jenjang ? `${sessionData.jenjang} - Kelas ${sessionData?.kelas || ''}` : (sessionData?.tingkatan || '-')}
+                            </Text>
                         </View>
+
+                        {/* WAKTU SESI DINAMIS */}
                         <View style={styles.smallBox}>
                             <Text style={styles.label}>Waktu Sesi</Text>
-                            <Text style={styles.smallValueText}>{sessionData?.waktu_sesi || '14:00 - 15:30'}</Text>
+                            <Text style={styles.smallValueText}>
+                                {sessionData?.waktu_mulai && sessionData?.waktu_selesai
+                                    ? `${sessionData.waktu_mulai} - ${sessionData.waktu_selesai}`
+                                    : (sessionData?.waktu_sesi || '-')}
+                            </Text>
                         </View>
                     </View>
 

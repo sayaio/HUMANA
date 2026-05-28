@@ -238,7 +238,8 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
 
     // === CORE HANDLE CONFIRM ===
     const handleConfirm = async () => {
-        if (!userId || !tanggal || !waktuMulai || !waktuSelesai || !jenjang || !kelas || !mataPelajaran || !selectedMateriId || !locationAddress) {
+        // Memastikan semua state esensial terisi
+        if (!userId || !tanggal || !waktuMulai || !waktuSelesai || !jenjang || !kelas || !mapelSelected || !selectedMateriId || !locationAddress) {
             Alert.alert('Form Belum Lengkap', 'Mohon lengkapi semua field atau pastikan Anda sudah login kembali.');
             return;
         }
@@ -249,11 +250,13 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
             const hari = String(tanggal.getDate()).padStart(2, '0');
             const tglDb = `${tahun}-${bulan}-${hari}`;
 
+            // Sesuaikan format datetime dengan requirement backend Anda (String biasa atau ISO String)
             const waktuMulaiFormatted = `${tglDb} ${waktuMulai}:00`;
             const waktuSelesaiFormatted = `${tglDb} ${waktuSelesai}:00`;
 
             const dataPemesanan = {
                 id_murid: userId,
+                id_mapel: mapelSelected.id, // Tambahkan ini jika backend membutuhkannya
                 id_materi: selectedMateriId,
                 waktu_mulai: waktuMulaiFormatted,
                 waktu_selesai: waktuSelesaiFormatted,
@@ -263,16 +266,20 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
             const result = await pemesananService.createPemesanan(dataPemesanan);
 
             if (result.success) {
-                Alert.alert('Sukses 🎉', 'Pemesanan sesi berhasil disimpan ke database!');
+                Alert.alert('Sukses 🎉', 'Pemesanan sesi berhasil disimpan!');
 
                 if (onConfirmOrder) {
+                    // SINKRONISASI: Samakan nama properti ini dengan apa yang diminta oleh page tujuan/sebelumnya
                     onConfirmOrder({
                         id_pemesanan: result.id_pemesanan,
                         tanggal: formatTanggal(tanggal),
-                        waktuSesi: `${waktuMulai} - ${waktuSelesai}`,
-                        jenjang: `${jenjang} - ${kelas}`,
-                        mataPelajaran,
-                        materi,
+                        waktu_sesi: `${waktuMulai} - ${waktuSelesai}`, // diubah ke snake_case jika perlu
+                        jenjang: jenjang,
+                        kelas: kelas,
+                        id_mapel: mapelSelected.id,
+                        nama_mapel: mataPelajaran,
+                        id_materi: selectedMateriId,
+                        nama_materi: materi,
                         lokasi: locationAddress,
                         koordinat: userLocation,
                     });
