@@ -99,6 +99,7 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
                             // 💡 TIPS: Jika layar "Sesi Aktif" berada di halaman yang sama,
                             // panggil fungsi fetch ulang Sesi Aktif kamu di sini agar UI langsung ter-update realtime.
                             // contoh: loadSesiDikonfirmasi();
+                            loadPermintaan();
                         } else {
                             Alert.alert("Gagal", res.message || "Terjadi kesalahan sistem.");
                         }

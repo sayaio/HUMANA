@@ -128,7 +128,6 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
                     <Text style={styles.subjectTitle}>{sessionData?.nama_mapel || 'Mata Pelajaran'}</Text>
                     <Text style={styles.chapterText}>{sessionData?.nama_materi || 'Materi Pembahasan'}</Text>
                     <View style={styles.divider} />
-                    {/* ✅ DINAMIS: Menggunakan data jenjang dan kelas dari DB */}
                     <Text style={styles.gradeText}>
                         {sessionData?.jenjang || 'Jenjang'} - Kelas {sessionData?.kelas || '-'}
                     </Text>
@@ -137,7 +136,6 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
                 {/* CARD UTAMA */}
                 <View style={styles.mainCard}>
                     <Text style={styles.inputLabel}>Lokasi Belajar</Text>
-                    {/* ✅ DINAMIS: Tipe lokasi (misal Rumah/Kampus) jika ada di data */}
                     <TextInput style={styles.disabledInput} value={sessionData?.tipe_lokasi || "Alamat Tujuan"} editable={false} />
                     <View style={styles.locationWrapper}>
                         <Text style={styles.pinIcon}>📍</Text>
@@ -181,19 +179,21 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
 
                     <Text style={styles.rincianTitle}>Rincian Pembayaran :</Text>
 
-                    {/* ✅ DINAMIS: Menampilkan nominal asli dari backend objek sessionData */}
+                    {/* 1. BIAYA SESI */}
                     <View style={styles.priceRow}>
-                        <Text style={styles.priceLabel}>Biaya Pembelajaran</Text>
-                        <Text style={styles.priceValue}>: {formatRupiah(sessionData?.biaya_belajar || sessionData?.harga)}</Text>
+                        <Text style={styles.priceLabel}>Biaya Sesi</Text>
+                        <Text style={styles.priceValue}>: {formatRupiah(sessionData?.biaya_sesi || sessionData?.biaya_belajar || sessionData?.harga)}</Text>
                     </View>
 
+                    {/* 2. BIAYA JARAK */}
                     <View style={styles.priceRow}>
-                        <Text style={styles.priceLabel}>Biaya Transportasi Guru</Text>
-                        <Text style={styles.priceValue}>: {formatRupiah(sessionData?.biaya_transport)}</Text>
+                        <Text style={styles.priceLabel}>Biaya Jarak (Transportasi)</Text>
+                        <Text style={styles.priceValue}>: {formatRupiah(sessionData?.biaya_jarak || sessionData?.biaya_transport)}</Text>
                     </View>
 
                     <View style={[styles.divider, { marginVertical: 12 }]} />
 
+                    {/* TOTAL */}
                     <View style={styles.priceRow}>
                         <Text style={styles.totalLabel}>Total Pembayaran</Text>
                         <Text style={styles.totalValue}>: {formatRupiah(sessionData?.total_bayar || sessionData?.total_harga)}</Text>
@@ -277,7 +277,6 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
     );
 };
 
-// ... (style definitions tetap sama seperti kode awal kamu)
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFF', paddingTop: 40 },
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginVertical: 15 },
