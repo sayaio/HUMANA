@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { API_URL } from '../src/config';
+import { getActiveSchedules, createChatRoom, getChatList } from '../services/chatService';
 import {
   StyleSheet, Text, View, TouchableOpacity, SafeAreaView,
   StatusBar, ScrollView, TextInput, Image
@@ -18,7 +17,12 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
   const role = userRole ? userRole.toLowerCase() : 'murid';
 
   useEffect(() => {
-    const fetchData = async () => {
+    const initChatData = async () => {
+      console.log("DEBUG SERVICE IMPORT:", {
+        getActiveSchedules,
+        createChatRoom,
+        getChatList
+      });
       if (!userId || !userRole) {
         setLoading(false);
         return;
@@ -26,49 +30,34 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
 
       try {
         // 1. Ambil jadwal aktif
-        const jadwalRes = await axios.get(`${API_URL}/active/${role}/${userId}`);
-        const jadwalAktif = jadwalRes.data?.data || [];
-        console.log('JADWAL AKTIF:', JSON.stringify(jadwalAktif));
+        const jadwalAktif = await getActiveSchedules(role, userId);
 
-        // Deduplikasi: 1 guru = 1 room chat
-        const uniqueGuru = [];
-        const seenGuru = new Set();
-        for (const jadwal of jadwalAktif) {
-          if (!seenGuru.has(jadwal.id_guru)) {
-            seenGuru.add(jadwal.id_guru);
-            uniqueGuru.push(jadwal);
-          }
-        }
-        // 2. Buat room chat untuk setiap jadwal aktif
-        for (const jadwal of uniqueGuru) {
-          if (jadwal.id_guru && jadwal.id_murid) {
+        // 2. Deduplikasi & Buat Room
+        const uniqueGuru = [...new Set(jadwalAktif.map(j => j.id_guru))];
+
+        await Promise.all(
+          uniqueGuru.map(async (id_guru) => {
+            const jadwal = jadwalAktif.find(j => j.id_guru === id_guru);
             try {
-              await axios.post(`${API_URL}/chats/create`, {
-                id_guru: jadwal.id_guru,
-                id_murid: jadwal.id_murid
-              });
+              await createChatRoom(jadwal.id_guru, jadwal.id_murid);
             } catch (e) {
-              console.log(`❌ Gagal room ${jadwal.id_guru}-${jadwal.id_murid}:`, JSON.stringify(e.response?.data));
+              console.log(`Gagal buat room untuk ${id_guru}`);
             }
-          }
-        }
+          })
+        );
 
-        // 3. Baru fetch chat list
-        const chatRes = await axios.get(`${API_URL}/chats`, {
-          params: { userId, role }
-        });
-        const data = chatRes.data.data;
+        // 3. Fetch list chat
+        const data = await getChatList(userId, role);
         setChats(Array.isArray(data) ? data : []);
-
       } catch (error) {
-        console.error("Gagal:", error.response?.data || error.message);
-        setChats([]);
+        console.error("Gagal inisialisasi chat:", error.message);
+        console.error("Gagal inisialisasi chat:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    initChatData();
   }, [userId, role]);
 
   return (
