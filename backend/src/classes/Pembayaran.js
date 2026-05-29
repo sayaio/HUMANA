@@ -1,49 +1,60 @@
 class Pembayaran {
-  #idPembayaran;
-  #nominal;
-  #metodeBayar;
-  #statusBayar;
-  #tanggalBayar;
+    #idPembayaran;
+    #nominal;
+    #metodeBayar;
+    #statusBayar;
+    #tanggalBayar;
 
-  constructor(nominal, metodeBayar) {
-    this.#idPembayaran = null;
-    this.#nominal = nominal;
-    this.#metodeBayar = metodeBayar;
-    this.#statusBayar = 'PENDING';
-    this.#tanggalBayar = new Date();
-  }
-
-  isBayar() {
-    return this.#statusBayar === 'PAID';
-  }
-
-  konfirmasiBayar() {
-    if (this.#statusBayar === 'PENDING') {
-      this.#statusBayar = 'PAID';
-      return true;
+    // Beri opsi statusBayar default 'PENDING' jika tidak diset dari DB
+    constructor(nominal, metodeBayar, id = null, status = 'menunggu', tanggal = new Date()) {
+        this.#idPembayaran = id;
+        this.#nominal = nominal;
+        this.#metodeBayar = metodeBayar;
+        this.#statusBayar = status;
+        this.#tanggalBayar = tanggal;
     }
-    return false;
-  }
 
-  getNominal() {
-    return this.#nominal;
-  }
+    isBayar() {
+        return this.#statusBayar === 'menunggu';
+    }
 
-  getMetodeBayar() {
-    return this.#metodeBayar;
-  }
+    konfirmasiBayar() {
+        if (this.#statusBayar === 'menunggu') {
+            this.#statusBayar = 'lunas';
+            return true;
+        }
+        return false;
+    }
 
-  getStatusBayar() {
-    return this.#statusBayar;
-  }
+    getNominal() {
+        return this.#nominal;
+    }
 
-  getTanggalBayar() {
-    return this.#tanggalBayar;
-  }
+    getMetodeBayar() {
+        return this.#metodeBayar;
+    }
 
-  getId() {
-    return this.#idPembayaran;
-  }
+    getStatusBayar() {
+        return this.#statusBayar;
+    }
+
+    getTanggalBayar() {
+        return this.#tanggalBayar;
+    }
+
+    getId() {
+        return this.#idPembayaran;
+    }
+
+    toJSON() {
+        return {
+            idPembayaran: this.getId(),
+            nominal: this.getNominal(),
+            metodeBayar: this.getMetodeBayar(),
+            statusBayar: this.getStatusBayar(),
+            tanggalBayar: this.getTanggalBayar()
+        };
+    }
 }
 
 module.exports = Pembayaran;

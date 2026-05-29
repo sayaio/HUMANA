@@ -1,4 +1,5 @@
 const PemesananSesi = require('../classes/PemesananSesi');
+const Pembayaran = require('../classes/Pembayaran');
 const pool = require('../database');
 
 // ==========================================
@@ -125,25 +126,33 @@ const getPermintaanBaru = async (req, res) => {
     }
 };
 const terimaPermintaanSesi = async (req, res) => {
-    // 🛠️ Tangkap biaya_sesi dan biaya_jarak dari frontend
-    const { id_pemesanan, id_guru, total_pembayaran_final, biaya_sesi, biaya_jarak } = req.body;
+    // 🛠️ Tangkap juga metode_pembayaran dari frontend (misal default: 'TUNAI')
+    const { id_pemesanan, id_guru, total_pembayaran_final, biaya_sesi, biaya_jarak, metode_pembayaran } = req.body;
 
     if (!id_pemesanan || !id_guru || !total_pembayaran_final || biaya_sesi === undefined || biaya_jarak === undefined) {
         return res.status(400).json({ success: false, message: "Data penerimaan atau rincian biaya tidak lengkap." });
     }
 
     try {
+        // 1. Instansiasi objek Pembayaran baru menggunakan OOP Class
+        const pembayaranBaru = new Pembayaran(total_pembayaran_final, metode_pembayaran);
+
         await pool.query(`
             UPDATE Pemesanan 
             SET id_guru = ?, status_pemesanan = 'dikonfirmasi' 
             WHERE id_pemesanan = ?
         `, [id_guru, id_pemesanan]);
 
-        // 🛠️ Simpan rincian biaya asli saat disetujui ke dalam tabel Pembayaran
+        // 2. Simpan ke DB menggunakan getter dari objek class Pembayaran
         await pool.query(`
             INSERT INTO Pembayaran (id_pemesanan, biaya_sesi, biaya_jarak, metode_pembayaran, nominal, status_pembayaran) 
             VALUES (?, ?, ?, 'menunggu', ?, 'menunggu')
-        `, [id_pemesanan, biaya_sesi, biaya_jarak, total_pembayaran_final]);
+        `, [
+            id_pemesanan,
+            biaya_sesi,
+            biaya_jarak,
+            pembayaranBaru.getNominal(),
+        ]);
 
         res.status(200).json({ success: true, message: "Sesi berhasil diterima!" });
     } catch (error) {
@@ -156,12 +165,11 @@ const getSesiDikonfirmasi = async (req, res) => {
     if (!id_guru) return res.status(400).json({ success: false, message: "ID Guru tidak disediakan." });
 
     try {
-        // 🛠️ Ambil kolom biaya_sesi dan biaya_jarak dari tabel pembayaran
         const rows = await pool.query(`
             SELECT 
                 p.id_pemesanan, p.waktu_mulai, p.waktu_selesai, p.lokasi_sesi, 
                 m.nama_murid, mat.nama_materi,
-                pem.biaya_sesi, pem.biaya_jarak, pem.nominal AS harga_total
+                pem.id_pembayaran, pem.biaya_sesi, pem.biaya_jarak, pem.metode_pembayaran, pem.nominal AS harga_total, pem.status_pembayaran
             FROM Pemesanan p
             JOIN Murid m ON p.id_murid = m.id_murid
             JOIN Materi mat ON p.id_materi = mat.id_materi
@@ -179,12 +187,22 @@ const getSesiDikonfirmasi = async (req, res) => {
         );
         sesiDikonfirmasi.id_pemesanan = row.id_pemesanan;
 
-        // 🛠️ Kunci nilainya menggunakan data asli dari database
+        // 3. Rekonstruksi data ke dalam objek Class Pembayaran
+        const objekPembayaran = new Pembayaran(
+            row.harga_total || 0,
+            row.metode_pembayaran || 'menunggu',
+            row.id_pembayaran,
+            row.status_pembayaran || 'menunggu'
+        );
+
+        // Pasang komponen biaya di luar class pembayaran (atau bisa digabung jika class di-extend)
         sesiDikonfirmasi.biaya_belajar = row.biaya_sesi || 0;
         sesiDikonfirmasi.biaya_transport = row.biaya_jarak || 0;
-        sesiDikonfirmasi.total_bayar = row.harga_total || 0;
 
-        // Format waktu string (08:30 – 10:30)
+        // 4. Masukkan objek class Pembayaran ke dalam properti PemesananSesi
+        sesiDikonfirmasi.pembayaran = objekPembayaran.toJSON(); // otomatis memanggil metode toJSON() aman untuk dikirim
+
+        // Format waktu string
         if (row.waktu_mulai && row.waktu_selesai) {
             const opsiJam = { hour: '2-digit', minute: '2-digit', hour12: false };
             const jamMulai = new Date(row.waktu_mulai).toLocaleTimeString('id-ID', opsiJam).replace('.', ':');

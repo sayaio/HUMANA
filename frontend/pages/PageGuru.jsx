@@ -80,25 +80,17 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
                     text: "Terima",
                     onPress: async () => {
                         setLoading(true);
-
-                        // 🛠️ PERBAIKAN: Tambahkan parameter biaya_belajar dan biaya_transport
                         const res = await terimaPermintaanSesiAPI(
                             item.id_pemesanan,
                             guruData.id,
                             item.harga_total,
-                            item.biaya_belajar,   // 👈 Ambil dari objek item hasil rumus instan class
-                            item.biaya_transport  // 👈 Ambil dari objek item hasil rumus instan class
+                            item.biaya_sesi,
+                            item.biaya_jarak
                         );
 
                         if (res && res.success) {
                             Alert.alert("Sukses", "Sesi berhasil dikonfirmasi!");
-
-                            // Menghapus data dari daftar "Permintaan Baru"
                             setPermintaan(prev => prev.filter(p => p.id_pemesanan !== item.id_pemesanan));
-
-                            // 💡 TIPS: Jika layar "Sesi Aktif" berada di halaman yang sama,
-                            // panggil fungsi fetch ulang Sesi Aktif kamu di sini agar UI langsung ter-update realtime.
-                            // contoh: loadSesiDikonfirmasi();
                             loadPermintaan();
                         } else {
                             Alert.alert("Gagal", res.message || "Terjadi kesalahan sistem.");

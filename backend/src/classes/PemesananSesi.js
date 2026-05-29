@@ -25,13 +25,6 @@ class PemesananSesi {
         this.#waktuMulai = waktuMulai;
         this.#waktuSelesai = waktuSelesai;
         this.#lokasiSesi = lokasiSesi;
-
-        this.jarak_km = 0;
-
-        // ✅ TAMBAHAN: Penampung nilai jika sewaktu-waktu diisi langsung dari DB
-        this.biaya_belajar = null;
-        this.biaya_transport = null;
-        this.total_bayar = null;
     }
 
     HitungDurasiJam() {
@@ -104,12 +97,6 @@ class PemesananSesi {
             waktu_string: jamMulaiText && jamSelesaiText ? `${jamMulaiText} – ${jamSelesaiText}` : "Waktu tidak valid",
             jarak_km: parseFloat(this.jarak_km.toFixed(2)),
             lokasi_sesi: this.#lokasiSesi,
-
-            // ✅ PROPERTI BARU UNTUK FRONTEND DETAIL PEMBAYARAN
-            biaya_belajar: bBelajar,
-            biaya_transport: bTransport,
-            total_bayar: tBayar,
-            harga_total: tBayar // Tetap dipertahankan untuk backward compatibility
         };
     }
 }
