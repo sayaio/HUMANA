@@ -21,11 +21,17 @@ class PemesananSesi {
         this.waktuPesan = new Date();
         this.pembayaran = null;
 
+        // Properti private
         this.#waktuMulai = waktuMulai;
         this.#waktuSelesai = waktuSelesai;
         this.#lokasiSesi = lokasiSesi;
 
         this.jarak_km = 0;
+
+        // ✅ TAMBAHAN: Penampung nilai jika sewaktu-waktu diisi langsung dari DB
+        this.biaya_belajar = null;
+        this.biaya_transport = null;
+        this.total_bayar = null;
     }
 
     HitungDurasiJam() {
@@ -68,41 +74,43 @@ class PemesananSesi {
     }
 
     toJSON() {
-        // Buat helper function internal untuk mengubah Date object atau string dari DB menjadi format HH:MM lokal
         const formatKeJamLokal = (waktuRaw) => {
             if (!waktuRaw) return "";
-
-            // Bungkus ke objek Date jika bentukannya masih string dari database
             const dateObj = waktuRaw instanceof Date ? waktuRaw : new Date(waktuRaw);
-
-            // Cek apakah parsing date berhasil/valid
             if (isNaN(dateObj.getTime())) return "";
-
-            // Ambil waktu lokal (WIB jika dijalankan di server lokal / device Indonesia) tanpa konversi UTC
             return dateObj.toLocaleTimeString('id-ID', {
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: false
-            }).replace('.', ':'); // Mengganti pemisah titik bawaan id-ID menjadi titik dua (:)
+            }).replace('.', ':');
         };
 
         const jamMulaiText = formatKeJamLokal(this.#waktuMulai);
         const jamSelesaiText = formatKeJamLokal(this.#waktuSelesai);
 
+        // 🛠️ HITUNG RINCIAN BIAYA SECARA OTOMATIS
         const rincianBiaya = this.HitungTotalBiaya(this.jarak_km);
+
+        // Tentukan nilai: pakai data yang sudah di-set manual (dari DB) ATAU hasil hitungan rumus
+        const bBelajar = this.biaya_belajar !== null ? this.biaya_belajar : rincianBiaya.biayaPembelajaran;
+        const bTransport = this.biaya_transport !== null ? this.biaya_transport : rincianBiaya.biayaTransportGuru;
+        const tBayar = this.total_bayar !== null ? this.total_bayar : rincianBiaya.totalPembayaran;
 
         return {
             id_pemesanan: this.id_pemesanan,
             nama_murid: this.murid,
             nama_materi: this.materi,
             status_pemesanan: this.statusPemesanan,
-            // Sekarang waktu_string akan menghasilkan jam lokal yang pas (07:30 – 09:30)
             waktu_string: jamMulaiText && jamSelesaiText ? `${jamMulaiText} – ${jamSelesaiText}` : "Waktu tidak valid",
             jarak_km: parseFloat(this.jarak_km.toFixed(2)),
             lokasi_sesi: this.#lokasiSesi,
-            harga_total: rincianBiaya.totalPembayaran
+
+            // ✅ PROPERTI BARU UNTUK FRONTEND DETAIL PEMBAYARAN
+            biaya_belajar: bBelajar,
+            biaya_transport: bTransport,
+            total_bayar: tBayar,
+            harga_total: tBayar // Tetap dipertahankan untuk backward compatibility
         };
     }
 }
-
 module.exports = PemesananSesi;

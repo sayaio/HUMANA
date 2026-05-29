@@ -281,7 +281,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
                         id_materi: selectedMateriId,
                         nama_materi: materi,
                         lokasi: locationAddress,
-                        koordinat: userLocation,
+                        koordinat: userLocation
                     });
                 }
             }

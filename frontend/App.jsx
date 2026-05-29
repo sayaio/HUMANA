@@ -27,7 +27,7 @@ import PembayaranPage from './pages/PembayaranPage';
 
 const App = () => {
 
-    const DEV_SKIP_TO_PAYMENT = true;
+    const DEV_SKIP_TO_PAYMENT = false;
     const [isAppLoading, setIsAppLoading] = useState(DEV_SKIP_TO_PAYMENT ? false : true);
 
     const [currentPage, setCurrentPage] = useState(DEV_SKIP_TO_PAYMENT ? 'DetailPembayaran' : 'Splash');
