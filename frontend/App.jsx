@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, InteractionManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import SplashScreen from './pages/SplashScreen';
@@ -18,19 +18,49 @@ import ChatPage from './pages/ChatPage';
 import ChatRoomPage from './pages/ChatRoomPage';
 import PageGuru from './pages/PageGuru';
 import ProfileGuruPage from './pages/ProfileGuruPage';
-import ActivityGuruPage from './pages/ActivityGuruPage'; 
+import ActivityGuruPage from './pages/ActivityGuruPage';
 import PesanSesiPage from './pages/PesanSesiPage';
 import MencariPengajarPage from './pages/MencariPengajarPage';
 import DetailPembayaranPage from './pages/DetailPembayaranPage';
 import PembayaranPage from './pages/PembayaranPage';
+// ... kode import tetap sama ...
 
 const App = () => {
-    const [currentPage, setCurrentPage] = useState('Splash');
-    const [isAppLoading, setIsAppLoading] = useState(true);
 
-    const [namaLengkap, setNamaLengkap] = useState('');
-    const [email, setEmail] = useState('');
-    const [profileData, setProfileData] = useState({
+    const DEV_SKIP_TO_PAYMENT = false;
+    const [isAppLoading, setIsAppLoading] = useState(DEV_SKIP_TO_PAYMENT ? false : true);
+
+    const [currentPage, setCurrentPage] = useState(DEV_SKIP_TO_PAYMENT ? 'DetailPembayaran' : 'Splash');
+
+    const [bookingSessionData, setBookingSessionData] = useState(DEV_SKIP_TO_PAYMENT ? {
+        id_pemesanan: 13,      // isi dengan id_pemesanan yang ada di DB kamu
+        id_guru: 1,
+        id_murid: 1,
+        nama_guru: 'Dr. Ahmad Fauzi',
+        nama_mapel: 'Kimia',
+        nama_materi: 'Struktur Atom',
+        waktu_sesi: '06:30 - 07:30',
+        tanggal: '25 Mei 2026',
+        lokasi: '37.42200, -122.08400',
+    } : null);
+
+    const [namaLengkap, setNamaLengkap] = useState(DEV_SKIP_TO_PAYMENT ? 'Siswa Tester' : '');
+    const [email, setEmail] = useState(DEV_SKIP_TO_PAYMENT ? 'tester@humana.com' : '');
+
+    // 🛠️ PERBAIKAN DI SINI: Berikan data dummy jika sedang dalam mode dev bypass
+    const [profileData, setProfileData] = useState(DEV_SKIP_TO_PAYMENT ? {
+        id: 1,                   // Sesuaikan dengan id_murid yang valid di DB kamu jika diperlukan
+        role: 'murid',
+        name: 'Siswa Tester',
+        email: 'tester@humana.com',
+        username: 'siswatester',
+        phone: '081234567890',
+        gender: 'Laki-laki',
+        domicile: 'Bandung',
+        education: 'SMA',
+        major: 'IPA',
+        is_active: true
+    } : {
         id: null,
         role: '-',
         name: '-',
@@ -43,18 +73,21 @@ const App = () => {
         major: '-',
         is_active: false
     });
+
+    // ... sisa kode ke bawah tetap sama ...
     const [selectedSubject, setSelectedSubject] = useState(null);
     const [selectedChapter, setSelectedChapter] = useState(null);
     const [activityTab, setActivityTab] = useState('aktif');
     const [selectedChatUser, setSelectedChatUser] = useState(null);
     const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
     const [selectedSession, setSelectedSession] = useState(null);
-    const [bookingSessionData, setBookingSessionData] = useState(null);
-    
+
+
     // PERBAIKAN DI SINI: Mendaftarkan fungsi pengubah state agar navigasi bisa merubah data
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
-
+    const [paymentSnapUrl, setPaymentSnapUrl] = useState(null);
     useEffect(() => {
+        if (DEV_SKIP_TO_PAYMENT) return;
         const checkLoginSession = async () => {
             try {
                 const savedSession = await AsyncStorage.getItem('user_session');
@@ -184,8 +217,10 @@ const App = () => {
 
             setCurrentPage('Login');
         } catch (error) {
-            console.error('❌ Gagal melakukan logout:', error);
-            Alert.alert('Error', 'Gagal keluar dari akun. Silakan coba lagi.');
+            // ✅ Ganti setTimeout → InteractionManager  
+            InteractionManager.runAfterInteractions(() => {
+                Alert.alert('Error', 'Gagal keluar dari akun.');
+            });
         }
     };
 
@@ -206,7 +241,7 @@ const App = () => {
         if (page === 'HomeGuru') {
             setCurrentPage('PageGuru');
         } else if (page === 'ActivityGuru') {
-            setCurrentPage('RealActivityGuru'); 
+            setCurrentPage('RealActivityGuru');
         } else if (page === 'ChatGuru') {
             setCurrentPage('Chat');
         } else if (page === 'ProfileGuru') {
@@ -324,7 +359,7 @@ const App = () => {
         return (
             <PesanSesiPage
                 onBack={() => setCurrentPage('Home')}
-                userId={profileData.id} 
+                userId={profileData.id}
                 onConfirmOrder={(data) => {
                     setBookingSessionData(data);
                     setCurrentPage('MencariPengajar');
@@ -352,26 +387,34 @@ const App = () => {
         return (
             <DetailPembayaranPage
                 sessionData={bookingSessionData}
+                // 🛠️ MODIFIKASI DI SINI:
                 onBack={() => {
-                    // PERBAIKAN: Mengubah target halaman langsung ke Home
-                    setCurrentPage('Home');
+                    if (DEV_SKIP_TO_PAYMENT) {
+                        // Jika sedang mode dev bypass, balikkan ke halaman Login atau Splash biar kelihatan pindah halaman
+                        setCurrentPage('Login');
+                    } else {
+                        // Jika mode normal, balik ke Home
+                        setCurrentPage('Home');
+                    }
                 }}
-                onPaymentSuccess={(method) => {
-                    setSelectedPaymentMethod(method);
+                onPaymentSuccess={(snapUrl) => {
+                    setPaymentSnapUrl(snapUrl);
                     setCurrentPage('Pembayaran');
                 }}
             />
         );
     }
-
     if (currentPage === 'Pembayaran') {
         return (
             <PembayaranPage
-                sessionData={bookingSessionData}
-                method={selectedPaymentMethod}
-                onBack={() => setCurrentPage('DetailPembayaran')}
-                onFinishPayment={() => {
+                snapUrl={paymentSnapUrl}
+                onFinish={(status) => {
                     setCurrentPage('Home');
+                    InteractionManager.runAfterInteractions(() => {
+                        if (status === 'success') Alert.alert('Sukses', 'Pembayaran berhasil!');
+                        else if (status === 'pending') Alert.alert('Info', 'Pembayaran pending.');
+                        else if (status === 'failed') Alert.alert('Gagal', 'Pembayaran gagal.');
+                    });
                 }}
             />
         );
@@ -407,7 +450,7 @@ const App = () => {
             <ProfilePage
                 profileData={profileData}
                 onNavigate={(page) => setCurrentPage(page)}
-                onLogout={handleLogout} 
+                onLogout={handleLogout}
             />
         );
     }

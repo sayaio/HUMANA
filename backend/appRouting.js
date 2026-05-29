@@ -28,6 +28,11 @@ router.get('/active/:role/:id', historyController.getActiveSchedule);
 const bankerController = require('./src/controllers/BankerController');
 router.get('/sesi/detail/:id', bankerController.getSesiDetail);
 router.put('/sesi/bayar-simulasi', bankerController.bayarSimulasi);
+router.post('/sesi/proses-midtrans', bankerController.prosesPembayaranMidtrans);
+router.post('/sesi/proses-cod', bankerController.prosesPembayaranCod);
+
+const webhookController = require('./src/controllers/webhookController');
+router.post('/webhook/midtrans', webhookController.handleMidtrans);
 
 const pemesananController = require('./src/controllers/pemesananController');
 router.get('/pemesanan/materi', pemesananController.getMateriDropdown);
