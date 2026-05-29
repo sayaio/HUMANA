@@ -59,3 +59,16 @@ exports.sendMessage = async (req, res) => {
         res.status(500).json({ success: false, message: "Gagal mengirim pesan" });
     }
 };
+exports.createOrGetChatRoom = async (req, res) => {
+    try {
+        const { id_guru, id_murid } = req.body;
+        if (!id_guru || !id_murid) {
+            return res.status(400).json({ success: false, message: "id_guru dan id_murid wajib diisi" });
+        }
+        const room = await chatService.findOrCreateChatRoom(id_guru, id_murid);
+        res.status(200).json({ success: true, data: room });
+    } catch (error) {
+        console.error("❌ ERROR createOrGetChatRoom:", error.message, error.sqlMessage);
+        res.status(500).json({ success: false, message: "Gagal membuat room chat" });
+    }
+};

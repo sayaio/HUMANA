@@ -1,7 +1,6 @@
-// Ambil daftar chat terbaru per pasangan guru-murid
 const db = require('../database');
+
 const getLatestChatList = async (userId, role) => {
-  const field = role === 'murid' ? 'id_murid' : 'id_guru';
   const query = `
     SELECT c.*, G.nama_guru, M.nama_murid
     FROM Chat c
@@ -10,49 +9,74 @@ const getLatestChatList = async (userId, role) => {
     WHERE c.id_chat IN (
       SELECT MAX(id_chat) 
       FROM Chat 
-      WHERE ${field} = ?
+      WHERE ${role === 'murid' ? 'id_murid' : 'id_guru'} = ?
       GROUP BY id_guru, id_murid
+    )
+    AND EXISTS (
+      SELECT 1 FROM Pemesanan p
+      WHERE p.id_guru = c.id_guru 
+      AND p.id_murid = c.id_murid
+      AND (
+        p.status_pemesanan IN ('dikonfirmasi', 'menunggu konfirmasi')
+        OR (
+          p.status_pemesanan = 'selesai' 
+          AND TIMESTAMPDIFF(HOUR, p.waktu_selesai, NOW()) <= 48
+        )
+      )
     )
     ORDER BY c.timestamp DESC
   `;
-  const rows = await db.query(query, [userId]); // pakai query(), bukan execute()
-  return rows;
+  return await db.query(query, [userId]);
 };
 
-// Ambil semua pesan dalam satu percakapan
 const getAllMessagesByChatId = async (id_guru, id_murid) => {
   const query = `
     SELECT * FROM Chat 
     WHERE id_guru = ? AND id_murid = ? 
     ORDER BY timestamp ASC
   `;
-  const rows = await db.query(query, [id_guru, id_murid]);
-  return rows;
+  return await db.query(query, [id_guru, id_murid]);
 };
 
-// Simpan pesan baru
 const saveMessage = async (id_guru, id_murid, pengirim_role, isi_pesan) => {
   const query = `
     INSERT INTO Chat (id_guru, id_murid, pengirim_role, isi_pesan, timestamp) 
     VALUES (?, ?, ?, ?, NOW())
   `;
-  const result = await db.query(query, [id_guru, id_murid, pengirim_role, isi_pesan]);
-  return result;
+  return await db.query(query, [id_guru, id_murid, pengirim_role, isi_pesan]);
 };
 
-// Tandai pesan sebagai sudah dibaca
 const markAsRead = async (id_guru, id_murid) => {
   const query = `
     UPDATE Chat SET is_read = 1 
     WHERE id_guru = ? AND id_murid = ?
   `;
-  const result = await db.query(query, [id_guru, id_murid]);
-  return result;
+  return await db.query(query, [id_guru, id_murid]);
+};
+
+const findOrCreateChatRoom = async (id_guru, id_murid) => {
+  const existing = await db.query(
+    'SELECT * FROM Chat WHERE id_guru = ? AND id_murid = ? LIMIT 1',
+    [id_guru, id_murid]
+  );
+  if (existing.length > 0) return existing[0];
+
+  await db.query(
+    `INSERT INTO Chat (id_guru, id_murid, pengirim_role, isi_pesan, timestamp) 
+     VALUES (?, ?, 'guru', 'Sesi telah dikonfirmasi. Silakan mulai percakapan!', NOW())`,
+    [id_guru, id_murid]
+  );
+
+  return await db.query(
+    'SELECT * FROM Chat WHERE id_guru = ? AND id_murid = ? LIMIT 1',
+    [id_guru, id_murid]
+  ).then(rows => rows[0]);
 };
 
 module.exports = {
   getLatestChatList,
-  getAllMessagesByChatId,  // ← pastikan ada ini
+  getAllMessagesByChatId,
   saveMessage,
-  markAsRead
+  markAsRead,
+  findOrCreateChatRoom
 };

@@ -20,22 +20,48 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
   useEffect(() => {
     const fetchData = async () => {
       if (!userId || !userRole) {
-        console.warn("userId atau userRole belum tersedia");
         setLoading(false);
         return;
       }
 
       try {
-        console.log("Fetching URL:", `${API_URL}/chats`, "params:", { userId, role });
-        const response = await axios.get(`${API_URL}/chats`, {
+        // 1. Ambil jadwal aktif
+        const jadwalRes = await axios.get(`${API_URL}/active/${role}/${userId}`);
+        const jadwalAktif = jadwalRes.data?.data || [];
+        console.log('JADWAL AKTIF:', JSON.stringify(jadwalAktif));
+
+        // Deduplikasi: 1 guru = 1 room chat
+        const uniqueGuru = [];
+        const seenGuru = new Set();
+        for (const jadwal of jadwalAktif) {
+          if (!seenGuru.has(jadwal.id_guru)) {
+            seenGuru.add(jadwal.id_guru);
+            uniqueGuru.push(jadwal);
+          }
+        }
+        // 2. Buat room chat untuk setiap jadwal aktif
+        for (const jadwal of uniqueGuru) {
+          if (jadwal.id_guru && jadwal.id_murid) {
+            try {
+              await axios.post(`${API_URL}/chats/create`, {
+                id_guru: jadwal.id_guru,
+                id_murid: jadwal.id_murid
+              });
+            } catch (e) {
+              console.log(`❌ Gagal room ${jadwal.id_guru}-${jadwal.id_murid}:`, JSON.stringify(e.response?.data));
+            }
+          }
+        }
+
+        // 3. Baru fetch chat list
+        const chatRes = await axios.get(`${API_URL}/chats`, {
           params: { userId, role }
         });
-        console.log("ISI RESPONSE API:", JSON.stringify(response.data, null, 2));
-
-        const data = response.data.data;
+        const data = chatRes.data.data;
         setChats(Array.isArray(data) ? data : []);
+
       } catch (error) {
-        console.error("Gagal mengambil chat:", error.response?.data || error.message);
+        console.error("Gagal:", error.response?.data || error.message);
         setChats([]);
       } finally {
         setLoading(false);
@@ -72,7 +98,7 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
 
               return (
                 <TouchableOpacity
-                  key={chat?.id_chat || index.toString()}
+                  key={`${chat?.id_guru}-${chat?.id_murid}`}
                   style={styles.chatItem}
                   onPress={() => onChatPress(chat)}
                 >
@@ -109,8 +135,8 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
       {/* BOTTOM NAVBAR KONDISIONAL BERDASARKAN ROLE GURU / MURID */}
       <View style={styles.customBottomNavbar}>
         {/* BUTTON 1: BERANDA / HOME */}
-        <TouchableOpacity 
-          style={styles.navBarItem} 
+        <TouchableOpacity
+          style={styles.navBarItem}
           onPress={() => onNavigate(role === 'guru' ? 'HomeGuru' : 'Home')}
         >
           <Home color="#A9A9A9" size={22} />
@@ -118,8 +144,8 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
         </TouchableOpacity>
 
         {/* BUTTON 2: AKTIVITAS / ACTIVITY */}
-        <TouchableOpacity 
-          style={styles.navBarItem} 
+        <TouchableOpacity
+          style={styles.navBarItem}
           onPress={() => onNavigate(role === 'guru' ? 'ActivityGuru' : 'Activity', 'aktif')}
         >
           {role === 'guru' ? (
@@ -150,8 +176,8 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
         </TouchableOpacity>
 
         {/* BUTTON 5: PROFILE */}
-        <TouchableOpacity 
-          style={styles.navBarItem} 
+        <TouchableOpacity
+          style={styles.navBarItem}
           onPress={() => onNavigate(role === 'guru' ? 'ProfileGuru' : 'Profile')}
         >
           <User color="#A9A9A9" size={22} />

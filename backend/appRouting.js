@@ -44,5 +44,5 @@ const chatController = require('./src/controllers/chatController'); // Pastikan 
 router.get('/chats', chatController.getChatList);
 router.get('/chats/messages/:id_guru/:id_murid', chatController.getMessages);
 router.post('/chats/send', chatController.sendMessage);
-
+router.post('/chats/create', chatController.createOrGetChatRoom);
 module.exports = router;

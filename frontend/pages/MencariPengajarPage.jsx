@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, Easing, Image } from 'react-native';
 import CustomAlert from '../components/CustomAlert';
-
+import axios from 'axios';
+import { API_URL } from '../src/config';
 import { pemesananService } from '../services/pemesananService';
 
 const { width, height } = Dimensions.get('window');
@@ -54,6 +55,19 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                     if (result.status_pemesanan === 'dikonfirmasi' || result.status_pemesanan === 'Dikonfirmasi') {
                         clearInterval(intervalCekStatus);
                         clearTimeout(timeoutMaksimal); // Amankan timeout agar tidak tabrakan
+
+                        console.log('DATA GURU:', JSON.stringify(result.data_guru));
+                        console.log('ID MURID dari sessionData:', sessionData?.id_murid);
+                        
+                        try {
+                            await axios.post(`${API_URL}/chats/create`, {
+                                id_guru: result.data_guru?.id_guru,
+                                id_murid: sessionData?.id_murid
+                            });
+                            console.log('✅ Room chat berhasil dibuat');
+                        } catch (e) {
+                            console.warn('⚠️ Gagal buat room chat:', e.message);
+                        }
 
                         setAlertType('success');
                         setAlertTitle('Guru Ditemukan!');
