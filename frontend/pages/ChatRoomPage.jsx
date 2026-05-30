@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#284B7A',
     paddingHorizontal: 15,
     paddingBottom: 15,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 44
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 40 : 40,
   },
   backBtn: { padding: 5, marginRight: 10 },
   avatar: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: 15 },

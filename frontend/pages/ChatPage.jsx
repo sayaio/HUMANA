@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { getActiveSchedules, createChatRoom, getChatList } from '../services/chatService';
 import {
   StyleSheet, Text, View, TouchableOpacity, SafeAreaView,
@@ -13,6 +13,7 @@ const LOGO_SOURCE = require('../assets/logo_humana.png');
 const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
   console.log("PROPS ChatPage - userId:", userId, "| userRole:", userRole);
   const [chats, setChats] = useState([]);
+  const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(true);
   const role = userRole ? userRole.toLowerCase() : 'murid';
 
@@ -60,6 +61,13 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
     initChatData();
   }, [userId, role]);
 
+  const filteredChats = useMemo(() => {
+    return chats.filter(chat => {
+      const displayName = role === 'guru' ? (chat?.nama_murid || "") : (chat?.nama_guru || "");
+      return displayName.toLowerCase().includes(searchText.toLowerCase());
+    });
+  }, [chats, searchText, role]);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#284B7A" translucent={false} />
@@ -70,8 +78,10 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Cari"
+            placeholder="Cari nama..."
             placeholderTextColor="#A9A9A9"
+            value={searchText} // Hubungkan ke state
+            onChangeText={(text) => setSearchText(text)} // Update state saat mengetik
           />
           <Text style={{ fontSize: 16, color: '#888' }}>🔍</Text>
         </View>
@@ -80,8 +90,8 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
       <View style={styles.contentContainer}>
         <Text style={styles.sectionTitle}>TERBARU</Text>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
-          {Array.isArray(chats) && chats.length > 0 ? (
-            chats.map((chat, index) => {
+          {Array.isArray(filteredChats) && filteredChats.length > 0 ? (
+            filteredChats.map((chat, index) => {
               const displayName = role === 'guru' ? (chat?.nama_murid || "Murid") : (chat?.nama_guru || "Guru");
               const firstLetter = displayName.charAt(0).toUpperCase();
 
@@ -104,11 +114,6 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
                     <Text style={styles.chatTime}>
                       {chat?.timestamp ? chat.timestamp.split(' ')[1]?.substring(0, 5) : ''}
                     </Text>
-                    {chat.is_read === 0 && chat.pengirim_role !== role && (
-                      <View style={styles.unreadBadge}>
-                        <Text style={styles.unreadText}>1</Text>
-                      </View>
-                    )}
                   </View>
                 </TouchableOpacity>
               );
