@@ -120,8 +120,7 @@ const terimaPermintaanSesi = async (req, res) => {
     }
     
     try {
-        // 1. Instansiasi objek Pembayaran baru menggunakan OOP Class
-        const pembayaranBaru = new Pembayaran(total_pembayaran_final, metode_pembayaran);
+
 
         await pool.query(`
             UPDATE Pemesanan 
