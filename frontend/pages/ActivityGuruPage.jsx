@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
     topHeaderTitleArea: { paddingTop: 50, paddingHorizontal: 24, paddingBottom: 10 },
     pageMainTitle: { fontSize: 24, fontWeight: 'bold', color: '#000' },
 
-    tabSliderContainer: { flexDirection: 'row', marginHorizontal: 24, backgroundColor: '#F0F2F5', borderRadius: 14, padding: 4, marginBottom: 16 },
+    derContainer: { ftabSlilexDirection: 'row', marginHorizontal: 24, backgroundColor: '#F0F2F5', borderRadius: 14, padding: 4, marginBottom: 16 },
     tabButtonElement: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
     tabButtonElementActive: { backgroundColor: '#FFF', elevation: 1, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 },
     tabButtonText: { fontSize: 13, color: '#666', fontWeight: '500' },

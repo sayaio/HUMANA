@@ -13,13 +13,13 @@ const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId, userRole }) => {
     const role = userRole ? userRole.toLowerCase() : 'murid';
-    const [activeTab, setActiveTab] = useState(initialTab);
+    const [activeTab, setActiveTab] = useState(initialTab === 'aktif' ? 'Jadwal Aktif' : 'Riwayat Sesi');
     const [activeData, setActiveData] = useState([]);
     const [historyData, setHistoryData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        setActiveTab(initialTab);
+        setActiveTab(initialTab === 'aktif' ? 'Jadwal Aktif' : 'Riwayat Sesi');
     }, [initialTab]);
 
     const fetchActiveData = async () => {
@@ -46,16 +46,14 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
     useEffect(() => {
         if (!userId || !userRole) return;
 
-        if (activeTab === 'aktif') {
+        if (activeTab === 'Jadwal Aktif') {
             fetchActiveData();
-        } else {
+        } else if (activeTab === 'Riwayat Sesi') {
             fetchHistoryData();
         }
     }, [activeTab, userId, userRole]);
 
     const fetchHistoryData = async () => {
-        console.log("[CEK PROPS] userId:", userId, "| userRole:", userRole);
-
         if (!userId || !userRole) {
             console.log("❌ FETCH DIBATALKAN KARENA ID ATAU ROLE KOSONG!");
             return;
@@ -65,6 +63,10 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
         try {
             const result = await getHistory(userRole, userId);
             console.log("[DEBUG] Balasan API History:", result);
+            if (result && result.data && result.data.length > 0) {
+                console.log("=== CEK DATA PERTAMA ===", result.data[0]);
+                console.log("=== APAKAH ADA WAKTU_MULAI? ===", result.data[0].waktu_mulai);
+            }
 
             if (Array.isArray(result)) {
                 setHistoryData(result);
@@ -84,7 +86,7 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
     };
 
     useEffect(() => {
-        if (activeTab === 'riwayat') {
+        if (activeTab === 'Riwayat Sesi') {
             fetchHistoryData();
         }
     }, [activeTab, userId, userRole]);
@@ -99,23 +101,28 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
                     </Text> - {item.materi?.nama_materi || item.nama_materi || 'Materi'}
                 </Text>
 
+                {/* LOGIKA NAMA GURU/MURID YANG FLEKSIBEL */}
                 <Text style={styles.cardGuru}>
-                    👤 {userRole === 'murid' ? item.nama_guru : item.nama_murid}
+                    👤 {userRole === 'murid'
+                        ? (item.nama_guru || item.guru?.nama_guru || 'Guru tidak terdaftar')
+                        : (item.nama_murid || item.murid?.nama_murid || 'Murid tidak terdaftar')
+                    }
                 </Text>
 
+                {/* LOGIKA WAKTU YANG FLEKSIBEL */}
                 <Text style={styles.cardTime}>
-                    {item.waktu_mulai ? new Date(item.waktu_mulai).toLocaleString('id-ID', {
-                        day: '2-digit',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    }) : 'Waktu tidak tersedia'}
+                    {item.waktu_mulai
+                        ? new Date(item.waktu_mulai.toString().replace(' ', 'T')).toLocaleString('id-ID', {
+                            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                        })
+                        : (item.waktu_string || 'Waktu tidak tersedia')
+                    }
                 </Text>
             </View>
 
             {isHistory ? (
-                <TouchableOpacity 
-                    style={[styles.actionBtn, { backgroundColor: '#284B7A' }]} 
+                <TouchableOpacity
+                    style={[styles.actionBtn, { backgroundColor: '#284B7A' }]}
                     onPress={() => onDetailClick(item)}
                 >
                     <Text style={styles.actionBtnText}>Beri Ulasan</Text>
@@ -127,7 +134,6 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
             )}
         </View>
     );
-
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
@@ -136,17 +142,21 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
                 <Text style={styles.headerTitle}>Activity</Text>
             </View>
 
-            <View style={styles.tabContainer}>
-                <TouchableOpacity style={[styles.tabBtn, activeTab === 'aktif' && styles.activeTabBtn]} onPress={() => setActiveTab('aktif')}>
-                    <Text style={[styles.tabText, activeTab === 'aktif' && styles.activeTabText]}>Jadwal Aktif</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.tabBtn, activeTab === 'riwayat' && styles.activeTabBtn]} onPress={() => setActiveTab('riwayat')}>
-                    <Text style={[styles.tabText, activeTab === 'riwayat' && styles.activeTabText]}>Riwayat Sesi</Text>
-                </TouchableOpacity>
+            <View style={styles.tabSliderContainer}>
+                {['Jadwal Aktif', 'Riwayat Sesi'].map((tab) => (
+                    <TouchableOpacity
+                        key={tab}
+                        style={[styles.tabButtonElement, activeTab === tab && styles.tabButtonElementActive]}
+                        onPress={() => setActiveTab(tab)}
+                    >
+                        <Text style={[styles.tabButtonText, activeTab === tab && styles.tabButtonTextActive]}>
+                            {tab}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
             </View>
-
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 110 }}>
-                {activeTab === 'aktif' ? (
+                {activeTab === 'Jadwal Aktif' ? (
                     isLoading ? (
                         <View style={{ marginTop: 50, alignItems: 'center' }}>
                             <ActivityIndicator size="large" color="#284B7A" />
@@ -183,7 +193,7 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
                     <Home color="#A9A9A9" size={22} />
                     <Text style={styles.navBarLabel}>{role === 'guru' ? 'Home' : 'Beranda'}</Text>
                 </TouchableOpacity>
-                
+
                 <TouchableOpacity style={styles.navBarItem}>
                     <Calendar color="#284B7A" size={22} />
                     <Text style={[styles.navBarLabel, { color: '#284B7A', fontWeight: 'bold' }]}>
@@ -192,7 +202,7 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
                 </TouchableOpacity>
 
                 <View style={styles.centerFabContainer}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.centerFabButton}
                         onPress={() => {
                             if (onNavigate) {
@@ -211,7 +221,7 @@ const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId,
                     <MessageSquare color="#A9A9A9" size={22} />
                     <Text style={styles.navBarLabel}>Chat</Text>
                 </TouchableOpacity>
-                
+
                 <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate && onNavigate('Profile')}>
                     <User color="#A9A9A9" size={22} />
                     <Text style={styles.navBarLabel}>Profile</Text>
@@ -230,6 +240,12 @@ const styles = StyleSheet.create({
     activeTabBtn: { borderBottomWidth: 2, borderBottomColor: '#284B7A' },
     tabText: { fontSize: 14, color: '#A9A9A9', fontWeight: '600' },
     activeTabText: { color: '#284B7A' },
+
+    tabSliderContainer: { flexDirection: 'row', marginHorizontal: 24, backgroundColor: '#F0F2F5', borderRadius: 14, padding: 4, marginBottom: 16 },
+    tabButtonElement: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
+    tabButtonElementActive: { backgroundColor: '#FFF', elevation: 1, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 },
+    tabButtonText: { fontSize: 13, color: '#666', fontWeight: '500' },
+    tabButtonTextActive: { color: '#284B7A', fontWeight: 'bold' },
 
     card: { backgroundColor: '#FFF', borderRadius: 15, padding: 15, marginBottom: 15, flexDirection: 'row', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 },
     cardIconBox: { width: 60, height: 60, backgroundColor: '#387C65', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
