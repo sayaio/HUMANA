@@ -1,7 +1,6 @@
 const PemesananSesi = require('../classes/PemesananSesi');
 const Pembayaran = require('../classes/Pembayaran');
 const pool = require('../database');
-
 // ==========================================
 // FUNGSI PEMBANTU (HELPERS)
 // ==========================================
@@ -15,7 +14,6 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
 }
-
 // ==========================================
 // CONTROLLERS
 // ==========================================
@@ -29,11 +27,9 @@ const getPermintaanBaru = async (req, res) => {
             message: "Koordinat lokasi terkini Guru tidak terdeteksi oleh sistem."
         });
     }
-
     try {
         const guruLat = Number(lat_guru);
         const guruLng = Number(lng_guru);
-
         // =========================================================================
         // STEP 1: CEK STATUS KEAKTIFAN GURU TERLEBIH DAHULU (PISAH DARI QUERY UTAMA)
         // =========================================================================
@@ -41,7 +37,6 @@ const getPermintaanBaru = async (req, res) => {
             `SELECT is_active FROM Guru WHERE id_guru = ?`,
             [id_guru]
         );
-
         // Jika data guru tidak ditemukan di database
         if (guruCheck.length === 0) {
             return res.status(404).json({
@@ -49,9 +44,7 @@ const getPermintaanBaru = async (req, res) => {
                 message: "Data Guru tidak ditemukan dalam sistem."
             });
         }
-
         const isTeacherActive = guruCheck[0].is_active;
-
         // KUNCI UX: Jika guru NONAKTIF (is_active === 0), langsung potong kompas di sini.
         // Kirim flag is_active: false dan data array kosong agar frontend bisa membedakan tampilannya.
         if (isTeacherActive === 0 || isTeacherActive === false) {
@@ -62,7 +55,6 @@ const getPermintaanBaru = async (req, res) => {
                 data: []
             });
         }
-
         // =========================================================================
         // STEP 2: JALANKAN QUERY UTAMA JIKA GURU BERSTATUS AKTIF (is_active === 1)
         // =========================================================================
@@ -84,7 +76,6 @@ const getPermintaanBaru = async (req, res) => {
               AND LOWER(p.status_pemesanan) = 'menunggu konfirmasi'
             ORDER BY p.waktu_mulai ASC
         `, [id_guru]); // Menggunakan placeholder binding agar query lebih aman dan presisi
-
         // Pemetaan data ke class objek dan kalkulasi jarak (Tetap dipertahankan seperti aslinya)
         const daftarSesiObjek = rows.map(row => {
             const sesiPemesanan = new PemesananSesi(
@@ -96,11 +87,9 @@ const getPermintaanBaru = async (req, res) => {
                 row.lokasi_sesi
             );
             sesiPemesanan.id_pemesanan = row.id_pemesanan;
-
             // SAFETY CHECK: Jalankan kalkulasi Haversine jika lokasi berupa koordinat
             if (row.lokasi_sesi && row.lokasi_sesi.includes(',')) {
                 const [muridLat, muridLng] = row.lokasi_sesi.split(',').map(Number);
-
                 if (!isNaN(muridLat) && !isNaN(muridLng)) {
                     sesiPemesanan.jarak_km = hitungJarak(guruLat, guruLng, muridLat, muridLng);
                 } else {
@@ -109,30 +98,35 @@ const getPermintaanBaru = async (req, res) => {
             } else {
                 sesiPemesanan.jarak_km = 0;
             }
-
             return sesiPemesanan;
         });
-
         // Jika guru aktif, kembalikan response sukses lengkap dengan flag is_active: true
         res.status(200).json({
             success: true,
             is_active: true,
             data: daftarSesiObjek
         });
-
     } catch (error) {
         console.error("Error pada getPermintaanBaruUntukGuru:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 const terimaPermintaanSesi = async (req, res) => {
+<<<<<<< HEAD
     // 🛠️ Tangkap juga metode_pembayaran dari frontend (misal default: 'TUNAI')
     const { id_pemesanan, id_guru, total_pembayaran_final, biaya_sesi, biaya_jarak, metode_pembayaran } = req.body;
 
     if (!id_pemesanan || !id_guru || !total_pembayaran_final || biaya_sesi === undefined || biaya_jarak === undefined) {
         return res.status(400).json({ success: false, message: "Data penerimaan atau rincian biaya tidak lengkap." });
+=======
+    // Tambahkan biaya_sesi dan biaya_jarak pada destrukturisasi body
+    const { id_pemesanan, id_guru, biaya_sesi, biaya_jarak, total_pembayaran_final } = req.body;
+    
+    if (!id_pemesanan || !id_guru || total_pembayaran_final === undefined) {
+        return res.status(400).json({ success: false, message: "Data penerimaan tidak lengkap." });
+>>>>>>> fixpembayaranpage
     }
-
+    
     try {
         // 1. Instansiasi objek Pembayaran baru menggunakan OOP Class
         const pembayaranBaru = new Pembayaran(total_pembayaran_final, metode_pembayaran);
@@ -142,6 +136,7 @@ const terimaPermintaanSesi = async (req, res) => {
             SET id_guru = ?, status_pemesanan = 'dikonfirmasi' 
             WHERE id_pemesanan = ?
         `, [id_guru, id_pemesanan]);
+<<<<<<< HEAD
 
         // 2. Simpan ke DB menggunakan getter dari objek class Pembayaran
         await pool.query(`
@@ -155,6 +150,19 @@ const terimaPermintaanSesi = async (req, res) => {
         ]);
 
         res.status(200).json({ success: true, message: "Sesi berhasil diterima!" });
+=======
+        
+        // 2. INSERT ke tabel pembayaran dengan struktur yang lengkap
+        await pool.query(`
+            INSERT INTO Pembayaran (id_pemesanan, biaya_sesi, biaya_jarak, metode_pembayaran, nominal, status_pembayaran) 
+            VALUES (?, ?, ?, 'menunggu', ?, 'menunggu')
+        `, [id_pemesanan, biaya_sesi, biaya_jarak, total_pembayaran_final]);
+        
+        res.status(200).json({
+            success: true,
+            message: "Sesi berhasil diterima, tagihan pembayaran telah dibuat untuk murid."
+        });
+>>>>>>> fixpembayaranpage
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -162,8 +170,14 @@ const terimaPermintaanSesi = async (req, res) => {
 
 const getSesiDikonfirmasi = async (req, res) => {
     const { id_guru } = req.query;
+<<<<<<< HEAD
     if (!id_guru) return res.status(400).json({ success: false, message: "ID Guru tidak disediakan." });
 
+=======
+    if (!id_guru) {
+        return res.status(400).json({ success: false, message: "ID Guru tidak disediakan." });
+    }
+>>>>>>> fixpembayaranpage
     try {
         const rows = await pool.query(`
             SELECT 
@@ -177,15 +191,25 @@ const getSesiDikonfirmasi = async (req, res) => {
             WHERE p.id_guru = ? AND LOWER(p.status_pemesanan) = 'dikonfirmasi'
             ORDER BY p.waktu_mulai ASC LIMIT 1
         `, [id_guru]);
+<<<<<<< HEAD
 
         if (rows.length === 0) return res.status(200).json({ success: true, data: null });
 
         const row = rows[0];
+=======
+        // Jika tidak ada sesi yang berstatus dikonfirmasi
+        if (rows.length === 0) {
+            return res.status(200).json({ success: true, data: null });
+        }
+        const row = rows[0];
+        // Memetakan ke struktur kelas PemesananSesi agar seragam dengan frontend
+>>>>>>> fixpembayaranpage
         const sesiDikonfirmasi = new PemesananSesi(
             row.nama_murid, id_guru, row.nama_materi,
             row.waktu_mulai, row.waktu_selesai, row.lokasi_sesi
         );
         sesiDikonfirmasi.id_pemesanan = row.id_pemesanan;
+<<<<<<< HEAD
 
         // 3. Rekonstruksi data ke dalam objek Class Pembayaran
         const objekPembayaran = new Pembayaran(
@@ -203,6 +227,11 @@ const getSesiDikonfirmasi = async (req, res) => {
         sesiDikonfirmasi.pembayaran = objekPembayaran.toJSON(); // otomatis memanggil metode toJSON() aman untuk dikirim
 
         // Format waktu string
+=======
+        // Menyisipkan properti tambahan untuk keperluan UI
+        sesiDikonfirmasi.harga_total = row.harga_total || 0;
+        // Membuat string format waktu kustom (contoh: 08:30 - 10:30)
+>>>>>>> fixpembayaranpage
         if (row.waktu_mulai && row.waktu_selesai) {
             const opsiJam = { hour: '2-digit', minute: '2-digit', hour12: false };
             const jamMulai = new Date(row.waktu_mulai).toLocaleTimeString('id-ID', opsiJam).replace('.', ':');
@@ -211,13 +240,11 @@ const getSesiDikonfirmasi = async (req, res) => {
         } else {
             sesiDikonfirmasi.waktu_string = "-";
         }
-
         res.status(200).json({ success: true, data: sesiDikonfirmasi });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
-
 module.exports = {
     getPermintaanBaru,
     terimaPermintaanSesi,

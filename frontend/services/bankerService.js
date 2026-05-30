@@ -1,5 +1,4 @@
 import { API_URL } from '../src/config';
-
 /**
  * GET /sesi/detail/:id
  * Fetch detail ringkasan sesi sebelum bayar berdasarkan id_sesi

@@ -10,7 +10,6 @@ class PemesananSesi {
     #waktuMulai;
     #waktuSelesai;
     #lokasiSesi;
-
     constructor(murid, guru, materi, waktuMulai, waktuSelesai, lokasiSesi) {
         this.id_pemesanan = null;
         this.murid = murid;
@@ -26,7 +25,6 @@ class PemesananSesi {
         this.#waktuSelesai = waktuSelesai;
         this.#lokasiSesi = lokasiSesi;
     }
-
     HitungDurasiJam() {
         const mulai = new Date(this.#waktuMulai);
         const selesai = new Date(this.#waktuSelesai);
@@ -34,7 +32,6 @@ class PemesananSesi {
         const durasiJam = selisihMilidetik / (1000 * 60 * 60);
         return durasiJam > 0 ? durasiJam : 0;
     }
-
     // Fungsi Utama: Menghitung total biaya berdasarkan tarif yang kamu tentukan
     HitungTotalBiaya(jarakKm) {
         const tarifPerJam = 30000;
@@ -49,23 +46,18 @@ class PemesananSesi {
             totalPembayaran: Math.round(biayaBelajar + biayaTransport)
         };
     }
-
     getInvoice() {
         return `INV-${this.id_pemesanan}-${this.waktuPesan.getTime()}`;
     }
-
     konfirmasi() {
         this.statusPemesanan = "dikonfirmasi";
     }
-
     batalkan() {
         this.statusPemesanan = "dibatalkan";
     }
-
     setPembayaran(pembayaran) {
         this.pembayaran = pembayaran;
     }
-
     toJSON() {
         const formatKeJamLokal = (waktuRaw) => {
             if (!waktuRaw) return "";
@@ -77,9 +69,9 @@ class PemesananSesi {
                 hour12: false
             }).replace('.', ':');
         };
-
         const jamMulaiText = formatKeJamLokal(this.#waktuMulai);
         const jamSelesaiText = formatKeJamLokal(this.#waktuSelesai);
+<<<<<<< HEAD
 
         // 🛠️ HITUNG RINCIAN BIAYA SECARA OTOMATIS
         const rincianBiaya = this.HitungTotalBiaya(this.jarak_km);
@@ -89,6 +81,9 @@ class PemesananSesi {
         const bTransport = this.biaya_transport !== null ? this.biaya_transport : rincianBiaya.biayaTransportGuru;
         const tBayar = this.total_bayar !== null ? this.total_bayar : rincianBiaya.totalPembayaran;
 
+=======
+        const rincianBiaya = this.HitungTotalBiaya(this.jarak_km);
+>>>>>>> fixpembayaranpage
         return {
             id_pemesanan: this.id_pemesanan,
             nama_murid: this.murid,
@@ -97,6 +92,12 @@ class PemesananSesi {
             waktu_string: jamMulaiText && jamSelesaiText ? `${jamMulaiText} – ${jamSelesaiText}` : "Waktu tidak valid",
             jarak_km: parseFloat(this.jarak_km.toFixed(2)),
             lokasi_sesi: this.#lokasiSesi,
+<<<<<<< HEAD
+=======
+            biaya_sesi: rincianBiaya.biayaPembelajaran,
+            biaya_jarak: rincianBiaya.biayaTransportGuru,
+            harga_total: rincianBiaya.totalPembayaran
+>>>>>>> fixpembayaranpage
         };
     }
 }

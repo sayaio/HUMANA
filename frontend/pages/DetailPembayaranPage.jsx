@@ -1,11 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, TextInput, ScrollView } from 'react-native';
+<<<<<<< HEAD
 import { prosesCod, prosesMidtrans } from '../services/bankerService';
+=======
+
+import { getSesiDetail } from '../services/bankerService';
+
+import { API_URL } from '../src/config'; // Sesuaikan path config kamu
+>>>>>>> fixpembayaranpage
 
 const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [showMethodModal, setShowMethodModal] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+
+    const [displayData, setDetailSesi] = useState(null);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+
+    const idSesi = sessionData?.id_sesi || sessionData?.id_pemesanan;
+
+    useEffect(() => {
+        const fetchDetail = async () => {
+            if (!idSesi) {
+                setIsLoadingData(false);
+                return;
+            }
+
+            try {
+                console.log(`📡 Fetching detail sesi untuk ID: ${idSesi}`);
+                const response = await getSesiDetail(idSesi);
+
+                // Asumsi backend mengembalikan { success: true, data: {...} } atau langsung objek datanya
+                if (response && response.data) {
+                    setDetailSesi(response.data);
+                } else if (response && !response.success && response.message) {
+                    console.log('⚠️ Warning:', response.message);
+                } else {
+                    // Jika response langsung berupa objek data
+                    setDetailSesi(response);
+                }
+            } catch (error) {
+                console.log('❌ Error di useEffect fetchDetail:', error);
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+
+        fetchDetail();
+    }, [idSesi]);
+
+    // Ambil data dari DB (displayData) atau fallback ke prop dari layar sebelumnya (sessionData)
+    const biayaSesi = displayData?.pembayaran?.biaya_sesi ?? sessionData?.biaya_sesi ?? sessionData?.harga ?? 0;
+    const biayaJarak = displayData?.pembayaran?.biaya_jarak ?? sessionData?.biaya_jarak ?? sessionData?.biaya_transport ?? 0;
+    const totalBayar = displayData?.pembayaran?.nominal ?? sessionData?.nominal ?? sessionData?.total_harga ?? (biayaSesi + biayaJarak);
 
     // Helper untuk memformat angka ke Rupiah secara otomatis
     const formatRupiah = (angka) => {
@@ -142,16 +189,28 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
 
                     <Text style={styles.rincianTitle}>Rincian Pembayaran :</Text>
 
+<<<<<<< HEAD
                     {/* 1. BIAYA SESI */}
                     <View style={styles.priceRow}>
                         <Text style={styles.priceLabel}>Biaya Sesi</Text>
                         <Text style={styles.priceValue}>: {formatRupiah(sessionData?.biaya_sesi || sessionData?.biaya_belajar || sessionData?.harga)}</Text>
+=======
+                    {/* ✅ MENGAMBIL DARI OBJEK PEMBAYARAN API, DENGAN FALLBACK KE PROPS */}
+                    <View style={styles.priceRow}>
+                        <Text style={styles.priceLabel}>Biaya Pembelajaran</Text>
+                        <Text style={styles.priceValue}>: {formatRupiah(biayaSesi)}</Text>
+>>>>>>> fixpembayaranpage
                     </View>
 
                     {/* 2. BIAYA JARAK */}
                     <View style={styles.priceRow}>
+<<<<<<< HEAD
                         <Text style={styles.priceLabel}>Biaya Jarak (Transportasi)</Text>
                         <Text style={styles.priceValue}>: {formatRupiah(sessionData?.biaya_jarak || sessionData?.biaya_transport)}</Text>
+=======
+                        <Text style={styles.priceLabel}>Biaya Transportasi Guru</Text>
+                        <Text style={styles.priceValue}>: {formatRupiah(biayaJarak)}</Text>
+>>>>>>> fixpembayaranpage
                     </View>
 
                     <View style={[styles.divider, { marginVertical: 12 }]} />
@@ -159,7 +218,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
                     {/* TOTAL */}
                     <View style={styles.priceRow}>
                         <Text style={styles.totalLabel}>Total Pembayaran</Text>
-                        <Text style={styles.totalValue}>: {formatRupiah(sessionData?.total_bayar || sessionData?.total_harga)}</Text>
+                        <Text style={styles.totalValue}>: {formatRupiah(totalBayar)}</Text>
                     </View>
                 </View>
 

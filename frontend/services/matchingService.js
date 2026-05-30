@@ -14,7 +14,11 @@ export const fetchPermintaanBaru = async (idGuru, lat, lng) => {
     }
 };
 
+<<<<<<< HEAD
 export const terimaPermintaanSesiAPI = async (idPemesanan, idGuru, totalPembayaranFinal, biayaSesi, biayaJarak, metodePembayaran = 'TUNAI') => {
+=======
+export const terimaPermintaanSesiAPI = async (idPemesanan, idGuru, biayaSesi, biayaJarak, totalPembayaranFinal) => {
+>>>>>>> fixpembayaranpage
     try {
         const response = await fetch(`${API_URL}/terima-permintaan`, {
             method: 'POST',
@@ -22,9 +26,15 @@ export const terimaPermintaanSesiAPI = async (idPemesanan, idGuru, totalPembayar
             body: JSON.stringify({
                 id_pemesanan: idPemesanan,
                 id_guru: idGuru,
+<<<<<<< HEAD
                 total_pembayaran_final: totalPembayaranFinal,
                 biaya_sesi: biayaSesi,
                 biaya_jarak: biayaJarak
+=======
+                biaya_sesi: biayaSesi,
+                biaya_jarak: biayaJarak,
+                total_pembayaran_final: totalPembayaranFinal
+>>>>>>> fixpembayaranpage
             })
         });
         return await response.json();
