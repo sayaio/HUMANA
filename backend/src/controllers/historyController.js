@@ -24,13 +24,15 @@ const getHistory = async (req, res) => {
                 murid.id_murid, murid.nama_murid, murid.email AS email_murid, murid.kelas AS kelas_murid,
                 guru.id_guru, guru.nama_guru, guru.email_guru,
                 materi.id_materi, materi.nama_materi, materi.kelas AS kelas_materi, materi.jurusan,
-                mapel.id_mapel, mapel.nama_mapel
+                mapel.id_mapel, mapel.nama_mapel,
+                bayar.nominal as harga
             FROM Pemesanan pemesanan
             JOIN Murid murid ON murid.id_murid = pemesanan.id_murid
             JOIN Guru guru ON guru.id_guru = pemesanan.id_guru
             LEFT JOIN Materi materi ON materi.id_materi = pemesanan.id_materi
             LEFT JOIN MataPelajaran mapel ON mapel.id_mapel = materi.id_mapel
-            WHERE (pemesanan.status_pemesanan = 'selesai' OR pemesanan.status_pemesanan = 'ditolak') 
+            LEFT JOIN Pembayaran bayar ON bayar.id_pemesanan = pemesanan.id_pemesanan
+            WHERE (pemesanan.status_pemesanan = 'selesai' OR pemesanan.status_pemesanan = 'dibatalkan') 
             AND (${whereClause} = ?)
             ORDER BY pemesanan.waktu_mulai DESC;
         `;
@@ -49,6 +51,7 @@ const getHistory = async (req, res) => {
             );
             sesi.id_pemesanan = row.id_pemesanan;
             sesi.statusPemesanan = row.status_pemesanan;
+            sesi.harga = row.harga;
 
             return {
                 ...sesi.toJSON(),

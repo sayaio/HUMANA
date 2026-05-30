@@ -19,6 +19,7 @@ import {
     terimaPermintaanSesiAPI,
     fetchSesiDikonfirmasi
 } from '../services/matchingService'; // Sesuaikan path jika berbeda
+import { getHistory } from '../services/historyService'; // Tambahkan ini
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
@@ -32,10 +33,8 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
     // State untuk menampung data riil dari database
     const [permintaanData, setPermintaanData] = useState([]);
     const [jadwalAktifData, setJadwalAktifData] = useState([]);
-    const [riwayatData, setRiwayatData] = useState([
-        // Riwayat disisipkan mock data dulu karena endpoint riwayat belum dibuat di backend
-        { id: 'R1', nama_murid: 'Naufal Arkan', materi: 'Algoritma — Merge Sort Java', waktu: 'Sabtu, 23 Mei 2026', harga: 34000, tipe: 'Riwayat', rating: 5, ulasan: 'Penjelasan mas Mario sangat terstruktur dan mudah dipahami!' }
-    ]);
+    // Ubah bagian ini di dalam komponen
+    const [riwayatData, setRiwayatData] = useState([]); // Awalnya kosong
 
     // State pendukung untuk loading dan koordinat GPS
     const [loading, setLoading] = useState(true);
@@ -63,9 +62,10 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
         setLoading(true);
         try {
             // Mengambil Permintaan Baru (GET) & Sesi Dikonfirmasi (GET) secara paralel
-            const [resPermintaan, resKonfirmasi] = await Promise.all([
+            const [resPermintaan, resKonfirmasi, resRiwayat] = await Promise.all([
                 fetchPermintaanBaru(idGuru, koordinat.lat, koordinat.lng),
-                fetchSesiDikonfirmasi(idGuru)
+                fetchSesiDikonfirmasi(idGuru),
+                getHistory('guru', idGuru) // Panggil service history
             ]);
 
             // Map data dari backend agar strukturnya sesuai dengan UI card yang kamu buat
@@ -95,6 +95,25 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
                 setJadwalAktifData(mappedAktif);
             } else {
                 setJadwalAktifData([]);
+            }
+
+            if (resRiwayat.success && resRiwayat.data) {
+                const mappedRiwayat = resRiwayat.data.map(item => ({
+                    id: item.id_pemesanan,
+                    nama_murid: item.murid.nama_murid,
+                    materi: item.mata_pelajaran.nama_mapel + ' — ' + item.nama_materi,
+                    // Di dalam map riwayatData
+                    waktu: item.waktu_mulai ? new Date(item.waktu_mulai).toLocaleDateString('id-ID', {
+                        day: 'numeric', month: 'long', year: 'numeric'
+                    }) : 'Tanggal tidak tersedia',
+                    harga: item.pembayaran?.total_bayar || 0, // Sesuaikan dengan struktur data backend Anda
+                    tipe: 'Riwayat',
+                    rating: item.feedback?.rating || 0, // Jika ada data feedback
+                    ulasan: item.feedback?.komentar || 'Tidak ada ulasan.'
+                }));
+                setRiwayatData(mappedRiwayat);
+            } else {
+                setRiwayatData([]);
             }
 
         } catch (err) {
