@@ -71,19 +71,7 @@ class PemesananSesi {
         };
         const jamMulaiText = formatKeJamLokal(this.#waktuMulai);
         const jamSelesaiText = formatKeJamLokal(this.#waktuSelesai);
-<<<<<<< HEAD
-
-        // 🛠️ HITUNG RINCIAN BIAYA SECARA OTOMATIS
         const rincianBiaya = this.HitungTotalBiaya(this.jarak_km);
-
-        // Tentukan nilai: pakai data yang sudah di-set manual (dari DB) ATAU hasil hitungan rumus
-        const bBelajar = this.biaya_belajar !== null ? this.biaya_belajar : rincianBiaya.biayaPembelajaran;
-        const bTransport = this.biaya_transport !== null ? this.biaya_transport : rincianBiaya.biayaTransportGuru;
-        const tBayar = this.total_bayar !== null ? this.total_bayar : rincianBiaya.totalPembayaran;
-
-=======
-        const rincianBiaya = this.HitungTotalBiaya(this.jarak_km);
->>>>>>> fixpembayaranpage
         return {
             id_pemesanan: this.id_pemesanan,
             nama_murid: this.murid,
@@ -92,12 +80,9 @@ class PemesananSesi {
             waktu_string: jamMulaiText && jamSelesaiText ? `${jamMulaiText} – ${jamSelesaiText}` : "Waktu tidak valid",
             jarak_km: parseFloat(this.jarak_km.toFixed(2)),
             lokasi_sesi: this.#lokasiSesi,
-<<<<<<< HEAD
-=======
             biaya_sesi: rincianBiaya.biayaPembelajaran,
             biaya_jarak: rincianBiaya.biayaTransportGuru,
             harga_total: rincianBiaya.totalPembayaran
->>>>>>> fixpembayaranpage
         };
     }
 }

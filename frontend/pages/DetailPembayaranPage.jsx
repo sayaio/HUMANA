@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, TextInput, ScrollView } from 'react-native';
-<<<<<<< HEAD
 import { prosesCod, prosesMidtrans } from '../services/bankerService';
-=======
-
 import { getSesiDetail } from '../services/bankerService';
-
-import { API_URL } from '../src/config'; // Sesuaikan path config kamu
->>>>>>> fixpembayaranpage
 
 const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
     const [selectedMethod, setSelectedMethod] = useState(null);
@@ -189,28 +183,16 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
 
                     <Text style={styles.rincianTitle}>Rincian Pembayaran :</Text>
 
-<<<<<<< HEAD
-                    {/* 1. BIAYA SESI */}
-                    <View style={styles.priceRow}>
-                        <Text style={styles.priceLabel}>Biaya Sesi</Text>
-                        <Text style={styles.priceValue}>: {formatRupiah(sessionData?.biaya_sesi || sessionData?.biaya_belajar || sessionData?.harga)}</Text>
-=======
                     {/* ✅ MENGAMBIL DARI OBJEK PEMBAYARAN API, DENGAN FALLBACK KE PROPS */}
                     <View style={styles.priceRow}>
                         <Text style={styles.priceLabel}>Biaya Pembelajaran</Text>
                         <Text style={styles.priceValue}>: {formatRupiah(biayaSesi)}</Text>
->>>>>>> fixpembayaranpage
                     </View>
 
                     {/* 2. BIAYA JARAK */}
                     <View style={styles.priceRow}>
-<<<<<<< HEAD
-                        <Text style={styles.priceLabel}>Biaya Jarak (Transportasi)</Text>
-                        <Text style={styles.priceValue}>: {formatRupiah(sessionData?.biaya_jarak || sessionData?.biaya_transport)}</Text>
-=======
                         <Text style={styles.priceLabel}>Biaya Transportasi Guru</Text>
                         <Text style={styles.priceValue}>: {formatRupiah(biayaJarak)}</Text>
->>>>>>> fixpembayaranpage
                     </View>
 
                     <View style={[styles.divider, { marginVertical: 12 }]} />

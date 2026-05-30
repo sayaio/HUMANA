@@ -83,18 +83,10 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
                         const res = await terimaPermintaanSesiAPI(
                             item.id_pemesanan,
                             guruData.id,
-<<<<<<< HEAD
-                            item.harga_total,
-                            item.biaya_sesi,
-                            item.biaya_jarak
-                        );
-
-=======
                             item.biaya_sesi,       // dikirim ke parameter biayaSesi
                             item.biaya_jarak,      // dikirim ke parameter biayaJarak
                             item.harga_total       // dikirim ke parameter totalPembayaranFinal
                         );
->>>>>>> fixpembayaranpage
                         if (res && res.success) {
                             Alert.alert("Sukses", "Sesi berhasil dikonfirmasi!");
                             setPermintaan(prev => prev.filter(p => p.id_pemesanan !== item.id_pemesanan));
