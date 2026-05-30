@@ -80,7 +80,13 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
                     text: "Terima",
                     onPress: async () => {
                         setLoading(true);
-                        const res = await terimaPermintaanSesiAPI(item.id_pemesanan, guruData.id, item.harga_total);
+                        const res = await terimaPermintaanSesiAPI(
+                            item.id_pemesanan,
+                            guruData.id,
+                            item.biaya_sesi,       // dikirim ke parameter biayaSesi
+                            item.biaya_jarak,      // dikirim ke parameter biayaJarak
+                            item.harga_total       // dikirim ke parameter totalPembayaranFinal
+                        );
                         if (res && res.success) {
                             Alert.alert("Sukses", "Sesi berhasil dikonfirmasi!");
                             setPermintaan(prev => prev.filter(p => p.id_pemesanan !== item.id_pemesanan));
@@ -399,11 +405,9 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
                     </Animated.View>
                 </View>
             </Modal>
-
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFF' },
     scrollContainer: { flex: 1 },

@@ -14,7 +14,7 @@ export const fetchPermintaanBaru = async (idGuru, lat, lng) => {
     }
 };
 
-export const terimaPermintaanSesiAPI = async (idPemesanan, idGuru, totalPembayaranFinal) => {
+export const terimaPermintaanSesiAPI = async (idPemesanan, idGuru, biayaSesi, biayaJarak, totalPembayaranFinal) => {
     try {
         const response = await fetch(`${API_URL}/terima-permintaan`, {
             method: 'POST',
@@ -22,6 +22,8 @@ export const terimaPermintaanSesiAPI = async (idPemesanan, idGuru, totalPembayar
             body: JSON.stringify({
                 id_pemesanan: idPemesanan,
                 id_guru: idGuru,
+                biaya_sesi: biayaSesi,
+                biaya_jarak: biayaJarak,
                 total_pembayaran_final: totalPembayaranFinal
             })
         });

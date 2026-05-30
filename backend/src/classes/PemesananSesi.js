@@ -10,7 +10,6 @@ class PemesananSesi {
     #waktuMulai;
     #waktuSelesai;
     #lokasiSesi;
-
     constructor(murid, guru, materi, waktuMulai, waktuSelesai, lokasiSesi) {
         this.id_pemesanan = null;
         this.murid = murid;
@@ -27,7 +26,6 @@ class PemesananSesi {
 
         this.jarak_km = 0;
     }
-
     HitungDurasiJam() {
         const mulai = new Date(this.#waktuMulai);
         const selesai = new Date(this.#waktuSelesai);
@@ -35,7 +33,6 @@ class PemesananSesi {
         const durasiJam = selisihMilidetik / (1000 * 60 * 60);
         return durasiJam > 0 ? durasiJam : 0;
     }
-
     // Fungsi Utama: Menghitung total biaya berdasarkan tarif yang kamu tentukan
     HitungTotalBiaya(jarakKm) {
         const tarifPerJam = 30000;
@@ -50,23 +47,18 @@ class PemesananSesi {
             totalPembayaran: Math.round(biayaBelajar + biayaTransport)
         };
     }
-
     getInvoice() {
         return `INV-${this.id_pemesanan}-${this.waktuPesan.getTime()}`;
     }
-
     konfirmasi() {
         this.statusPemesanan = "dikonfirmasi";
     }
-
     batalkan() {
         this.statusPemesanan = "dibatalkan";
     }
-
     setPembayaran(pembayaran) {
         this.pembayaran = pembayaran;
     }
-
     toJSON() {
         // Buat helper function internal untuk mengubah Date object atau string dari DB menjadi format HH:MM lokal
         const formatKeJamLokal = (waktuRaw) => {
@@ -85,12 +77,9 @@ class PemesananSesi {
                 hour12: false
             }).replace('.', ':'); // Mengganti pemisah titik bawaan id-ID menjadi titik dua (:)
         };
-
         const jamMulaiText = formatKeJamLokal(this.#waktuMulai);
         const jamSelesaiText = formatKeJamLokal(this.#waktuSelesai);
-
         const rincianBiaya = this.HitungTotalBiaya(this.jarak_km);
-
         return {
             id_pemesanan: this.id_pemesanan,
             nama_murid: this.murid,
@@ -100,9 +89,10 @@ class PemesananSesi {
             waktu_string: jamMulaiText && jamSelesaiText ? `${jamMulaiText} – ${jamSelesaiText}` : "Waktu tidak valid",
             jarak_km: parseFloat(this.jarak_km.toFixed(2)),
             lokasi_sesi: this.#lokasiSesi,
+            biaya_sesi: rincianBiaya.biayaPembelajaran,
+            biaya_jarak: rincianBiaya.biayaTransportGuru,
             harga_total: rincianBiaya.totalPembayaran
         };
     }
 }
-
 module.exports = PemesananSesi;

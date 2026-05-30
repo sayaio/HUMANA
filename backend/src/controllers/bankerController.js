@@ -1,5 +1,6 @@
 // controllers/BankerController.js
 const pool = require('../database');
+const Pembayaran = require('../classes/Pembayaran');
 const midtransClient = require('midtrans-client');
 
 const snap = new midtransClient.Snap({
@@ -31,6 +32,8 @@ const getSesiDetail = async (req, res) => {
                 mapel.id_mapel,
                 mapel.nama_mapel,
                 bayar.id_pembayaran,
+                bayar.biaya_sesi,        -- ✅ TAMBAHKAN INI
+                bayar.biaya_jarak,       -- ✅ TAMBAHKAN INI
                 bayar.metode_pembayaran,
                 bayar.nominal,
                 bayar.status_pembayaran,
@@ -64,6 +67,8 @@ const getSesiDetail = async (req, res) => {
                 materi: { id_materi: row.id_materi, nama_materi: row.nama_materi },
                 pembayaran: {
                     id_pembayaran: row.id_pembayaran,
+                    biaya_sesi: row.biaya_sesi,           // ✅ TAMBAHKAN INI
+                    biaya_jarak: row.biaya_jarak,         // ✅ TAMBAHKAN INI
                     metode_pembayaran: row.metode_pembayaran,
                     nominal: row.nominal,
                     status_pembayaran: row.status_pembayaran,
@@ -245,5 +250,6 @@ const prosesPembayaranMidtrans = async (req, res) => {
     }
 };
 
-// Jangan lupa tambah di module.exports
 module.exports = { getSesiDetail, bayarSimulasi, prosesPembayaranMidtrans, prosesPembayaranCod };
+
+
