@@ -207,17 +207,19 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
                 {/* CARD: SESI HARI INI */}
                 <View style={styles.mainCard}>
                     <Text style={styles.cardSectionTitle}>SESI DIKONFIRMASI / TERDEKAT</Text>
-                    {sesiDikonfirmasi ? (
+
+                    {/* Perbaikan: Cek apakah sesiDikonfirmasi ada isinya dan merupakan Array dengan length > 0 */}
+                    {sesiDikonfirmasi && sesiDikonfirmasi.length > 0 ? (
                         <>
                             <View style={styles.profileRow}>
                                 <View style={styles.avatarCircle}>
                                     <Text style={styles.avatarText}>
-                                        {sesiDikonfirmasi.nama_murid ? sesiDikonfirmasi.nama_murid.substring(0, 2).toUpperCase() : 'SR'}
+                                        {sesiDikonfirmasi[0].nama_murid ? sesiDikonfirmasi[0].nama_murid.substring(0, 2).toUpperCase() : 'SR'}
                                     </Text>
                                 </View>
                                 <View style={styles.profileInfo}>
-                                    <Text style={styles.studentName}>{sesiDikonfirmasi.nama_murid}</Text>
-                                    <Text style={styles.subjectText}>{sesiDikonfirmasi.nama_materi}</Text>
+                                    <Text style={styles.studentName}>{sesiDikonfirmasi[0].nama_murid}</Text>
+                                    <Text style={styles.subjectText}>{sesiDikonfirmasi[0].nama_materi}</Text>
                                 </View>
                                 <View style={[styles.badgeSegera, { backgroundColor: '#D1E7DD' }]}>
                                     <Text style={[styles.badgeTextSegera, { color: '#0F5132' }]}>• Siap</Text>
@@ -227,15 +229,15 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
                             <View style={styles.detailGrid}>
                                 <View style={styles.detailItem}>
                                     <Text style={styles.detailLabel}>Waktu</Text>
-                                    <Text style={styles.detailValue}>{sesiDikonfirmasi.waktu_string || 'Sesi Terjadwal'}</Text>
+                                    <Text style={styles.detailValue}>{sesiDikonfirmasi[0].waktu_string || 'Sesi Terjadwal'}</Text>
                                 </View>
                                 <View style={styles.detailItem}>
                                     <Text style={styles.detailLabel}>Lokasi</Text>
-                                    <Text style={styles.detailValue} numberOfLines={2}>{sesiDikonfirmasi.lokasi_sesi}</Text>
+                                    <Text style={styles.detailValue} numberOfLines={2}>{sesiDikonfirmasi[0].lokasi_sesi}</Text>
                                 </View>
                                 <View style={styles.detailItem}>
                                     <Text style={styles.detailLabel}>Bayaran</Text>
-                                    <Text style={styles.detailValue}>{formatRupiah(sesiDikonfirmasi.harga_total)}</Text>
+                                    <Text style={styles.detailValue}>{formatRupiah(sesiDikonfirmasi[0].harga_total)}</Text>
                                 </View>
                             </View>
 

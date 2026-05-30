@@ -81,20 +81,20 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
                 setPermintaanData(mappedPermintaan);
             }
 
+            // SESUDAHNYA (BENAR)
             if (resKonfirmasi.success && resKonfirmasi.data) {
-                // Backend mengembalikan satu objek atau null untuk getSesiDikonfirmasi (LIMIT 1)
-                const item = resKonfirmasi.data;
-                const mappedAktif = [{
+                // Karena backend mengembalikan Array, kita proses pakai .map()
+                const mappedAktif = resKonfirmasi.data.map(item => ({
                     id: item.id_pemesanan,
                     nama_murid: item.nama_murid,
                     materi: item.nama_materi,
                     waktu: item.waktu_string || 'Jam Terjadwal',
                     harga: item.harga_total || 34000,
                     tipe: 'Aktif'
-                }];
+                }));
                 setJadwalAktifData(mappedAktif);
             } else {
-                setJadwalAktifData([]); // Kosongkan jika backend me-return data: null
+                setJadwalAktifData([]);
             }
 
         } catch (err) {

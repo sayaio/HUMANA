@@ -69,16 +69,22 @@ class PemesananSesi {
                 hour12: false
             }).replace('.', ':');
         };
+
         const jamMulaiText = formatKeJamLokal(this.#waktuMulai);
         const jamSelesaiText = formatKeJamLokal(this.#waktuSelesai);
-        const rincianBiaya = this.HitungTotalBiaya(this.jarak_km);
+
+        // PERBAIKAN: Berikan nilai fallback 0 jika this.jarak_km tidak ada/undefined
+        const jarak = this.jarak_km || 0;
+        const rincianBiaya = this.HitungTotalBiaya(jarak);
+
         return {
             id_pemesanan: this.id_pemesanan,
             nama_murid: this.murid,
             nama_materi: this.materi,
             status_pemesanan: this.statusPemesanan,
             waktu_string: jamMulaiText && jamSelesaiText ? `${jamMulaiText} – ${jamSelesaiText}` : "Waktu tidak valid",
-            jarak_km: parseFloat(this.jarak_km.toFixed(2)),
+            // PERBAIKAN: Gunakan variabel 'jarak' yang sudah aman
+            jarak_km: parseFloat(jarak.toFixed(2)),
             lokasi_sesi: this.#lokasiSesi,
             biaya_sesi: rincianBiaya.biayaPembelajaran,
             biaya_jarak: rincianBiaya.biayaTransportGuru,
