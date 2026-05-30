@@ -38,3 +38,36 @@ export const bayarSimulasi = async (id_sesi) => {
         return { success: false, message: error.message };
     }
 };
+
+/**
+ * POST /sesi/proses-midtrans  
+ */
+export const prosesMidtrans = async (id_sesi, tipe_pembayaran) => {
+    try {
+        const response = await fetch(`${API_URL}/sesi/proses-midtrans`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_sesi, tipe_pembayaran }),
+        });
+        return await response.json();
+    } catch (error) {
+        console.log('[BankerService] Error processing Midtrans:', error);
+        return { success: false, message: error.message };
+    }
+};
+/**
+ * POST /sesi/proses-cod 
+ */
+export const prosesCod = async (id_sesi) => {
+    try {
+        const response = await fetch(`${API_URL}/sesi/proses-cod`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_sesi }),
+        });
+        return await response.json();
+    } catch (error) {
+        console.log('[BankerService] Error processing COD:', error);
+        return { success: false, message: error.message };
+    }
+};

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, TextInput, ScrollView } from 'react-native';
-import { API_URL } from '../src/config'; // Sesuaikan path config kamu
+import { prosesCod, prosesMidtrans } from '../services/bankerService';
 
 const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
     const [selectedMethod, setSelectedMethod] = useState(null);
@@ -15,7 +15,6 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
 
     const handlePaymentPress = async () => {
         const idSesi = sessionData?.id_sesi || sessionData?.id_pemesanan;
-        console.log('🔘 Tombol ditekan, method:', selectedMethod, '| idSesi:', idSesi);
 
         if (!selectedMethod) {
             requestAnimationFrame(() => {
@@ -24,68 +23,33 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
             return;
         }
 
-        console.log('📡 Mulai fetch ke backend...');
-
-        // --- KONDISI COD ---
+        // --- COD ---
         if (selectedMethod === 'cod') {
             try {
                 setIsProcessing(true);
-                const response = await fetch(`${API_URL}/sesi/proses-cod`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_sesi: idSesi })
-                });
-                const result = await response.json();
-                console.log('📦 Result COD:', JSON.stringify(result));
+                const result = await prosesCod(idSesi); // ← berubah
                 setIsProcessing(false);
 
-                if (response.ok) {
-                    Alert.alert(
-                        'Sukses',
-                        'Pemesanan berhasil dengan COD. Silakan bayar tunai ke pengajar.',
-                        [
-                            {
-                                text: 'OK',
-                                onPress: () => {
-                                    if (onBack) onBack();
-                                }
-                            }
-                        ],
-                        { cancelable: false }
-                    );
-
-                    setTimeout(() => {
-                        console.log('⏳ Triggering fallback navigasi back...');
-                        if (onBack) onBack();
-                    }, 100);
-
+                if (result.success) {
+                    if (onBack) onBack();
                 } else {
                     throw new Error(result.message || 'Gagal memproses COD.');
                 }
             } catch (error) {
-                console.log('❌ ERROR COD:', error.message);
                 setIsProcessing(false);
                 Alert.alert('Gagal', error.message || 'Terjadi kesalahan sistem.');
             }
             return;
         }
 
-        // --- KONDISI VA / EWALLET (MIDTRANS) ---
+        // --- VA / EWALLET ---
         if (selectedMethod === 'va' || selectedMethod === 'ewallet') {
             try {
                 setIsProcessing(true);
-                const response = await fetch(`${API_URL}/sesi/proses-midtrans`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_sesi: idSesi, tipe_pembayaran: selectedMethod })
-                });
-
-                console.log('📥 Response status:', response.status);
-                const result = await response.json();
-                console.log('📦 Result Midtrans:', JSON.stringify(result));
+                const result = await prosesMidtrans(idSesi, selectedMethod); // ← berubah
                 setIsProcessing(false);
 
-                if (response.ok && (result.snap_url || result.data?.snap_url)) {
+                if (result.success && (result.snap_url || result.data?.snap_url)) {
                     const url = result.snap_url || result.data?.snap_url;
                     requestAnimationFrame(() => {
                         if (onPaymentSuccess) onPaymentSuccess(url);
@@ -94,7 +58,6 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
                     throw new Error(result.message || 'Gagal mendapatkan URL pembayaran.');
                 }
             } catch (error) {
-                console.log('❌ ERROR Midtrans:', error.message);
                 setIsProcessing(false);
                 requestAnimationFrame(() => {
                     Alert.alert('Gagal Transaksi', error.message || 'Gagal terhubung ke sistem pembayaran.');
