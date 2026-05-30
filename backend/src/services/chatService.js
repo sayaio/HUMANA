@@ -71,7 +71,7 @@ const findOrCreateChatRoom = async (id_guru, id_murid) => {
   // Belum ada, insert row baru dengan pesan placeholder
   await db.query(
     `INSERT INTO Chat (id_guru, id_murid, pengirim_role, isi_pesan, timestamp) 
-     VALUES (?, ?, 'sistem', 'Sesi telah dikonfirmasi. Silakan mulai percakapan!', NOW())`,
+      VALUES (?, ?, 'guru', 'Sesi telah dikonfirmasi. Silakan mulai percakapan!', NOW())`,
     [id_guru, id_murid]
   );
 

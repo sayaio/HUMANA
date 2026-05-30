@@ -42,7 +42,17 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
             try {
               await createChatRoom(jadwal.id_guru, jadwal.id_murid);
             } catch (e) {
-              console.log(`Gagal buat room untuk ${id_guru}`);
+              await Promise.all(
+                uniqueGuru.map(async (id_guru) => {
+                  const jadwal = jadwalAktif.find(j => j.id_guru === id_guru);
+                  try {
+                    await createChatRoom(jadwal.id_guru, jadwal.id_murid);
+                  } catch (e) {
+                    // UBAH BAGIAN INI UNTUK MELIHAT DETAIL ERROR-NYA
+                    console.log(`[ChatPage] Gagal buat room untuk guru ${id_guru}. Detail:`, e.response?.data || e.message || e);
+                  }
+                })
+              );
             }
           })
         );
