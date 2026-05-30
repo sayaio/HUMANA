@@ -114,27 +114,24 @@ const getPermintaanBaru = async (req, res) => {
 const terimaPermintaanSesi = async (req, res) => {
     // Tambahkan biaya_sesi dan biaya_jarak pada destrukturisasi body
     const { id_pemesanan, id_guru, biaya_sesi, biaya_jarak, total_pembayaran_final } = req.body;
-    
+
     if (!id_pemesanan || !id_guru || total_pembayaran_final === undefined) {
         return res.status(400).json({ success: false, message: "Data penerimaan tidak lengkap." });
     }
-    
-    try {
-        // 1. Instansiasi objek Pembayaran baru menggunakan OOP Class
-        const pembayaranBaru = new Pembayaran(total_pembayaran_final, metode_pembayaran);
 
+    try {
         await pool.query(`
             UPDATE Pemesanan 
             SET id_guru = ?, status_pemesanan = 'dikonfirmasi' 
             WHERE id_pemesanan = ?
         `, [id_guru, id_pemesanan]);
-        
+
         // 2. INSERT ke tabel pembayaran dengan struktur yang lengkap
         await pool.query(`
             INSERT INTO Pembayaran (id_pemesanan, biaya_sesi, biaya_jarak, metode_pembayaran, nominal, status_pembayaran) 
             VALUES (?, ?, ?, 'menunggu', ?, 'menunggu')
         `, [id_pemesanan, biaya_sesi, biaya_jarak, total_pembayaran_final]);
-        
+
         res.status(200).json({
             success: true,
             message: "Sesi berhasil diterima, tagihan pembayaran telah dibuat untuk murid."
@@ -146,46 +143,58 @@ const terimaPermintaanSesi = async (req, res) => {
 
 const getSesiDikonfirmasi = async (req, res) => {
     const { id_guru } = req.query;
+
     if (!id_guru) {
         return res.status(400).json({ success: false, message: "ID Guru tidak disediakan." });
     }
+
     try {
+        // PERBAIKAN: Jika menggunakan mysql2/promise, pastikan mengambil [rows]
         const rows = await pool.query(`
             SELECT 
                 p.id_pemesanan, p.waktu_mulai, p.waktu_selesai, p.lokasi_sesi, 
                 m.nama_murid, mat.nama_materi,
-                pem.id_pembayaran, pem.biaya_sesi, pem.biaya_jarak, pem.metode_pembayaran, pem.nominal AS harga_total, pem.status_pembayaran
+                pem.id_pembayaran, pem.biaya_sesi, pem.biaya_jarak, pem.metode_pembayaran, 
+                pem.nominal AS harga_total, pem.status_pembayaran
             FROM Pemesanan p
             JOIN Murid m ON p.id_murid = m.id_murid
             JOIN Materi mat ON p.id_materi = mat.id_materi
             LEFT JOIN Pembayaran pem ON p.id_pemesanan = pem.id_pemesanan
             WHERE p.id_guru = ? AND LOWER(p.status_pemesanan) = 'dikonfirmasi'
-            ORDER BY p.waktu_mulai ASC LIMIT 1
+            ORDER BY p.waktu_mulai ASC
         `, [id_guru]);
-        // Jika tidak ada sesi yang berstatus dikonfirmasi
-        if (rows.length === 0) {
-            return res.status(200).json({ success: true, data: null });
+
+        if (!rows || rows.length === 0) {
+            return res.status(200).json({ success: true, data: [] }); // Kirim array kosong
         }
-        const row = rows[0];
-        // Memetakan ke struktur kelas PemesananSesi agar seragam dengan frontend
-        const sesiDikonfirmasi = new PemesananSesi(
-            row.nama_murid, id_guru, row.nama_materi,
-            row.waktu_mulai, row.waktu_selesai, row.lokasi_sesi
-        );
-        sesiDikonfirmasi.id_pemesanan = row.id_pemesanan;
-        // Menyisipkan properti tambahan untuk keperluan UI
-        sesiDikonfirmasi.harga_total = row.harga_total || 0;
-        // Membuat string format waktu kustom (contoh: 08:30 - 10:30)
-        if (row.waktu_mulai && row.waktu_selesai) {
-            const opsiJam = { hour: '2-digit', minute: '2-digit', hour12: false };
-            const jamMulai = new Date(row.waktu_mulai).toLocaleTimeString('id-ID', opsiJam).replace('.', ':');
-            const jamSelesai = new Date(row.waktu_selesai).toLocaleTimeString('id-ID', opsiJam).replace('.', ':');
-            sesiDikonfirmasi.waktu_string = `${jamMulai} – ${jamSelesai}`;
-        } else {
-            sesiDikonfirmasi.waktu_string = "-";
-        }
-        res.status(200).json({ success: true, data: sesiDikonfirmasi });
+
+        // PERBAIKAN: Mapping semua baris menjadi list objek
+        const listSesiDikonfirmasi = rows.map(row => {
+            const sesi = new PemesananSesi(
+                row.nama_murid, id_guru, row.nama_materi,
+                row.waktu_mulai, row.waktu_selesai, row.lokasi_sesi
+            );
+
+            sesi.id_pemesanan = row.id_pemesanan;
+            sesi.jarak_km = 0;
+            sesi.harga_total = row.harga_total || 0; // Pastikan properti ini dibaca di toJSON nanti
+
+            // Format waktu
+            if (row.waktu_mulai && row.waktu_selesai) {
+                const opsiJam = { hour: '2-digit', minute: '2-digit', hour12: false };
+                const jamMulai = new Date(row.waktu_mulai).toLocaleTimeString('id-ID', opsiJam).replace('.', ':');
+                const jamSelesai = new Date(row.waktu_selesai).toLocaleTimeString('id-ID', opsiJam).replace('.', ':');
+                sesi.waktu_string = `${jamMulai} – ${jamSelesai}`;
+            } else {
+                sesi.waktu_string = "-";
+            }
+
+            return sesi;
+        });
+
+        res.status(200).json({ success: true, data: listSesiDikonfirmasi });
     } catch (error) {
+        console.error("❌ ERROR DB getSesiDikonfirmasi:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
