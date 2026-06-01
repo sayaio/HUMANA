@@ -41,7 +41,6 @@ const getHistory = async (req, res) => {
 
         if (rows.length === 0) {
             return res.status(200).json({ success: true, data: [], message: 'Belum ada riwayat pemesanan.' });
-            // Bagus diubah ke status 200 dengan array kosong agar frontend tidak menangkapnya sebagai "Error" crash
         }
 
         const data = rows.map(row => {
@@ -55,6 +54,11 @@ const getHistory = async (req, res) => {
 
             return {
                 ...sesi.toJSON(),
+                
+                // 🔴 PERBAIKAN: Selipkan kembali data waktu asli agar terbaca oleh frontend React Native
+                waktu_mulai: row.waktu_mulai,
+                waktu_selesai: row.waktu_selesai,
+
                 murid: { id_murid: row.id_murid, nama_murid: row.nama_murid, email: row.email_murid, kelas: row.kelas_murid },
                 guru: { id_guru: row.id_guru, nama_guru: row.nama_guru, email_guru: row.email_guru },
                 mata_pelajaran: { id_mapel: row.id_mapel, nama_mapel: row.nama_mapel },
@@ -81,7 +85,6 @@ const getActiveSchedule = async (req, res) => {
     const whereClause = userRole === 'murid' ? 'murid.id_murid' : 'guru.id_guru';
 
     try {
-        // Ditambahkan kolom id_murid, id_guru, dsb agar frontend Guru bisa tahu siapa muridnya
         const query = `
             SELECT 
                 pemesanan.id_pemesanan, pemesanan.status_pemesanan, 
