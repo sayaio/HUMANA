@@ -40,6 +40,9 @@ router.post('/pemesanan/tambah', pemesananController.tambahPemesanan);
 router.get('/pemesanan/mapel', pemesananController.getMapelByJenjang);
 router.get('/pemesanan/cek-status', pemesananController.cekStatusPemesananMurid);
 router.delete('/pemesanan/batal/:id_pemesanan', pemesananController.batalPemesanan);
+router.post('/pemesanan/save-draft', pemesananController.saveDraftPemesanan);
+router.get('/pemesanan/get-draft/:id_murid', pemesananController.getDraftPemesanan);
+router.delete('/pemesanan/clear-draft/:id_murid', pemesananController.clearDraftPemesanan);
 
 const matchingController = require('./src/controllers/matchingController');
 router.get('/permintaan-baru', matchingController.getPermintaanBaru);
