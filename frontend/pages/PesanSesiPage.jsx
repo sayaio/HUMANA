@@ -39,6 +39,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
     const [loadingMapel, setLoadingMapel] = useState(false);
     const [loadingMateri, setLoadingMateri] = useState(false);
     const [mapelSelected, setMapelSelected] = useState(null);
+    const [isLoadingDraft, setIsLoadingDraft] = useState(true);
 
     // === STATE DROPDOWN ===
     const [openWaktuMulai, setOpenWaktuMulai] = useState(false);
@@ -75,6 +76,27 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
         };
         fetchMapel();
     }, [jenjang]);
+
+    // === FETCH LOAD DRAFT
+    useEffect(() => {
+        if (userId) {
+            loadDraft();
+        }
+    }, [userId]);
+
+    // === FETCH AUTO=SAVE
+    useEffect(() => {
+        if (!isLoadingDraft && userId) {
+            // Cek apakah ada data yang terisi
+            const hasData = tanggal || waktuMulai || waktuSelesai || jenjang || kelas || mataPelajaran || materi;
+            if (hasData) {
+                const timer = setTimeout(() => {
+                    saveDraft();
+                }, 2000); // delay 2 detik
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [tanggal, waktuMulai, waktuSelesai, jenjang, kelas, mataPelajaran, materi, locationAddress, isLoadingDraft, userId]);
 
     // === FETCH MATERI (Menggunakan Service) ===
     useEffect(() => {
@@ -233,6 +255,83 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
         }
     };
 
+    // === FUNGSI DRAFT ===
+    const loadDraft = async () => {
+        console.log('🔄 ===== LOAD DRAFT DIPANGGIL =====');
+        console.log('📌 userId:', userId);
+        try {
+            const draft = await pemesananService.getDraft(userId);
+            console.log('📦 Draft dari server:', draft);
+            if (draft && Object.keys(draft).length > 0) {
+                console.log('✅ Draft ditemukan, memuat data...');
+                // ========== ISI FORM DENGAN DATA DRAFT ==========
+                if (draft.tanggal) setTanggal(new Date(draft.tanggal));
+                if (draft.waktuMulai) setWaktuMulai(draft.waktuMulai);
+                if (draft.waktuSelesai) setWaktuSelesai(draft.waktuSelesai);
+                if (draft.jenjang) setJenjang(draft.jenjang);
+                if (draft.kelas) setKelas(draft.kelas);
+                if (draft.mataPelajaran) setMataPelajaran(draft.mataPelajaran);
+                if (draft.materi) setMateri(draft.materi);
+                if (draft.mapelSelected) setMapelSelected(draft.mapelSelected);
+                if (draft.selectedMateriId) setSelectedMateriId(draft.selectedMateriId);
+                if (draft.locationAddress) setLocationAddress(draft.locationAddress);
+                if (draft.userLocation) setUserLocation(draft.userLocation);
+                // ==============================================
+                console.log('✅ State form sudah diisi dengan draft');
+            } else {
+                console.log('ℹ️ Tidak ada draft untuk userId:', userId);
+            }
+        } catch (error) {
+            console.error('❌ Error loadDraft:', error);
+        } finally {
+            setIsLoadingDraft(false);
+            console.log('🏁 isLoadingDraft set ke false');
+        }
+    };
+
+    const saveDraft = async () => {
+        console.log('💾 ===== SAVE DRAFT DIPANGGIL =====');
+        console.log('📌 userId:', userId);
+        console.log('📋 Data form saat ini:');
+        console.log('   - tanggal:', tanggal);
+        console.log('   - waktuMulai:', waktuMulai);
+        console.log('   - waktuSelesai:', waktuSelesai);
+        console.log('   - jenjang:', jenjang);
+        console.log('   - kelas:', kelas);
+        console.log('   - mataPelajaran:', mataPelajaran);
+        console.log('   - materi:', materi);
+        console.log('   - locationAddress:', locationAddress);
+        
+        try {
+            const draftData = {
+                tanggal: tanggal ? tanggal.toISOString() : null,
+                waktuMulai: waktuMulai,
+                waktuSelesai: waktuSelesai,
+                jenjang: jenjang,
+                kelas: kelas,
+                mataPelajaran: mataPelajaran,
+                materi: materi,
+                mapelSelected: mapelSelected,
+                selectedMateriId: selectedMateriId,
+                locationAddress: locationAddress,
+                userLocation: userLocation
+            };
+            console.log('📦 Data yang akan dikirim:', JSON.stringify(draftData, null, 2));
+            await pemesananService.saveDraft(userId, draftData);
+            console.log('✅ Draft tersimpan');
+        } catch (error) {
+            console.error('❌ Gagal save draft:', error);
+        }
+    };
+
+    const handleBackPress = () => {
+        console.log('👆 Tombol back ditekan, menyimpan draft...');
+        saveDraft(); // Simpan draft terlebih dahulu
+        if (onBack) {
+            onBack(); // Panggil fungsi back dari props
+        }
+    };
+
     // === FORMAT TANGGAL HELPER ===
     const formatTanggal = (date) => date ? `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}` : '';
 
@@ -266,6 +365,8 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
             const result = await pemesananService.createPemesanan(dataPemesanan);
 
             if (result.success) {
+                await pemesananService.clearDraft(userId);
+
                 Alert.alert('Sukses 🎉', 'Pemesanan sesi berhasil disimpan!');
 
                 if (onConfirmOrder) {
@@ -479,10 +580,19 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
     };
 
     // === RENDER ===
+    if (isLoadingDraft) {
+        return (
+            <View style={styles.centeredLoading}>
+                <ActivityIndicator size="large" color="#284B7A" />
+                <Text style={styles.loadingText}>Memuat draft tersimpan...</Text>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+                <TouchableOpacity onPress={handleBackPress} style={styles.backBtn}>
                     <BackIconSvg size={10} color="#000000" />
                     <Text style={styles.backText}>Kembali</Text>
                 </TouchableOpacity>
@@ -940,6 +1050,17 @@ const styles = StyleSheet.create({
     calendarDayTextDisabled: { color: '#CCC' },
     modalCloseBtn: { marginTop: 16, alignItems: 'center', paddingVertical: 12, backgroundColor: '#F5F5F5', borderRadius: 10 },
     modalCloseBtnText: { fontSize: 14, color: '#666', fontWeight: '600' },
+    centeredLoading: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+    },
+    loadingText: {
+        marginTop: 12,
+        fontSize: 14,
+        color: '#666',
+    },
 });
 
 export default PesanSesiPage;

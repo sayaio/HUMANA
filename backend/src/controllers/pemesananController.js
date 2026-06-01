@@ -93,6 +93,14 @@ const tambahPemesanan = async (req, res) => {
         let insertedId = result[0]?.insertId || result.insertId || null;
         const safeId = insertedId !== null ? insertedId.toString() : null;
 
+        // *** TAMBAHKAN: Hapus draft setelah pemesanan sukses ***
+        try {
+            await pool.query(`DELETE FROM draft_pemesanan WHERE id_murid = ?`, [id_murid]);
+            console.log(`Draft untuk murid ${id_murid} berhasil dihapus setelah pemesanan sukses`);
+        } catch (clearError) {
+            console.warn("Gagal menghapus draft (non-critical):", clearError);
+        }
+
         res.status(201).json({
             success: true,
             message: 'Pemesanan sesi berhasil disimpan!',
@@ -102,6 +110,103 @@ const tambahPemesanan = async (req, res) => {
     } catch (error) {
         console.error("Error pada saat Insert Pemesanan:", error);
         res.status(500).json({ success: false, message: 'Gagal menyimpan data pemesanan ke database.' });
+    }
+};
+
+const saveDraftPemesanan = async (req, res) => {
+    try {
+        const { id_murid, draft_data } = req.body;
+        
+        if (!id_murid) {
+            return res.status(400).json({ success: false, message: 'ID Murid diperlukan' });
+        }
+
+        // Cek apakah tabel draft_pemesanan sudah ada
+        const checkTableQuery = `
+            CREATE TABLE IF NOT EXISTS draft_pemesanan (
+                id_murid INT PRIMARY KEY,
+                draft_data JSON NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (id_murid) REFERENCES Murid(id_murid) ON DELETE CASCADE
+            )
+        `;
+        await pool.query(checkTableQuery);
+
+        // Simpan atau update draft
+        const querySQL = `
+            INSERT INTO draft_pemesanan (id_murid, draft_data, updated_at)
+            VALUES (?, ?, NOW())
+            ON DUPLICATE KEY UPDATE 
+                draft_data = VALUES(draft_data),
+                updated_at = NOW()
+        `;
+        
+        await pool.query(querySQL, [id_murid, JSON.stringify(draft_data)]);
+        
+        res.status(200).json({ 
+            success: true, 
+            message: 'Draft pemesanan berhasil disimpan' 
+        });
+        
+    } catch (error) {
+        console.error("Error saveDraftPemesanan:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const getDraftPemesanan = async (req, res) => {
+    try {
+        const { id_murid } = req.params;
+        
+        if (!id_murid) {
+            return res.status(400).json({ success: false, message: 'ID Murid diperlukan' });
+        }
+        
+        const querySQL = `
+            SELECT draft_data, updated_at 
+            FROM draft_pemesanan 
+            WHERE id_murid = ?
+        `;
+        
+        const result = await pool.query(querySQL, [id_murid]);
+        
+        // Proteksi format array
+        const rows = Array.isArray(result[0]) ? result[0] : 
+                    (Array.isArray(result) ? result : [result]);
+        
+        if (rows.length === 0) {
+            return res.status(200).json({ success: true, data: null });
+        }
+        
+        res.status(200).json({ 
+            success: true, 
+            data: rows[0].draft_data,  // ← LANGSUNG PAKAI, karena sudah object dari MySQL
+            updated_at: rows[0].updated_at
+        });
+        
+    } catch (error) {
+        console.error("Error getDraftPemesanan:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const clearDraftPemesanan = async (req, res) => {
+    try {
+        const { id_murid } = req.params;
+        
+        const querySQL = `DELETE FROM draft_pemesanan WHERE id_murid = ?`;
+        const result = await pool.query(querySQL, [id_murid]);
+        
+        res.status(200).json({ 
+            success: true, 
+            message: 'Draft berhasil dihapus',
+            affected: result.affectedRows || 0
+        });
+        
+    } catch (error) {
+        console.error("Error clearDraftPemesanan:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -205,5 +310,8 @@ module.exports = {
     tambahPemesanan,
     getMapelByJenjang,
     cekStatusPemesananMurid,
-    batalPemesanan
+    batalPemesanan,
+    saveDraftPemesanan,
+    getDraftPemesanan,
+    clearDraftPemesanan
 };

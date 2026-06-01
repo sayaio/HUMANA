@@ -95,5 +95,72 @@ export const pemesananService = {
             console.error("Service Error (batalPemesanan):", error);
             throw error;
         }
+    },
+
+    /**
+     * Menyimpan draft pemesanan
+     */
+    async saveDraft(id_murid, draftData) {
+        try {
+            const response = await fetch(`${API_URL}/pemesanan/save-draft`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ id_murid, draft_data: draftData }),
+            });
+            
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || 'Gagal menyimpan draft');
+            }
+            return result;
+        } catch (error) {
+            console.error("Service Error (saveDraft):", error);
+            throw error;
+        }
+    },
+    
+    /**
+     * Mengambil draft pemesanan
+     */
+    async getDraft(id_murid) {
+        try {
+            const response = await fetch(`${API_URL}/pemesanan/get-draft/${id_murid}`, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+            });
+            
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || 'Gagal mengambil draft');
+            }
+            return result.data; // Kembalikan data draft atau null
+        } catch (error) {
+            console.error("Service Error (getDraft):", error);
+            return null; // Return null jika error, tidak throw
+        }
+    },
+    
+    /**
+     * Menghapus draft setelah pemesanan sukses
+     */
+    async clearDraft(id_murid) {
+        try {
+            const response = await fetch(`${API_URL}/pemesanan/clear-draft/${id_murid}`, {
+                method: 'DELETE',
+                headers: { 'Accept': 'application/json' },
+            });
+            
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || 'Gagal menghapus draft');
+            }
+            return result;
+        } catch (error) {
+            console.error("Service Error (clearDraft):", error);
+            throw error;
+        }
     }
 };
