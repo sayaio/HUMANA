@@ -15,6 +15,7 @@ import {
 import { Settings, Edit2, Briefcase, Plus, Trash2, Home, Activity, MessageCircle, User } from 'lucide-react-native';
 import { updateAvailabilityProfile } from '../services/editProfileService';
 import { fetchGuruRating } from '../services/feedbackService';
+import { portfolioService } from '../services/portfolioService';
 
 // Import asset logo yang sama dengan HomePage.jsx
 const LOGO_SOURCE = require('../assets/logo_humana.png');
@@ -94,42 +95,78 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
     };
 
     // State untuk manajemen data Portofolio tambahan
-    const [portofolios, setPortofolios] = useState([
-        { id: '1', judul: 'Tutor Olimpiade Matematika SMA', deskripsi: 'Berhasil membimbing 3 siswa masuk ke tingkat nasional.' },
-        { id: '2', judul: 'Sertifikasi Pengajaran Kurikulum Merdeka', deskripsi: 'Diterbitkan oleh Kemendikbud Ristek.' }
-    ]);
+    const [portofolios, setPortofolios] = useState([]);
 
     // State untuk form input portofolio baru
     const [newJudul, setNewJudul] = useState('');
     const [newDeskripsi, setNewDeskripsi] = useState('');
+    const [newTipe, setNewTipe] = useState('')
+    const [newBukti, setNewBukti] = useState('');
+    const [openTipe, setOpenTipe] = useState(false);
     const [isAdding, setIsAdding] = useState(false);
+    const [newTanggalMulai, setNewTanggalMulai] = useState('');
+    const [newTanggalSelesai, setNewTanggalSelesai] = useState('');
 
-    const handleAddPorto = () => {
-        if (!newJudul.trim() || !newDeskripsi.trim()) {
-            Alert.alert('Eror', 'Judul dan deskripsi portofolio tidak boleh kosong!');
-            return;
-        }
+    const tipeOptions = ['Penghargaan', 'Pengalaman', 'Sertifikat', 'Karya', 'Pendidikan'];
 
-        const newId = String(portofolios.length + 1);
-        setPortofolios([...portofolios, { id: newId, judul: newJudul, deskripsi: newDeskripsi }]);
-        setNewJudul('');
-        setNewDeskripsi('');
+    const handleAddPorto = async () => {
+    setNewTanggalMulai('');
+    setNewTanggalSelesai('');
+    if (!newJudul.trim() || !newDeskripsi.trim() || !newTipe || !newBukti.trim() || !newTanggalMulai.trim() || !newTanggalSelesai.trim()) {
+        Alert.alert('Error', 'Semua field wajib diisi!');
+        return;
+    }
+    try {
+        await portfolioService.tambahPortfolio({
+        id_guru:        idGuru,
+        judul:          newJudul,
+        deskripsi:      newDeskripsi,
+        tipe_portfolio: newTipe,
+        bukti:          newBukti,
+        tanggal_mulai:   newTanggalMulai,   // ← update
+        tanggal_selesai: newTanggalSelesai,
+        });
+        // Refresh list dari DB
+        await loadPortofolios();
+        setNewJudul(''); setNewDeskripsi('');
+        setNewTipe(''); setNewBukti('');
         setIsAdding(false);
         Alert.alert('Sukses', 'Portofolio berhasil ditambahkan!');
+    } catch (error) {
+        Alert.alert('Error', error.message);
+    }
     };
 
-    const handleDeletePorto = (id) => {
-        Alert.alert('Hapus Portofolio', 'Apakah Anda yakin ingin menghapus portofolio ini?', [
-            { text: 'Batal', style: 'cancel' },
-            {
-                text: 'Hapus',
-                style: 'destructive',
-                onPress: () => {
-                    setPortofolios(portofolios.filter(porto => porto.id !== id));
-                }
+    const handleDeletePorto = (idPortfolio) => {
+    Alert.alert('Hapus Portofolio', 'Apakah Anda yakin?', [
+        { text: 'Batal', style: 'cancel' },
+        {
+        text: 'Hapus', style: 'destructive',
+        onPress: async () => {
+            try {
+            await portfolioService.hapusPortfolio(idPortfolio);
+            await loadPortofolios(); // refresh list
+            } catch (error) {
+            Alert.alert('Error', error.message);
             }
-        ]);
+        }
+        }
+    ]);
     };
+
+    const loadPortofolios = async () => {
+    if (!idGuru) return;
+    try {
+        const data = await portfolioService.getPortfolioByGuru(idGuru);
+        setPortofolios(data);
+    } catch (error) {
+        console.log('Gagal load portofolio:', error.message);
+    }
+    };
+
+    useEffect(() => {
+    loadPortofolios();
+    }, [idGuru]);
 
     return (
         <View style={styles.container}>
@@ -239,43 +276,111 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
                 {/* Form Input Tambah Portofolio */}
                 {isAdding && (
-                    <View style={styles.addPortoForm}>
-                        <Text style={styles.formLabel}>Judul Pengalaman / Sertifikat</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Contoh: Mengajar Fisika SMA 2 Tahun"
-                            value={newJudul}
-                            onChangeText={setNewJudul}
-                            placeholderTextColor="#999"
-                        />
-                        <Text style={styles.formLabel}>Deskripsi Singkat</Text>
-                        <TextInput
-                            style={[styles.input, styles.textArea]}
-                            placeholder="Tuliskan detail pencapaian atau sertifikasi Anda..."
-                            value={newDeskripsi}
-                            onChangeText={setNewDeskripsi}
-                            multiline
-                            numberOfLines={3}
-                            placeholderTextColor="#999"
-                        />
-                        <View style={styles.formActions}>
-                            <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsAdding(false)}>
-                                <Text style={styles.cancelBtnText}>Batal</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.saveBtn} onPress={handleAddPorto}>
-                                <Text style={styles.saveBtnText}>Simpan</Text>
-                            </TouchableOpacity>
-                        </View>
+                <View style={styles.addPortoForm}>
+                    <Text style={styles.formTitle}>🗂️ Portofolio Pengajaran</Text>
+
+                    {/* Judul */}
+                    <Text style={styles.formLabel}>Judul Pengalaman / Sertifikat</Text>
+                    <TextInput
+                    style={styles.input}
+                    placeholder="Contoh: Mengajar Fisika SMA 2 Tahun"
+                    value={newJudul}
+                    onChangeText={setNewJudul}
+                    placeholderTextColor="#999"
+                    />
+
+                    {/* Deskripsi */}
+                    <Text style={styles.formLabel}>Deskripsi Singkat</Text>
+                    <TextInput
+                    style={[styles.input, styles.textArea]}
+                    placeholder="Tuliskan detail pencapaian atau sertifikasi Anda..."
+                    value={newDeskripsi}
+                    onChangeText={setNewDeskripsi}
+                    multiline numberOfLines={3}
+                    placeholderTextColor="#999"
+                    />
+
+                    {/* ← TAMBAH: Tipe Portofolio */}
+                    <Text style={styles.formLabel}>Tipe Portofolio</Text>
+                    <TouchableOpacity
+                    style={[styles.input, styles.tipeSelector]}
+                    onPress={() => setOpenTipe(!openTipe)}
+                    activeOpacity={0.7}
+                    >
+                    <Text style={newTipe ? styles.tipeSelectorText : styles.tipePlaceholder}>
+                        {newTipe || 'Pilih tipe portofolio'}
+                    </Text>
+                    <Text style={styles.chevron}>{openTipe ? '▲' : '▼'}</Text>
+                    </TouchableOpacity>
+
+                    {openTipe && (
+                    <View style={styles.tipeDropdown}>
+                        {tipeOptions.map((item) => (
+                        <TouchableOpacity
+                            key={item}
+                            style={[styles.tipeItem, newTipe === item && styles.tipeItemActive]}
+                            onPress={() => { setNewTipe(item); setOpenTipe(false); }}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={[styles.tipeItemText, newTipe === item && styles.tipeItemTextActive]}>
+                            {item}
+                            </Text>
+                            {newTipe === item && <Text style={styles.tipeCheckmark}>✓</Text>}
+                        </TouchableOpacity>
+                        ))}
                     </View>
+                    )}
+
+                    {/* ← TAMBAH: Link Bukti */}
+                    <Text style={styles.formLabel}>Link Bukti</Text>
+                    <TextInput
+                    style={styles.input}
+                    placeholder="https://drive.google.com/..."
+                    value={newBukti}
+                    onChangeText={setNewBukti}
+                    keyboardType="url"
+                    autoCapitalize="none"
+                    placeholderTextColor="#999"
+                    />
+                    {/* Tanggal Mulai */}
+                    <Text style={styles.formLabel}>Tanggal Mulai</Text>
+                    <TextInput
+                    style={styles.input}
+                    placeholder="YYYY-MM-DD  (contoh: 2022-01-15)"
+                    value={newTanggalMulai}
+                    onChangeText={setNewTanggalMulai}
+                    keyboardType="numbers-and-punctuation"
+                    placeholderTextColor="#999"
+                    />
+                    {/* Tanggal Selesai */}
+                    <Text style={styles.formLabel}>Tanggal Selesai</Text>
+                    <TextInput
+                    style={styles.input}
+                    placeholder="YYYY-MM-DD  (contoh: 2023-06-30)"
+                    value={newTanggalSelesai}
+                    onChangeText={setNewTanggalSelesai}
+                    keyboardType="numbers-and-punctuation"
+                    placeholderTextColor="#999"
+                    />
+
+                    <View style={styles.formActions}>
+                    <TouchableOpacity style={styles.cancelBtn} onPress={() => { setIsAdding(false); setOpenTipe(false); }}>
+                        <Text style={styles.cancelBtnText}>Batal</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.saveBtn} onPress={handleAddPorto}>
+                        <Text style={styles.saveBtnText}>Simpan</Text>
+                    </TouchableOpacity>
+                    </View>
+                </View>
                 )}
 
                 {/* Daftar Item Portofolio */}
                 <View style={styles.portoListWrapper}>
                     {portofolios.map((item) => (
-                        <View key={item.id} style={styles.portoCard}>
+                        <View key={item.id_portfolio} style={styles.portoCard}>
                             <View style={styles.portoHeader}>
                                 <Text style={styles.portoTitle}>{item.judul}</Text>
-                                <TouchableOpacity onPress={() => handleDeletePorto(item.id)}>
+                                <TouchableOpacity onPress={() => handleDeletePorto(item.id_portfolio)}>
                                     <Trash2 size={16} color="#FF8A8A" />
                                 </TouchableOpacity>
                             </View>
@@ -400,6 +505,30 @@ const styles = StyleSheet.create({
     centerTabButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', borderWidth: 4, borderColor: '#FFF', elevation: 4 },
     centerLogoImage: { width: 32, height: 32 }, // Penyesuaian ukuran gambar logo
     centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
+
+    // Style form
+    formTitle: { fontSize: 16, fontWeight: 'bold', color: '#1A1A2E', marginBottom: 14 },
+    tipeSelector: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 0,
+    },
+    tipeSelectorText: { fontSize: 14, color: '#333' },
+    tipePlaceholder: { fontSize: 14, color: '#999' },
+    chevron: { fontSize: 11, color: '#999' },
+    tipeDropdown: {
+    backgroundColor: '#FFF', borderWidth: 1, borderTopWidth: 0,
+    borderColor: '#284B7A', borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8, marginBottom: 12, overflow: 'hidden',
+    },
+    tipeItem: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: '#F0F2F5',
+    },
+    tipeItemActive: { backgroundColor: '#EBF0F8' },
+    tipeItemText: { fontSize: 14, color: '#333' },
+    tipeItemTextActive: { fontWeight: 'bold', color: '#284B7A' },
+    tipeCheckmark: { fontSize: 13, color: '#284B7A', fontWeight: 'bold' },
 });
 
 export default ProfileGuruPage;

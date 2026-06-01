@@ -54,4 +54,10 @@ router.get('/chats', chatController.getChatList);
 router.get('/chats/messages/:id_guru/:id_murid', chatController.getMessages);
 router.post('/chats/send', chatController.sendMessage);
 router.post('/chats/create', chatController.createOrGetChatRoom);
+
+const portfolioController = require('./src/controllers/portfolioController');
+router.get('/portfolio/:id_guru', portfolioController.getPortfolioByGuru);
+router.post('/portfolio', portfolioController.tambahPortfolio);
+router.delete('/portfolio/:id_portfolio', portfolioController.hapusPortfolio);
+
 module.exports = router;
