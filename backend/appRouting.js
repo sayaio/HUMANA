@@ -57,4 +57,7 @@ router.get('/portfolio/:id_guru', portfolioController.getPortfolioByGuru);
 router.post('/portfolio', portfolioController.tambahPortfolio);
 router.delete('/portfolio/:id_portfolio', portfolioController.hapusPortfolio);
 
+const { getPendapatan, getRiwayatPendapatan } = require('./src/controllers/pendapatanController');
+router.get('/pendapatan/:id_guru', getPendapatan);
+router.get('/pendapatan/:id_guru/riwayat', getRiwayatPendapatan);
 module.exports = router;

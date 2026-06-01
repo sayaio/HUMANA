@@ -402,7 +402,10 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
               </View>
               <Text style={styles.menuButtonText}>Materi</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItemButton}>
+            <TouchableOpacity
+              style={styles.menuItemButton}
+              onPress={() => onNavigate && onNavigate('Pendapatan')}
+            >
               <View style={styles.iconContainer}>
                 <Wallet color="#2D6A61" size={28} />
               </View>
