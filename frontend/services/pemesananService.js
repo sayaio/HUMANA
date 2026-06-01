@@ -133,6 +133,8 @@ export const pemesananService = {
             });
             
             const result = await response.json();
+            console.log('🔍 Raw response getDraft:', result);
+            
             if (!response.ok) {
                 throw new Error(result.message || 'Gagal mengambil draft');
             }

@@ -167,10 +167,8 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
 
                 {/* Header Tetap Di Atas */}
                 <View style={styles.header}>
-                    <TouchableOpacity style={styles.backButton} onPress={onCancel}>
-                        <Text style={styles.backText}>❮ Kembali</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Pesan Sesi</Text>
+                    <View style={{ width: 60 }} />
+                    <Text style={styles.headerTitle}>Mencari Pengajar</Text>
                     <View style={{ width: 60 }} />
                 </View>
             </View>

@@ -81,6 +81,8 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
     useEffect(() => {
         if (userId) {
             loadDraft();
+        } else {
+            console.log('❌ userId kosong! Draft tidak bisa di-load');
         }
     }, [userId]);
 
@@ -92,11 +94,22 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
             if (hasData) {
                 const timer = setTimeout(() => {
                     saveDraft();
-                }, 2000); // delay 2 detik
+                }, 1000); // delay 2 detik
                 return () => clearTimeout(timer);
             }
         }
     }, [tanggal, waktuMulai, waktuSelesai, jenjang, kelas, mataPelajaran, materi, locationAddress, isLoadingDraft, userId]);
+
+    // Untuk save saat component unmount
+    useEffect(() => {
+        return () => {
+            // Cleanup: simpan draft saat component unmount
+            if (!isLoadingDraft && userId) {
+                console.log('👋 Component unmount, menyimpan draft...');
+                saveDraft();
+            }
+        };
+    }, []);
 
     // === FETCH MATERI (Menggunakan Service) ===
     useEffect(() => {
@@ -365,7 +378,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
             const result = await pemesananService.createPemesanan(dataPemesanan);
 
             if (result.success) {
-                await pemesananService.clearDraft(userId);
+                // await pemesananService.clearDraft(userId);
 
                 Alert.alert('Sukses 🎉', 'Pemesanan sesi berhasil disimpan!');
 
