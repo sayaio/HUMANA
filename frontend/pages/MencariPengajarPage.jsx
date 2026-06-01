@@ -133,6 +133,23 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
         outputRange: [0.4, 0.1, 0],
     });
 
+    const handleBatalkan = async () => {
+        console.log('=== handleBatalkan dipanggil ===');
+        const id_pemesanan = sessionData?.id_pemesanan;
+        if (!id_pemesanan) {
+            onCancel();
+            return;
+        }
+        try {
+            const result = await pemesananService.batalPemesanan(id_pemesanan);
+            console.log('[MencariPengajar] Batal pemesanan:', result);
+        } catch (error) {
+            console.warn('[MencariPengajar] Gagal batal pemesanan:', error.message);
+        } finally {
+            onCancel(); // Tetap balik ke halaman sebelumnya
+        }
+    };
+
     return (
         <View style={styles.container}>
             {/* ================= AREA PETA (DIPERBESAR) ================= */}
@@ -211,7 +228,7 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                     </View>
 
                     {/* Tombol diposisikan paling bawah */}
-                    <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
+                    <TouchableOpacity style={styles.cancelButton} onPress={handleBatalkan}>
                         <Text style={styles.cancelButtonText}>✕ Batalkan Pesanan</Text>
                     </TouchableOpacity>
                 </View>

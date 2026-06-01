@@ -39,6 +39,7 @@ router.get('/pemesanan/materi', pemesananController.getMateriDropdown);
 router.post('/pemesanan/tambah', pemesananController.tambahPemesanan);
 router.get('/pemesanan/mapel', pemesananController.getMapelByJenjang);
 router.get('/pemesanan/cek-status', pemesananController.cekStatusPemesananMurid);
+router.delete('/pemesanan/batal/:id_pemesanan', pemesananController.batalPemesanan);
 
 const matchingController = require('./src/controllers/matchingController');
 router.get('/permintaan-baru', matchingController.getPermintaanBaru);

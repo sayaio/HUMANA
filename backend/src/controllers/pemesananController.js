@@ -147,10 +147,63 @@ const cekStatusPemesananMurid = async (req, res) => {
     }
 };
 
+const batalPemesanan = async (req, res) => {
+    const { id_pemesanan } = req.params;
+
+    if (!id_pemesanan) {
+        return res.status(400).json({ success: false, message: 'Parameter id_pemesanan wajib diisi.' });
+    }
+
+    try {
+        const checkQuery = `
+            SELECT id_pemesanan, status_pemesanan
+            FROM Pemesanan
+            WHERE id_pemesanan = ?
+            LIMIT 1;
+        `;
+
+        const result = await pool.query(checkQuery, [id_pemesanan]);
+
+        const rows = Array.isArray(result[0]) ? result[0] :
+            Array.isArray(result) ? result : [result];
+
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Pemesanan tidak ditemukan.' });
+        }
+
+        const pemesanan = rows[0];
+
+        if (pemesanan.status_pemesanan !== 'menunggu konfirmasi') {
+            return res.status(400).json({
+                success: false,
+                message: `Pemesanan dengan status '${pemesanan.status_pemesanan}' tidak dapat dibatalkan.`,
+            });
+        }
+
+        const deleteResult = await pool.query(`DELETE FROM Pemesanan WHERE id_pemesanan = ?`, [id_pemesanan]);
+
+        if (deleteResult.affectedRows === 0) {
+            return res.status(500).json({ success: false, message: 'Gagal menghapus pemesanan.' });
+        }
+
+        console.log(`[PemesananController] batalPemesanan: Pemesanan ID ${id_pemesanan} berhasil dihapus`);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Pemesanan berhasil dibatalkan.',
+            data: { id_pemesanan }
+        });
+
+    } catch (error) {
+        console.error('[PemesananController] Error deleting pemesanan:', error);
+        return res.status(500).json({ success: false, message: 'Terjadi kesalahan saat membatalkan pemesanan.' });
+    }
+};
 
 module.exports = {
     getMateriDropdown,
     tambahPemesanan,
     getMapelByJenjang,
-    cekStatusPemesananMurid
+    cekStatusPemesananMurid,
+    batalPemesanan
 };

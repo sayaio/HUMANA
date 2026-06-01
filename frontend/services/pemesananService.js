@@ -79,5 +79,21 @@ export const pemesananService = {
             console.error("Service Error (cekStatusPemesanan):", error);
             throw error;
         }
+    },
+
+    async batalPemesanan(id_pemesanan) {
+        try {
+            const response = await fetch(`${API_URL}/pemesanan/batal/${id_pemesanan}`, {
+                method: 'DELETE',
+                headers: { 'Accept': 'application/json' },
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Gagal membatalkan pemesanan');
+            return result;
+        } catch (error) {
+            console.error("Service Error (batalPemesanan):", error);
+            throw error;
+        }
     }
 };
