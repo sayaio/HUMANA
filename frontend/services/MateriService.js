@@ -41,3 +41,30 @@ export const fetchAllMapel = async () => {
 
   return json.data;
 };
+
+export const simpanMateriGuru = async (idGuru, daftarIdMateri) => {
+    try {
+        const response = await fetch(`${API_URL}/materi/guru`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id_guru: idGuru,
+                daftar_id_materi: daftarIdMateri // Array of numbers, misal: [1, 2, 10]
+            }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Gagal menyimpan kompetensi materi');
+        }
+
+        return { success: true, data: result };
+
+    } catch (error) {
+        console.error("Error memanggil API simpanMateriGuru:", error);
+        return { success: false, message: error.message };
+    }
+};

@@ -87,4 +87,51 @@ const getAllMapel = async (req, res) => {
   }
 };
 
-module.exports = { getMateriBySubject, getAllMateri, getAllMapel };
+const updateMateriGuru = async (req, res) => {
+    const { id_guru, daftar_id_materi } = req.body; // daftar_id_materi berbentuk array, contoh: [1, 2, 5]
+
+    // Validasi input dasar
+    if (!id_guru || !Array.isArray(daftar_id_materi)) {
+        return res.status(400).json({ message: "Data id_guru atau daftar_id_materi tidak valid." });
+    }
+
+    // Mendapatkan koneksi khusus untuk menjalankan Transaction
+    const connection = await pool.getConnection();
+
+    try {
+        // Ambil data dari image_483582.png untuk struktur tabel MateriGuru
+        await connection.beginTransaction();
+
+        // Langkah 1: Hapus semua kompetensi materi yang sebelumnya pernah dipilih oleh guru ini
+        await connection.query(
+            `DELETE FROM MateriGuru WHERE id_guru = ?`, 
+            [id_guru]
+        );
+
+        // Langkah 2: Jika guru menceklis materi (array tidak kosong), lakukan bulk insert
+        if (daftar_id_materi.length > 0) {
+            // Transformasi array menjadi format multi-row untuk query: [[id_guru, id_materi1], [id_guru, id_materi2]]
+            const values = daftar_id_materi.map(id_materi => [id_guru, id_materi]);
+
+            await connection.query(
+                `INSERT INTO MateriGuru (id_guru, id_materi) VALUES ?`, 
+                [values]
+            );
+        }
+
+        // Jika semua langkah berhasil, commit perubahan ke database
+        await connection.commit();
+        return res.status(200).json({ message: "Kompetensi materi guru berhasil diperbarui." });
+
+    } catch (error) {
+        // Jika ada error di tengah jalan, batalkan semua perintah hapus/input di atas
+        await connection.rollback();
+        console.error("Error di updateMateriGuru:", error);
+        return res.status(500).json({ message: "Terjadi kesalahan saat menyimpan materi guru." });
+    } finally {
+        // Kembalikan koneksi ke pool
+        connection.release();
+    }
+};
+
+module.exports = { getMateriBySubject, getAllMateri, getAllMapel, updateMateriGuru };
