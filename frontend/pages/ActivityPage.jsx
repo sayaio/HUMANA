@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
-    StyleSheet, Text, View, TouchableOpacity, SafeAreaView,
-    StatusBar, ScrollView, Image, ActivityIndicator
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  ScrollView,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
-
+import BottomNavbar from '../components/BottomNavbar';
 import { getHistory, getActiveSchedule } from '../services/historyService';
 
 // Import Ikon Lucide agar seragam dengan HomePage
@@ -11,259 +18,316 @@ import { Calendar, MessageSquare, User, Home } from 'lucide-react-native';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
-const ActivityPage = ({ initialTab = 'aktif', onNavigate, onDetailClick, userId, userRole }) => {
-    const role = userRole ? userRole.toLowerCase() : 'murid';
-    const [activeTab, setActiveTab] = useState(initialTab === 'aktif' ? 'Jadwal Aktif' : 'Riwayat Sesi');
-    const [activeData, setActiveData] = useState([]);
-    const [historyData, setHistoryData] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
+const ActivityPage = ({
+  initialTab = 'aktif',
+  onNavigate,
+  onDetailClick,
+  userId,
+  userRole,
+}) => {
+  const role = userRole ? userRole.toLowerCase() : 'murid';
+  const [activeTab, setActiveTab] = useState(
+    initialTab === 'aktif' ? 'Jadwal Aktif' : 'Riwayat Sesi',
+  );
+  const [activeData, setActiveData] = useState([]);
+  const [historyData, setHistoryData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        setActiveTab(initialTab === 'aktif' ? 'Jadwal Aktif' : 'Riwayat Sesi');
-    }, [initialTab]);
+  useEffect(() => {
+    setActiveTab(initialTab === 'aktif' ? 'Jadwal Aktif' : 'Riwayat Sesi');
+  }, [initialTab]);
 
-    const fetchActiveData = async () => {
-        setIsLoading(true);
-        try {
-            const result = await getActiveSchedule(userRole, userId);
-            console.log("Hasil dari Backend:", result);
+  const fetchActiveData = async () => {
+    setIsLoading(true);
+    try {
+      const result = await getActiveSchedule(userRole, userId);
+      console.log('Hasil dari Backend:', result);
 
-            if (result && result.success) {
-                const rawData = result.data;
-                const formattedData = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
-                setActiveData(formattedData);
-            } else {
-                setActiveData([]);
-            }
-        } catch (error) {
-            console.log("Error fetch active:", error);
-            setActiveData([]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+      if (result && result.success) {
+        const rawData = result.data;
+        const formattedData = Array.isArray(rawData)
+          ? rawData
+          : rawData
+          ? [rawData]
+          : [];
+        setActiveData(formattedData);
+      } else {
+        setActiveData([]);
+      }
+    } catch (error) {
+      console.log('Error fetch active:', error);
+      setActiveData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    useEffect(() => {
-        if (!userId || !userRole) return;
+  useEffect(() => {
+    if (!userId || !userRole) return;
 
-        if (activeTab === 'Jadwal Aktif') {
-            fetchActiveData();
-        } else if (activeTab === 'Riwayat Sesi') {
-            fetchHistoryData();
-        }
-    }, [activeTab, userId, userRole]);
+    if (activeTab === 'Jadwal Aktif') {
+      fetchActiveData();
+    } else if (activeTab === 'Riwayat Sesi') {
+      fetchHistoryData();
+    }
+  }, [activeTab, userId, userRole]);
 
-    const fetchHistoryData = async () => {
-        if (!userId || !userRole) {
-            console.log("❌ FETCH DIBATALKAN KARENA ID ATAU ROLE KOSONG!");
-            return;
-        }
+  const fetchHistoryData = async () => {
+    if (!userId || !userRole) {
+      console.log('❌ FETCH DIBATALKAN KARENA ID ATAU ROLE KOSONG!');
+      return;
+    }
 
-        setIsLoading(true);
-        try {
-            const result = await getHistory(userRole, userId);
-            console.log("[DEBUG] Balasan API History:", result);
-            if (result && result.data && result.data.length > 0) {
-                console.log("=== CEK DATA PERTAMA ===", result.data[0]);
-                console.log("=== APAKAH ADA WAKTU_MULAI? ===", result.data[0].waktu_mulai);
-            }
+    setIsLoading(true);
+    try {
+      const result = await getHistory(userRole, userId);
+      console.log('[DEBUG] Balasan API History:', result);
+      if (result && result.data && result.data.length > 0) {
+        console.log('=== CEK DATA PERTAMA ===', result.data[0]);
+        console.log(
+          '=== APAKAH ADA WAKTU_MULAI? ===',
+          result.data[0].waktu_mulai,
+        );
+      }
 
-            if (Array.isArray(result)) {
-                setHistoryData(result);
-            }
-            else if (result && (result.success === true || result.status === 200)) {
-                setHistoryData(result.data || result.history || []);
-            }
-            else {
-                setHistoryData([]);
-            }
+      if (Array.isArray(result)) {
+        setHistoryData(result);
+      } else if (result && (result.success === true || result.status === 200)) {
+        setHistoryData(result.data || result.history || []);
+      } else {
+        setHistoryData([]);
+      }
+    } catch (error) {
+      console.log('[DEBUG] Error fetch history:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        } catch (error) {
-            console.log("[DEBUG] Error fetch history:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  useEffect(() => {
+    if (activeTab === 'Riwayat Sesi') {
+      fetchHistoryData();
+    }
+  }, [activeTab, userId, userRole]);
 
-    useEffect(() => {
-        if (activeTab === 'Riwayat Sesi') {
-            fetchHistoryData();
-        }
-    }, [activeTab, userId, userRole]);
+  const renderCard = (item, isHistory, index) => (
+    <View style={styles.card} key={item.id_pemesanan || index}>
+      <View style={styles.cardIconBox}>
+        <Text style={{ color: '#FFF', fontSize: 24 }}>📖</Text>
+      </View>
+      <View style={styles.cardInfo}>
+        <Text style={styles.cardTitle}>
+          <Text style={{ fontWeight: 'bold' }}>
+            {item.mata_pelajaran?.nama_mapel || item.nama_mapel || 'Pelajaran'}
+          </Text>{' '}
+          - {item.materi?.nama_materi || item.nama_materi || 'Materi'}
+        </Text>
 
-    const renderCard = (item, isHistory, index) => (
-        <View style={styles.card} key={item.id_pemesanan || index}>
-            <View style={styles.cardIconBox}><Text style={{ color: '#FFF', fontSize: 24 }}>📖</Text></View>
-            <View style={styles.cardInfo}>
-                <Text style={styles.cardTitle}>
-                    <Text style={{ fontWeight: 'bold' }}>
-                        {item.mata_pelajaran?.nama_mapel || item.nama_mapel || 'Pelajaran'}
-                    </Text> - {item.materi?.nama_materi || item.nama_materi || 'Materi'}
-                </Text>
+        {/* LOGIKA NAMA GURU/MURID YANG FLEKSIBEL */}
+        <Text style={styles.cardGuru}>
+          👤{' '}
+          {userRole === 'murid'
+            ? item.nama_guru || item.guru?.nama_guru || 'Guru tidak terdaftar'
+            : item.nama_murid ||
+              item.murid?.nama_murid ||
+              'Murid tidak terdaftar'}
+        </Text>
 
-                {/* LOGIKA NAMA GURU/MURID YANG FLEKSIBEL */}
-                <Text style={styles.cardGuru}>
-                    👤 {userRole === 'murid'
-                        ? (item.nama_guru || item.guru?.nama_guru || 'Guru tidak terdaftar')
-                        : (item.nama_murid || item.murid?.nama_murid || 'Murid tidak terdaftar')
-                    }
-                </Text>
+        {/* LOGIKA WAKTU YANG FLEKSIBEL */}
+        <Text style={styles.cardTime}>
+          {item.waktu_mulai
+            ? new Date(
+                item.waktu_mulai.toString().replace(' ', 'T'),
+              ).toLocaleString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : item.waktu_string || 'Waktu tidak tersedia'}
+        </Text>
+      </View>
 
-                {/* LOGIKA WAKTU YANG FLEKSIBEL */}
-                <Text style={styles.cardTime}>
-                    {item.waktu_mulai
-                        ? new Date(item.waktu_mulai.toString().replace(' ', 'T')).toLocaleString('id-ID', {
-                            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                        })
-                        : (item.waktu_string || 'Waktu tidak tersedia')
-                    }
-                </Text>
+      {isHistory ? (
+        <TouchableOpacity
+          style={[styles.actionBtn, { backgroundColor: '#284B7A' }]}
+          onPress={() => onDetailClick(item)}
+        >
+          <Text style={styles.actionBtnText}>Beri Ulasan</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity style={styles.actionBtn}>
+          <Text style={styles.actionBtnText}>Ingatkan</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Activity</Text>
+      </View>
+
+      <View style={styles.tabSliderContainer}>
+        {['Jadwal Aktif', 'Riwayat Sesi'].map(tab => (
+          <TouchableOpacity
+            key={tab}
+            style={[
+              styles.tabButtonElement,
+              activeTab === tab && styles.tabButtonElementActive,
+            ]}
+            onPress={() => setActiveTab(tab)}
+          >
+            <Text
+              style={[
+                styles.tabButtonText,
+                activeTab === tab && styles.tabButtonTextActive,
+              ]}
+            >
+              {tab}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
+      >
+        {activeTab === 'Jadwal Aktif' ? (
+          isLoading ? (
+            <View style={{ marginTop: 50, alignItems: 'center' }}>
+              <ActivityIndicator size="large" color="#284B7A" />
+              <Text style={{ marginTop: 10, color: '#888' }}>
+                Memuat jadwal...
+              </Text>
             </View>
-
-            {isHistory ? (
-                <TouchableOpacity
-                    style={[styles.actionBtn, { backgroundColor: '#284B7A' }]}
-                    onPress={() => onDetailClick(item)}
-                >
-                    <Text style={styles.actionBtnText}>Beri Ulasan</Text>
-                </TouchableOpacity>
-            ) : (
-                <TouchableOpacity style={styles.actionBtn}>
-                    <Text style={styles.actionBtnText}>Ingatkan</Text>
-                </TouchableOpacity>
-            )}
-        </View>
-    );
-    return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
-
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Activity</Text>
+          ) : activeData && activeData.length > 0 ? (
+            activeData.map((item, index) => renderCard(item, false, index))
+          ) : (
+            <View style={{ marginTop: 50, alignItems: 'center' }}>
+              <Text style={{ fontSize: 40 }}>📅</Text>
+              <Text style={styles.emptyText}>
+                Tidak ada jadwal aktif saat ini.
+              </Text>
             </View>
+          )
+        ) : isLoading ? (
+          <View style={{ marginTop: 50, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#284B7A" />
+            <Text style={{ marginTop: 10, color: '#888' }}>
+              Mencari riwayat...
+            </Text>
+          </View>
+        ) : historyData && historyData.length > 0 ? (
+          historyData.map((item, index) => renderCard(item, true, index))
+        ) : (
+          <View style={{ marginTop: 50, alignItems: 'center' }}>
+            <Text style={{ fontSize: 40 }}>📭</Text>
+            <Text style={styles.emptyText}>Belum ada riwayat sesi.</Text>
+          </View>
+        )}
+      </ScrollView>
 
-            <View style={styles.tabSliderContainer}>
-                {['Jadwal Aktif', 'Riwayat Sesi'].map((tab) => (
-                    <TouchableOpacity
-                        key={tab}
-                        style={[styles.tabButtonElement, activeTab === tab && styles.tabButtonElementActive]}
-                        onPress={() => setActiveTab(tab)}
-                    >
-                        <Text style={[styles.tabButtonText, activeTab === tab && styles.tabButtonTextActive]}>
-                            {tab}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 110 }}>
-                {activeTab === 'Jadwal Aktif' ? (
-                    isLoading ? (
-                        <View style={{ marginTop: 50, alignItems: 'center' }}>
-                            <ActivityIndicator size="large" color="#284B7A" />
-                            <Text style={{ marginTop: 10, color: '#888' }}>Memuat jadwal...</Text>
-                        </View>
-                    ) : activeData && activeData.length > 0 ? (
-                        activeData.map((item, index) => renderCard(item, false, index))
-                    ) : (
-                        <View style={{ marginTop: 50, alignItems: 'center' }}>
-                            <Text style={{ fontSize: 40 }}>📅</Text>
-                            <Text style={styles.emptyText}>Tidak ada jadwal aktif saat ini.</Text>
-                        </View>
-                    )
-                ) : (
-                    isLoading ? (
-                        <View style={{ marginTop: 50, alignItems: 'center' }}>
-                            <ActivityIndicator size="large" color="#284B7A" />
-                            <Text style={{ marginTop: 10, color: '#888' }}>Mencari riwayat...</Text>
-                        </View>
-                    ) : historyData && historyData.length > 0 ? (
-                        historyData.map((item, index) => renderCard(item, true, index))
-                    ) : (
-                        <View style={{ marginTop: 50, alignItems: 'center' }}>
-                            <Text style={{ fontSize: 40 }}>📭</Text>
-                            <Text style={styles.emptyText}>Belum ada riwayat sesi.</Text>
-                        </View>
-                    )
-                )}
-            </ScrollView>
-
-            {/* BOTTOM NAVBAR DENGAN FITUR KLIK SINKRON HOMEPAGE */}
-            <View style={styles.customBottomNavbar}>
-                <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate && onNavigate('Home')}>
-                    <Home color="#A9A9A9" size={22} />
-                    <Text style={styles.navBarLabel}>{role === 'guru' ? 'Home' : 'Beranda'}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.navBarItem}>
-                    <Calendar color="#284B7A" size={22} />
-                    <Text style={[styles.navBarLabel, { color: '#284B7A', fontWeight: 'bold' }]}>
-                        {role === 'guru' ? 'Activity' : 'Aktivitas'}
-                    </Text>
-                </TouchableOpacity>
-
-                <View style={styles.centerFabContainer}>
-                    <TouchableOpacity
-                        style={styles.centerFabButton}
-                        onPress={() => {
-                            if (onNavigate) {
-                                onNavigate(role === 'guru' ? 'Activity' : 'PesanSesi');
-                            }
-                        }}
-                    >
-                        <Image source={LOGO_SOURCE} style={styles.centerFabLogoIcon} resizeMode="contain" />
-                    </TouchableOpacity>
-                    <Text style={styles.centerFabLabelText}>
-                        {role === 'guru' ? 'Permintaan' : 'Pesan Sesi'}
-                    </Text>
-                </View>
-
-                <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate && onNavigate('Chat')}>
-                    <MessageSquare color="#A9A9A9" size={22} />
-                    <Text style={styles.navBarLabel}>Chat</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.navBarItem} onPress={() => onNavigate && onNavigate('Profile')}>
-                    <User color="#A9A9A9" size={22} />
-                    <Text style={styles.navBarLabel}>Profile</Text>
-                </TouchableOpacity>
-            </View>
-        </SafeAreaView>
-    );
+      {/* BOTTOM NAVBAR DENGAN FITUR KLIK SINKRON HOMEPAGE */}
+      <BottomNavbar
+        currentScreen="Activity"
+        onNavigate={onNavigate}
+        userRole={userRole}
+      />
+    </SafeAreaView>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FAFAFA' },
-    header: { paddingHorizontal: 20, paddingTop: 35, paddingBottom: 15, backgroundColor: '#FFF' },
-    headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#000' },
-    tabContainer: { flexDirection: 'row', backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EEE' },
-    tabBtn: { flex: 1, paddingVertical: 15, alignItems: 'center' },
-    activeTabBtn: { borderBottomWidth: 2, borderBottomColor: '#284B7A' },
-    tabText: { fontSize: 14, color: '#A9A9A9', fontWeight: '600' },
-    activeTabText: { color: '#284B7A' },
+  container: { flex: 1, backgroundColor: '#FAFAFA' },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 35,
+    paddingBottom: 15,
+    backgroundColor: '#FFF',
+  },
+  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#000' },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  tabBtn: { flex: 1, paddingVertical: 15, alignItems: 'center' },
+  activeTabBtn: { borderBottomWidth: 2, borderBottomColor: '#284B7A' },
+  tabText: { fontSize: 14, color: '#A9A9A9', fontWeight: '600' },
+  activeTabText: { color: '#284B7A' },
 
-    tabSliderContainer: { flexDirection: 'row', marginHorizontal: 24, backgroundColor: '#F0F2F5', borderRadius: 14, padding: 4, marginBottom: 16 },
-    tabButtonElement: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
-    tabButtonElementActive: { backgroundColor: '#FFF', elevation: 1, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 },
-    tabButtonText: { fontSize: 13, color: '#666', fontWeight: '500' },
-    tabButtonTextActive: { color: '#284B7A', fontWeight: 'bold' },
+  tabSliderContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 24,
+    backgroundColor: '#F0F2F5',
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 16,
+  },
+  tabButtonElement: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  tabButtonElementActive: {
+    backgroundColor: '#FFF',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  tabButtonText: { fontSize: 13, color: '#666', fontWeight: '500' },
+  tabButtonTextActive: { color: '#284B7A', fontWeight: 'bold' },
 
-    card: { backgroundColor: '#FFF', borderRadius: 15, padding: 15, marginBottom: 15, flexDirection: 'row', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 },
-    cardIconBox: { width: 60, height: 60, backgroundColor: '#387C65', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-    cardInfo: { flex: 1 },
-    cardTitle: { fontSize: 12, color: '#333', marginBottom: 5 },
-    cardGuru: { fontSize: 11, color: '#555', marginBottom: 5 },
-    cardTime: { fontSize: 10, color: '#A9A9A9' },
-    actionBtn: { backgroundColor: '#387C65', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 15, position: 'absolute', bottom: 15, right: 15 },
-    actionBtnText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
-    emptyText: { textAlign: 'center', color: '#888', marginTop: 10, fontSize: 14 },
+  card: {
+    backgroundColor: '#FFF',
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  cardIconBox: {
+    width: 60,
+    height: 60,
+    backgroundColor: '#387C65',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  cardInfo: { flex: 1 },
+  cardTitle: { fontSize: 12, color: '#333', marginBottom: 5 },
+  cardGuru: { fontSize: 11, color: '#555', marginBottom: 5 },
+  cardTime: { fontSize: 10, color: '#A9A9A9' },
+  actionBtn: {
+    backgroundColor: '#387C65',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 15,
+    position: 'absolute',
+    bottom: 15,
+    right: 15,
+  },
+  actionBtnText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
+  emptyText: {
+    textAlign: 'center',
+    color: '#888',
+    marginTop: 10,
+    fontSize: 14,
+  },
 
-    customBottomNavbar: { position: 'absolute', bottom: 0, width: '100%', height: 75, backgroundColor: '#FFF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderColor: '#EEF0F2', paddingHorizontal: 10 },
-    navBarItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
-    navBarLabel: { fontSize: 10, color: '#A9A9A9', marginTop: 4 },
-    centerFabContainer: { alignItems: 'center', width: 75, height: 80, top: -16 },
-    centerFabButton: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#284B7A', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 4 },
-    centerFabLogoIcon: { width: 24, height: 24, tintColor: '#FFF' },
-    centerFabLabelText: { fontSize: 9, color: '#284B7A', textAlign: 'center', marginTop: 4, fontWeight: '600' },
 });
 
 export default ActivityPage;

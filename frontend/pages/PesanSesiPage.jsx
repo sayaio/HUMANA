@@ -378,7 +378,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
             const result = await pemesananService.createPemesanan(dataPemesanan);
 
             if (result.success) {
-                // await pemesananService.clearDraft(userId);
+                await pemesananService.clearDraft(userId);
 
                 Alert.alert('Sukses 🎉', 'Pemesanan sesi berhasil disimpan!');
 
