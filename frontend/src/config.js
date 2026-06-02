@@ -9,9 +9,7 @@ import DeviceInfo from 'react-native-device-info';
 // Masukkan IP Wi-Fi laptop kamu saat ini sebagai cadangan (fallback) untuk HP fisik
 const LOCAL_IP = '172.20.10.2'; 
 const PORT = '3000';
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server berjalan di port ${PORT} dan terbuka untuk jaringan lokal!`);
-});
+
 
 const getBaseURL = () => {
   if (__DEV__) {
