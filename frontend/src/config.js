@@ -10,6 +10,7 @@ import DeviceInfo from 'react-native-device-info';
 const LOCAL_IP = '172.20.10.2'; 
 const PORT = '3000';
 
+
 const getBaseURL = () => {
   if (__DEV__) {
     // 1. CEK OTOMATIS: Apakah aplikasi berjalan di Emulator?
