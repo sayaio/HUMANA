@@ -3,21 +3,24 @@
 
 // export const API_URL = 'http://172.20.10.2:3000/api'; //
 
-
 import { Platform } from 'react-native';
 
-// Ganti IP ini dengan IP komputer Anda saat ini
-const LOCAL_IP = '172.20.10.2';
+const LOCAL_IP = '172.20.10.2'; // IP Laptop/PC kamu saat ini
 const PORT = '3000';
 
+// UBAH INI: set true jika pakai Emulator Android Studio, set false jika pakai HP Fisik/iOS
+const IS_EMULATOR = false; 
+
 const getBaseURL = () => {
-  // Emulator Android → pakai 10.0.2.2
-  // Device fisik Android/iOS → pakai IP komputer
   if (__DEV__) {
-    return Platform.OS === 'android'
-      ? `http://10.0.2.2:${PORT}/api`        // emulator
-      : `http://${LOCAL_IP}:${PORT}/api`;     // device fisik / iOS
+    // Jika diatur sebagai emulator dan sistemnya Android, pakai 10.0.2.2
+    if (IS_EMULATOR && Platform.OS === 'android') {
+      return `http://10.0.2.2:${PORT}/api`;
+    }
+    // Jika pakai HP Fisik (Android/iOS) atau simulator iOS, pakai IP Laptop
+    return `http://${LOCAL_IP}:${PORT}/api`;
   }
+  
   // Production
   return 'https://api.humana.com/api';
 };
