@@ -699,39 +699,6 @@ const styles = StyleSheet.create({
   },
   saveBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
 
-  // Layout Bottom Tab Navbar
-  bottomTabContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 70,
-    backgroundColor: '#FFF',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#EEE',
-    paddingBottom: 10,
-  },
-  tabItem: { alignItems: 'center', justifyContent: 'center' },
-  tabLabel: { fontSize: 11, color: '#666', marginTop: 4 },
-  activeTabLabel: { color: '#284B7A', fontWeight: 'bold' },
-  centerTabWrapper: { alignItems: 'center', marginTop: -30 },
-  centerTabButton: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: '#284B7A',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 4,
-    borderColor: '#FFF',
-    elevation: 4,
-  },
-  centerLogoImage: { width: 32, height: 32 }, // Penyesuaian ukuran gambar logo
-  centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
-
   // Style form
   formTitle: {
     fontSize: 16,

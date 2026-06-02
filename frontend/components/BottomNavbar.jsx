@@ -15,7 +15,7 @@ const LOGO_SOURCE = require('../assets/logo_humana.png');
 const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
   const role = userRole ? userRole.toLowerCase() : 'murid';
 
-  // Helper untuk mengecek status aktif halaman
+  // Helper kondisi aktif yang spesifik dan akurat agar tidak saling tabrakan
   const isProfileActive = currentScreen === 'Profile' || currentScreen === 'ProfileGuru';
   const isActivityActive = currentScreen === 'Activity' || currentScreen === 'ActivityGuru';
 
@@ -63,8 +63,8 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
       </TouchableOpacity>
 
       {/* TEKS TENGAH (PERMINTAAN / PESAN SESI) */}
-      <TouchableOpacity
-        style={styles.navBarItem}
+      <TouchableOpacity 
+        style={styles.navBarItem} 
         onPress={() =>
           onNavigate && onNavigate(role === 'guru' ? 'ActivityGuru' : 'PesanSesi')
         }
@@ -103,8 +103,7 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
       <TouchableOpacity
         style={styles.navBarItem}
         onPress={() =>
-          onNavigate &&
-          onNavigate(role === 'guru' ? 'ProfileGuru' : 'Profile')
+          onNavigate && onNavigate(role === 'guru' ? 'ProfileGuru' : 'Profile')
         }
       >
         <User
