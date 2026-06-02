@@ -49,7 +49,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
     }
   }, [chatData]);
 
-  const name = chatData?.nama_guru || chatData?.nama_murid || 'User';
+  const name = userRole === "murid" ? chatData?.nama_guru : (userRole === "guru" ? chatData?.nama_murid : 'User');
   const subject = chatData?.mapel || 'Chat';
   const initials = name.charAt(0).toUpperCase();
   const color = chatData?.color || '#FF9B9B';

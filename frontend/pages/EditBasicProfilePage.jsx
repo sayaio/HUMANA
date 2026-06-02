@@ -3,10 +3,22 @@ import {
     StyleSheet, Text, View, TouchableOpacity, SafeAreaView,
     StatusBar, ScrollView, TextInput, ActivityIndicator, Alert
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import BackIconSvg from '../components/BackIconSvg';
 // Import API dari file service kamu
 import { updateBasicProfile } from '../services/editProfileService';
+
+const InputField = ({ label, value, onChangeText }) => (
+    <View style={styles.inputContainer}>
+        <Text style={styles.label}>{label}</Text>
+        <TextInput
+            style={styles.input}
+            value={value}
+            onChangeText={onChangeText}
+            placeholderTextColor="#A9A9A9"
+        />
+    </View>
+);
 
 const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
     const [username, setUsername] = useState(profileData.username || '');
@@ -25,13 +37,13 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
         const numericRegex = /^[0-9]+$/;
         if (!numericRegex.test(phone)) {
             Alert.alert(
-                "Format Salah", 
+                "Format Salah",
                 "Nomor telepon tidak valid! Mohon masukkan angka murni (tidak boleh mengandung huruf atau karakter khusus)."
             );
             return; // Gagalkan proses pengiriman ke server
         }
         // ==========================================
-        
+
         setIsLoading(true);
         try {
             // Menyiapkan payload untuk dikirim ke backend
@@ -91,18 +103,6 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
             setIsLoading(false);
         }
     };
-
-    const InputField = ({ label, value, onChangeText }) => (
-        <View style={styles.inputContainer}>
-            <Text style={styles.label}>{label}</Text>
-            <TextInput
-                style={styles.input}
-                value={value}
-                onChangeText={onChangeText}
-                placeholderTextColor="#A9A9A9"
-            />
-        </View>
-    );
 
     return (
         <SafeAreaView style={styles.container}>

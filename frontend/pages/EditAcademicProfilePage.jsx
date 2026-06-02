@@ -8,6 +8,18 @@ import BackIconSvg from '../components/BackIconSvg';
 // Import API dari file service kamu
 import { updateAcademicProfile } from '../services/editProfileService';
 
+const InputField = ({ label, value, onChangeText }) => (
+    <View style={styles.inputContainer}>
+        <Text style={styles.label}>{label}</Text>
+        <TextInput
+            style={styles.input}
+            value={value}
+            onChangeText={onChangeText}
+            placeholderTextColor="#A9A9A9"
+        />
+    </View>
+);
+
 const EditAcademicProfilePage = ({ profileData, onSave, onCancel }) => {
     const [education, setEducation] = useState(profileData.education);
     const [major, setMajor] = useState(profileData.major);
@@ -75,18 +87,6 @@ const EditAcademicProfilePage = ({ profileData, onSave, onCancel }) => {
             setIsLoading(false);
         }
     };
-
-    const InputField = ({ label, value, onChangeText }) => (
-        <View style={styles.inputContainer}>
-            <Text style={styles.label}>{label}</Text>
-            <TextInput
-                style={styles.input}
-                value={value}
-                onChangeText={onChangeText}
-                placeholderTextColor="#A9A9A9"
-            />
-        </View>
-    );
 
     return (
         <SafeAreaView style={styles.container}>
