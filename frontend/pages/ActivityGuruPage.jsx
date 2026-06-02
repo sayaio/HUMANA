@@ -7,15 +7,10 @@ import {
   TouchableOpacity,
   StatusBar,
   Modal,
-  Image,
   Alert,
   ActivityIndicator, // Tambahan untuk loading indicator yang rapi
 } from 'react-native';
 import {
-  Home,
-  Activity,
-  MessageCircle,
-  User,
   Star,
   X,
   Clock,
@@ -29,6 +24,7 @@ import {
   fetchSesiDikonfirmasi,
 } from '../services/matchingService'; // Sesuaikan path jika berbeda
 import { getHistory } from '../services/historyService'; // Tambahkan ini
+import BottomNavbar from '../components/BottomNavbar';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
@@ -436,53 +432,11 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
       </Modal>
 
       {/* Bottom Navigation Tab Bar */}
-      <View style={styles.bottomTabContainer}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => onNavigate && onNavigate('HomeGuru')}
-        >
-          <Home color="#666" size={24} />
-          <Text style={styles.tabLabel}>Beranda</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => onNavigate && onNavigate('ActivityGuru')}
-        >
-          <Activity color="#284B7A" size={24} />
-          <Text style={[styles.tabLabel, styles.activeTabLabel]}>
-            Aktivitas
-          </Text>
-        </TouchableOpacity>
-
-        <View style={styles.centerTabWrapper}>
-          <TouchableOpacity
-            style={styles.centerTabButton}
-            onPress={() => onNavigate && onNavigate('HomeGuru')}
-          >
-            <Image
-              source={LOGO_SOURCE}
-              style={styles.centerLogoImage}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-          <Text style={styles.centerTabLabel}>Permintaan</Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => onNavigate && onNavigate('ChatGuru')}
-        >
-          <MessageCircle color="#666" size={24} />
-          <Text style={styles.tabLabel}>Chat</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => onNavigate && onNavigate('ProfileGuru')}
-        >
-          <User color="#666" size={24} />
-          <Text style={styles.tabLabel}>Profil</Text>
-        </TouchableOpacity>
-      </View>
+      <BottomNavbar
+        currentScreen="Activity"
+        onNavigate={onNavigate}
+        userRole="guru"
+      />
     </View>
   );
 };
@@ -594,38 +548,6 @@ const styles = StyleSheet.create({
     color: '#FFB800',
     marginLeft: 4,
   },
-
-  bottomTabContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 70,
-    backgroundColor: '#FFF',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#EEE',
-    paddingBottom: 10,
-  },
-  tabItem: { alignItems: 'center', justifyContent: 'center' },
-  tabLabel: { fontSize: 11, color: '#666', marginTop: 4 },
-  activeTabLabel: { color: '#284B7A', fontWeight: 'bold' },
-  centerTabWrapper: { alignItems: 'center', marginTop: -30 },
-  centerTabButton: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: '#284B7A',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 4,
-    borderColor: '#FFF',
-    elevation: 4,
-  },
-  centerLogoImage: { width: 32, height: 32 },
-  centerTabLabel: { fontSize: 11, color: '#666', marginTop: 6 },
 
   modalOverlayBackground: {
     flex: 1,

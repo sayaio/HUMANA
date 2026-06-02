@@ -20,10 +20,6 @@ import {
   BookOpen,
   Wallet,
   MousePointerClick,
-  Home,
-  Activity,
-  MessageCircle,
-  User,
 } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -35,6 +31,7 @@ import {
   fetchSesiDikonfirmasi,
 } from '../services/matchingService';
 import { fetchAllMapel } from '../services/MateriService';
+import BottomNavbar from '../components/BottomNavbar';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
@@ -518,51 +515,11 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
       </ScrollView>
 
       {/* BOTTOM NAVIGATION BAR */}
-      <View style={styles.bottomTabContainer}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => onNavigate && onNavigate('HomeGuru')}
-        >
-          <Home color="#284B7A" size={24} />
-          <Text style={[styles.tabLabel, styles.activeTabLabel]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => onNavigate && onNavigate('ActivityGuru')}
-        >
-          <Activity color="#666" size={24} />
-          <Text style={styles.tabLabel}>Activity</Text>
-        </TouchableOpacity>
-
-        <View style={styles.centerTabWrapper}>
-          <TouchableOpacity
-            style={styles.centerTabButton}
-            onPress={() => onNavigate && onNavigate('HomeGuru')}
-          >
-            <Image
-              source={LOGO_SOURCE}
-              style={styles.centerLogoImage}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-          <Text style={styles.centerTabLabel}>Permintaan</Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => onNavigate && onNavigate('ChatGuru')}
-        >
-          <MessageCircle color="#666" size={24} />
-          <Text style={styles.tabLabel}>Chat</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => onNavigate && onNavigate('ProfileGuru')}
-        >
-          <User color="#666" size={24} />
-          <Text style={styles.tabLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      <BottomNavbar
+        currentScreen="Home"
+        onNavigate={onNavigate}
+        userRole="guru"
+      />
 
       {/* Bottom Sheet Materi */}
       <Modal
@@ -870,51 +827,6 @@ const styles = StyleSheet.create({
   btnPrimaryRequest: { backgroundColor: '#284B7A' },
   btnDangerRequest: { backgroundColor: '#DC3545' },
   btnTextWhiteRequest: { color: '#FFF', fontFamily: FONTS.bold, fontSize: 14 },
-
-  /* ==========================================================================
-        BOTTOM TAB STYLING
-       ========================================================================== */
-  bottomTabContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 70,
-    backgroundColor: '#FFF',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#EEE',
-    paddingBottom: 10,
-  },
-  tabItem: { alignItems: 'center', justifyContent: 'center' },
-  tabLabel: {
-    fontSize: 11,
-    color: '#666',
-    marginTop: 4,
-    fontFamily: FONTS.regular,
-  },
-  activeTabLabel: { color: '#284B7A', fontFamily: FONTS.bold },
-  centerTabWrapper: { alignItems: 'center', marginTop: -30 },
-  centerTabButton: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: '#284B7A',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 4,
-    borderColor: '#FFF',
-    elevation: 4,
-  },
-  centerLogoImage: { width: 32, height: 32 },
-  centerTabLabel: {
-    fontSize: 11,
-    color: '#666',
-    marginTop: 6,
-    fontFamily: FONTS.regular,
-  },
 
   loadingText: {
     fontFamily: FONTS.regular,
