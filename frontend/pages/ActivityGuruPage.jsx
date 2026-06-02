@@ -133,6 +133,7 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
             : 'Tanggal tidak tersedia',
           harga: item.pembayaran?.total_bayar || 0, // Sesuaikan dengan struktur data backend Anda
           tipe: 'Riwayat',
+          status_pemesanan: item.status_pemesanan,
           rating: item.feedback?.rating || 0, // Jika ada data feedback
           ulasan: item.feedback?.komentar || 'Tidak ada ulasan.',
         }));
@@ -217,12 +218,17 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
 
         <View style={styles.cardActionRow}>
           {item.tipe === 'Riwayat' && (
-            <View style={styles.ratingBadgeRow}>
-              <Star size={14} color="#FFB800" fill="#FFB800" />
-              <Text style={styles.ratingTextBadge}>
-                {item.rating}.0 Selesai
-              </Text>
-            </View>
+              <View style={[
+                  styles.ratingBadgeRow,
+                  item.status_pemesanan === 'selesai' ? styles.ratingBadgeSelesai : styles.ratingBadgeDibatalkan
+              ]}>
+                  <Text style={[
+                      styles.ratingTextOnly,
+                      item.status_pemesanan === 'selesai' ? styles.ratingTextSelesai : styles.ratingTextDibatalkan
+                  ]}>
+                      {item.status_pemesanan === 'selesai' ? 'Selesai' : 'Dibatalkan'}
+                  </Text>
+              </View>
           )}
           <View style={{ flex: 1 }} />
           <TouchableOpacity
@@ -724,6 +730,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalBtnSingleRouteText: { color: '#FFF', fontWeight: 'bold' },
+  ratingBadgeSelesai: {
+      backgroundColor: '#E8F5E9',
+      borderWidth: 1,
+      borderColor: '#4CAF50',
+  },
+  ratingBadgeDibatalkan: {
+      backgroundColor: '#FFEBEE',
+      borderWidth: 1,
+      borderColor: '#F44336',
+  },
+  ratingTextSelesai: {
+      color: '#4CAF50',
+      fontWeight: 'bold',
+  },
+  ratingTextDibatalkan: {
+      color: '#F44336',
+      fontWeight: 'bold',
+  },
+  ratingTextOnly: {
+      fontSize: 12,
+      fontWeight: 'bold',
+  },
 });
 
 export default ActivityGuruPage;
