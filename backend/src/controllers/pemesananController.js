@@ -94,12 +94,12 @@ const tambahPemesanan = async (req, res) => {
         const safeId = insertedId !== null ? insertedId.toString() : null;
 
         // *** TAMBAHKAN: Hapus draft setelah pemesanan sukses ***
-        try {
-            await pool.query(`DELETE FROM draft_pemesanan WHERE id_murid = ?`, [id_murid]);
-            console.log(`Draft untuk murid ${id_murid} berhasil dihapus setelah pemesanan sukses`);
-        } catch (clearError) {
-            console.warn("Gagal menghapus draft (non-critical):", clearError);
-        }
+        // try {
+        //     await pool.query(`DELETE FROM draft_pemesanan WHERE id_murid = ?`, [id_murid]);
+        //     console.log(`Draft untuk murid ${id_murid} berhasil dihapus setelah pemesanan sukses`);
+        // } catch (clearError) {
+        //     console.warn("Gagal menghapus draft (non-critical):", clearError);
+        // }
 
         res.status(201).json({
             success: true,
