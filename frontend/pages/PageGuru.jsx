@@ -264,7 +264,10 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
           <View style={styles.gridCol2}>
             <Text style={styles.detailLabel}>Bayaran</Text>
             <Text style={styles.detailValue} numberOfLines={1}>
-              {formatRupiah(item.harga_total)}
+              {formatRupiah(
+                item.harga_total ||
+                  (item.biaya_sesi || 0) + (item.biaya_jarak || 0),
+              )}
             </Text>
           </View>
         </View>
@@ -349,13 +352,25 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.headerBackground}>
-          <Text style={styles.welcomeText}>Halo,</Text>
-          <Text style={styles.nameText}>{guruData?.name || 'Guru'}!</Text>
-        </View>
+        <View style={styles.headerWrapper}>
+          {/* Header Background biru membulat + watermark logo (seperti HomePage) */}
+          <View style={styles.headerBackground}>
+            <Image
+              source={LOGO_SOURCE}
+              style={styles.headerWatermark}
+              resizeMode="contain"
+            />
+          </View>
 
-        {/* CONTAINER CAROUSEL SLIDER SESI DIKONFIRMASI */}
-        <View style={{ marginTop: -50 }}>{renderSessionCard()}</View>
+          {/* Greeting */}
+          <View style={styles.greetingContainer}>
+            <Text style={styles.greetingLabel}>Selamat Datang,</Text>
+            <Text style={styles.greetingName}>{guruData?.name || 'Guru'}</Text>
+          </View>
+
+          {/* CONTAINER CAROUSEL SLIDER SESI DIKONFIRMASI */}
+          <View>{renderSessionCard()}</View>
+        </View>
 
         {/* GRID MENU BUTTONS DENGAN ICON ASSET GAMBAR BARU */}
         <View style={styles.menuGridContainer}>
@@ -579,20 +594,39 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
   centerContent: { justifyContent: 'center', alignItems: 'center' },
   scrollContainer: { flex: 1 },
+  headerWrapper: { position: 'relative' },
   headerBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 290,
     backgroundColor: '#284B7A',
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 70,
-    borderBottomLeftRadius: 35,
-    borderBottomRightRadius: 35,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    overflow: 'hidden',
   },
-  welcomeText: { color: '#FFF', fontSize: 28, fontFamily: FONTS.regular },
-  nameText: {
-    color: '#FFF',
-    fontSize: 32,
+  headerWatermark: {
+    position: 'absolute',
+    right: -20,
+    top: -10,
+    width: 240,
+    height: 240,
+    tintColor: '#FFF',
+    opacity: 0.06,
+  },
+  greetingContainer: { marginTop: 100, paddingHorizontal: 35, marginBottom: 24 },
+  greetingLabel: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.75)',
+    marginBottom: 2,
+  },
+  greetingName: {
     fontFamily: FONTS.bold,
-    marginTop: 4,
+    fontSize: 32,
+    color: '#FFF',
+    lineHeight: 38,
   },
 
   sessionCard: {
@@ -768,6 +802,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderWidth: 1,
     borderColor: '#ECEFF1',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
   },
   profileRowRequest: {
     flexDirection: 'row',

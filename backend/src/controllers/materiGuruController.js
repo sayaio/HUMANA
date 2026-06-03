@@ -23,29 +23,62 @@ const getMateriGuru = async (req, res) => {
   }
 };
 
-// POST — simpan materi terpilih (batch)
+// POST — sinkronkan materi terpilih guru (insert yang baru + hapus yang tidak lagi dipilih).
+// id_materi_list adalah SELURUH daftar materi yang seharusnya dimiliki guru setelah perubahan.
 const simpanMateriGuru = async (req, res) => {
+  const { id_guru, id_materi_list } = req.body;
+
+  // Validasi dasar: id_guru harus integer positif, id_materi_list harus array (boleh kosong = hapus semua).
+  const idGuruNum = Number(id_guru);
+  if (!Number.isInteger(idGuruNum) || idGuruNum <= 0) {
+    return res.status(400).json({ success: false, message: 'id_guru tidak valid.' });
+  }
+  if (!Array.isArray(id_materi_list)) {
+    return res.status(400).json({ success: false, message: 'id_materi_list wajib berupa array.' });
+  }
+
+  // Sanitasi: hanya integer positif & unik yang diproses (menutup celah input pengguna).
+  const cleanList = [...new Set(
+    id_materi_list
+      .map(x => Number(x))
+      .filter(x => Number.isInteger(x) && x > 0)
+  )];
+
+  let conn;
   try {
-    const { id_guru, id_materi_list } = req.body;
-    
-    // Validasi input
-    if (!id_guru || !Array.isArray(id_materi_list) || id_materi_list.length === 0) {
-      return res.status(400).json({ success: false, message: 'id_guru dan id_materi_list wajib diisi.' });
-    }
-    const queries = id_materi_list.map(id_materi => {
-      return pool.query(
-        `INSERT IGNORE INTO MateriGuru (id_guru, id_materi) VALUES (?, ?)`,
-        [id_guru, id_materi]
+    conn = await pool.getConnection();
+    await conn.beginTransaction();
+
+    if (cleanList.length > 0) {
+      const placeholders = cleanList.map(() => '?').join(',');
+      // 1. Hapus materi guru yang TIDAK ada lagi di daftar terpilih.
+      await conn.query(
+        `DELETE FROM MateriGuru WHERE id_guru = ? AND id_materi NOT IN (${placeholders})`,
+        [idGuruNum, ...cleanList]
       );
-    });
+      // 2. Tambahkan materi terpilih (IGNORE agar duplikat tidak error).
+      const valueTuples = cleanList.map(() => '(?, ?)').join(',');
+      const insertParams = [];
+      cleanList.forEach(id => insertParams.push(idGuruNum, id));
+      await conn.query(
+        `INSERT IGNORE INTO MateriGuru (id_guru, id_materi) VALUES ${valueTuples}`,
+        insertParams
+      );
+    } else {
+      // Daftar kosong -> guru menghapus seluruh materinya.
+      await conn.query('DELETE FROM MateriGuru WHERE id_guru = ?', [idGuruNum]);
+    }
 
-    // Tunggu sampai semua data selesai dimasukkan ke database
-    await Promise.all(queries);
-
-    res.status(201).json({ success: true, message: 'Materi berhasil disimpan.' });
+    await conn.commit();
+    res.status(200).json({ success: true, message: 'Materi berhasil disimpan.' });
   } catch (error) {
+    if (conn) {
+      try { await conn.rollback(); } catch (e) { /* abaikan error rollback */ }
+    }
     console.error('Error simpanMateriGuru:', error);
     res.status(500).json({ success: false, message: error.message });
+  } finally {
+    if (conn) conn.release();
   }
 };
 

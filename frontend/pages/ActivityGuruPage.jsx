@@ -107,7 +107,7 @@ const ActivityGuruPage = ({
                     materi: item.nama_materi,
                     tanggal: formatTanggalCard(item.waktu_mulai),
                     waktu: item.waktu_string || 'Jam Terjadwal',
-                    harga: item.harga_total || 34000,
+                    harga: item.harga_total || ((item.biaya_sesi || 0) + (item.biaya_jarak || 0)),
                     tipe: item.status_pemesanan === 'berlangsung' ? 'Berlangsung' : 'Aktif',
                     id_pemesanan: item.id_pemesanan,
                     nama_materi: item.nama_materi,

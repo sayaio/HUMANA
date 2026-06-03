@@ -20,6 +20,19 @@ const submitFeedback = async (req, res) => {
     // =========================================================================
 
     try {
+        // 0. Cegah feedback ganda: satu sesi hanya boleh punya satu feedback.
+        const sudahAda = await pool.query(
+            'SELECT id_feedback FROM Feedback WHERE id_pemesanan = ? LIMIT 1',
+            [id_pemesanan]
+        );
+        const sudahAdaRows = sudahAda.rows || sudahAda;
+        if (sudahAdaRows && sudahAdaRows.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message: 'Feedback untuk sesi ini sudah pernah dikirim.'
+            });
+        }
+
         // 1. Simpan feedback baru ke tabel Feedback
         await pool.query(
             'INSERT INTO Feedback (id_pemesanan, komentar, rating) VALUES (?, ?, ?)',
@@ -173,7 +186,31 @@ const getGuruRating = async (req, res) => {
     }
 };
 
+// Ambil feedback yang sudah tersimpan untuk satu sesi (id_pemesanan).
+// Dipakai murid agar saat membuka ulang detail sesi, ulasannya tampil & terkunci.
+const getFeedbackByPemesanan = async (req, res) => {
+    const { id_pemesanan } = req.params;
+
+    try {
+        const rows = await pool.query(
+            'SELECT id_feedback, id_pemesanan, komentar, rating FROM Feedback WHERE id_pemesanan = ? ORDER BY id_feedback DESC LIMIT 1',
+            [id_pemesanan]
+        );
+        const data = rows.rows || rows;
+
+        if (!data || data.length === 0) {
+            return res.status(200).json({ success: true, data: null });
+        }
+
+        return res.status(200).json({ success: true, data: data[0] });
+    } catch (error) {
+        console.error('Error pada getFeedbackByPemesanan:', error);
+        return res.status(500).json({ success: false, message: 'Gagal mengambil feedback' });
+    }
+};
+
 module.exports = {
     submitFeedback,
-    getGuruRating
+    getGuruRating,
+    getFeedbackByPemesanan
 };

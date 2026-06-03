@@ -22,6 +22,7 @@ router.post('/materi/guru', materiController.updateMateriGuru);
 
 const feedbackController = require('./src/controllers/feedbackController');
 router.post('/feedback', feedbackController.submitFeedback);
+router.get('/feedback/:id_pemesanan', feedbackController.getFeedbackByPemesanan);
 router.get('/profile-guru/:id_guru', feedbackController.getGuruRating);
 
 const historyController = require('./src/controllers/historyController');

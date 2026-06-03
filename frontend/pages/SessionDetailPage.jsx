@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,7 +16,7 @@ import {
 
 // Import SafeAreaView yang dari library khusus tetap biarkan di bawahnya:
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { postFeedback } from '../services/feedbackService';
+import { postFeedback, fetchFeedbackBySesi } from '../services/feedbackService';
 import BackIconSvg from '../components/BackIconSvg';
 
 const SessionDetailPage = ({ onBack, sessionData, userId }) => {
@@ -26,6 +26,34 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [checkingFeedback, setCheckingFeedback] = useState(true);
+
+  // Muat feedback yang sudah tersimpan agar saat dibuka lagi tampil & terkunci.
+  useEffect(() => {
+    const idPemesanan = sessionData?.id_pemesanan;
+    if (!idPemesanan) {
+      setCheckingFeedback(false);
+      return;
+    }
+
+    let aktif = true;
+    const muatFeedback = async () => {
+      const res = await fetchFeedbackBySesi(idPemesanan);
+      if (!aktif) return;
+
+      if (res.success && res.data) {
+        setFeedback(res.data.komentar || '');
+        setRating(Number(res.data.rating) || 0);
+        setIsSubmitted(true);
+      }
+      setCheckingFeedback(false);
+    };
+
+    muatFeedback();
+    return () => {
+      aktif = false;
+    };
+  }, [sessionData?.id_pemesanan]);
 
   // --- FUNGSI FORMAT WAKTU (MENYESUAIKAN LOG BACKEND) ---
   // --- FUNGSI FORMAT WAKTU (SUDAH DI-UPGRADE AGAR AMAN DARI FORMAT ISO) ---
@@ -99,8 +127,12 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
           Alert.alert('Berhasil', 'Terima kasih atas ulasan Anda!');
         }, 100);
         setIsSubmitted(true);
+      } else if (result.message && result.message.toLowerCase().includes('sudah')) {
+        // Sudah pernah dikirim (mis. dari perangkat/sesi lain) -> kunci form.
+        setIsSubmitted(true);
+        Alert.alert('Info', result.message);
       } else {
-        Alert.alert('Gagal', 'Gagal menyimpan feedback.');
+        Alert.alert('Gagal', result.message || 'Gagal menyimpan feedback.');
       }
     } catch (error) {
       Alert.alert('Error', 'Terjadi kesalahan koneksi.');
@@ -218,7 +250,7 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
             multiline
             value={feedback}
             onChangeText={setFeedback}
-            editable={!isSubmitted && !isSubmitting}
+            editable={!isSubmitted && !isSubmitting && !checkingFeedback}
           />
 
           <Text style={[styles.ratingText, { fontSize: dynamicFontSizeTitle }]}>
@@ -228,7 +260,12 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
             {[1, 2, 3, 4, 5].map(star => (
               <TouchableOpacity
                 key={star}
-                onPress={() => !isSubmitted && !isSubmitting && setRating(star)}
+                onPress={() =>
+                  !isSubmitted &&
+                  !isSubmitting &&
+                  !checkingFeedback &&
+                  setRating(star)
+                }
                 activeOpacity={isSubmitted ? 1 : 0.7}
                 style={{ paddingHorizontal: 4 }}
               >
@@ -248,13 +285,14 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
           <TouchableOpacity
             style={[
               styles.submitBtn,
-              (isSubmitted || isSubmitting) && styles.submitBtnDisabled,
+              (isSubmitted || isSubmitting || checkingFeedback) &&
+                styles.submitBtnDisabled,
             ]}
             onPress={handleSubmit}
-            disabled={isSubmitted || isSubmitting}
+            disabled={isSubmitted || isSubmitting || checkingFeedback}
           >
-            {isSubmitting ? (
-              <ActivityIndicator color="#FFF" />
+            {isSubmitting || checkingFeedback ? (
+              <ActivityIndicator color={checkingFeedback ? '#387C65' : '#FFF'} />
             ) : (
               <Text
                 style={[

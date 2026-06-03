@@ -223,35 +223,33 @@ const DetailPermintaanGuruPage = ({
             );
         }
 
-        if (tipePermintaan === 'Aktif') {
+        // Sesi terkonfirmasi & belum dimulai -> boleh dibatalkan
+        if (belumMulai) {
             return (
                 <View style={styles.actionBar}>
-                    <TouchableOpacity style={styles.btnBatal} onPress={handleAjukanBatal}>
+                    <TouchableOpacity
+                        style={[styles.btnBatal, loading && styles.btnDisabled]}
+                        onPress={handleAjukanBatal}
+                        disabled={loading}
+                    >
                         <Text style={styles.btnBatalText}>Batalkan Sesi</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.btnChat} onPress={handleChat}>
-                        <MessageCircle size={18} color="#FFF" style={{ marginRight: 6 }} />
-                        <Text style={styles.btnChatText}>Chat Murid</Text>
-                    </TouchableOpacity>
                 </View>
             );
         }
 
-        if (tipePermintaan === 'Berlangsung') {
-            return (
-                <View style={styles.actionBar}>
-                    <TouchableOpacity style={styles.btnChat} onPress={handleChat}>
-                        <MessageCircle size={18} color="#FFF" style={{ marginRight: 6 }} />
-                        <Text style={styles.btnChatText}>Chat Murid</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.btnSelesaikan} onPress={handleSelesaikan}>
-                        <Text style={styles.btnSelesaikanText}>Selesaikan</Text>
-                    </TouchableOpacity>
-                </View>
-            );
-        }
-
-        return null;
+        // Sesi sedang/sudah berlangsung -> diselesaikan
+        return (
+            <View style={styles.actionBar}>
+                <TouchableOpacity
+                    style={[styles.btnSelesaikan, loading && styles.btnDisabled]}
+                    onPress={handleSelesaikan}
+                    disabled={loading}
+                >
+                    <Text style={styles.btnSelesaikanText}>Selesaikan Pesanan</Text>
+                </TouchableOpacity>
+            </View>
+        );
     };
 
     // Badge status
@@ -302,6 +300,16 @@ const DetailPermintaanGuruPage = ({
     const waktuSesi = formatWaktu();
     const lokasiAlamat = data.lokasi_sesi || data.lokasi || data.alamat || 'Alamat tidak tersedia';
 
+    // Penentu tombol bawah untuk sesi terkonfirmasi:
+    // sekarang < waktu_mulai  -> masih bisa dibatalkan
+    // sekarang >= waktu_mulai -> sesi sedang/sudah berlangsung -> diselesaikan
+    const sekarang = new Date();
+    const waktuMulaiObj = data.waktu_mulai ? new Date(data.waktu_mulai) : null;
+    const belumMulai =
+        waktuMulaiObj && !isNaN(waktuMulaiObj.getTime())
+            ? sekarang < waktuMulaiObj
+            : true;
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
@@ -317,7 +325,7 @@ const DetailPermintaanGuruPage = ({
             </View>
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-                {/* Profil Murid + Badge */}
+                {/* Profil Murid + Badge + Chat (sejajar nama) */}
                 <View style={styles.profileRow}>
                     <View style={styles.avatarCircle}>
                         <Text style={styles.avatarText}>{namaInisial}</Text>
@@ -328,6 +336,12 @@ const DetailPermintaanGuruPage = ({
                             <Text style={[styles.badgeText, { color: badge.text }]}>{badge.label}</Text>
                         </View>
                     </View>
+                    {tipePermintaan !== 'Permintaan' && (
+                        <TouchableOpacity style={styles.btnChatHeader} onPress={handleChat}>
+                            <MessageCircle size={16} color="#FFF" style={{ marginRight: 6 }} />
+                            <Text style={styles.btnChatHeaderText}>Chat Murid</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 {/* Tanggal & Waktu */}
@@ -480,10 +494,12 @@ const styles = StyleSheet.create({
     btnTerima: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center' },
     btnTerimaText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
     btnDisabled: { opacity: 0.6 },
-    btnBatal: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#FFF', borderWidth: 1.5, borderColor: '#E53935', justifyContent: 'center', alignItems: 'center' },
-    btnBatalText: { color: '#E53935', fontWeight: 'bold', fontSize: 14 },
+    btnBatal: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#E53935', justifyContent: 'center', alignItems: 'center' },
+    btnBatalText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
     btnChat: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#284B7A', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
     btnChatText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
+    btnChatHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#284B7A', paddingHorizontal: 14, height: 40, borderRadius: 12 },
+    btnChatHeaderText: { color: '#FFF', fontWeight: 'bold', fontSize: 13 },
     btnSelesaikan: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center' },
     btnSelesaikanText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
 });

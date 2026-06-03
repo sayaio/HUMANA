@@ -47,37 +47,31 @@ const TambahMateriGuruPage = ({ onBack, idGuru }) => {
     });
   };
 
-  const hapusChip = async (item) => {
+  // Hapus chip hanya membatalkan pilihan secara lokal (di-stage),
+  // perubahan baru dipersistkan ke DB saat menekan "Simpan".
+  const hapusChip = (item) => {
     setTerpilih(prev => {
       const next = new Set(prev);
       next.delete(item.id_materi);
       return next;
     });
-    if (terpilihAwal.has(item.id_materi)) {
-      try {
-        await materiGuruService.hapusMateriGuru(idGuru, item.id_materi);
-        setTerpilihAwal(prev => {
-          const next = new Set(prev);
-          next.delete(item.id_materi);
-          return next;
-        });
-      } catch (error) {
-        Alert.alert('Error', error.message);
-      }
-    }
   };
 
   const handleSimpan = async () => {
-    const baru = [...terpilih].filter(id => !terpilihAwal.has(id));
-    if (baru.length === 0 && terpilih.size === terpilihAwal.size) {
-      Alert.alert('Info', 'Tidak ada perubahan baru untuk disimpan.');
+    // Deteksi perubahan: bandingkan set terpilih dengan kondisi awal (tambah ATAU hapus).
+    const tidakAdaPerubahan =
+      terpilih.size === terpilihAwal.size &&
+      [...terpilih].every(id => terpilihAwal.has(id));
+    if (tidakAdaPerubahan) {
+      Alert.alert('Info', 'Tidak ada perubahan untuk disimpan.');
       return;
     }
     setSaving(true);
     try {
+      // Kirim SELURUH daftar terpilih; backend menyinkronkan (insert baru + hapus yang dilepas).
       await materiGuruService.simpanMateriGuru(idGuru, [...terpilih]);
       setTerpilihAwal(new Set(terpilih));
-      Alert.alert('Berhasil 🎉', `Perubahan materi berhasil disimpan!`);
+      Alert.alert('Berhasil 🎉', 'Perubahan materi berhasil disimpan!');
     } catch (error) {
       Alert.alert('Error', error.message);
     } finally {

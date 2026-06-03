@@ -18,6 +18,23 @@ export const postFeedback = async (feedbackData) => {
     }
 };
 
+export const fetchFeedbackBySesi = async (idPemesanan) => {
+    try {
+        const response = await fetch(`${API_URL}/feedback/${idPemesanan}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error("Error pada fetchFeedbackBySesi:", error);
+        return { success: false, message: "Gagal memuat feedback" };
+    }
+};
+
 export const fetchGuruRating = async (idGuru) => {
     try {
         const response = await fetch(`${API_URL}/profile-guru/${idGuru}`, {

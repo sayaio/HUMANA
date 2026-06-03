@@ -196,6 +196,13 @@ const getSesiDikonfirmasi = async (req, res) => {
             // toJSON() menghitung ulang biaya dari tarif & jarak (jarak=0 di sini),
             // sehingga harus ditimpa dengan nilai pembayaran sebenarnya dari DB
             // agar Bayaran & Rincian (biaya_sesi + biaya_jarak = nominal) akurat.
+            const biayaSesi = Number(row.biaya_sesi) || 0;
+            const biayaJarak = Number(row.biaya_jarak) || 0;
+            const nominalDb = Number(row.harga_total) || 0;
+            // nominal (harga_total) adalah sumber utama; bila kosong/0 di DB,
+            // total dihitung dari komponennya (biaya_sesi + biaya_jarak).
+            const hargaTotal = nominalDb > 0 ? nominalDb : biayaSesi + biayaJarak;
+
             return {
                 ...sesi.toJSON(),
                 id_murid: row.id_murid,
@@ -203,9 +210,9 @@ const getSesiDikonfirmasi = async (req, res) => {
                 jenjang_pendidikan: row.jenjang,
                 waktu_mulai: row.waktu_mulai,
                 waktu_selesai: row.waktu_selesai,
-                biaya_sesi: row.biaya_sesi,
-                biaya_jarak: row.biaya_jarak,
-                harga_total: row.harga_total,
+                biaya_sesi: biayaSesi,
+                biaya_jarak: biayaJarak,
+                harga_total: hargaTotal,
                 status_pembayaran: row.status_pembayaran,
                 metode_pembayaran: row.metode_pembayaran,
             };
