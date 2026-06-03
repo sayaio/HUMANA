@@ -70,8 +70,10 @@ const ActivityGuruPage = ({
             if (resPermintaan.success && resPermintaan.data) {
                 const mappedPermintaan = resPermintaan.data.map(item => ({
                     id: item.id_pemesanan,
+                    id_murid: item.id_murid,
                     nama_murid: item.nama_murid,
                     materi: item.nama_materi,
+                    tanggal: formatTanggalCard(item.waktu_mulai),
                     waktu: item.waktu_string ||
                         `${new Date(item.waktu_mulai).toLocaleTimeString('id-ID', {
                             hour: '2-digit',
@@ -100,8 +102,10 @@ const ActivityGuruPage = ({
             if (resKonfirmasi.success && resKonfirmasi.data) {
                 const mappedAktif = resKonfirmasi.data.map(item => ({
                     id: item.id_pemesanan,
+                    id_murid: item.id_murid,
                     nama_murid: item.nama_murid,
                     materi: item.nama_materi,
+                    tanggal: formatTanggalCard(item.waktu_mulai),
                     waktu: item.waktu_string || 'Jam Terjadwal',
                     harga: item.harga_total || 34000,
                     tipe: item.status_pemesanan === 'berlangsung' ? 'Berlangsung' : 'Aktif',
@@ -163,6 +167,17 @@ const ActivityGuruPage = ({
         setModalVisible(true);
     };
 
+    const formatTanggalCard = raw => {
+        if (!raw) return '';
+        const tanggalObj = new Date(raw);
+        if (isNaN(tanggalObj.getTime())) return '';
+        return tanggalObj.toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        });
+    };
+
     const renderCardItem = item => {
         return (
             <View key={item.id} style={styles.sesiCard}>
@@ -181,6 +196,12 @@ const ActivityGuruPage = ({
                 </View>
 
                 <View style={styles.cardGridInfo}>
+                    {item.tanggal ? (
+                        <View style={styles.gridInfoBox}>
+                            <Text style={styles.infoLabel}>Tanggal</Text>
+                            <Text style={styles.infoValue}>{item.tanggal}</Text>
+                        </View>
+                    ) : null}
                     <View style={styles.gridInfoBox}>
                         <Text style={styles.infoLabel}>Waktu</Text>
                         <Text style={styles.infoValue}>{item.waktu}</Text>
@@ -497,7 +518,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         paddingLeft: 2,
     },
-    gridInfoBox: { width: '45%' },
+    gridInfoBox: { flex: 1, paddingRight: 8 },
     infoLabel: { fontSize: 11, color: '#999', marginBottom: 4 },
     infoValue: { fontSize: 13, fontWeight: 'bold', color: '#333' },
 

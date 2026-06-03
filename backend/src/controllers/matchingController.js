@@ -62,14 +62,18 @@ const getPermintaanBaru = async (req, res) => {
         const rows = await pool.query(`
             SELECT 
                 p.id_pemesanan, 
+                p.id_murid,
                 p.waktu_mulai, 
                 p.waktu_selesai, 
                 p.lokasi_sesi,
                 m.nama_murid, 
-                mat.nama_materi
+                mat.nama_materi,
+                mp.nama_mapel,
+                mp.jenjang
             FROM Pemesanan p
             JOIN Murid m ON p.id_murid = m.id_murid
             JOIN Materi mat ON p.id_materi = mat.id_materi
+            JOIN MataPelajaran mp ON mat.id_mapel = mp.id_mapel
             JOIN MateriGuru mg ON p.id_materi = mg.id_materi
             WHERE p.id_guru IS NULL 
               AND mg.id_guru = ?
@@ -98,7 +102,16 @@ const getPermintaanBaru = async (req, res) => {
             } else {
                 sesiPemesanan.jarak_km = 0;
             }
-            return sesiPemesanan;
+            // Lengkapi output dengan data yang tidak di-serialize oleh toJSON() class
+            // (nama_mapel, jenjang, dan waktu mentah) agar halaman detail terisi penuh.
+            return {
+                ...sesiPemesanan.toJSON(),
+                id_murid: row.id_murid,
+                nama_mapel: row.nama_mapel,
+                jenjang_pendidikan: row.jenjang,
+                waktu_mulai: row.waktu_mulai,
+                waktu_selesai: row.waktu_selesai,
+            };
         });
         // Jika guru aktif, kembalikan response sukses lengkap dengan flag is_active: true
         res.status(200).json({
@@ -152,13 +165,15 @@ const getSesiDikonfirmasi = async (req, res) => {
         // PERBAIKAN: Jika menggunakan mysql2/promise, pastikan mengambil [rows]
         const rows = await pool.query(`
             SELECT 
-                p.id_pemesanan, p.waktu_mulai, p.waktu_selesai, p.lokasi_sesi, 
+                p.id_pemesanan, p.id_murid, p.waktu_mulai, p.waktu_selesai, p.lokasi_sesi, 
                 m.nama_murid, mat.nama_materi,
+                mp.nama_mapel, mp.jenjang,
                 pem.id_pembayaran, pem.biaya_sesi, pem.biaya_jarak, pem.metode_pembayaran, 
                 pem.nominal AS harga_total, pem.status_pembayaran
             FROM Pemesanan p
             JOIN Murid m ON p.id_murid = m.id_murid
             JOIN Materi mat ON p.id_materi = mat.id_materi
+            JOIN MataPelajaran mp ON mat.id_mapel = mp.id_mapel
             LEFT JOIN Pembayaran pem ON p.id_pemesanan = pem.id_pemesanan
             WHERE p.id_guru = ? AND LOWER(p.status_pemesanan) = 'dikonfirmasi'
             ORDER BY p.waktu_mulai ASC
@@ -177,19 +192,23 @@ const getSesiDikonfirmasi = async (req, res) => {
 
             sesi.id_pemesanan = row.id_pemesanan;
             sesi.jarak_km = 0;
-            sesi.harga_total = row.harga_total || 0; // Pastikan properti ini dibaca di toJSON nanti
 
-            // Format waktu
-            if (row.waktu_mulai && row.waktu_selesai) {
-                const opsiJam = { hour: '2-digit', minute: '2-digit', hour12: false };
-                const jamMulai = new Date(row.waktu_mulai).toLocaleTimeString('id-ID', opsiJam).replace('.', ':');
-                const jamSelesai = new Date(row.waktu_selesai).toLocaleTimeString('id-ID', opsiJam).replace('.', ':');
-                sesi.waktu_string = `${jamMulai} – ${jamSelesai}`;
-            } else {
-                sesi.waktu_string = "-";
-            }
-
-            return sesi;
+            // toJSON() menghitung ulang biaya dari tarif & jarak (jarak=0 di sini),
+            // sehingga harus ditimpa dengan nilai pembayaran sebenarnya dari DB
+            // agar Bayaran & Rincian (biaya_sesi + biaya_jarak = nominal) akurat.
+            return {
+                ...sesi.toJSON(),
+                id_murid: row.id_murid,
+                nama_mapel: row.nama_mapel,
+                jenjang_pendidikan: row.jenjang,
+                waktu_mulai: row.waktu_mulai,
+                waktu_selesai: row.waktu_selesai,
+                biaya_sesi: row.biaya_sesi,
+                biaya_jarak: row.biaya_jarak,
+                harga_total: row.harga_total,
+                status_pembayaran: row.status_pembayaran,
+                metode_pembayaran: row.metode_pembayaran,
+            };
         });
 
         res.status(200).json({ success: true, data: listSesiDikonfirmasi });

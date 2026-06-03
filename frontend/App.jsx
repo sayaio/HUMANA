@@ -402,6 +402,11 @@ const App = () => {
                     setSelectedSubject(subjectData);
                     setCurrentPage('Materi');
                 }}
+                onDetailPermintaan={(item, tipe) => {
+                    setSelectedPermintaanGuru(item);
+                    setSelectedTipePermintaan(tipe);
+                    setCurrentPage('DetailPermintaanGuru');
+                }}
             />
         );
     }
@@ -449,9 +454,9 @@ const App = () => {
                     Alert.alert('Info', 'Permintaan ditolak');
                     setCurrentPage('RealActivityGuru');
                 }}
-                onChat={(data) => {
-                    // Navigasi ke halaman chat dengan data murid
-                    setSelectedChatUser({ id: data.id_murid, name: data.nama_murid });
+                onChat={(chatData) => {
+                    // chatData sudah berisi id_guru, id_murid, id_chat, nama_murid, mapel
+                    setSelectedChatUser(chatData);
                     setCurrentPage('ChatRoom');
                 }}
                 onSelesaikan={async (idPemesanan) => {
@@ -531,6 +536,7 @@ const App = () => {
                     setPaymentSnapUrl(snapUrl);
                     setCurrentPage('Pembayaran');
                 }}
+                onSesiDilepas={() => setCurrentPage('MencariPengajar')}
             />
         );
     }

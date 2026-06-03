@@ -32,7 +32,7 @@ const getHistory = async (req, res) => {
             LEFT JOIN Materi materi ON materi.id_materi = pemesanan.id_materi
             LEFT JOIN MataPelajaran mapel ON mapel.id_mapel = materi.id_mapel
             LEFT JOIN Pembayaran bayar ON bayar.id_pemesanan = pemesanan.id_pemesanan
-            WHERE (pemesanan.status_pemesanan = 'selesai' OR pemesanan.status_pemesanan = 'dibatalkan') 
+            WHERE pemesanan.status_pemesanan IN ('selesai', 'dibatalkan', 'dibatalkan_murid', 'dibatalkan_guru')
             AND (${whereClause} = ?)
             ORDER BY pemesanan.waktu_mulai DESC;
         `;
@@ -98,7 +98,7 @@ const getActiveSchedule = async (req, res) => {
             JOIN Guru guru ON guru.id_guru = pemesanan.id_guru
             LEFT JOIN Materi materi ON materi.id_materi = pemesanan.id_materi
             LEFT JOIN MataPelajaran mapel ON mapel.id_mapel = materi.id_mapel
-            WHERE (pemesanan.status_pemesanan = 'dikonfirmasi' OR pemesanan.status_pemesanan = 'menunggu konfirmasi') 
+            WHERE pemesanan.status_pemesanan IN ('dikonfirmasi', 'menunggu konfirmasi', 'berlangsung')
             AND (${whereClause} = ?)
             ORDER BY pemesanan.waktu_mulai ASC;
         `;

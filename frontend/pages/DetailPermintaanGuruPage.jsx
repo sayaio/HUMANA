@@ -12,6 +12,9 @@ import {
 import { ChevronLeft, MapPin, ChevronRight, MessageCircle } from 'lucide-react-native';
 
 import { terimaPermintaanSesiAPI } from '../services/matchingService';
+import { batalkanSesi } from '../services/batalSesiService';
+import { createChatRoom } from '../services/chatService';
+import CustomAlert from '../components/CustomAlert';
 
 const DetailPermintaanGuruPage = ({
     permintaanData,
@@ -25,6 +28,15 @@ const DetailPermintaanGuruPage = ({
 }) => {
     const data = permintaanData || {};
     const [loading, setLoading] = useState(false);
+
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [navigateOnClose, setNavigateOnClose] = useState(false);
+    const [alertConfig, setAlertConfig] = useState({
+        type: 'success',
+        title: '',
+        message: '',
+        isConfirmation: false,
+    });
 
     const namaInisial = data.nama_murid
         ? data.nama_murid.substring(0, 2).toUpperCase()
@@ -111,20 +123,43 @@ const DetailPermintaanGuruPage = ({
 
     // ─── Handler untuk Aktif ─────────────────────────────────────
     const handleAjukanBatal = () => {
-        Alert.alert(
-            'Ajukan Pembatalan',
-            `Yakin ingin mengajukan pembatalan sesi dengan ${data.nama_murid}?`,
-            [
-                { text: 'Batal', style: 'cancel' },
-                {
-                    text: 'Ajukan',
-                    style: 'destructive',
-                    onPress: () => {
-                        if (onAjukanBatal) onAjukanBatal(data.id_pemesanan || data.id);
-                    },
-                },
-            ]
-        );
+        setAlertConfig({
+            type: 'gagal',
+            title: 'Batalkan sesi?',
+            message: `Sesi dengan ${data.nama_murid || 'murid'} akan dibatalkan.`,
+            isConfirmation: true,
+        });
+        setNavigateOnClose(false);
+        setAlertVisible(true);
+    };
+
+    const prosesBatalGuru = async () => {
+        setAlertVisible(false);
+        const id = data.id_pemesanan || data.id;
+        if (!id) return;
+        setLoading(true);
+        const res = await batalkanSesi(id, 'guru');
+        setLoading(false);
+
+        if (res.success) {
+            const detail = res.data || {};
+            setAlertConfig({
+                type: 'success',
+                title: 'Sesi Dibatalkan',
+                message: detail.message || 'Sesi berhasil dibatalkan.',
+                isConfirmation: false,
+            });
+            setNavigateOnClose(true);
+        } else {
+            setAlertConfig({
+                type: 'gagal',
+                title: 'Gagal',
+                message: res.message || 'Gagal membatalkan sesi.',
+                isConfirmation: false,
+            });
+            setNavigateOnClose(false);
+        }
+        setAlertVisible(true);
     };
 
     // ─── Handler untuk Berlangsung ───────────────────────────────
@@ -144,8 +179,29 @@ const DetailPermintaanGuruPage = ({
         );
     };
 
-    const handleChat = () => {
-        if (onChat) onChat(data);
+    const handleChat = async () => {
+        if (!onChat) return;
+
+        const idGuru = guruData?.id;
+        const idMurid = data.id_murid;
+
+        if (!idGuru || !idMurid) {
+            Alert.alert('Error', 'Data guru atau murid tidak lengkap untuk membuka chat.');
+            return;
+        }
+
+        // Room dijamin sudah ada (otomatis dibuat saat pesanan dikonfirmasi),
+        // findOrCreate mengembalikan row Chat beserta id_chat-nya.
+        const resp = await createChatRoom(idGuru, idMurid);
+        const room = resp?.data?.data || {};
+
+        onChat({
+            id_guru: idGuru,
+            id_murid: idMurid,
+            id_chat: room.id_chat,
+            nama_murid: data.nama_murid,
+            mapel: data.nama_mapel || data.mata_pelajaran,
+        });
     };
 
     // ─── Render tombol berdasarkan tipe ──────────────────────────
@@ -171,7 +227,7 @@ const DetailPermintaanGuruPage = ({
             return (
                 <View style={styles.actionBar}>
                     <TouchableOpacity style={styles.btnBatal} onPress={handleAjukanBatal}>
-                        <Text style={styles.btnBatalText}>Ajukan Pembatalan</Text>
+                        <Text style={styles.btnBatalText}>Batalkan Sesi</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.btnChat} onPress={handleChat}>
                         <MessageCircle size={18} color="#FFF" style={{ marginRight: 6 }} />
@@ -351,6 +407,19 @@ const DetailPermintaanGuruPage = ({
 
             {/* Action Bar Dinamis */}
             {renderActionBar()}
+
+            <CustomAlert
+                visible={alertVisible}
+                type={alertConfig.type}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                isConfirmation={alertConfig.isConfirmation}
+                onConfirm={prosesBatalGuru}
+                onClose={() => {
+                    setAlertVisible(false);
+                    if (!alertConfig.isConfirmation && navigateOnClose) onBack && onBack();
+                }}
+            />
         </View>
     );
 };

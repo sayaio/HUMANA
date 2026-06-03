@@ -235,7 +235,8 @@ const cekStatusPemesananMurid = async (req, res) => {
         console.log("=== [DEBUG BACKEND] Rows Terdeteksi ===", rows);
 
         if (!rows || rows.length === 0) {
-            return res.status(204).json({ success: false, message: "Pesanan tidak ditemukan." });
+            // Jangan pakai 204 (tanpa body) karena response.json() di frontend akan gagal parse.
+            return res.status(200).json({ success: false, status_pemesanan: null, message: "Pesanan tidak ditemukan." });
         }
 
         const pesanan = rows[0];

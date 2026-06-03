@@ -70,6 +70,10 @@ router.get('/pendapatan/:id_guru/riwayat', getRiwayatPendapatan);
 const { batalSesiController } = require('./src/controllers/batalSesiController');
 router.post('/pemesanan/batal', batalSesiController);
 
+const { getNotifikasi, hapusNotifikasiUser } = require('./src/controllers/notifikasiController');
+router.get('/notifikasi/:role/:id', getNotifikasi);
+router.delete('/notifikasi/:role/:id', hapusNotifikasiUser);
+
 const { getDetailPemesanan } = require('./src/controllers/detailPemesananController');
 router.get('/detailpemesanan/:id', getDetailPemesanan);
 

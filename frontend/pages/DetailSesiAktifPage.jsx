@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,17 +7,85 @@ import {
   StatusBar,
   ScrollView,
   Image,
-  Alert,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BackIconSvg from '../components/BackIconSvg';
+import CustomAlert from '../components/CustomAlert';
+import { batalkanSesi } from '../services/batalSesiService';
+import { pemesananService } from '../services/pemesananService';
 
 const { width, height } = Dimensions.get('window');
 
 const DetailSesiAktifPage = ({ onBack, sessionData }) => {
   const [isCanceling, setIsCanceling] = useState(false);
+
+  const idPemesanan = sessionData?.id_pemesanan;
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [navigateOnClose, setNavigateOnClose] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    type: 'success',
+    title: '',
+    message: '',
+    isConfirmation: false,
+  });
+
+  // Deteksi jika GURU membatalkan sesi ini (kasus 4) selagi murid membuka halaman.
+  useEffect(() => {
+    if (!idPemesanan) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await pemesananService.cekStatusPemesanan(idPemesanan);
+        if (res?.success && res.status_pemesanan === 'dibatalkan_guru') {
+          clearInterval(interval);
+          setAlertConfig({
+            type: 'gagal',
+            title: 'Sesi Dibatalkan Guru',
+            message: 'Guru membatalkan sesi ini. Dana kamu dikembalikan (refund).',
+            isConfirmation: false,
+          });
+          setNavigateOnClose(true);
+          setAlertVisible(true);
+        }
+      } catch (e) {
+        // Diamkan error polling; biarkan interval berikutnya mencoba lagi.
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [idPemesanan]);
+
+  const prosesPembatalan = async () => {
+    setAlertVisible(false);
+    if (!idPemesanan) {
+      onBack && onBack();
+      return;
+    }
+    setIsCanceling(true);
+    const res = await batalkanSesi(idPemesanan, 'murid');
+    setIsCanceling(false);
+
+    if (res.success) {
+      const detail = res.data || {};
+      setAlertConfig({
+        type: 'success',
+        title: 'Sesi Dibatalkan',
+        message: detail.message || 'Sesi berhasil dibatalkan.',
+        isConfirmation: false,
+      });
+      setNavigateOnClose(true);
+    } else {
+      setAlertConfig({
+        type: 'gagal',
+        title: 'Gagal',
+        message: res.message || 'Gagal membatalkan sesi.',
+        isConfirmation: false,
+      });
+      setNavigateOnClose(false);
+    }
+    setAlertVisible(true);
+  };
 
   // ==========================================
   // PEMETAAN VARIABEL DATA DARI SESSIONDATA
@@ -55,26 +123,14 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
   };
 
   const handleBatalkanPesanan = () => {
-    Alert.alert(
-      'Batalkan Pesanan',
-      'Apakah Anda yakin ingin membatalkan jadwal pemesanan sesi kelas ini?',
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Ya, Batalkan',
-          style: 'destructive',
-          onPress: () => {
-            setIsCanceling(true);
-            setTimeout(() => {
-              setIsCanceling(false);
-              Alert.alert('Sukses', 'Pesanan sesi berhasil dibatalkan.', [
-                { text: 'OK', onPress: () => onBack && onBack() }
-              ]);
-            }, 1000);
-          }
-        }
-      ]
-    );
+    setAlertConfig({
+      type: 'gagal',
+      title: 'Batalkan sesi?',
+      message: 'Sesi yang sudah dibatalkan tidak dapat dikembalikan.',
+      isConfirmation: true,
+    });
+    setNavigateOnClose(false);
+    setAlertVisible(true);
   };
 
   return (
@@ -177,6 +233,19 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
           )}
         </TouchableOpacity>
       </View>
+
+      <CustomAlert
+        visible={alertVisible}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        isConfirmation={alertConfig.isConfirmation}
+        onConfirm={prosesPembatalan}
+        onClose={() => {
+          setAlertVisible(false);
+          if (!alertConfig.isConfirmation && navigateOnClose) onBack && onBack();
+        }}
+      />
 
     </SafeAreaView>
   );
