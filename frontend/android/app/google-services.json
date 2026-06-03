@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "775122124755",
+    "project_id": "humana-5ed56",
+    "storage_bucket": "humana-5ed56.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:775122124755:android:46cc426cb7daa6ad94f926",
+        "android_client_info": {
+          "package_name": "com.humana"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdjiUcEkAnIcIBZjUYCJMqTl44slvYfwY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

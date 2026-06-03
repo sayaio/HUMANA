@@ -7,7 +7,7 @@ import {
   InteractionManager,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import auth from '@react-native-firebase/auth';
 import SplashScreen from './pages/SplashScreen';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -108,6 +108,19 @@ const App = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [paymentSnapUrl, setPaymentSnapUrl] = useState(null);
   useEffect(() => {
+    const unsubscribeFirebase = auth().onAuthStateChanged(user => {
+      console.log('====================================');
+      if (user) {
+        console.log('🔥 [Firebase Auth] User terdeteksi login di Firebase!');
+        console.log('📧 Email:', user.email);
+        console.log('🆔 UID:', user.uid);
+      } else {
+        console.log(
+          '🔥 [Firebase Auth] Tidak ada user login di Firebase (Guest/Logout).',
+        );
+      }
+      console.log('====================================');
+    });
     if (DEV_SKIP_TO_PAYMENT) return;
     const checkLoginSession = async () => {
       try {
@@ -194,6 +207,7 @@ const App = () => {
     };
 
     checkLoginSession();
+    return () => unsubscribeFirebase();
   }, []);
 
   const handleLoginSuccess = async (userData, loggedInEmail) => {
