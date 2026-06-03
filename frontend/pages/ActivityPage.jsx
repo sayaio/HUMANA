@@ -82,13 +82,6 @@ const ActivityPage = ({
     try {
       const result = await getHistory(userRole, userId);
       console.log('[DEBUG] Balasan API History:', result);
-      if (result && result.data && result.data.length > 0) {
-        console.log('=== CEK DATA PERTAMA ===', result.data[0]);
-        console.log(
-          '=== APAKAH ADA WAKTU_MULAI? ===',
-          result.data[0].waktu_mulai,
-        );
-      }
 
       if (Array.isArray(result)) {
         setHistoryData(result);
@@ -104,12 +97,6 @@ const ActivityPage = ({
     }
   };
 
-  useEffect(() => {
-    if (activeTab === 'Riwayat Sesi') {
-      fetchHistoryData();
-    }
-  }, [activeTab, userId, userRole]);
-
   const renderCard = (item, isHistory, index) => (
     <View style={styles.card} key={item.id_pemesanan || index}>
       <View style={styles.cardIconBox}>
@@ -123,7 +110,6 @@ const ActivityPage = ({
           - {item.materi?.nama_materi || item.nama_materi || 'Materi'}
         </Text>
 
-        {/* LOGIKA NAMA GURU/MURID YANG FLEKSIBEL */}
         <Text style={styles.cardGuru}>
           👤{' '}
           {userRole === 'murid'
@@ -133,7 +119,6 @@ const ActivityPage = ({
               'Murid tidak terdaftar'}
         </Text>
 
-        {/* LOGIKA WAKTU YANG FLEKSIBEL */}
         <Text style={styles.cardTime}>
           {item.waktu_mulai
             ? new Date(
@@ -151,18 +136,28 @@ const ActivityPage = ({
 
       {isHistory ? (
         <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: '#284B7A' }]}
+          style={[styles.actionBtn, { backgroundColor: '#387C65' }]}
           onPress={() => onDetailClick(item)}
         >
           <Text style={styles.actionBtnText}>Beri Ulasan</Text>
         </TouchableOpacity>
       ) : (
-        <TouchableOpacity style={styles.actionBtn}>
-          <Text style={styles.actionBtnText}>Ingatkan</Text>
+        /* PERUBAHAN: Ganti "Ingatkan" menjadi "Lihat Detail" & navigasi ke SessionDetail */
+        <TouchableOpacity 
+          style={styles.actionBtn}
+          onPress={() => {
+            if (onDetailClick) {
+              onDetailClick(item); // Menyimpan data sesi ke state global App.jsx[cite: 18]
+              onNavigate('SessionDetail'); // Beralih ke halaman detail sesi[cite: 20]
+            }
+          }}
+        >
+          <Text style={styles.actionBtnText}>Lihat Detail</Text>
         </TouchableOpacity>
       )}
     </View>
   );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
@@ -231,7 +226,6 @@ const ActivityPage = ({
         )}
       </ScrollView>
 
-      {/* BOTTOM NAVBAR DENGAN FITUR KLIK SINKRON HOMEPAGE */}
       <BottomNavbar
         currentScreen="Activity"
         onNavigate={onNavigate}
@@ -250,17 +244,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
   },
   headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#000' },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
-  },
-  tabBtn: { flex: 1, paddingVertical: 15, alignItems: 'center' },
-  activeTabBtn: { borderBottomWidth: 2, borderBottomColor: '#284B7A' },
-  tabText: { fontSize: 14, color: '#A9A9A9', fontWeight: '600' },
-  activeTabText: { color: '#284B7A' },
-
   tabSliderContainer: {
     flexDirection: 'row',
     marginHorizontal: 24,
@@ -327,7 +310,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 14,
   },
-
 });
 
 export default ActivityPage;
