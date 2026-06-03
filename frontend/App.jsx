@@ -32,6 +32,7 @@ import DetailPembayaranPage from './pages/DetailPembayaranPage';
 import PembayaranPage from './pages/PembayaranPage';
 import PendapatanPage from './pages/PendapatanPage';
 import RiwayatPendapatanPage from './pages/RiwayatPendapatanPage';
+import TambahMateriGuruPage from './pages/TambahMateriGuruPage';
 
 const App = () => {
     const DEV_SKIP_TO_PAYMENT = false;
@@ -604,6 +605,15 @@ const App = () => {
                 onNavigate={handleGlobalNavigate}
             />
         );
+    }
+    
+    if (currentPage === 'TambahMateri') {
+      return (
+        <TambahMateriGuruPage
+          onBack={() => setCurrentPage('RealProfileGuru')}
+          idGuru={profileData.id}
+        />
+      );
     }
 
     return (
