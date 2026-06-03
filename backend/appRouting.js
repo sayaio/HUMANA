@@ -74,6 +74,7 @@ const { getDetailPemesanan } = require('./src/controllers/detailPemesananControl
 router.get('/detailpemesanan/:id', getDetailPemesanan);
 
 const materiGuruController = require('./src/controllers/materiGuruController');
+router.get('/semua-materi', pemesananController.getMateriDropdown);
 router.get('/materi-guru/:id_guru', materiGuruController.getMateriGuru);
 router.post('/materi-guru', materiGuruController.simpanMateriGuru);
 router.delete('/materi-guru/:id_guru/:id_materi', materiGuruController.hapusMateriGuru);

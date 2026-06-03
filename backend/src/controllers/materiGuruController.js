@@ -27,16 +27,20 @@ const getMateriGuru = async (req, res) => {
 const simpanMateriGuru = async (req, res) => {
   try {
     const { id_guru, id_materi_list } = req.body;
+    
+    // Validasi input
     if (!id_guru || !Array.isArray(id_materi_list) || id_materi_list.length === 0) {
       return res.status(400).json({ success: false, message: 'id_guru dan id_materi_list wajib diisi.' });
     }
+    const queries = id_materi_list.map(id_materi => {
+      return pool.query(
+        `INSERT IGNORE INTO MateriGuru (id_guru, id_materi) VALUES (?, ?)`,
+        [id_guru, id_materi]
+      );
+    });
 
-    // Insert semua sekaligus, skip kalau sudah ada
-    const values = id_materi_list.map(id_materi => [id_guru, id_materi]);
-    await pool.query(
-      `INSERT IGNORE INTO MateriGuru (id_guru, id_materi) VALUES ?`,
-      [values]
-    );
+    // Tunggu sampai semua data selesai dimasukkan ke database
+    await Promise.all(queries);
 
     res.status(201).json({ success: true, message: 'Materi berhasil disimpan.' });
   } catch (error) {
