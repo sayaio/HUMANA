@@ -580,7 +580,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
             {/* BOTTOM NAVIGATION BAR */}
             <BottomNavbar
-                currentScreen="Activity"
+                currentScreen="ProfileGuru"
                 onNavigate={onNavigate}
                 userRole="guru"
             />

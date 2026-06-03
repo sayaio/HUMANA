@@ -439,7 +439,7 @@ const ActivityGuruPage = ({ guruData, onNavigate }) => {
 
       {/* Bottom Navigation Tab Bar */}
       <BottomNavbar
-        currentScreen="Activity"
+        currentScreen="ActivityGuru"
         onNavigate={onNavigate}
         userRole="guru"
       />
