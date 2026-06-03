@@ -399,15 +399,14 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                         <Briefcase size={18} color="#284B7A" style={{ marginRight: 6 }} />
                         <Text style={styles.sectionTitleMain}>Portofolio Pengajaran</Text>
                     </View>
-                    {!isAdding && (
-                        <TouchableOpacity
-                            style={styles.addPortoBtn}
-                            onPress={() => setIsAdding(true)}
-                        >
-                            <Plus size={14} color="#FFF" />
-                            <Text style={styles.addPortoBtnText}>Tambah</Text>
-                        </TouchableOpacity>
-                    )}
+                    {/* ✅ DIUBAH: Klik Tambah langsung navigasi ke PortofolioPage[cite: 16] */}
+                    <TouchableOpacity
+                        style={styles.addPortoBtn}
+                        onPress={() => onNavigate('Portofolio')}
+                    >
+                        <Plus size={14} color="#FFF" />
+                        <Text style={styles.addPortoBtnText}>Tambah</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Form Input Tambah Portofolio */}
