@@ -11,7 +11,7 @@ class PemesananSesi {
     #waktuSelesai;
     #lokasiSesi;
     constructor(murid, guru, materi, waktuMulai, waktuSelesai, lokasiSesi) {
-        this.id_pemesanan = null;
+        this.id_pemesanan = null; // autoincrement db
         this.murid = murid;
         this.guru = guru;
         this.sesi = null;
@@ -84,6 +84,7 @@ class PemesananSesi {
             status_pemesanan: this.statusPemesanan,
             waktu_string: jamMulaiText && jamSelesaiText ? `${jamMulaiText} – ${jamSelesaiText}` : "Waktu tidak valid",
             // PERBAIKAN: Gunakan variabel 'jarak' yang sudah aman
+            tanggal_mentah: this.#waktuMulai,
             jarak_km: parseFloat(jarak.toFixed(2)),
             lokasi_sesi: this.#lokasiSesi,
             biaya_sesi: rincianBiaya.biayaPembelajaran,
