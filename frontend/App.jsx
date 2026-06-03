@@ -26,16 +26,15 @@ import ChatRoomPage from './pages/ChatRoomPage';
 import PageGuru from './pages/PageGuru';
 import ProfileGuruPage from './pages/ProfileGuruPage';
 import ActivityGuruPage from './pages/ActivityGuruPage';
+import DetailPermintaanGuruPage from './pages/DetailPermintaanGuruPage';
+import TambahMateriGuruPage from './pages/TambahMateriGuruPage';
 import PesanSesiPage from './pages/PesanSesiPage';
 import MencariPengajarPage from './pages/MencariPengajarPage';
 import DetailPembayaranPage from './pages/DetailPembayaranPage';
 import PembayaranPage from './pages/PembayaranPage';
 import PendapatanPage from './pages/PendapatanPage';
 import RiwayatPendapatanPage from './pages/RiwayatPendapatanPage';
-import TambahMateriGuruPage from './pages/TambahMateriGuruPage';
-import DetailPermintaanGuruPage from './pages/DetailPermintaanGuruPage';
-// ✅ TAMBAH: import service untuk API call terima di routing DetailPermintaanGuru
-import { terimaPermintaanSesiAPI } from './services/matchingService';
+import PortofolioPage from './pages/PortofolioPage';
 
 const App = () => {
     const DEV_SKIP_TO_PAYMENT = false;
@@ -108,7 +107,7 @@ const App = () => {
     const [selectedPermintaanGuru, setSelectedPermintaanGuru] = useState(null);
     const [selectedTipePermintaan, setSelectedTipePermintaan] = useState('Permintaan');
     const [selectedRiwayatData, setSelectedRiwayatData] = useState(null);
-    
+
     const handleRefreshProfileData = useCallback(async newData => {
         console.log(
             '🔄 [App.jsx] Memperbarui profileData & AsyncStorage dari child:',
@@ -290,7 +289,10 @@ const App = () => {
         setProfileData(newProfile);
 
         try {
-            const sessionData = { userData, email: loggedInEmail };
+            const sessionData = {
+                userData: userData,
+                email: loggedInEmail,
+            };
             await AsyncStorage.setItem('user_session', JSON.stringify(sessionData));
             console.log('💾 [App.jsx] Berhasil memastikan sesi tersimpan!');
         } catch (error) {
@@ -320,7 +322,10 @@ const App = () => {
                 domicile: '-',
                 education: '-',
                 major: '-',
+                is_active: false,
             });
+            setNamaLengkap('');
+            setEmail('');
             console.log('🚪 [App.jsx] Sesi berhasil dihapus. Keluar...');
             setCurrentPage('Login');
         } catch (error) {
@@ -519,7 +524,7 @@ const App = () => {
                     if (DEV_SKIP_TO_PAYMENT) {
                         setCurrentPage('Login');
                     } else {
-                        setCurrentPage('Home');
+                        setCurrentPage('PesanSesi');
                     }
                 }}
                 onPaymentSuccess={snapUrl => {
@@ -582,10 +587,11 @@ const App = () => {
     }
 
     if (currentPage === 'SessionDetail') {
+        const isGuru = profileData.role?.toLowerCase() === 'guru';
         return (
             <SessionDetailPage
-                onBack={() => setCurrentPage('RealActivityGuru')}
-                sessionData={selectedRiwayatData}
+                onBack={() => setCurrentPage(isGuru ? 'RealActivityGuru' : 'Activity')}
+                sessionData={isGuru ? selectedRiwayatData : selectedSession}
                 userId={profileData.id}
             />
         );
@@ -705,6 +711,14 @@ const App = () => {
     if (currentPage === 'TambahMateri') {
         return (
             <TambahMateriGuruPage
+            onBack={() => setCurrentPage('RealProfileGuru')}
+                idGuru={profileData.id}
+            />
+        );
+    }
+    if (currentPage === 'Portofolio') {
+        return (
+            <PortofolioPage
                 onBack={() => setCurrentPage('RealProfileGuru')}
                 idGuru={profileData.id}
             />
