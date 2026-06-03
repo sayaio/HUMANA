@@ -429,14 +429,9 @@ const App = () => {
     return (
       <DetailPermintaanGuruPage
         permintaanData={selectedPermintaanGuru}
+         guruData={profileData}
         idGuru={profileData.id}
         onBack={() => setCurrentPage('RealActivityGuru')}
-        onTolak={() => {
-          setCurrentPage('RealActivityGuru');
-        }}
-        onTerima={async () => {
-          setCurrentPage('RealActivityGuru');
-        }}
       />
     );
   }
