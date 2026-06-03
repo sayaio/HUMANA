@@ -17,6 +17,7 @@ import DetailMateriPage from './pages/DetailMateriPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ActivityPage from './pages/ActivityPage';
 import SessionDetailPage from './pages/SessionDetailPage';
+import DetailSesiAktifPage from './pages/DetailSesiAktifPage'; // Tambahan Baru
 import ProfilePage from './pages/ProfilePage';
 import EditBasicProfilePage from './pages/EditBasicProfilePage';
 import EditAcademicProfilePage from './pages/EditAcademicProfilePage';
@@ -522,10 +523,24 @@ const App = () => {
         onNavigate={page => setCurrentPage(page)}
         onDetailClick={item => {
           setSelectedSession(item);
-          setCurrentPage('SessionDetail');
+          // Mengarahkan ke DetailSesiAktifPage jika tab yang aktif adalah Jadwal Aktif
+          if (activityTab === 'aktif') {
+            setCurrentPage('DetailSesiAktif');
+          } else {
+            setCurrentPage('SessionDetail');
+          }
         }}
         userId={profileData.id}
         userRole={(profileData.role || 'murid').toLowerCase()}
+      />
+    );
+  }
+
+  if (currentPage === 'DetailSesiAktif') {
+    return (
+      <DetailSesiAktifPage
+        onBack={() => setCurrentPage('Activity')}
+        sessionData={selectedSession}
       />
     );
   }

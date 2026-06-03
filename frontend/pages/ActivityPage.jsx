@@ -142,13 +142,13 @@ const ActivityPage = ({
           <Text style={styles.actionBtnText}>Beri Ulasan</Text>
         </TouchableOpacity>
       ) : (
-        /* PERUBAHAN: Ganti "Ingatkan" menjadi "Lihat Detail" & navigasi ke SessionDetail */
+        /* PERUBAHAN: Navigasi tombol Lihat Detail khusus ke halaman DetailSesiAktif */
         <TouchableOpacity 
           style={styles.actionBtn}
           onPress={() => {
             if (onDetailClick) {
-              onDetailClick(item); // Menyimpan data sesi ke state global App.jsx[cite: 18]
-              onNavigate('SessionDetail'); // Beralih ke halaman detail sesi[cite: 20]
+              onDetailClick(item); // Menyimpan data sesi yang dipilih[cite: 8]
+              onNavigate('DetailSesiAktif'); // Beralih ke halaman DetailSesiAktifPage[cite: 8]
             }
           }}
         >
