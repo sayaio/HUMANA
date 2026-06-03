@@ -27,7 +27,7 @@ import PageGuru from './pages/PageGuru';
 import ProfileGuruPage from './pages/ProfileGuruPage';
 import ActivityGuruPage from './pages/ActivityGuruPage';
 import DetailPermintaanGuruPage from './pages/DetailPermintaanGuruPage'; 
-import TambahMateriGuruPage from './pages/TambahMateriGuruPage'; // ✅ Tambah Import
+import TambahMateriGuruPage from './pages/TambahMateriGuruPage'; 
 import PesanSesiPage from './pages/PesanSesiPage';
 import MencariPengajarPage from './pages/MencariPengajarPage';
 import DetailPembayaranPage from './pages/DetailPembayaranPage';
@@ -418,7 +418,6 @@ const App = () => {
         );
     }
 
-    // ✅ Tambah Kondisi Routing Tambah Materi Guru
     if (currentPage === 'TambahMateri') {
       return (
         <TambahMateriGuruPage

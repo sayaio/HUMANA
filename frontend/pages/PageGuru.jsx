@@ -40,7 +40,7 @@ const SUBJECT_ICONS = {
   Informatika: require('../assets/informatika.png'),
   Biologi: require('../assets/biologi.png'),
   Kimia: require('../assets/kimia.png'),
-  Fisika: require('../assets/fisika.png'),
+  Fisika: require('../assets/fisika.png'), // ✅ FIXED: Sudah diperbaiki dari fiska.png menjadi fisika.png
   Sejarah: require('../assets/sejarah.png'),
   Sosiologi: require('../assets/sosiologi.png'),
   'Bahasa Inggris': require('../assets/inggris.png'),
@@ -93,7 +93,6 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
     loadPermintaan();
   }, [guruData]);
 
-  // ✅ DIUBAH: tambah try/catch/finally + requestAnimationFrame
   const handleTerimaSesi = async item => {
     Alert.alert(
       'Konfirmasi Terima',
@@ -135,7 +134,6 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
     );
   };
 
-  // ✅ DIUBAH: pesan lebih ringkas, konsisten dengan halaman lain
   const handleTolakSesi = item => {
     Alert.alert(
       'Tolak Permintaan',
