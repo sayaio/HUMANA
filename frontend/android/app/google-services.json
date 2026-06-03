@@ -12,7 +12,20 @@
           "package_name": "com.humana"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "775122124755-lcnevkk0nggtuk6177p1cn553tap36d5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.humana",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "775122124755-8hfq1podstfpjq4bra4f45ebtcd0jdol.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCdjiUcEkAnIcIBZjUYCJMqTl44slvYfwY"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "775122124755-8hfq1podstfpjq4bra4f45ebtcd0jdol.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

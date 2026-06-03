@@ -15,9 +15,15 @@ import {
 } from 'react-native';
 import { Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loginUser } from '../services/authService';
+import {
+  loginUser,
+  checkEmail,
+  loginUserGoogle,
+} from '../services/authService';
 import CustomAlert from '../components/CustomAlert';
 import { Eye, EyeOff } from 'lucide-react-native';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import auth from '@react-native-firebase/auth';
 
 const LoginPage = ({
   onLoginSuccess,
@@ -30,7 +36,7 @@ const LoginPage = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   // UBAH: Set default menjadi true agar otomatis menyimpan sesi login
-  const [rememberMe] = useState(true); 
+  const [rememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
   const [alertConfig, setAlertConfig] = useState({
@@ -40,6 +46,13 @@ const LoginPage = ({
     message: '',
     onCloseAction: null,
   });
+
+  React.useEffect(() => {
+    GoogleSignin.configure({
+      webClientId:
+        '775122124755-8hfq1podstfpjq4bra4f45ebtcd0jdol.apps.googleusercontent.com',
+    });
+  }, []);
 
   const LOGO_SOURCE = require('../assets/logo_humana.png');
 
@@ -74,17 +87,22 @@ const LoginPage = ({
       if (result.success === true || result.token || result.status === 200) {
         const userData =
           result.profile || result.data || result.user || result || {};
-        
+
         // Fungsi ini akan selalu berjalan karena rememberMe bernilai true
         if (rememberMe) {
           const sessionData = {
             userData: userData,
             email: email,
           };
-          await AsyncStorage.setItem('user_session', JSON.stringify(sessionData));
-          console.log('Sesi login berhasil disimpan ke user_session secara otomatis!');
+          await AsyncStorage.setItem(
+            'user_session',
+            JSON.stringify(sessionData),
+          );
+          console.log(
+            'Sesi login berhasil disimpan ke user_session secara otomatis!',
+          );
         }
-        
+
         onLoginSuccess(userData, email);
       } else {
         showAlert(
@@ -99,6 +117,43 @@ const LoginPage = ({
         'Terjadi Kesalahan',
         'Coba cek koneksi internetmu atau coba metode lain.',
       );
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const googleCredential = auth.GoogleAuthProvider.credential(
+        userInfo.data.idToken,
+      );
+      const firebaseResult = await auth().signInWithCredential(
+        googleCredential,
+      );
+
+      const email = firebaseResult.user.email;
+
+      const result = await loginUserGoogle(email);
+
+      if (result.success) {
+        const userData = result.profile || {};
+        await AsyncStorage.setItem(
+          'user_session',
+          JSON.stringify({ userData, email }),
+        );
+        onLoginSuccess(userData, email);
+      } else {
+        await auth().signOut();
+        await GoogleSignin.signOut();
+        showAlert(
+          'error',
+          'Akun Tidak Ditemukan',
+          result.message ||
+            'Email ini belum terdaftar. Silakan daftar terlebih dahulu.',
+        );
+      }
+    } catch (error) {
+      showAlert('error', 'Google Login Gagal', error.message || 'Coba lagi.');
     }
   };
 
@@ -148,7 +203,7 @@ const LoginPage = ({
             <Text
               style={[
                 styles.titleText,
-                { fontSize: width * 0.065, lineHeight: width * 0.070 },
+                { fontSize: width * 0.065, lineHeight: width * 0.07 },
               ]}
             >
               Humanity in action,{'\n'}Learning in motion.
@@ -206,7 +261,7 @@ const LoginPage = ({
 
             {/* Remember Me diubah menjadi row Lupa Password saja */}
             <View style={styles.rememberForgotRow}>
-              <View /> 
+              <View />
               <TouchableOpacity onPress={onForgotPassword}>
                 <Text style={styles.forgotPasswordText}>Lupa password ?</Text>
               </TouchableOpacity>
@@ -225,7 +280,10 @@ const LoginPage = ({
             </View>
 
             {/* Google Button */}
-            <TouchableOpacity style={styles.googleButton}>
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleLogin}
+            >
               <Text style={styles.googleButtonText}>Masuk dengan Google</Text>
               <Image
                 source={GOOGLE_ICON}
@@ -319,11 +377,13 @@ const styles = StyleSheet.create({
   },
   switchModeText: {
     fontFamily: 'SF-Pro-Display-Regular',
-    fontSize: 13, color: '#888'
+    fontSize: 13,
+    color: '#888',
   },
   switchModeLink: {
     fontFamily: 'SF-Pro-Display-Bold',
-    fontSize: 13, color: '#4285F4',
+    fontSize: 13,
+    color: '#4285F4',
   },
   inputWrapper: {
     borderWidth: 1,
@@ -348,8 +408,9 @@ const styles = StyleSheet.create({
   },
   inputField: {
     fontFamily: 'SF-Pro-Display-Regular',
-    fontSize: 14, color: '#333',
-    height: '100%'
+    fontSize: 14,
+    color: '#333',
+    height: '100%',
   },
   passwordContainer: {
     fontFamily: 'SF-Pro-Display-Regular',
@@ -357,7 +418,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: '100%',
   },
-  passwordField: { fontFamily: 'SF-Pro-Display-Regular',flex: 1, fontSize: 14, color: '#333', height: '100%' },
+  passwordField: {
+    fontFamily: 'SF-Pro-Display-Regular',
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    height: '100%',
+  },
   rememberForgotRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -384,7 +451,11 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   checkboxText: { fontSize: 13, color: '#666' },
-  forgotPasswordText: { fontSize: 13, color: '#4285F4', fontFamily: 'SF-Pro-Display-Bold'},
+  forgotPasswordText: {
+    fontSize: 13,
+    color: '#4285F4',
+    fontFamily: 'SF-Pro-Display-Bold',
+  },
   submitButton: {
     backgroundColor: '#3a7d6b',
     borderRadius: 25,
@@ -393,13 +464,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: height * 0.02,
   },
-  submitButtonText: { color: '#FFF', fontSize: 16, fontFamily: 'SF-Pro-Display-Bold' },
+  submitButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontFamily: 'SF-Pro-Display-Bold',
+  },
   orDividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 15,
   },
-  orLine: { fontFamily: 'SF-Pro-Display-Regular', flex: 1, height: 1, backgroundColor: '#E0E0E0' },
+  orLine: {
+    fontFamily: 'SF-Pro-Display-Regular',
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E0E0E0',
+  },
   orText: { marginHorizontal: 12, fontSize: 12, color: '#A9A9A9' },
   googleButton: {
     flexDirection: 'row',

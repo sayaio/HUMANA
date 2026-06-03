@@ -105,5 +105,99 @@ const login = async (req, res) => {
         if (conn) conn.release();
     }
 };
+const checkEmail = async (req, res) => {
+  const { email } = req.query;
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const query = `
+      SELECT email_guru AS email FROM Guru WHERE email_guru = ?
+      UNION
+      SELECT email FROM Murid WHERE email = ?
+    `;
+    const rows = await conn.query(query, [email, email]);
+    if (rows.length > 0) {
+      res.json({ exists: true });
+    } else {
+      res.json({ exists: false });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+};
+const loginGoogle = async (req, res) => {
+  const { email } = req.body;
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const query = `
+      SELECT
+        id_guru AS id, 
+        nama_guru AS nama_lengkap, 
+        email_guru AS email, 
+        password, 
+        'Guru' AS role,
+        username,
+        no_telepon,
+        jenis_kelamin,
+        alamat,
+        is_active,
+        NULL AS kelas,
+        NULL AS jurusan
+      FROM Guru WHERE email_guru = ?
+      UNION ALL
+      SELECT 
+        id_murid AS id, 
+        nama_murid AS nama_lengkap, 
+        email, 
+        password, 
+        'Murid' AS role,
+        username,       
+        no_telepon,
+        jenis_kelamin,
+        alamat,
+        NULL AS is_active,
+        kelas,
+        jurusan
+      FROM Murid WHERE email = ?
+    `;
+    const rows = await conn.query(query, [email, email]);
 
-module.exports = { login };
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Akun tidak ditemukan. Silakan daftar terlebih dahulu.',
+      });
+    }
+
+    const dataDB = rows[0];
+    let userAktif;
+
+    if (dataDB.role === 'Guru') {
+      const statusToggleBoolean = dataDB.is_active == 1;
+      userAktif = new Guru(
+        dataDB.username, dataDB.email, dataDB.password,
+        dataDB.nama_lengkap, dataDB.id, statusToggleBoolean,
+        dataDB.no_telepon, dataDB.jenis_kelamin, dataDB.alamat
+      );
+    } else {
+      userAktif = new Murid(
+        dataDB.username, dataDB.email, dataDB.password,
+        dataDB.nama_lengkap, dataDB.id, dataDB.kelas,
+        dataDB.no_telepon, dataDB.jenis_kelamin, dataDB.alamat, dataDB.jurusan
+      );
+    }
+
+    res.json({ success: true, profile: userAktif.getProfile() });
+
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
+module.exports = { login, loginGoogle, checkEmail };
+
