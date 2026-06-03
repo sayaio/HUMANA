@@ -100,7 +100,11 @@ const ActivityPage = ({
   const renderCard = (item, isHistory, index) => (
     <View style={styles.card} key={item.id_pemesanan || index}>
       <View style={styles.cardIconBox}>
-        <Text style={{ color: '#FFF', fontSize: 24 }}>📖</Text>
+        {/* PERUBAHAN: Emoji diganti dengan Image dari assets[cite: 11] */}
+        <Image 
+          source={require('../assets/buku.png')} 
+          style={{ width: 40, height: 40, resizeMode: 'contain' }} 
+        />
       </View>
       <View style={styles.cardInfo}>
         <Text style={styles.cardTitle}>
