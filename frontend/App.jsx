@@ -17,7 +17,7 @@ import DetailMateriPage from './pages/DetailMateriPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ActivityPage from './pages/ActivityPage';
 import SessionDetailPage from './pages/SessionDetailPage';
-import DetailSesiAktifPage from './pages/DetailSesiAktifPage'; // Tambahan Baru
+import DetailSesiAktifPage from './pages/DetailSesiAktifPage'; 
 import ProfilePage from './pages/ProfilePage';
 import EditBasicProfilePage from './pages/EditBasicProfilePage';
 import EditAcademicProfilePage from './pages/EditAcademicProfilePage';
@@ -26,13 +26,15 @@ import ChatRoomPage from './pages/ChatRoomPage';
 import PageGuru from './pages/PageGuru';
 import ProfileGuruPage from './pages/ProfileGuruPage';
 import ActivityGuruPage from './pages/ActivityGuruPage';
+import DetailPermintaanGuruPage from './pages/DetailPermintaanGuruPage'; 
+import TambahMateriGuruPage from './pages/TambahMateriGuruPage'; // ✅ Tambah Import
 import PesanSesiPage from './pages/PesanSesiPage';
 import MencariPengajarPage from './pages/MencariPengajarPage';
 import DetailPembayaranPage from './pages/DetailPembayaranPage';
 import PembayaranPage from './pages/PembayaranPage';
 import PendapatanPage from './pages/PendapatanPage';
 import RiwayatPendapatanPage from './pages/RiwayatPendapatanPage';
-import PortofolioPage from './pages/PortofolioPage'; // ✅ Tambah Import PortofolioPage
+import PortofolioPage from './pages/PortofolioPage'; 
 
 const App = () => {
     const DEV_SKIP_TO_PAYMENT = false;
@@ -47,7 +49,7 @@ const App = () => {
     const [bookingSessionData, setBookingSessionData] = useState(
         DEV_SKIP_TO_PAYMENT
             ? {
-                id_pemesanan: 13, // isi dengan id_pemesanan yang ada di DB kamu
+                id_pemesanan: 13, 
                 id_guru: 1,
                 id_murid: 1,
                 nama_guru: 'Dr. Ahmad Fauzi',
@@ -67,11 +69,10 @@ const App = () => {
         DEV_SKIP_TO_PAYMENT ? 'tester@humana.com' : '',
     );
 
-    // 🛠️ PERBAIKAN DI SINI: Berikan data dummy jika sedang dalam mode dev bypass
     const [profileData, setProfileData] = useState(
         DEV_SKIP_TO_PAYMENT
             ? {
-                id: 1, // Sesuaikan dengan id_murid yang valid di DB kamu jika diperlukan
+                id: 1, 
                 role: 'murid',
                 name: 'Siswa Tester',
                 email: 'tester@humana.com',
@@ -98,18 +99,17 @@ const App = () => {
             },
     );
 
-    // ... sisa kode ke bawah tetap sama ...
     const [selectedSubject, setSelectedSubject] = useState(null);
     const [selectedChapter, setSelectedChapter] = useState(null);
     const [activityTab, setActivityTab] = useState('aktif');
     const [selectedChatUser, setSelectedChatUser] = useState(null);
     const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
     const [selectedSession, setSelectedSession] = useState(null);
+    const [selectedPermintaanGuru, setSelectedPermintaanGuru] = useState(null);
 
-    // PERBAIKAN DI SINI: Mendaftarkan fungsi pengubah state agar navigasi bisa merubah data
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
     const [paymentSnapUrl, setPaymentSnapUrl] = useState(null);
-    // ✅ Pindahkan logika update profil ke sini dan bungkus dengan useCallback
+
     const handleRefreshProfileData = useCallback(async (newData) => {
         console.log('🔄 [App.jsx] Memperbarui profileData & AsyncStorage dari child:', newData);
         setProfileData(newData);
@@ -132,7 +132,8 @@ const App = () => {
         } catch (err) {
             console.error('❌ Gagal menyelaraskan data baru ke AsyncStorage:', err);
         }
-    }, []); // Kosongkan dependency agar fungsi ini tidak berubah-ubah referensinya
+    }, []); 
+
     useEffect(() => {
         if (DEV_SKIP_TO_PAYMENT) return;
         const checkLoginSession = async () => {
@@ -298,263 +299,13 @@ const App = () => {
                 domicile: '-',
                 education: '-',
                 major: '-',
+                is_active: false,
             });
             setNamaLengkap('');
             setEmail('');
             console.log('🚪 [App.jsx] Sesi berhasil dihapus. Keluar...');
-
-            setNamaLengkap('');
-            setEmail('');
-            setProfileData({
-                id: null,
-                role: '-',
-                name: '-',
-                email: '-',
-                username: '-',
-                phone: '-',
-                gender: '-',
-                domicile: '-',
-                education: '-',
-                major: '-',
-            });
-
-<<<<<<< HEAD
-=======
-    const newProfile = {
-      id: userData?.id,
-      role: userData?.role || '-',
-      name: namaDariDB || '-',
-      email: loggedInEmail || '-',
-      username: usernameDariDB || '-',
-      phone: userData?.no_telepon || userData?.phone || '-',
-      no_telepon: userData?.no_telepon || userData?.phone || '-',
-      gender: userData?.jenis_kelamin || userData?.gender || '-',
-      jenis_kelamin: userData?.jenis_kelamin || userData?.gender || '-',
-      domicile:
-        userData?.domisili || userData?.domicile || userData?.alamat || '-',
-      domisili:
-        userData?.domisili || userData?.domicile || userData?.alamat || '-',
-      alamat:
-        userData?.domisili || userData?.domicile || userData?.alamat || '-',
-      education: userData?.jenjang_pendidikan || userData?.education || '-',
-      jenjang_pendidikan:
-        userData?.jenjang_pendidikan || userData?.education || '-',
-      major:
-        userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
-      kelas_jurusan:
-        userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
-      is_active: userData?.is_active ?? 0,
-    };
-
-    setNamaLengkap(namaDariDB);
-    setEmail(loggedInEmail);
-    setProfileData(newProfile);
-
-    try {
-      const sessionData = { userData, email: loggedInEmail };
-      await AsyncStorage.setItem('user_session', JSON.stringify(sessionData));
-      console.log('💾 [App.jsx] Berhasil memastikan sesi tersimpan!');
-    } catch (error) {
-      console.error('❌ Gagal mengamankan sesi di App.jsx:', error);
-    }
-
-    if (roleDariDB === 'guru') {
-      setCurrentPage('PageGuru');
-    } else {
-      setCurrentPage('Home');
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('user_session');
-      setNamaLengkap('');
-      setEmail('');
-      setProfileData({
-        id: null,
-        role: '-',
-        name: '-',
-        email: '-',
-        username: '-',
-        phone: '-',
-        gender: '-',
-        domicile: '-',
-        education: '-',
-        major: '-',
-      });
-      console.log('🚪 [App.jsx] Sesi berhasil dihapus. Keluar...');
-      setCurrentPage('Login');
-    } catch (error) {
-      InteractionManager.runAfterInteractions(() => {
-        Alert.alert('Error', 'Gagal keluar dari akun.');
-      });
-    }
-  };
-
-  const handleGlobalNavigate = (page, tab) => {
-    console.log(`🧭 [App.jsx] Global Navigate to: ${page}, tab: ${tab}`);
-    if (tab) setActivityTab(tab);
-
-    const currentRole = (profileData.role || 'murid').toLowerCase();
-
-    if (page === 'Home' && currentRole === 'guru') {
-      setCurrentPage('PageGuru');
-      return;
-    } else if (page === 'EditBasicProfilePage' && currentRole === 'guru') {
-      setCurrentPage('EditBasicProfile');
-      return;
-    }
-
-    if (page === 'HomeGuru') {
-      setCurrentPage('PageGuru');
-    } else if (page === 'ActivityGuru') {
-      setCurrentPage('RealActivityGuru');
-    } else if (page === 'ChatGuru') {
-      setCurrentPage('Chat');
-    } else if (page === 'ProfileGuru') {
-      setCurrentPage('RealProfileGuru');
-    } else if (page === 'Pendapatan') {
-      setCurrentPage('Pendapatan');
-    } else if (page === 'RiwayatPendapatan') {
-      setCurrentPage('RiwayatPendapatan');
-    } else {
-      setCurrentPage(page);
-    }
-  };
-
-  if (isAppLoading) {
-    return <SplashScreen />;
-  }
-
-  if (currentPage === 'Login') {
-    return (
-      <LoginPage
-        onLoginSuccess={handleLoginSuccess}
-        onNavigateToRegister={() => setCurrentPage('Register')}
-        onForgotPassword={() => setCurrentPage('ResetPassword')}
-      />
-    );
-  }
-
-  if (currentPage === 'Register') {
-    return (
-      <RegisterPage
-        onRegisterSuccess={() => setCurrentPage('Login')}
-        onNavigateToLogin={() => setCurrentPage('Login')}
-      />
-    );
-  }
-
-  if (currentPage === 'ResetPassword') {
-    return <ResetPasswordPage onBack={() => setCurrentPage('Login')} />;
-  }
-
-  if (currentPage === 'PageGuru') {
-    return (
-      <PageGuru
-        guruData={profileData}
-        onNavigate={handleGlobalNavigate}
-        onSelectSubject={subjectData => {
-          setSelectedSubject(subjectData);
-          setCurrentPage('Materi');
-        }}
-      />
-    );
-  }
-
-  if (currentPage === 'RealProfileGuru') {
-    return (
-      <ProfileGuruPage
-        guruData={profileData}
-        onNavigate={handleGlobalNavigate}
-        onLogout={handleLogout}
-        onRefreshData={handleRefreshProfileData}
-      />
-    );
-  }
-
-  if (currentPage === 'RealActivityGuru') {
-    return (
-      <ActivityGuruPage
-        guruData={profileData}
-        onNavigate={handleGlobalNavigate}
-        // ✅ TAMBAH: kirim item ke state lalu pindah halaman
-        onDetailPermintaan={item => {
-          setSelectedPermintaanGuru(item);
-          setCurrentPage('DetailPermintaanGuru');
-        }}
-      />
-    );
-  }
-
-  // ✅ TAMBAH: routing halaman detail permintaan guru
-  if (currentPage === 'DetailPermintaanGuru') {
-    return (
-      <DetailPermintaanGuruPage
-        permintaanData={selectedPermintaanGuru}
-         guruData={profileData}
-        idGuru={profileData.id}
-        onBack={() => setCurrentPage('RealActivityGuru')}
-      />
-    );
-  }
-
-  if (currentPage === 'Home') {
-    return (
-      <HomePage
-        namaLengkap={namaLengkap}
-        email={email}
-        onLogout={handleLogout}
-        onSelectSubject={subjectData => {
-          setSelectedSubject(subjectData);
-          setCurrentPage('Materi');
-        }}
-        onNavigate={(page, tab) => {
-          if (tab) setActivityTab(tab);
-          setCurrentPage(page);
-        }}
-        showSuccessAlert={showLoginSuccessAlert}
-        onAlertClose={() => setShowLoginSuccessAlert(false)}
-        userId={profileData.id}
-        userRole={(profileData.role || 'murid').toLowerCase()}
-      />
-    );
-  }
-
-  if (currentPage === 'PesanSesi') {
-    return (
-      <PesanSesiPage
-        onBack={() => setCurrentPage('Home')}
-        userId={profileData.id}
-        onConfirmOrder={data => {
-          setBookingSessionData(data);
-          setCurrentPage('MencariPengajar');
-        }}
-      />
-    );
-  }
-
-  if (currentPage === 'MencariPengajar') {
-    return (
-      <MencariPengajarPage
-        sessionData={bookingSessionData}
-        onCancel={() => setCurrentPage('PesanSesi')}
-        onMatchSuccess={() => setCurrentPage('DetailPembayaran')}
-        onMatchFailed={() => setCurrentPage('PesanSesi')}
-      />
-    );
-  }
-
-  if (currentPage === 'DetailPembayaran') {
-    return (
-      <DetailPembayaranPage
-        sessionData={bookingSessionData}
-        onBack={() => {
-          if (DEV_SKIP_TO_PAYMENT) {
->>>>>>> eef9d4045b8cd36d3305e65bfe2ba5d7aed01db8
             setCurrentPage('Login');
         } catch (error) {
-            // ✅ Ganti setTimeout → InteractionManager
             InteractionManager.runAfterInteractions(() => {
                 Alert.alert('Error', 'Gagal keluar dari akun.');
             });
@@ -638,7 +389,7 @@ const App = () => {
                 guruData={profileData}
                 onNavigate={handleGlobalNavigate}
                 onLogout={handleLogout}
-                onRefreshData={handleRefreshProfileData} // ✅ Panggil fungsi yang sudah diamankan
+                onRefreshData={handleRefreshProfileData}
             />
         );
     }
@@ -648,8 +399,33 @@ const App = () => {
             <ActivityGuruPage
                 guruData={profileData}
                 onNavigate={handleGlobalNavigate}
+                onDetailPermintaan={item => {
+                    setSelectedPermintaanGuru(item);
+                    setCurrentPage('DetailPermintaanGuru');
+                }}
             />
         );
+    }
+
+    if (currentPage === 'DetailPermintaanGuru') {
+        return (
+            <DetailPermintaanGuruPage
+                permintaanData={selectedPermintaanGuru}
+                guruData={profileData}
+                idGuru={profileData.id}
+                onBack={() => setCurrentPage('RealActivityGuru')}
+            />
+        );
+    }
+
+    // ✅ Tambah Kondisi Routing Tambah Materi Guru
+    if (currentPage === 'TambahMateri') {
+      return (
+        <TambahMateriGuruPage
+          onBack={() => setCurrentPage('RealProfileGuru')}
+          idGuru={profileData.id}
+        />
+      );
     }
 
     if (currentPage === 'Home') {
@@ -692,12 +468,8 @@ const App = () => {
             <MencariPengajarPage
                 sessionData={bookingSessionData}
                 onCancel={() => setCurrentPage('PesanSesi')}
-                onMatchSuccess={() => {
-                    setCurrentPage('DetailPembayaran');
-                }}
-                onMatchFailed={() => {
-                    setCurrentPage('PesanSesi');
-                }}
+                onMatchSuccess={() => setCurrentPage('DetailPembayaran')}
+                onMatchFailed={() => setCurrentPage('PesanSesi')}
             />
         );
     }
@@ -706,9 +478,12 @@ const App = () => {
         return (
             <DetailPembayaranPage
                 sessionData={bookingSessionData}
-                // 🛠️ MODIFIKASI DI SINI:
                 onBack={() => {
-                    setCurrentPage('PesanSesi');
+                    if (DEV_SKIP_TO_PAYMENT) {
+                        setCurrentPage('Login');
+                    } else {
+                        setCurrentPage('PesanSesi');
+                    }
                 }}
                 onPaymentSuccess={snapUrl => {
                     setPaymentSnapUrl(snapUrl);
@@ -717,6 +492,7 @@ const App = () => {
             />
         );
     }
+
     if (currentPage === 'Pembayaran') {
         return (
             <PembayaranPage
@@ -747,7 +523,6 @@ const App = () => {
                 onNavigate={page => setCurrentPage(page)}
                 onDetailClick={item => {
                     setSelectedSession(item);
-                    // Mengarahkan ke DetailSesiAktifPage jika tab yang aktif adalah Jadwal Aktif
                     if (activityTab === 'aktif') {
                         setCurrentPage('DetailSesiAktif');
                     } else {
@@ -872,6 +647,7 @@ const App = () => {
             />
         );
     }
+
     if (currentPage === 'Pendapatan') {
         return (
             <PendapatanPage
@@ -880,6 +656,7 @@ const App = () => {
             />
         );
     }
+
     if (currentPage === 'RiwayatPendapatan') {
         return (
             <RiwayatPendapatanPage
@@ -889,14 +666,13 @@ const App = () => {
         );
     }
 
-    // ✅ Tambahkan Kondisi Portofolio Page
     if (currentPage === 'Portofolio') {
-      return (
-        <PortofolioPage
-          onBack={() => setCurrentPage('RealProfileGuru')}
-          idGuru={profileData.id}
-        />
-      );
+        return (
+            <PortofolioPage
+                onBack={() => setCurrentPage('RealProfileGuru')}
+                idGuru={profileData.id}
+            />
+        );
     }
 
     return (
