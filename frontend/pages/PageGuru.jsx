@@ -93,6 +93,7 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
     loadPermintaan();
   }, [guruData]);
 
+  // ✅ DIUBAH: tambah try/catch/finally + requestAnimationFrame
   const handleTerimaSesi = async item => {
     Alert.alert(
       'Konfirmasi Terima',
@@ -103,33 +104,42 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
           text: 'Terima',
           onPress: async () => {
             setLoading(true);
-            const res = await terimaPermintaanSesiAPI(
-              item.id_pemesanan,
-              guruData.id,
-              item.biaya_sesi,
-              item.biaya_jarak,
-              item.harga_total,
-            );
-            if (res && res.success) {
-              Alert.alert('Sukses', 'Sesi berhasil dikonfirmasi!');
-              setPermintaan(prev =>
-                prev.filter(p => p.id_pemesanan !== item.id_pemesanan),
+            try {
+              const res = await terimaPermintaanSesiAPI(
+                item.id_pemesanan,
+                guruData.id,
+                item.biaya_sesi,
+                item.biaya_jarak,
+                item.harga_total,
               );
-              loadPermintaan();
-            } else {
-              Alert.alert('Gagal', res.message || 'Terjadi kesalahan sistem.');
+              if (res && res.success) {
+                requestAnimationFrame(() => {
+                  Alert.alert('Sukses', 'Sesi berhasil dikonfirmasi!');
+                });
+                loadPermintaan();
+              } else {
+                requestAnimationFrame(() => {
+                  Alert.alert('Gagal', res.message || 'Terjadi kesalahan sistem.');
+                });
+              }
+            } catch (e) {
+              requestAnimationFrame(() => {
+                Alert.alert('Error', 'Terjadi masalah jaringan.');
+              });
+            } finally {
+              setLoading(false);
             }
-            setLoading(false);
           },
         },
       ],
     );
   };
 
+  // ✅ DIUBAH: pesan lebih ringkas, konsisten dengan halaman lain
   const handleTolakSesi = item => {
     Alert.alert(
       'Tolak Permintaan',
-      `Abaikan permintaan dari ${item.nama_murid}? Sesi akan dihapus dari daftar pantauan Anda.`,
+      `Abaikan permintaan dari ${item.nama_murid}?`,
       [
         { text: 'Batal', style: 'cancel' },
         {
@@ -322,8 +332,8 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
     }
 
     const SIDE_PADDING = 20;
-    const cardWidth = windowWidth - 40; 
-    const gapSize = 12; 
+    const cardWidth = windowWidth - 40;
+    const gapSize = 12;
 
     return (
       <Animated.FlatList
@@ -380,10 +390,10 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
               onPress={() => onNavigate && onNavigate('ActivityGuru')}
             >
               <View style={styles.iconContainer}>
-                <Image 
-                  source={require('../assets/kalender.png')} 
-                  style={styles.menuIconImage} 
-                  resizeMode="contain" 
+                <Image
+                  source={require('../assets/kalender.png')}
+                  style={styles.menuIconImage}
+                  resizeMode="contain"
                 />
               </View>
               <Text style={styles.menuButtonText}>Jadwal Saya</Text>
@@ -394,10 +404,10 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
               onPress={() => setIsMateriVisible(true)}
             >
               <View style={styles.iconContainer}>
-                <Image 
-                  source={require('../assets/materi.png')} 
-                  style={styles.menuIconImage} 
-                  resizeMode="contain" 
+                <Image
+                  source={require('../assets/materi.png')}
+                  style={styles.menuIconImage}
+                  resizeMode="contain"
                 />
               </View>
               <Text style={styles.menuButtonText}>Materi</Text>
@@ -408,24 +418,24 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
               onPress={() => onNavigate && onNavigate('Pendapatan')}
             >
               <View style={styles.iconContainer}>
-                <Image 
-                  source={require('../assets/pendapatan.png')} 
-                  style={styles.menuIconImage} 
-                  resizeMode="contain" 
+                <Image
+                  source={require('../assets/pendapatan.png')}
+                  style={styles.menuIconImage}
+                  resizeMode="contain"
                 />
               </View>
               <Text style={styles.menuButtonText}>Pendapatan</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={styles.menuItemButton}
               onPress={() => onNavigate && onNavigate('ActivityGuru')}
             >
               <View style={styles.iconContainer}>
-                <Image 
-                  source={require('../assets/permintaan.png')} 
-                  style={styles.menuIconImage} 
-                  resizeMode="contain" 
+                <Image
+                  source={require('../assets/permintaan.png')}
+                  style={styles.menuIconImage}
+                  resizeMode="contain"
                 />
               </View>
               <Text style={styles.menuButtonText}>Permintaan</Text>
@@ -606,9 +616,9 @@ const styles = StyleSheet.create({
 
   sessionCard: {
     backgroundColor: '#FFF',
-    borderRadius: 20, 
-    padding: 14, 
-    paddingLeft: 20, 
+    borderRadius: 20,
+    padding: 14,
+    paddingLeft: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -631,19 +641,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4, 
+    marginBottom: 4,
   },
   cardLabel: {
     fontFamily: FONTS.bold,
-    fontSize: 10, 
+    fontSize: 10,
     color: '#A9A9A9',
     letterSpacing: 1.2,
   },
   badgeSegera: {
     backgroundColor: '#A2E9B4',
-    paddingVertical: 4, 
-    paddingHorizontal: 10, 
-    borderRadius: 10, 
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -655,33 +665,33 @@ const styles = StyleSheet.create({
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 0, 
+    marginBottom: 0,
   },
   avatarCircle: {
-    width: 44, 
-    height: 44, 
-    borderRadius: 22, 
-    backgroundColor: '#2C2C2C', 
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#2C2C2C',
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     color: '#FFF',
     fontFamily: FONTS.bold,
-    fontSize: 13, 
+    fontSize: 13,
   },
   profileInfo: {
     flex: 1,
-    marginLeft: 12, 
+    marginLeft: 12,
   },
   studentName: {
-    fontSize: 15, 
+    fontSize: 15,
     fontFamily: FONTS.bold,
     color: '#000',
     marginBottom: 2,
   },
   subjectText: {
-    fontSize: 12, 
+    fontSize: 12,
     fontFamily: FONTS.regular,
     color: '#777',
   },
@@ -693,13 +703,13 @@ const styles = StyleSheet.create({
   },
   gridCol2: { width: '45%' },
   detailLabel: {
-    fontSize: 10, 
+    fontSize: 10,
     fontFamily: FONTS.regular,
     color: '#ABABAB',
     marginBottom: 4,
   },
   detailValue: {
-    fontSize: 13, 
+    fontSize: 13,
     fontFamily: FONTS.bold,
     color: '#1A1A2E',
   },
@@ -710,7 +720,7 @@ const styles = StyleSheet.create({
   },
   btnAction: {
     flex: 1,
-    height: 42, 
+    height: 42,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -737,20 +747,20 @@ const styles = StyleSheet.create({
   menuGridContainer: { paddingHorizontal: 24, marginTop: 24 },
   menuRow: { flexDirection: 'row', justifyContent: 'space-between' },
   menuItemButton: { alignItems: 'center', width: '22%' },
-  
+
   iconContainer: {
     width: 65,
     height: 65,
-    backgroundColor: '#3A7D6B', // Warna box seragam dengan HomePage[cite: 16]
+    backgroundColor: '#3A7D6B',
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
   },
   menuIconImage: {
-    width: 35, // Ukuran ikon seragam dengan HomePage[cite: 16]
+    width: 35,
     height: 35,
-    tintColor: '#FFF', 
+    tintColor: '#FFF',
   },
   menuButtonText: {
     fontSize: 11,
