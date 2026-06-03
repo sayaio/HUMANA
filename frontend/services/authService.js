@@ -15,3 +15,25 @@ export const loginUser = async (email, password) => {
         return { success: false, message: error.message };
     }
 };
+export const checkEmail = async (email) => {
+  try {
+    const response = await fetch(`${API_URL}/check-email?email=${encodeURIComponent(email)}`);
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    return { exists: false };
+  }
+};
+export const loginUserGoogle = async (email) => {
+  try {
+    const response = await fetch(`${API_URL}/login-google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+};

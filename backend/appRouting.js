@@ -3,6 +3,8 @@ const router = express.Router();
 
 const authController = require('./src/controllers/authController');
 router.post('/login', authController.login);
+router.get('/check-email', authController.checkEmail);
+router.post('/login-google', authController.loginGoogle);
 
 const registerController = require('./src/controllers/registerController');
 router.post('/register', registerController.register);
@@ -70,5 +72,10 @@ router.post('/pemesanan/batal', batalSesiController);
 
 const { getDetailPemesanan } = require('./src/controllers/detailPemesananController');
 router.get('/detailpemesanan/:id', getDetailPemesanan);
+
+const materiGuruController = require('./src/controllers/materiGuruController');
+router.get('/materi-guru/:id_guru', materiGuruController.getMateriGuru);
+router.post('/materi-guru', materiGuruController.simpanMateriGuru);
+router.delete('/materi-guru/:id_guru/:id_materi', materiGuruController.hapusMateriGuru);
 
 module.exports = router;
