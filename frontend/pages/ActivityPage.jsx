@@ -139,20 +139,26 @@ const ActivityPage = ({
       </View>
 
       {isHistory ? (
+        /* PERUBAHAN: Saat beri ulasan beralih ke SessionDetail[cite: 12, 15] */
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: '#387C65' }]}
-          onPress={() => onDetailClick(item)}
+          onPress={() => {
+            if (onDetailClick) {
+                onDetailClick(item); 
+                onNavigate('SessionDetail'); 
+            }
+          }}
         >
           <Text style={styles.actionBtnText}>Beri Ulasan</Text>
         </TouchableOpacity>
       ) : (
-        /* PERUBAHAN: Navigasi tombol Lihat Detail khusus ke halaman DetailSesiAktif */
+        /* PERUBAHAN: Saat lihat detail beralih ke DetailSesiAktif[cite: 12, 15] */
         <TouchableOpacity 
           style={styles.actionBtn}
           onPress={() => {
             if (onDetailClick) {
-              onDetailClick(item); // Menyimpan data sesi yang dipilih[cite: 8]
-              onNavigate('DetailSesiAktif'); // Beralih ke halaman DetailSesiAktifPage[cite: 8]
+              onDetailClick(item); 
+              onNavigate('DetailSesiAktif'); 
             }
           }}
         >
