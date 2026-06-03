@@ -43,6 +43,9 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
     const idGuru = guruData?.id || guruData?.id_guru;
 
+    // Tambahan: State untuk RefreshControl
+    const [refreshing, setRefreshing] = useState(false);
+
     // Fungsi untuk memuat data profil murni dari database
     const loadLatestProfileData = useCallback(async () => {
         if (!idGuru) return;
@@ -64,12 +67,18 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
     const handleRefresh = async () => {
         setRefreshing(true);
-        await loadLatestProfileData();
+        // Memuat ulang semua data yang diperlukan
+        await Promise.all([
+            loadLatestProfileData(),
+            loadPortofolios(),
+            loadSesiHariIni(),
+            loadMateriDiajar()
+        ]);
         setRefreshing(false);
     };
 
     const handleToggleAvailability = async newValue => {
-        const idGuruTerpilih = guruData?.id || guruData?.id_guru; // Pastikan penamaan properti ID sesuai data login kamu
+        const idGuruTerpilih = guruData?.id || guruData?.id_guru; 
         if (!idGuruTerpilih) {
             Alert.alert(
                 'Data Tidak Valid',
@@ -78,16 +87,13 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
             return;
         }
 
-        // Optimistic update di UI
         setIsAktif(newValue);
 
-        // Tembak service API
         const result = await updateAvailabilityProfile(idGuruTerpilih, newValue);
 
         if (result && result.success) {
             setIsAktif(newValue);
 
-            // update parent state
             if (onRefreshData) {
                 onRefreshData({
                     ...guruData,
@@ -106,12 +112,9 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
         }
     };
 
-    // State untuk manajemen data Portofolio tambahan
     const [portofolios, setPortofolios] = useState([]);
-
     const [materiDiajar, setMateriDiajar] = useState([]);
 
-    // State untuk form input portofolio baru
     const [newJudul, setNewJudul] = useState('');
     const [newDeskripsi, setNewDeskripsi] = useState('');
     const [newTipe, setNewTipe] = useState('');
@@ -132,31 +135,20 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
     const loadSesiHariIni = useCallback(async () => {
         if (!idGuru) return;
-
         try {
-            // 2. Gunakan matchingService milikmu, tidak ada lagi raw fetch API di sini
             const result = await fetchSesiDikonfirmasi(idGuru);
-
             if (result && result.success && result.data) {
                 const today = new Date();
-
-                // Filter array data sesi yang harinya sama dengan hari ini
                 const sesiToday = result.data.filter(sesi => {
-                    // PENTING: Pastikan property 'tanggal_mentah' atau 'waktu_mulai' 
-                    // ikut di-return oleh method toJSON() di class PemesananSesi backend kamu.
                     const tanggalRaw = sesi.tanggal_mentah || sesi.waktu_mulai;
                     if (!tanggalRaw) return false;
-
                     const tanggalSesi = new Date(tanggalRaw);
-
                     return (
                         tanggalSesi.getDate() === today.getDate() &&
                         tanggalSesi.getMonth() === today.getMonth() &&
                         tanggalSesi.getFullYear() === today.getFullYear()
                     );
                 });
-
-                // Simpan jumlah total sesi hari ini ke state
                 setSesiHariIni(sesiToday.length);
             }
         } catch (error) {
@@ -165,8 +157,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
     }, [idGuru]);
 
     const handleAddPorto = async () => {
-        setNewTanggalMulai('');
-        setNewTanggalSelesai('');
         if (
             !newJudul.trim() ||
             !newDeskripsi.trim() ||
@@ -185,15 +175,16 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                 deskripsi: newDeskripsi,
                 tipe_portfolio: newTipe,
                 bukti: newBukti,
-                tanggal_mulai: newTanggalMulai, // ← update
+                tanggal_mulai: newTanggalMulai,
                 tanggal_selesai: newTanggalSelesai,
             });
-            // Refresh list dari DB
             await loadPortofolios();
             setNewJudul('');
             setNewDeskripsi('');
             setNewTipe('');
             setNewBukti('');
+            setNewTanggalMulai('');
+            setNewTanggalSelesai('');
             setIsAdding(false);
             Alert.alert('Sukses', 'Portofolio berhasil ditambahkan!');
         } catch (error) {
@@ -210,7 +201,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                 onPress: async () => {
                     try {
                         await portfolioService.hapusPortfolio(idPortfolio);
-                        await loadPortofolios(); // refresh list
+                        await loadPortofolios(); 
                     } catch (error) {
                         Alert.alert('Error', error.message);
                     }
@@ -219,7 +210,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
         ]);
     };
 
-    const loadPortofolios = async () => {
+    const loadPortofolios = useCallback(async () => {
         if (!idGuru) return;
         try {
             const data = await portfolioService.getPortfolioByGuru(idGuru);
@@ -227,36 +218,31 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
         } catch (error) {
             console.log('Gagal load portofolio:', error.message);
         }
-    };
+    }, [idGuru]);
 
-    // Gabungkan semuanya di sini
+    const loadMateriDiajar = useCallback(async () => {
+        if (!idGuru) return;
+        try {
+          const data = await materiGuruService.getMateriGuru(idGuru);
+          setMateriDiajar(data);
+        } catch (error) {
+          console.log('Gagal load materi diajar:', error.message);
+        }
+    }, [idGuru]);
+
     useEffect(() => {
         if (idGuru) {
             loadLatestProfileData();
             loadPortofolios();
             loadSesiHariIni();
+            loadMateriDiajar();
         }
-    }, [idGuru]); // ✅ Cukup bergantung pada idGuru saja untuk mencegah render berulang
-
-    const loadMateriDiajar = async () => {
-      if (!idGuru) return;
-      try {
-        const data = await materiGuruService.getMateriGuru(idGuru);
-        setMateriDiajar(data);
-      } catch (error) {
-        console.log('Gagal load materi diajar:', error.message);
-      }
-    };
-
-    useEffect(() => {
-      loadMateriDiajar();
-    }, [idGuru]);
+    }, [idGuru, loadLatestProfileData, loadPortofolios, loadSesiHariIni, loadMateriDiajar]);
 
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
-            {/* Top Header - Sesuai gambar Figma dengan icon Settings */}
             <View style={styles.topHeader}>
                 <View style={{ width: 24 }} />
                 <TouchableOpacity
@@ -269,8 +255,10 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
             <ScrollView
                 style={styles.scrollContainer}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+                }
             >
-                {/* 1. CARD UTAMA: Foto Profil & Info Dasar */}
                 <View style={styles.profileMainCard}>
                     <View style={styles.avatarCircle}>
                         <Text style={styles.avatarText}>
@@ -280,31 +268,24 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                         </Text>
                     </View>
                     <View style={styles.profileMetaInfo}>
-                        {/* Gunakan guruData.nama atau guruData.name */}
                         <Text style={styles.guruName}>
                             {guruData?.name || guruData?.nama || 'Nama Guru'}
                         </Text>
-                        {/* Pastikan membaca .email sesuai payload dataResponse backend */}
                         <Text style={styles.guruEmail}>
                             {guruData?.email || 'email@humana.id'}
                         </Text>
                     </View>
                 </View>
 
-                {/* 2. CARD STATUS: Sesi, Rating, Status Aktif (Persis Gambar Figma) */}
                 <View style={styles.statusCard}>
                     <Text style={styles.statusSectionLabel}>STATUS</Text>
                     <View style={styles.statusRow}>
                         <View style={styles.statusSubBox}>
-
-                            {/* UBAH DI SINI: Gunakan state sesiHariIni */}
                             <Text style={styles.statusValueBlue}>{sesiHariIni}</Text>
-
                             <Text style={styles.statusSubLabel}>Sesi hari ini</Text>
                         </View>
                         <View style={styles.statusDivider} />
                         <View style={styles.statusSubBox}>
-                            {/* 🌟 DISINI: Menampilkan rating yang dikirim langsung dari getRating() backend */}
                             <Text style={styles.statusValueBlue}>
                                 {guruData?.rating ? Number(guruData.rating).toFixed(1) : '0.0'}
                             </Text>
@@ -322,7 +303,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                             </Text>
                             <Switch
                                 value={isAktif}
-                                onValueChange={handleToggleAvailability} // ← DIARAHKAN KE HANDLER API, BUKAN SETISAKTIF LANGSUNG
+                                onValueChange={handleToggleAvailability} 
                                 trackColor={{ false: '#767577', true: '#C1F4D3' }}
                                 thumbColor={isAktif ? '#25A244' : '#f4f3f4'}
                             />
@@ -330,7 +311,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                     </View>
                 </View>
 
-                {/* 3. SECTION: Data Pribadi (Persis Tampilan Layout Figma) */}
                 <View style={styles.dataPribadiHeaderRow}>
                     <Text style={styles.sectionTitleMain}>Data Pribadi</Text>
                     <TouchableOpacity onPress={() => onNavigate('EditBasicProfile')}>
@@ -341,7 +321,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                 <View style={styles.dataPribadiContainer}>
                     <View style={styles.dataItemField}>
                         <Text style={styles.fieldLabel}>Nama Pengguna</Text>
-                        {/* Menggunakan username, jika kosong pakai fallback name tanpa spasi */}
                         <Text style={styles.fieldValue}>
                             {guruData?.username && guruData.username !== '-'
                                 ? guruData.username
@@ -368,7 +347,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                     </View>
                 </View>
 
-                {/* SECTION: Materi yang Diajar */}
                 <View style={styles.materiHeaderRow}>
                   <Text style={styles.sectionTitleMain}>Materi yang diajar</Text>
                   <TouchableOpacity
@@ -393,29 +371,23 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                   )}
                 </View>
 
-                {/* 4. SECTION EDITAN TAMBAHAN: Portofolio & Pengalaman */}
                 <View style={styles.portoSectionHeaderRow}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Briefcase size={18} color="#284B7A" style={{ marginRight: 6 }} />
                         <Text style={styles.sectionTitleMain}>Portofolio Pengajaran</Text>
                     </View>
-                    {!isAdding && (
-                        <TouchableOpacity
-                            style={styles.addPortoBtn}
-                            onPress={() => setIsAdding(true)}
-                        >
-                            <Plus size={14} color="#FFF" />
-                            <Text style={styles.addPortoBtnText}>Tambah</Text>
-                        </TouchableOpacity>
-                    )}
+                    <TouchableOpacity
+                        style={styles.addPortoBtn}
+                        onPress={() => onNavigate('Portofolio')}
+                    >
+                        <Plus size={14} color="#FFF" />
+                        <Text style={styles.addPortoBtnText}>Tambah</Text>
+                    </TouchableOpacity>
                 </View>
 
-                {/* Form Input Tambah Portofolio */}
                 {isAdding && (
                     <View style={styles.addPortoForm}>
                         <Text style={styles.formTitle}>🗂️ Portofolio Pengajaran</Text>
-
-                        {/* Judul */}
                         <Text style={styles.formLabel}>Judul Pengalaman / Sertifikat</Text>
                         <TextInput
                             style={styles.input}
@@ -424,8 +396,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                             onChangeText={setNewJudul}
                             placeholderTextColor="#999"
                         />
-
-                        {/* Deskripsi */}
                         <Text style={styles.formLabel}>Deskripsi Singkat</Text>
                         <TextInput
                             style={[styles.input, styles.textArea]}
@@ -436,8 +406,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                             numberOfLines={3}
                             placeholderTextColor="#999"
                         />
-
-                        {/* ← TAMBAH: Tipe Portofolio */}
                         <Text style={styles.formLabel}>Tipe Portofolio</Text>
                         <TouchableOpacity
                             style={[styles.input, styles.tipeSelector]}
@@ -485,7 +453,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                             </View>
                         )}
 
-                        {/* ← TAMBAH: Link Bukti */}
                         <Text style={styles.formLabel}>Link Bukti</Text>
                         <TextInput
                             style={styles.input}
@@ -496,7 +463,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                             autoCapitalize="none"
                             placeholderTextColor="#999"
                         />
-                        {/* Tanggal Mulai */}
                         <Text style={styles.formLabel}>Tanggal Mulai</Text>
                         <TextInput
                             style={styles.input}
@@ -506,7 +472,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                             keyboardType="numbers-and-punctuation"
                             placeholderTextColor="#999"
                         />
-                        {/* Tanggal Selesai */}
                         <Text style={styles.formLabel}>Tanggal Selesai</Text>
                         <TextInput
                             style={styles.input}
@@ -534,7 +499,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                     </View>
                 )}
 
-                {/* Daftar Item Portofolio */}
                 <View style={styles.portoListWrapper}>
                     {portofolios.map(item => (
                         <View key={item.id_portfolio} style={styles.portoCard}>
@@ -550,7 +514,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                         </View>
                     ))}
                 </View>
-                {/* Tombol Logout */}
+
                 <View style={{ paddingHorizontal: 24, marginTop: 10 }}>
                     <TouchableOpacity
                         style={{
@@ -574,11 +538,9 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                 </View>
 
                 <View style={{ height: 120 }} />
-                {/* Spacer agar konten tidak tertutup bottom tab navbar */}
                 <View style={{ height: 120 }} />
             </ScrollView>
 
-            {/* BOTTOM NAVIGATION BAR */}
             <BottomNavbar
                 currentScreen="ProfileGuru"
                 onNavigate={onNavigate}
@@ -587,6 +549,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
         </View>
     );
 };
+
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFF' },
     topHeader: {
@@ -598,8 +561,6 @@ const styles = StyleSheet.create({
         height: 80,
     },
     scrollContainer: { flex: 1 },
-
-    // Layout Profile Card Atas
     profileMainCard: {
         backgroundColor: '#FFF',
         marginHorizontal: 24,
@@ -622,8 +583,6 @@ const styles = StyleSheet.create({
     profileMetaInfo: { marginLeft: 20, flex: 1 },
     guruName: { fontSize: 22, fontWeight: 'bold', color: '#000' },
     guruEmail: { fontSize: 13, color: '#666', marginTop: 4 },
-
-    // Layout Status Card (Persis Figma Box)
     statusCard: {
         backgroundColor: '#FFF',
         marginHorizontal: 24,
@@ -660,8 +619,6 @@ const styles = StyleSheet.create({
     },
     statusDivider: { width: 1, height: 35, backgroundColor: '#E0E0E0' },
     activeStatusLabel: { fontSize: 11, fontWeight: 'bold', marginBottom: 4 },
-
-    // Layout Data Pribadi
     dataPribadiHeaderRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -689,7 +646,6 @@ const styles = StyleSheet.create({
     },
     fieldLabel: { fontSize: 12, color: '#999', fontWeight: '500' },
     fieldValue: { fontSize: 15, fontWeight: 'bold', color: '#000', marginTop: 4 },
-    
     materiHeaderRow: {
       flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
       paddingHorizontal: 24, marginTop: 28, marginBottom: 12,
@@ -716,8 +672,6 @@ const styles = StyleSheet.create({
     materiEmptyText: {
       fontSize: 13, color: '#ABABAB', fontStyle: 'italic',
     },
-
-    // Layout Tambahan Portofolio
     portoSectionHeaderRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -762,8 +716,6 @@ const styles = StyleSheet.create({
         marginRight: 8,
     },
     portoDesc: { fontSize: 13, color: '#555', marginTop: 6, lineHeight: 18 },
-
-    // Form Tambah Porto
     addPortoForm: {
         backgroundColor: '#F8FAFC',
         marginHorizontal: 24,
@@ -805,8 +757,6 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     saveBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
-
-    // Style form
     formTitle: {
         fontSize: 16,
         fontWeight: 'bold',
