@@ -318,6 +318,240 @@ const App = () => {
                 major: '-',
             });
 
+<<<<<<< HEAD
+=======
+    const newProfile = {
+      id: userData?.id,
+      role: userData?.role || '-',
+      name: namaDariDB || '-',
+      email: loggedInEmail || '-',
+      username: usernameDariDB || '-',
+      phone: userData?.no_telepon || userData?.phone || '-',
+      no_telepon: userData?.no_telepon || userData?.phone || '-',
+      gender: userData?.jenis_kelamin || userData?.gender || '-',
+      jenis_kelamin: userData?.jenis_kelamin || userData?.gender || '-',
+      domicile:
+        userData?.domisili || userData?.domicile || userData?.alamat || '-',
+      domisili:
+        userData?.domisili || userData?.domicile || userData?.alamat || '-',
+      alamat:
+        userData?.domisili || userData?.domicile || userData?.alamat || '-',
+      education: userData?.jenjang_pendidikan || userData?.education || '-',
+      jenjang_pendidikan:
+        userData?.jenjang_pendidikan || userData?.education || '-',
+      major:
+        userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
+      kelas_jurusan:
+        userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
+      is_active: userData?.is_active ?? 0,
+    };
+
+    setNamaLengkap(namaDariDB);
+    setEmail(loggedInEmail);
+    setProfileData(newProfile);
+
+    try {
+      const sessionData = { userData, email: loggedInEmail };
+      await AsyncStorage.setItem('user_session', JSON.stringify(sessionData));
+      console.log('💾 [App.jsx] Berhasil memastikan sesi tersimpan!');
+    } catch (error) {
+      console.error('❌ Gagal mengamankan sesi di App.jsx:', error);
+    }
+
+    if (roleDariDB === 'guru') {
+      setCurrentPage('PageGuru');
+    } else {
+      setCurrentPage('Home');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('user_session');
+      setNamaLengkap('');
+      setEmail('');
+      setProfileData({
+        id: null,
+        role: '-',
+        name: '-',
+        email: '-',
+        username: '-',
+        phone: '-',
+        gender: '-',
+        domicile: '-',
+        education: '-',
+        major: '-',
+      });
+      console.log('🚪 [App.jsx] Sesi berhasil dihapus. Keluar...');
+      setCurrentPage('Login');
+    } catch (error) {
+      InteractionManager.runAfterInteractions(() => {
+        Alert.alert('Error', 'Gagal keluar dari akun.');
+      });
+    }
+  };
+
+  const handleGlobalNavigate = (page, tab) => {
+    console.log(`🧭 [App.jsx] Global Navigate to: ${page}, tab: ${tab}`);
+    if (tab) setActivityTab(tab);
+
+    const currentRole = (profileData.role || 'murid').toLowerCase();
+
+    if (page === 'Home' && currentRole === 'guru') {
+      setCurrentPage('PageGuru');
+      return;
+    } else if (page === 'EditBasicProfilePage' && currentRole === 'guru') {
+      setCurrentPage('EditBasicProfile');
+      return;
+    }
+
+    if (page === 'HomeGuru') {
+      setCurrentPage('PageGuru');
+    } else if (page === 'ActivityGuru') {
+      setCurrentPage('RealActivityGuru');
+    } else if (page === 'ChatGuru') {
+      setCurrentPage('Chat');
+    } else if (page === 'ProfileGuru') {
+      setCurrentPage('RealProfileGuru');
+    } else if (page === 'Pendapatan') {
+      setCurrentPage('Pendapatan');
+    } else if (page === 'RiwayatPendapatan') {
+      setCurrentPage('RiwayatPendapatan');
+    } else {
+      setCurrentPage(page);
+    }
+  };
+
+  if (isAppLoading) {
+    return <SplashScreen />;
+  }
+
+  if (currentPage === 'Login') {
+    return (
+      <LoginPage
+        onLoginSuccess={handleLoginSuccess}
+        onNavigateToRegister={() => setCurrentPage('Register')}
+        onForgotPassword={() => setCurrentPage('ResetPassword')}
+      />
+    );
+  }
+
+  if (currentPage === 'Register') {
+    return (
+      <RegisterPage
+        onRegisterSuccess={() => setCurrentPage('Login')}
+        onNavigateToLogin={() => setCurrentPage('Login')}
+      />
+    );
+  }
+
+  if (currentPage === 'ResetPassword') {
+    return <ResetPasswordPage onBack={() => setCurrentPage('Login')} />;
+  }
+
+  if (currentPage === 'PageGuru') {
+    return (
+      <PageGuru
+        guruData={profileData}
+        onNavigate={handleGlobalNavigate}
+        onSelectSubject={subjectData => {
+          setSelectedSubject(subjectData);
+          setCurrentPage('Materi');
+        }}
+      />
+    );
+  }
+
+  if (currentPage === 'RealProfileGuru') {
+    return (
+      <ProfileGuruPage
+        guruData={profileData}
+        onNavigate={handleGlobalNavigate}
+        onLogout={handleLogout}
+        onRefreshData={handleRefreshProfileData}
+      />
+    );
+  }
+
+  if (currentPage === 'RealActivityGuru') {
+    return (
+      <ActivityGuruPage
+        guruData={profileData}
+        onNavigate={handleGlobalNavigate}
+        // ✅ TAMBAH: kirim item ke state lalu pindah halaman
+        onDetailPermintaan={item => {
+          setSelectedPermintaanGuru(item);
+          setCurrentPage('DetailPermintaanGuru');
+        }}
+      />
+    );
+  }
+
+  // ✅ TAMBAH: routing halaman detail permintaan guru
+  if (currentPage === 'DetailPermintaanGuru') {
+    return (
+      <DetailPermintaanGuruPage
+        permintaanData={selectedPermintaanGuru}
+         guruData={profileData}
+        idGuru={profileData.id}
+        onBack={() => setCurrentPage('RealActivityGuru')}
+      />
+    );
+  }
+
+  if (currentPage === 'Home') {
+    return (
+      <HomePage
+        namaLengkap={namaLengkap}
+        email={email}
+        onLogout={handleLogout}
+        onSelectSubject={subjectData => {
+          setSelectedSubject(subjectData);
+          setCurrentPage('Materi');
+        }}
+        onNavigate={(page, tab) => {
+          if (tab) setActivityTab(tab);
+          setCurrentPage(page);
+        }}
+        showSuccessAlert={showLoginSuccessAlert}
+        onAlertClose={() => setShowLoginSuccessAlert(false)}
+        userId={profileData.id}
+        userRole={(profileData.role || 'murid').toLowerCase()}
+      />
+    );
+  }
+
+  if (currentPage === 'PesanSesi') {
+    return (
+      <PesanSesiPage
+        onBack={() => setCurrentPage('Home')}
+        userId={profileData.id}
+        onConfirmOrder={data => {
+          setBookingSessionData(data);
+          setCurrentPage('MencariPengajar');
+        }}
+      />
+    );
+  }
+
+  if (currentPage === 'MencariPengajar') {
+    return (
+      <MencariPengajarPage
+        sessionData={bookingSessionData}
+        onCancel={() => setCurrentPage('PesanSesi')}
+        onMatchSuccess={() => setCurrentPage('DetailPembayaran')}
+        onMatchFailed={() => setCurrentPage('PesanSesi')}
+      />
+    );
+  }
+
+  if (currentPage === 'DetailPembayaran') {
+    return (
+      <DetailPembayaranPage
+        sessionData={bookingSessionData}
+        onBack={() => {
+          if (DEV_SKIP_TO_PAYMENT) {
+>>>>>>> eef9d4045b8cd36d3305e65bfe2ba5d7aed01db8
             setCurrentPage('Login');
         } catch (error) {
             // ✅ Ganti setTimeout → InteractionManager

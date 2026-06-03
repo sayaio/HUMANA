@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   // Header
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 8 : 16, paddingBottom: 14,
+    paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 20 : 50, paddingBottom: 14,
     borderBottomWidth: 1, borderBottomColor: '#F0F2F5', backgroundColor: '#FFF',
   },
   headerBack: { fontFamily: FONTS.regular, fontSize: 15, color: '#555' },
