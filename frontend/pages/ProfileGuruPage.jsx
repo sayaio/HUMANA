@@ -28,6 +28,7 @@ import { fetchGuruRating } from '../services/feedbackService';
 import { portfolioService } from '../services/portfolioService';
 import { fetchSesiDikonfirmasi } from '../services/matchingService';
 import BottomNavbar from '../components/BottomNavbar';
+import { materiGuruService } from '../services/materiGuruService';
 
 // Import asset logo yang sama dengan HomePage.jsx
 const LOGO_SOURCE = require('../assets/logo_humana.png');
@@ -107,6 +108,8 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
     // State untuk manajemen data Portofolio tambahan
     const [portofolios, setPortofolios] = useState([]);
+
+    const [materiDiajar, setMateriDiajar] = useState([]);
 
     // State untuk form input portofolio baru
     const [newJudul, setNewJudul] = useState('');
@@ -235,6 +238,20 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
         }
     }, [idGuru]); // ✅ Cukup bergantung pada idGuru saja untuk mencegah render berulang
 
+    const loadMateriDiajar = async () => {
+      if (!idGuru) return;
+      try {
+        const data = await materiGuruService.getMateriGuru(idGuru);
+        setMateriDiajar(data);
+      } catch (error) {
+        console.log('Gagal load materi diajar:', error.message);
+      }
+    };
+
+    useEffect(() => {
+      loadMateriDiajar();
+    }, [idGuru]);
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
@@ -349,6 +366,31 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                             {guruData?.domicile || guruData?.alamat || '-'}
                         </Text>
                     </View>
+                </View>
+
+                {/* SECTION: Materi yang Diajar */}
+                <View style={styles.materiHeaderRow}>
+                  <Text style={styles.sectionTitleMain}>Materi yang diajar</Text>
+                  <TouchableOpacity
+                    style={styles.editMateriBtn}
+                    onPress={() => onNavigate('TambahMateri')}
+                    activeOpacity={0.7}
+                  >
+                    <Edit2 size={14} color="#284B7A" />
+                    <Text style={styles.editMateriBtnText}>Edit</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.materiChipWrap}>
+                  {materiDiajar.length === 0 ? (
+                    <Text style={styles.materiEmptyText}>Belum ada materi. Tap Edit untuk menambah.</Text>
+                  ) : (
+                    materiDiajar.map(item => (
+                      <View key={item.id_materi} style={styles.materiChip}>
+                        <Text style={styles.materiChipText}>{item.nama_materi}</Text>
+                      </View>
+                    ))
+                  )}
                 </View>
 
                 {/* 4. SECTION EDITAN TAMBAHAN: Portofolio & Pengalaman */}
@@ -647,6 +689,33 @@ const styles = StyleSheet.create({
     },
     fieldLabel: { fontSize: 12, color: '#999', fontWeight: '500' },
     fieldValue: { fontSize: 15, fontWeight: 'bold', color: '#000', marginTop: 4 },
+    
+    materiHeaderRow: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+      paddingHorizontal: 24, marginTop: 28, marginBottom: 12,
+    },
+    editMateriBtn: {
+      flexDirection: 'row', alignItems: 'center',
+      borderWidth: 1, borderColor: '#284B7A',
+      paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
+    },
+    editMateriBtnText: {
+      fontSize: 12, fontWeight: 'bold', color: '#284B7A', marginLeft: 4,
+    },
+    materiChipWrap: {
+      flexDirection: 'row', flexWrap: 'wrap',
+      paddingHorizontal: 24, gap: 8, marginBottom: 24,
+    },
+    materiChip: {
+      borderWidth: 1.5, borderColor: '#284B7A',
+      paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
+    },
+    materiChipText: {
+      fontSize: 13, fontWeight: 'bold', color: '#284B7A',
+    },
+    materiEmptyText: {
+      fontSize: 13, color: '#ABABAB', fontStyle: 'italic',
+    },
 
     // Layout Tambahan Portofolio
     portoSectionHeaderRow: {
