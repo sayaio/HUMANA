@@ -473,13 +473,7 @@ const App = () => {
                 sessionData={bookingSessionData}
                 // 🛠️ MODIFIKASI DI SINI:
                 onBack={() => {
-                    if (DEV_SKIP_TO_PAYMENT) {
-                        // Jika sedang mode dev bypass, balikkan ke halaman Login atau Splash biar kelihatan pindah halaman
-                        setCurrentPage('Login');
-                    } else {
-                        // Jika mode normal, balik ke Home
-                        setCurrentPage('Home');
-                    }
+                    setCurrentPage('PesanSesi');
                 }}
                 onPaymentSuccess={snapUrl => {
                     setPaymentSnapUrl(snapUrl);
@@ -493,7 +487,11 @@ const App = () => {
             <PembayaranPage
                 snapUrl={paymentSnapUrl}
                 onFinish={status => {
-                    setCurrentPage('Home');
+                    if (status === 'closed') {
+                        setCurrentPage('PesanSesi');
+                    } else {
+                        setCurrentPage('Home');
+                    }
                     InteractionManager.runAfterInteractions(() => {
                         if (status === 'success')
                             Alert.alert('Sukses', 'Pembayaran berhasil!');

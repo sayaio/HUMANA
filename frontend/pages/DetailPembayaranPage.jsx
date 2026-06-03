@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, TextInput, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, ScrollView } from 'react-native';
 import { prosesCod, prosesMidtrans } from '../services/bankerService';
 import { getSesiDetail } from '../services/bankerService';
+import CustomAlert from '../components/CustomAlert'; // Import komponen CustomAlert[cite: 10]
 
 const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
     const [selectedMethod, setSelectedMethod] = useState(null);
@@ -10,6 +11,15 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
 
     const [displayData, setDetailSesi] = useState(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
+
+    // State untuk mengontrol CustomAlert secara dinamis[cite: 10]
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState({
+        type: 'success',
+        title: '',
+        message: '',
+        isConfirmation: false // Properti tambahan untuk membedakan mode Ya/Tidak
+    });
 
     const idSesi = sessionData?.id_sesi || sessionData?.id_pemesanan;
 
@@ -21,16 +31,12 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
             }
 
             try {
-                console.log(`📡 Fetching detail sesi untuk ID: ${idSesi}`);
                 const response = await getSesiDetail(idSesi);
-
-                // Asumsi backend mengembalikan { success: true, data: {...} } atau langsung objek datanya
                 if (response && response.data) {
                     setDetailSesi(response.data);
                 } else if (response && !response.success && response.message) {
                     console.log('⚠️ Warning:', response.message);
                 } else {
-                    // Jika response langsung berupa objek data
                     setDetailSesi(response);
                 }
             } catch (error) {
@@ -43,32 +49,43 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
         fetchDetail();
     }, [idSesi]);
 
-    // Ambil data dari DB (displayData) atau fallback ke prop dari layar sebelumnya (sessionData)
     const biayaSesi = displayData?.pembayaran?.biaya_sesi ?? sessionData?.biaya_sesi ?? sessionData?.harga ?? 0;
     const biayaJarak = displayData?.pembayaran?.biaya_jarak ?? sessionData?.biaya_jarak ?? sessionData?.biaya_transport ?? 0;
     const totalBayar = displayData?.pembayaran?.nominal ?? sessionData?.nominal ?? sessionData?.total_harga ?? (biayaSesi + biayaJarak);
 
-    // Helper untuk memformat angka ke Rupiah secara otomatis
     const formatRupiah = (angka) => {
         if (angka === undefined || angka === null) return 'Rp 0';
         return `Rp ${Number(angka).toLocaleString('id-ID')}`;
+    };
+
+    // Fungsi navigasi kembali dengan CustomAlert (Ya/Tidak)[cite: 8, 10]
+    const handleBackWithConfirmation = () => {
+        setAlertConfig({
+            type: 'gagal', // Menggunakan ikon gagal sebagai tanda peringatan
+            title: 'Batalkan Pesanan?',
+            isConfirmation: true
+        });
+        setAlertVisible(true);
     };
 
     const handlePaymentPress = async () => {
         const idSesi = sessionData?.id_sesi || sessionData?.id_pemesanan;
 
         if (!selectedMethod) {
-            requestAnimationFrame(() => {
-                Alert.alert('Peringatan', 'Mohon pilih metode pembayaran terlebih dahulu.');
+            setAlertConfig({
+                type: 'gagal',
+                title: 'Peringatan',
+                message: 'Mohon pilih metode pembayaran terlebih dahulu.',
+                isConfirmation: false
             });
+            setAlertVisible(true);
             return;
         }
 
-        // --- COD ---
         if (selectedMethod === 'cod') {
             try {
                 setIsProcessing(true);
-                const result = await prosesCod(idSesi); // ← berubah
+                const result = await prosesCod(idSesi);
                 setIsProcessing(false);
 
                 if (result.success) {
@@ -78,31 +95,38 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
                 }
             } catch (error) {
                 setIsProcessing(false);
-                Alert.alert('Gagal', error.message || 'Terjadi kesalahan sistem.');
+                setAlertConfig({
+                    type: 'gagal',
+                    title: 'Gagal',
+                    message: error.message || 'Terjadi kesalahan sistem.',
+                    isConfirmation: false
+                });
+                setAlertVisible(true);
             }
             return;
         }
 
-        // --- VA / EWALLET ---
         if (selectedMethod === 'va' || selectedMethod === 'ewallet') {
             try {
                 setIsProcessing(true);
-                const result = await prosesMidtrans(idSesi, selectedMethod); // ← berubah
+                const result = await prosesMidtrans(idSesi, selectedMethod);
                 setIsProcessing(false);
 
                 if (result.success && (result.snap_url || result.data?.snap_url)) {
                     const url = result.snap_url || result.data?.snap_url;
-                    requestAnimationFrame(() => {
-                        if (onPaymentSuccess) onPaymentSuccess(url);
-                    });
+                    if (onPaymentSuccess) onPaymentSuccess(url);
                 } else {
                     throw new Error(result.message || 'Gagal mendapatkan URL pembayaran.');
                 }
             } catch (error) {
                 setIsProcessing(false);
-                requestAnimationFrame(() => {
-                    Alert.alert('Gagal Transaksi', error.message || 'Gagal terhubung ke sistem pembayaran.');
+                setAlertConfig({
+                    type: 'gagal',
+                    title: 'Gagal Transaksi',
+                    message: error.message || 'Gagal terhubung ke sistem pembayaran.',
+                    isConfirmation: false
                 });
+                setAlertVisible(true);
             }
         }
     };
@@ -117,10 +141,9 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
     return (
         <View style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-
                 {/* HEADER */}
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={onBack}>
+                    <TouchableOpacity onPress={handleBackWithConfirmation}>
                         <Text style={styles.backText}>❮ Kembali</Text>
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Detail Pembayaran</Text>
@@ -180,16 +203,13 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
                     </View>
 
                     <View style={[styles.divider, { marginVertical: 12 }]} />
-
                     <Text style={styles.rincianTitle}>Rincian Pembayaran :</Text>
 
-                    {/* ✅ MENGAMBIL DARI OBJEK PEMBAYARAN API, DENGAN FALLBACK KE PROPS */}
                     <View style={styles.priceRow}>
                         <Text style={styles.priceLabel}>Biaya Pembelajaran</Text>
                         <Text style={styles.priceValue}>: {formatRupiah(biayaSesi)}</Text>
                     </View>
 
-                    {/* 2. BIAYA JARAK */}
                     <View style={styles.priceRow}>
                         <Text style={styles.priceLabel}>Biaya Transportasi Guru</Text>
                         <Text style={styles.priceValue}>: {formatRupiah(biayaJarak)}</Text>
@@ -197,13 +217,11 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
 
                     <View style={[styles.divider, { marginVertical: 12 }]} />
 
-                    {/* TOTAL */}
                     <View style={styles.priceRow}>
                         <Text style={styles.totalLabel}>Total Pembayaran</Text>
                         <Text style={styles.totalValue}>: {formatRupiah(totalBayar)}</Text>
                     </View>
                 </View>
-
             </ScrollView>
 
             {/* TOMBOL UTAMA */}
@@ -229,47 +247,21 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
                 </TouchableOpacity>
             </View>
 
-            {/* PORTAL BOTTOM SHEET */}
+            {/* MODAL PILIHAN PEMBAYARAN */}
             {showMethodModal && (
                 <View style={styles.customModalOverlay}>
-                    <TouchableOpacity
-                        style={StyleSheet.absoluteFillObject}
-                        activeOpacity={1}
-                        onPress={() => setShowMethodModal(false)}
-                    />
-
+                    <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => setShowMethodModal(false)} />
                     <View style={styles.bottomSheetContainer}>
                         <View style={styles.notchIndicator} />
-
-                        <TouchableOpacity
-                            style={[styles.imageOptionBox, selectedMethod === 'va' && styles.selectedOptionBox]}
-                            onPress={() => {
-                                setShowMethodModal(false);
-                                setTimeout(() => { setSelectedMethod('va'); }, 100);
-                            }}
-                        >
+                        <TouchableOpacity style={[styles.imageOptionBox, selectedMethod === 'va' && styles.selectedOptionBox]} onPress={() => { setShowMethodModal(false); setTimeout(() => { setSelectedMethod('va'); }, 100); }}>
                             <Text style={styles.imageOptionIcon}>🏛️</Text>
                             <Text style={styles.imageOptionText}>Virtual Account</Text>
                         </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.imageOptionBox, selectedMethod === 'ewallet' && styles.selectedOptionBox]}
-                            onPress={() => {
-                                setShowMethodModal(false);
-                                setTimeout(() => { setSelectedMethod('ewallet'); }, 100);
-                            }}
-                        >
+                        <TouchableOpacity style={[styles.imageOptionBox, selectedMethod === 'ewallet' && styles.selectedOptionBox]} onPress={() => { setShowMethodModal(false); setTimeout(() => { setSelectedMethod('ewallet'); }, 100); }}>
                             <Text style={styles.imageOptionIcon}>💼</Text>
                             <Text style={styles.imageOptionText}>E-Wallet / QR Code</Text>
                         </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.imageOptionBox, selectedMethod === 'cod' && styles.selectedOptionBox]}
-                            onPress={() => {
-                                setShowMethodModal(false);
-                                setTimeout(() => { setSelectedMethod('cod'); }, 100);
-                            }}
-                        >
+                        <TouchableOpacity style={[styles.imageOptionBox, selectedMethod === 'cod' && styles.selectedOptionBox]} onPress={() => { setShowMethodModal(false); setTimeout(() => { setSelectedMethod('cod'); }, 100); }}>
                             <Text style={styles.imageOptionIcon}>💵</Text>
                             <Text style={styles.imageOptionText}>Bayar di Tempat (COD)</Text>
                         </TouchableOpacity>
@@ -277,6 +269,19 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess }) => {
                 </View>
             )}
 
+            {/* CUSTOM ALERT KONFIRMASI / PERINGATAN[cite: 10] */}
+            <CustomAlert 
+                visible={alertVisible}
+                type={alertConfig.type}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                isConfirmation={alertConfig.isConfirmation} // Mengirim mode Ya/Tidak ke CustomAlert
+                onClose={() => setAlertVisible(false)} // Handler tombol "Tidak" atau tutup
+                onConfirm={() => {
+                    setAlertVisible(false);
+                    if (alertConfig.isConfirmation && onBack) onBack(); // Navigasi jika memilih "Ya"
+                }}
+            />
         </View>
     );
 };
@@ -294,7 +299,6 @@ const styles = StyleSheet.create({
     mainCard: {
         backgroundColor: '#FFF', borderRadius: 20, padding: 20, marginHorizontal: 20,
         borderWidth: 1, borderColor: '#EFEFEF', elevation: 3,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5,
     },
     inputLabel: { fontSize: 13, fontWeight: 'bold', color: '#000', marginBottom: 6, marginTop: 10 },
     disabledInput: { backgroundColor: '#F9F9F9', borderWidth: 1, borderColor: '#EBEBEB', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 10, fontSize: 14, color: '#A0A0A0' },
@@ -303,7 +307,6 @@ const styles = StyleSheet.create({
     paymentCard: {
         backgroundColor: '#FFF', borderRadius: 20, padding: 20, marginHorizontal: 20, marginTop: 15,
         borderWidth: 1, borderColor: '#EFEFEF', elevation: 3,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5,
     },
     methodContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' },
     methodLeftColumn: { flex: 1 },
@@ -322,10 +325,10 @@ const styles = StyleSheet.create({
     payButtonActive: { backgroundColor: '#3A7D6B', borderColor: '#3A7D6B' },
     payButtonDisabled: { backgroundColor: '#FFF', borderColor: '#E0E0E0' },
     payButtonText: { fontSize: 15, fontWeight: 'bold' },
-    customModalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end', zIndex: 9999, elevation: 999 },
-    bottomSheetContainer: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 24, paddingTop: 15, paddingBottom: 50, zIndex: 10000, elevation: 1000 },
+    customModalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end', zIndex: 9999 },
+    bottomSheetContainer: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 24, paddingTop: 15, paddingBottom: 50 },
     notchIndicator: { width: 50, height: 5, backgroundColor: '#E0E0E0', borderRadius: 2.5, alignSelf: 'center', marginBottom: 25 },
-    imageOptionBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#F0F0F0', borderRadius: 20, paddingVertical: 18, paddingHorizontal: 20, marginBottom: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 3 },
+    imageOptionBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#F0F0F0', borderRadius: 20, paddingVertical: 18, paddingHorizontal: 20, marginBottom: 12 },
     selectedOptionBox: { borderColor: '#3A7D6B', borderWidth: 1.5, backgroundColor: '#F4FAF8' },
     imageOptionIcon: { fontSize: 20, marginRight: 18, color: '#2C4373' },
     imageOptionText: { fontSize: 16, fontWeight: 'bold', color: '#000' }
