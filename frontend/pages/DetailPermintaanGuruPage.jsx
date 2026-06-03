@@ -9,15 +9,22 @@ import {
     Alert,
     Linking,
 } from 'react-native';
-import { ChevronLeft, MapPin, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, MapPin, ChevronRight, MessageCircle } from 'lucide-react-native';
 
 import { terimaPermintaanSesiAPI } from '../services/matchingService';
 
-const DetailPermintaanGuruPage = ({ permintaanData, guruData, onBack }) => {
+const DetailPermintaanGuruPage = ({
+    permintaanData,
+    guruData,
+    tipePermintaan = 'Permintaan', // 'Permintaan', 'Aktif', 'Berlangsung'
+    onBack,
+    onTolak,         // untuk tipe Permintaan
+    onChat,          // untuk tipe Aktif & Berlangsung
+    onSelesaikan,    // untuk tipe Berlangsung
+    onAjukanBatal,   // untuk tipe Aktif
+}) => {
     const data = permintaanData || {};
-
-    const [sesiDikonfirmasi, setSesiDikonfirmasi] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     const namaInisial = data.nama_murid
         ? data.nama_murid.substring(0, 2).toUpperCase()
@@ -48,6 +55,7 @@ const DetailPermintaanGuruPage = ({ permintaanData, guruData, onBack }) => {
         }
     };
 
+    // ─── Handler untuk Permintaan ─────────────────────────────────
     const handleTolak = () => {
         Alert.alert(
             'Tolak Permintaan',
@@ -65,11 +73,10 @@ const DetailPermintaanGuruPage = ({ permintaanData, guruData, onBack }) => {
         );
     };
 
-    // FUNGSI DIPERBAIKI: Hanya memunculkan alert, logika API ditangani oleh prop onTerima
-    const handleTerimaSesi = async item => {
+    const handleTerima = async () => {
         Alert.alert(
             'Konfirmasi Terima',
-            `Apakah Anda yakin ingin menerima permintaan mengajar dari ${item.nama_murid}?`,
+            `Apakah Anda yakin ingin menerima permintaan mengajar dari ${data.nama_murid}?`,
             [
                 { text: 'Batal', style: 'cancel' },
                 {
@@ -78,37 +85,130 @@ const DetailPermintaanGuruPage = ({ permintaanData, guruData, onBack }) => {
                         setLoading(true);
                         try {
                             const res = await terimaPermintaanSesiAPI(
-                                item.id_pemesanan,
+                                data.id_pemesanan,
                                 guruData.id,
-                                item.biaya_sesi,
-                                item.biaya_jarak,
-                                item.harga_total,
+                                data.biaya_sesi,
+                                data.biaya_jarak,
+                                data.harga_total,
                             );
                             if (res && res.success) {
-                                requestAnimationFrame(() => {
-                                    Alert.alert('Sukses', 'Sesi berhasil dikonfirmasi!');
-                                });
-                                loadPermintaan();
+                                Alert.alert('Sukses', 'Sesi berhasil dikonfirmasi!', [
+                                    { text: 'OK', onPress: onBack },
+                                ]);
                             } else {
-                                requestAnimationFrame(() => {
-                                    Alert.alert('Gagal', res.message || 'Terjadi kesalahan sistem.');
-                                });
+                                Alert.alert('Gagal', res.message || 'Terjadi kesalahan sistem.');
                             }
                         } catch (e) {
-                            requestAnimationFrame(() => {
-                                Alert.alert('Error', 'Terjadi masalah jaringan.');
-                            });
+                            Alert.alert('Error', 'Terjadi masalah jaringan.');
                         } finally {
                             setLoading(false);
                         }
                     },
                 },
-            ],
+            ]
         );
     };
 
+    // ─── Handler untuk Aktif ─────────────────────────────────────
+    const handleAjukanBatal = () => {
+        Alert.alert(
+            'Ajukan Pembatalan',
+            `Yakin ingin mengajukan pembatalan sesi dengan ${data.nama_murid}?`,
+            [
+                { text: 'Batal', style: 'cancel' },
+                {
+                    text: 'Ajukan',
+                    style: 'destructive',
+                    onPress: () => {
+                        if (onAjukanBatal) onAjukanBatal(data.id_pemesanan || data.id);
+                    },
+                },
+            ]
+        );
+    };
+
+    // ─── Handler untuk Berlangsung ───────────────────────────────
+    const handleSelesaikan = () => {
+        Alert.alert(
+            'Selesaikan Pesanan',
+            `Konfirmasi bahwa sesi dengan ${data.nama_murid} telah selesai?`,
+            [
+                { text: 'Batal', style: 'cancel' },
+                {
+                    text: 'Selesaikan',
+                    onPress: () => {
+                        if (onSelesaikan) onSelesaikan(data.id_pemesanan || data.id);
+                    },
+                },
+            ]
+        );
+    };
+
+    const handleChat = () => {
+        if (onChat) onChat(data);
+    };
+
+    // ─── Render tombol berdasarkan tipe ──────────────────────────
+    const renderActionBar = () => {
+        if (tipePermintaan === 'Permintaan') {
+            return (
+                <View style={styles.actionBar}>
+                    <TouchableOpacity style={styles.btnTolak} onPress={handleTolak} disabled={loading}>
+                        <Text style={styles.btnTolakText}>Tolak</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.btnTerima, loading && styles.btnDisabled]}
+                        onPress={handleTerima}
+                        disabled={loading}
+                    >
+                        <Text style={styles.btnTerimaText}>{loading ? 'Memproses...' : 'Terima'}</Text>
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+
+        if (tipePermintaan === 'Aktif') {
+            return (
+                <View style={styles.actionBar}>
+                    <TouchableOpacity style={styles.btnBatal} onPress={handleAjukanBatal}>
+                        <Text style={styles.btnBatalText}>Ajukan Pembatalan</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.btnChat} onPress={handleChat}>
+                        <MessageCircle size={18} color="#FFF" style={{ marginRight: 6 }} />
+                        <Text style={styles.btnChatText}>Chat Murid</Text>
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+
+        if (tipePermintaan === 'Berlangsung') {
+            return (
+                <View style={styles.actionBar}>
+                    <TouchableOpacity style={styles.btnChat} onPress={handleChat}>
+                        <MessageCircle size={18} color="#FFF" style={{ marginRight: 6 }} />
+                        <Text style={styles.btnChatText}>Chat Murid</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.btnSelesaikan} onPress={handleSelesaikan}>
+                        <Text style={styles.btnSelesaikanText}>Selesaikan</Text>
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+
+        return null;
+    };
+
+    // Badge status
+    const badgeConfig = {
+        Permintaan: { label: 'Menunggu Konfirmasi', bg: '#FFF3E0', text: '#E65100' },
+        Aktif: { label: 'Terkonfirmasi', bg: '#E3F2FD', text: '#1565C0' },
+        Berlangsung: { label: 'Sedang Berlangsung', bg: '#E8F5E9', text: '#2E7D32' },
+    };
+    const badge = badgeConfig[tipePermintaan] || badgeConfig.Permintaan;
+
+    // Data lain
     const biayaSesi = data.biaya_sesi || data.harga_total || 0;
-    const biayaTransportasi = data.biaya_jarak || data.biaya_transportasi || 0;
+    const biayaTransportasi = data.biaya_jarak || 0;
     const totalBayar = data.harga_total || (biayaSesi + biayaTransportasi);
 
     const formatTanggal = (raw) => {
@@ -160,20 +260,21 @@ const DetailPermintaanGuruPage = ({ permintaanData, guruData, onBack }) => {
                 <View style={{ width: 80 }} />
             </View>
 
-            <ScrollView
-                style={styles.scrollView}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 120 }}
-            >
-                {/* Bagian Profil, dll (Sama seperti sebelumnya) */}
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+                {/* Profil Murid + Badge */}
                 <View style={styles.profileRow}>
                     <View style={styles.avatarCircle}>
                         <Text style={styles.avatarText}>{namaInisial}</Text>
                     </View>
-                    <Text style={styles.namaMurid}>{data.nama_murid || 'Nama Murid'}</Text>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.namaMurid}>{data.nama_murid || 'Nama Murid'}</Text>
+                        <View style={[styles.badge, { backgroundColor: badge.bg }]}>
+                            <Text style={[styles.badgeText, { color: badge.text }]}>{badge.label}</Text>
+                        </View>
+                    </View>
                 </View>
 
-                {/* TANGGAL & WAKTU SESI */}
+                {/* Tanggal & Waktu */}
                 <View style={styles.dateTimeRow}>
                     <View style={styles.dateTimeBox}>
                         <Text style={styles.dtLabel}>Tanggal</Text>
@@ -185,78 +286,62 @@ const DetailPermintaanGuruPage = ({ permintaanData, guruData, onBack }) => {
                     </View>
                 </View>
 
-                {/* JENJANG */}
+                {/* Jenjang */}
                 <View style={styles.fieldSection}>
                     <Text style={styles.fieldLabel}>Jenjang</Text>
                     <View style={styles.fieldBox}>
-                        <Text style={styles.fieldValue}>
-                            {data.jenjang_pendidikan || data.jenjang || '-'}
-                        </Text>
+                        <Text style={styles.fieldValue}>{data.jenjang_pendidikan || data.jenjang || '-'}</Text>
                     </View>
                 </View>
 
-                {/* MATA PELAJARAN */}
+                {/* Mata Pelajaran */}
                 <View style={styles.fieldSection}>
                     <Text style={styles.fieldLabel}>Mata Pelajaran</Text>
                     <View style={styles.fieldBox}>
-                        <Text style={styles.fieldValue}>
-                            {data.nama_mapel || data.mata_pelajaran || '-'}
-                        </Text>
+                        <Text style={styles.fieldValue}>{data.nama_mapel || data.mata_pelajaran || '-'}</Text>
                     </View>
                 </View>
 
-                {/* MATERI */}
+                {/* Materi */}
                 <View style={styles.fieldSection}>
                     <Text style={styles.fieldLabel}>Materi</Text>
                     <View style={styles.fieldBox}>
-                        <Text style={styles.fieldValue}>
-                            {data.nama_materi || data.materi || '-'}
-                        </Text>
+                        <Text style={styles.fieldValue}>{data.nama_materi || data.materi || '-'}</Text>
                     </View>
                 </View>
 
-                {/* PETA / MAP PLACEHOLDER */}
+                {/* Map Placeholder */}
                 <View style={styles.mapContainer}>
                     <View style={styles.mapPlaceholder}>
                         <Text style={styles.mapPlaceholderText}>📍 Peta Lokasi</Text>
-                        <Text style={styles.mapPlaceholderSub}>
-                            Tap tombol lokasi di bawah untuk membuka di Google Maps
-                        </Text>
+                        <Text style={styles.mapPlaceholderSub}>Tap tombol lokasi di bawah untuk membuka Google Maps</Text>
                     </View>
                 </View>
 
-                {/* LOKASI ROW — BISA DI-TAP */}
+                {/* Lokasi Row */}
                 <TouchableOpacity style={styles.lokasiRow} onPress={handleBukaMap} activeOpacity={0.7}>
                     <View style={styles.lokasiIconWrap}>
                         <MapPin size={18} color="#284B7A" />
                     </View>
                     <View style={styles.lokasiInfo}>
-                        <Text style={styles.lokasiTitle}>
-                            {data.tipe_lokasi || 'Lokasi Sesi'}
-                        </Text>
-                        <Text style={styles.lokasiAlamat} numberOfLines={2}>
-                            {lokasiAlamat}
-                        </Text>
+                        <Text style={styles.lokasiTitle}>{data.tipe_lokasi || 'Lokasi Sesi'}</Text>
+                        <Text style={styles.lokasiAlamat} numberOfLines={2}>{lokasiAlamat}</Text>
                     </View>
                     <ChevronRight size={18} color="#ABABAB" />
                 </TouchableOpacity>
 
-                {/* RINCIAN BAYARAN */}
+                {/* Rincian Bayaran */}
                 <View style={styles.rincianCard}>
                     <Text style={styles.rincianTitle}>Rincian Bayaran</Text>
-
                     <View style={styles.rincianRow}>
                         <Text style={styles.rincianLabel}>Biaya Sesi</Text>
                         <Text style={styles.rincianValue}>: {formatRupiah(biayaSesi)}</Text>
                     </View>
-
                     <View style={styles.rincianRow}>
                         <Text style={styles.rincianLabel}>Biaya Transportasi</Text>
                         <Text style={styles.rincianValue}>: {formatRupiah(biayaTransportasi)}</Text>
                     </View>
-
                     <View style={styles.rincianDivider} />
-
                     <View style={styles.totalRow}>
                         <Text style={styles.totalLabel}>Total Bayaran</Text>
                         <Text style={styles.totalValue}>: {formatRupiah(totalBayar)}</Text>
@@ -264,23 +349,15 @@ const DetailPermintaanGuruPage = ({ permintaanData, guruData, onBack }) => {
                 </View>
             </ScrollView>
 
-            {/* TOMBOL TOLAK & TERIMA */}
-            <View style={styles.actionBar}>
-                <TouchableOpacity style={styles.btnTolak} onPress={handleTolak} activeOpacity={0.8}>
-                    <Text style={styles.btnTolakText}>Tolak</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnTerima} onPress={()=>handleTerimaSesi(permintaanData)} activeOpacity={0.8}>
-                    <Text style={styles.btnTerimaText}>Terima</Text>
-                </TouchableOpacity>
-            </View>
+            {/* Action Bar Dinamis */}
+            {renderActionBar()}
         </View>
     );
 };
 
+// Styles (sama seperti sebelumnya, ditambah style untuk tombol tambahan)
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFF' },
-
-    // HEADER
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -292,224 +369,54 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#F0F0F0',
     },
-    backBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: 80,
-    },
-    backText: {
-        fontSize: 14,
-        color: '#284B7A',
-        fontWeight: '600',
-        marginLeft: 2,
-    },
-    headerTitle: {
-        fontSize: 17,
-        fontWeight: 'bold',
-        color: '#000',
-        textAlign: 'center',
-    },
-
+    backBtn: { flexDirection: 'row', alignItems: 'center', width: 80 },
+    backText: { fontSize: 14, color: '#284B7A', fontWeight: '600', marginLeft: 2 },
+    headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#000', textAlign: 'center' },
     scrollView: { flex: 1 },
-
-    // PROFIL MURID
-    profileRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 24,
-        paddingTop: 24,
-        paddingBottom: 20,
-    },
-    avatarCircle: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: '#284B7A',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 16,
-    },
+    profileRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 20, gap: 16 },
+    avatarCircle: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center' },
     avatarText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
     namaMurid: { fontSize: 20, fontWeight: 'bold', color: '#000' },
-
-    // TANGGAL & WAKTU
-    dateTimeRow: {
-        flexDirection: 'row',
-        marginHorizontal: 24,
-        marginBottom: 20,
-        gap: 12,
-    },
-    dateTimeBox: {
-        flex: 1,
-        borderWidth: 1,
-        borderColor: '#E8EEF6',
-        borderRadius: 12,
-        padding: 14,
-        backgroundColor: '#F8FAFC',
-    },
-    dateTimeBoxRight: {},
-    dtLabel: {
-        fontSize: 11,
-        color: '#ABABAB',
-        marginBottom: 6,
-        fontWeight: '500',
-    },
-    dtValue: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#284B7A',
-    },
-
-    // FIELD SECTIONS (Jenjang, Mapel, Materi)
-    fieldSection: {
-        marginHorizontal: 24,
-        marginBottom: 14,
-    },
-    fieldLabel: {
-        fontSize: 13,
-        color: '#333',
-        fontWeight: '600',
-        marginBottom: 8,
-    },
-    fieldBox: {
-        borderWidth: 1,
-        borderColor: '#E8EEF6',
-        borderRadius: 12,
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        backgroundColor: '#FAFBFD',
-        alignItems: 'center',
-    },
-    fieldValue: {
-        fontSize: 14,
-        color: '#444',
-        fontWeight: '500',
-    },
-
-    // MAP
-    mapContainer: {
-        marginHorizontal: 24,
-        marginBottom: 0,
-        borderRadius: 14,
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: '#E8EEF6',
-    },
-    mapPlaceholder: {
-        height: 160,
-        backgroundColor: '#E8F0E9',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    mapPlaceholderText: {
-        fontSize: 20,
-        marginBottom: 6,
-    },
-    mapPlaceholderSub: {
-        fontSize: 12,
-        color: '#666',
-        textAlign: 'center',
-        paddingHorizontal: 20,
-    },
-
-    // LOKASI ROW
-    lokasiRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginHorizontal: 24,
-        marginTop: 0,
-        marginBottom: 20,
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        backgroundColor: '#FFF',
-        borderWidth: 1,
-        borderTopWidth: 0,
-        borderColor: '#E8EEF6',
-        borderBottomLeftRadius: 14,
-        borderBottomRightRadius: 14,
-    },
-    lokasiIconWrap: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#EBF0F8',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
+    badge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, marginTop: 6 },
+    badgeText: { fontSize: 11, fontWeight: '700' },
+    dateTimeRow: { flexDirection: 'row', marginHorizontal: 24, marginBottom: 20, gap: 12 },
+    dateTimeBox: { flex: 1, borderWidth: 1, borderColor: '#E8EEF6', borderRadius: 12, padding: 14, backgroundColor: '#F8FAFC' },
+    dtLabel: { fontSize: 11, color: '#ABABAB', marginBottom: 6, fontWeight: '500' },
+    dtValue: { fontSize: 14, fontWeight: 'bold', color: '#284B7A' },
+    fieldSection: { marginHorizontal: 24, marginBottom: 14 },
+    fieldLabel: { fontSize: 13, color: '#333', fontWeight: '600', marginBottom: 8 },
+    fieldBox: { borderWidth: 1, borderColor: '#E8EEF6', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#FAFBFD', alignItems: 'center' },
+    fieldValue: { fontSize: 14, color: '#444', fontWeight: '500' },
+    mapContainer: { marginHorizontal: 24, marginBottom: 0, borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: '#E8EEF6' },
+    mapPlaceholder: { height: 160, backgroundColor: '#E8F0E9', justifyContent: 'center', alignItems: 'center' },
+    mapPlaceholderText: { fontSize: 20, marginBottom: 6 },
+    mapPlaceholderSub: { fontSize: 12, color: '#666', textAlign: 'center', paddingHorizontal: 20 },
+    lokasiRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 24, marginTop: 0, marginBottom: 20, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#FFF', borderWidth: 1, borderTopWidth: 0, borderColor: '#E8EEF6', borderBottomLeftRadius: 14, borderBottomRightRadius: 14 },
+    lokasiIconWrap: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#EBF0F8', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
     lokasiInfo: { flex: 1 },
     lokasiTitle: { fontSize: 13, fontWeight: 'bold', color: '#000', marginBottom: 2 },
     lokasiAlamat: { fontSize: 12, color: '#666' },
-
-    // RINCIAN BAYARAN
-    rincianCard: {
-        marginHorizontal: 24,
-        marginBottom: 16,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: '#E8EEF6',
-        padding: 18,
-        backgroundColor: '#FFF',
-    },
-    rincianTitle: {
-        fontSize: 15,
-        fontWeight: 'bold',
-        color: '#000',
-        marginBottom: 14,
-    },
-    rincianRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
+    rincianCard: { marginHorizontal: 24, marginBottom: 16, borderRadius: 14, borderWidth: 1, borderColor: '#E8EEF6', padding: 18, backgroundColor: '#FFF' },
+    rincianTitle: { fontSize: 15, fontWeight: 'bold', color: '#000', marginBottom: 14 },
+    rincianRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
     rincianLabel: { fontSize: 13, color: '#555' },
     rincianValue: { fontSize: 13, color: '#333', fontWeight: '500' },
-    rincianDivider: {
-        height: 1,
-        backgroundColor: '#F0F0F0',
-        marginVertical: 10,
-    },
-    totalRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
+    rincianDivider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: 10 },
+    totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     totalLabel: { fontSize: 16, fontWeight: 'bold', color: '#000' },
     totalValue: { fontSize: 17, fontWeight: 'bold', color: '#000' },
-
-    // ACTION BAR BAWAH
-    actionBar: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        flexDirection: 'row',
-        paddingHorizontal: 24,
-        paddingBottom: 32,
-        paddingTop: 16,
-        backgroundColor: '#FFF',
-        borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
-        gap: 12,
-    },
-    btnTolak: {
-        flex: 1,
-        height: 50,
-        borderRadius: 14,
-        backgroundColor: '#E53935',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+    actionBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', paddingHorizontal: 24, paddingBottom: 32, paddingTop: 16, backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#F0F0F0', gap: 12 },
+    btnTolak: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#E53935', justifyContent: 'center', alignItems: 'center' },
     btnTolakText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
-    btnTerima: {
-        flex: 1,
-        height: 50,
-        borderRadius: 14,
-        backgroundColor: '#2A7A5E',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+    btnTerima: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center' },
     btnTerimaText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
+    btnDisabled: { opacity: 0.6 },
+    btnBatal: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#FFF', borderWidth: 1.5, borderColor: '#E53935', justifyContent: 'center', alignItems: 'center' },
+    btnBatalText: { color: '#E53935', fontWeight: 'bold', fontSize: 14 },
+    btnChat: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#284B7A', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+    btnChatText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
+    btnSelesaikan: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center' },
+    btnSelesaikanText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
 });
 
 export default DetailPermintaanGuruPage;
