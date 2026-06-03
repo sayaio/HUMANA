@@ -16,6 +16,7 @@ const materiController = require('./src/controllers/MateriController');
 router.get('/materi', materiController.getMateriBySubject);
 router.get('/materi/all', materiController.getAllMateri);
 router.get('/mapel', materiController.getAllMapel);
+router.post('/materi/guru', materiController.updateMateriGuru);
 
 const feedbackController = require('./src/controllers/feedbackController');
 router.post('/feedback', feedbackController.submitFeedback);
@@ -63,4 +64,11 @@ router.delete('/portfolio/:id_portfolio', portfolioController.hapusPortfolio);
 const { getPendapatan, getRiwayatPendapatan } = require('./src/controllers/pendapatanController');
 router.get('/pendapatan/:id_guru', getPendapatan);
 router.get('/pendapatan/:id_guru/riwayat', getRiwayatPendapatan);
+
+const { batalSesiController } = require('./src/controllers/batalSesiController');
+router.post('/pemesanan/batal', batalSesiController);
+
+const { getDetailPemesanan } = require('./src/controllers/detailPemesananController');
+router.get('/detailpemesanan/:id', getDetailPemesanan);
+
 module.exports = router;

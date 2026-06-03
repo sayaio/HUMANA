@@ -7,15 +7,19 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import { Home, Calendar, MessageSquare, User } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
-const LOGO_SOURCE = require('../assets/logo_humana.png');
+
+// Import Aset Gambar Lokal
+const ICON_BERANDA = require('../assets/beranda.png');
+const ICON_AKTIVITAS = require('../assets/aktivitas.png');
+const ICON_CHAT = require('../assets/chat.png');
+const ICON_PROFIL = require('../assets/profil.png');
+const LOGO_H = require('../assets/LOGOH.png'); // Aset baru untuk tombol tengah
 
 const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
   const role = userRole ? userRole.toLowerCase() : 'murid';
 
-  // Helper kondisi aktif yang spesifik dan akurat agar tidak saling tabrakan
   const isProfileActive = currentScreen === 'Profile' || currentScreen === 'ProfileGuru';
   const isActivityActive = currentScreen === 'Activity' || currentScreen === 'ActivityGuru';
 
@@ -26,9 +30,13 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
         style={styles.navBarItem}
         onPress={() => onNavigate && onNavigate('Home')}
       >
-        <Home
-          color={currentScreen === 'Home' ? '#284B7A' : '#A9A9A9'}
-          size={22}
+        <Image 
+          source={ICON_BERANDA} 
+          style={[
+            styles.navIcon, 
+            { tintColor: currentScreen === 'Home' ? '#284B7A' : '#A9A9A9' }
+          ]} 
+          resizeMode="contain"
         />
         <Text
           style={[
@@ -36,7 +44,7 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
             currentScreen === 'Home' && styles.activeLabel,
           ]}
         >
-          {role === 'guru' ? 'Home' : 'Beranda'}
+          Beranda
         </Text>
       </TouchableOpacity>
 
@@ -48,9 +56,13 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
           onNavigate(role === 'guru' ? 'ActivityGuru' : 'Activity', 'aktif')
         }
       >
-        <Calendar
-          color={isActivityActive ? '#284B7A' : '#A9A9A9'}
-          size={22}
+        <Image 
+          source={ICON_AKTIVITAS} 
+          style={[
+            styles.navIcon, 
+            { tintColor: isActivityActive ? '#284B7A' : '#A9A9A9' }
+          ]} 
+          resizeMode="contain"
         />
         <Text
           style={[
@@ -58,7 +70,7 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
             isActivityActive && styles.activeLabel,
           ]}
         >
-          {role === 'guru' ? 'Activity' : 'Aktivitas'}
+          Aktivitas
         </Text>
       </TouchableOpacity>
 
@@ -85,9 +97,13 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
         style={styles.navBarItem}
         onPress={() => onNavigate && onNavigate('Chat')}
       >
-        <MessageSquare
-          color={currentScreen === 'Chat' ? '#284B7A' : '#A9A9A9'}
-          size={22}
+        <Image 
+          source={ICON_CHAT} 
+          style={[
+            styles.navIcon, 
+            { tintColor: currentScreen === 'Chat' ? '#284B7A' : '#A9A9A9' }
+          ]} 
+          resizeMode="contain"
         />
         <Text
           style={[
@@ -106,9 +122,13 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
           onNavigate && onNavigate(role === 'guru' ? 'ProfileGuru' : 'Profile')
         }
       >
-        <User
-          color={isProfileActive ? '#284B7A' : '#A9A9A9'}
-          size={22}
+        <Image 
+          source={ICON_PROFIL} 
+          style={[
+            styles.navIcon, 
+            { tintColor: isProfileActive ? '#284B7A' : '#A9A9A9' }
+          ]} 
+          resizeMode="contain"
         />
         <Text
           style={[
@@ -116,24 +136,26 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
             isProfileActive && styles.activeLabel,
           ]}
         >
-          Profile
+          Profil
         </Text>
       </TouchableOpacity>
 
-      {/* FAB BUTTON (TOMBOL BULAT TENGAH) */}
-      <TouchableOpacity
-        style={styles.centerFabAbsolute}
-        onPress={() =>
-          onNavigate && onNavigate(role === 'guru' ? 'ActivityGuru' : 'PesanSesi')
-        }
-        activeOpacity={0.8}
-      >
-        <Image
-          source={LOGO_SOURCE}
-          style={styles.centerFabLogoIcon}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
+      {/* FAB BUTTON (TOMBOL BULAT TENGAH DENGAN LOGO H) */}
+      <View style={styles.centerFabWrapper}>
+        <TouchableOpacity
+          style={styles.centerFabAbsolute}
+          onPress={() =>
+            onNavigate && onNavigate(role === 'guru' ? 'ActivityGuru' : 'PesanSesi')
+          }
+          activeOpacity={0.8}
+        >
+          <Image
+            source={LOGO_H}
+            style={styles.centerFabLogoIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -159,12 +181,27 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
   },
+  navIcon: {
+    width: 25,
+    height: 25,
+  },
   navBarLabel: { fontSize: 10, color: '#A9A9A9', marginTop: 4 },
   activeLabel: { color: '#284B7A', fontWeight: 'bold' },
-  centerFabAbsolute: {
+  
+  // Wrapper untuk memberikan efek lingkaran putih di belakang tombol biru (sesuai gambar)
+  centerFabWrapper: {
     position: 'absolute',
-    left: width / 2 - 27,
-    top: -18,
+    left: width / 2 - 35,
+    top: -30,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#FFF', // Efek putih melengkung di belakang
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1001,
+  },
+  centerFabAbsolute: {
     width: 54,
     height: 54,
     borderRadius: 27,
@@ -177,7 +214,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
-  centerFabLogoIcon: { width: 24, height: 24, tintColor: '#FFF' },
+  centerFabLogoIcon: { 
+  width: 80, 
+  height: 150, 
+  tintColor: '#FFF',
+  marginLeft: 2.5,
+  marginTop: 3,
+},
 });
 
 export default BottomNavbar;
