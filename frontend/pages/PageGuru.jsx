@@ -81,7 +81,6 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
 
     const resultSesi = await fetchSesiDikonfirmasi(guruData.id);
     if (resultSesi && resultSesi.success && resultSesi.data) {
-      // Memastikan data yang disimpan berupa array agar bisa diloop/diwipe horizontal
       const raw = resultSesi.data;
       setSesiDikonfirmasi(Array.isArray(raw) ? raw : raw ? [raw] : []);
     } else {
@@ -245,7 +244,6 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
   const renderSessionItem = ({ item }) => {
     return (
       <View style={styles.sessionCard}>
-        {/* Bagian Atas: Label "SESI HARI INI" & Badge "• Segera" */}
         <View style={styles.cardHeaderRow}>
           <Text style={styles.cardLabel}>SESI HARI INI</Text>
           <View style={styles.badgeSegera}>
@@ -253,7 +251,6 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
           </View>
         </View>
 
-        {/* Bagian Tengah: Avatar Lingkaran Hitam & Detail Nama */}
         <View style={styles.profileRow}>
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarText}>
@@ -272,7 +269,6 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
           </View>
         </View>
 
-        {/* Bagian Bawah: Grid Waktu & Bayaran Sesuai Desain Gambar */}
         <View style={styles.detailGrid}>
           <View style={styles.gridCol2}>
             <Text style={styles.detailLabel}>Waktu</Text>
@@ -287,8 +283,6 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
             </Text>
           </View>
         </View>
-
-        {/* Action Buttons di bagian bawah kartu */}
       </View>
     );
   };
@@ -328,8 +322,8 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
     }
 
     const SIDE_PADDING = 20;
-    const cardWidth = windowWidth - 40; // Ukuran lebar card disamakan seperti homepage
-    const gapSize = 12; // Gap antar card saat digeser
+    const cardWidth = windowWidth - 40; 
+    const gapSize = 12; 
 
     return (
       <Animated.FlatList
@@ -378,7 +372,7 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
         {/* CONTAINER CAROUSEL SLIDER SESI DIKONFIRMASI */}
         <View style={{ marginTop: -50 }}>{renderSessionCard()}</View>
 
-        {/* GRID MENU BUTTONS */}
+        {/* GRID MENU BUTTONS DENGAN ICON ASSET GAMBAR BARU */}
         <View style={styles.menuGridContainer}>
           <View style={styles.menuRow}>
             <TouchableOpacity
@@ -386,34 +380,53 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject }) => {
               onPress={() => onNavigate && onNavigate('ActivityGuru')}
             >
               <View style={styles.iconContainer}>
-                <Calendar color="#2D6A61" size={28} />
+                <Image 
+                  source={require('../assets/kalender.png')} 
+                  style={styles.menuIconImage} 
+                  resizeMode="contain" 
+                />
               </View>
               <Text style={styles.menuButtonText}>Jadwal Saya</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.menuItemButton}
               onPress={() => setIsMateriVisible(true)}
             >
               <View style={styles.iconContainer}>
-                <BookOpen color="#2D6A61" size={28} />
+                <Image 
+                  source={require('../assets/materi.png')} 
+                  style={styles.menuIconImage} 
+                  resizeMode="contain" 
+                />
               </View>
               <Text style={styles.menuButtonText}>Materi</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.menuItemButton}
               onPress={() => onNavigate && onNavigate('Pendapatan')}
             >
               <View style={styles.iconContainer}>
-                <Wallet color="#2D6A61" size={28} />
+                <Image 
+                  source={require('../assets/pendapatan.png')} 
+                  style={styles.menuIconImage} 
+                  resizeMode="contain" 
+                />
               </View>
               <Text style={styles.menuButtonText}>Pendapatan</Text>
             </TouchableOpacity>
+            
             <TouchableOpacity
               style={styles.menuItemButton}
               onPress={() => onNavigate && onNavigate('ActivityGuru')}
             >
               <View style={styles.iconContainer}>
-                <MousePointerClick color="#2D6A61" size={28} />
+                <Image 
+                  source={require('../assets/permintaan.png')} 
+                  style={styles.menuIconImage} 
+                  resizeMode="contain" 
+                />
               </View>
               <Text style={styles.menuButtonText}>Permintaan</Text>
             </TouchableOpacity>
@@ -591,14 +604,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  /* ==========================================================================
-        SESSION CARD (carousel swipe) - Matching design image_40c294.png (COMPACT)
-       ========================================================================== */
   sessionCard: {
     backgroundColor: '#FFF',
-    borderRadius: 20, // Dikecilkan dari 28 ke 20 agar pas seperti HomePage[cite: 1]
-    padding: 14, // Sisi atas-bawah-kanan dikecilkan dari 22 ke 14[cite: 1]
-    paddingLeft: 20, // Sisi kiri disamakan 20 agar seimbang[cite: 1]
+    borderRadius: 20, 
+    padding: 14, 
+    paddingLeft: 20, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -621,19 +631,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4, // Dirapatkan dari 16 ke 8
+    marginBottom: 4, 
   },
   cardLabel: {
     fontFamily: FONTS.bold,
-    fontSize: 10, // Dikecilkan dari 11 ke 10[cite: 1]
+    fontSize: 10, 
     color: '#A9A9A9',
     letterSpacing: 1.2,
   },
   badgeSegera: {
     backgroundColor: '#A2E9B4',
-    paddingVertical: 4, // Dikecilkan dari 6 ke 4[cite: 1]
-    paddingHorizontal: 10, // Dikecilkan dari 14 ke 10[cite: 1]
-    borderRadius: 10, // Disesuaikan dari 20 ke 10[cite: 1]
+    paddingVertical: 4, 
+    paddingHorizontal: 10, 
+    borderRadius: 10, 
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -645,33 +655,33 @@ const styles = StyleSheet.create({
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 0, // Dirapatkan dari 18 ke 4 agar menempel manis ke bawah[cite: 1]
+    marginBottom: 0, 
   },
   avatarCircle: {
-    width: 44, // Ukuran lingkaran dikecilkan dari 56 ke 44[cite: 1]
-    height: 44, // Ukuran lingkaran dikecilkan dari 56 ke 44[cite: 1]
-    borderRadius: 22, // Setengah dari width/height[cite: 1]
-    backgroundColor: '#2C2C2C', // Hitam/gelap pekat sesuai gambar
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
+    backgroundColor: '#2C2C2C', 
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     color: '#FFF',
     fontFamily: FONTS.bold,
-    fontSize: 13, // Dikecilkan dari 16 ke 13[cite: 1]
+    fontSize: 13, 
   },
   profileInfo: {
     flex: 1,
-    marginLeft: 12, // Disesuaikan ruangnya dari 14 ke 12[cite: 1]
+    marginLeft: 12, 
   },
   studentName: {
-    fontSize: 15, // Nama murid dikecilkan dari 19 ke 15[cite: 1]
+    fontSize: 15, 
     fontFamily: FONTS.bold,
     color: '#000',
     marginBottom: 2,
   },
   subjectText: {
-    fontSize: 12, // Nama mapel dikecilkan dari 14 ke 12[cite: 1]
+    fontSize: 12, 
     fontFamily: FONTS.regular,
     color: '#777',
   },
@@ -683,13 +693,13 @@ const styles = StyleSheet.create({
   },
   gridCol2: { width: '45%' },
   detailLabel: {
-    fontSize: 10, // Diturunkan dari 13 ke 10[cite: 1]
+    fontSize: 10, 
     fontFamily: FONTS.regular,
     color: '#ABABAB',
     marginBottom: 4,
   },
   detailValue: {
-    fontSize: 13, // Diturunkan dari 16 ke 13[cite: 1]
+    fontSize: 13, 
     fontFamily: FONTS.bold,
     color: '#1A1A2E',
   },
@@ -700,7 +710,7 @@ const styles = StyleSheet.create({
   },
   btnAction: {
     flex: 1,
-    height: 42, // Tinggi tombol dipendekkan dari 44 ke 42[cite: 1]
+    height: 42, 
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -724,25 +734,28 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  /* ==========================================================================
-        MENU GRID, DIVIDER, & REQUEST CARDS SECTION
-       ========================================================================== */
   menuGridContainer: { paddingHorizontal: 24, marginTop: 24 },
   menuRow: { flexDirection: 'row', justifyContent: 'space-between' },
   menuItemButton: { alignItems: 'center', width: '22%' },
+  
   iconContainer: {
-    width: 56,
-    height: 56,
+    width: 65,
+    height: 65,
+    backgroundColor: '#3A7D6B', // Warna box seragam dengan HomePage[cite: 16]
     borderRadius: 16,
-    backgroundColor: '#E4F0EC',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
   },
+  menuIconImage: {
+    width: 35, // Ukuran ikon seragam dengan HomePage[cite: 16]
+    height: 35,
+    tintColor: '#FFF', 
+  },
   menuButtonText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: FONTS.bold,
-    color: '#222',
+    color: '#333',
     textAlign: 'center',
   },
   divider: { height: 6, backgroundColor: '#F0F2F5', marginTop: 24 },
@@ -756,7 +769,6 @@ const styles = StyleSheet.create({
   sectionTitleText: { fontSize: 14, fontFamily: FONTS.bold, color: '#888' },
   linkText: { fontSize: 14, fontFamily: FONTS.bold, color: '#3A7BD5' },
 
-  // Styling Request Cards (Permintaan Baru) di bawah
   requestCard: {
     backgroundColor: '#FFF',
     marginHorizontal: 24,
@@ -835,9 +847,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  /* ==========================================================================
-        MODAL & BOTTOM SHEET MATERI
-       ========================================================================== */
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',

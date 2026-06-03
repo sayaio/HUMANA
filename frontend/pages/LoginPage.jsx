@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   checkboxText: { fontSize: 13, color: '#666' },
   forgotPasswordText: { fontSize: 13, color: '#4285F4', fontFamily: 'SF-Pro-Display-Bold'},
   submitButton: {
-    backgroundColor: '#3A7D6B',
+    backgroundColor: '#3a7d6b',
     borderRadius: 25,
     height: height * 0.06,
     justifyContent: 'center',

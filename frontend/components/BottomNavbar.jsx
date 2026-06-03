@@ -36,7 +36,7 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
             currentScreen === 'Home' && styles.activeLabel,
           ]}
         >
-          {role === 'guru' ? 'Home' : 'Beranda'}
+          {role === 'guru' ? 'Beranda' : 'Beranda'}
         </Text>
       </TouchableOpacity>
 
@@ -58,7 +58,7 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
             isActivityActive && styles.activeLabel,
           ]}
         >
-          {role === 'guru' ? 'Activity' : 'Aktivitas'}
+          {role === 'guru' ? 'Aktivitas' : 'Aktivitas'}
         </Text>
       </TouchableOpacity>
 
@@ -116,7 +116,7 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
             isProfileActive && styles.activeLabel,
           ]}
         >
-          Profile
+          Profil
         </Text>
       </TouchableOpacity>
 
