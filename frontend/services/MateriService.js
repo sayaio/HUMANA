@@ -26,6 +26,32 @@ export const fetchMateriBySubject = async (id_mapel) => {
  * Fetch semua mata pelajaran dari database
  * @returns {Promise<Array>} - Array of { id_mapel, nama_mapel }
  */
+/**
+ * Fetch mata pelajaran yang sesuai jenjang murid (SD / SMP / SMA).
+ */
+export const fetchMapelByJenjang = async jenjang => {
+  if (!jenjang) return fetchAllMapel();
+
+  const response = await fetch(
+    `${API_URL}/pemesanan/mapel?jenjang=${encodeURIComponent(jenjang)}`,
+  );
+
+  if (!response.ok) {
+    throw new Error(`Gagal mengambil mapel jenjang: ${response.status}`);
+  }
+
+  const json = await response.json();
+  if (!json.success) {
+    throw new Error(json.message || 'Gagal mengambil mata pelajaran.');
+  }
+
+  const rows = Array.isArray(json.data) ? json.data : [];
+  return rows.map(row => ({
+    id_mapel: row.id ?? row.id_mapel,
+    nama_mapel: row.namaMapel ?? row.nama_mapel,
+  }));
+};
+
 export const fetchAllMapel = async () => {
   const response = await fetch(`${API_URL}/mapel`);
 

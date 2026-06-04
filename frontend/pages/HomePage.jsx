@@ -8,6 +8,11 @@ import CustomAlert from '../components/CustomAlert';
 import BottomNavbar from '../components/BottomNavbar';
 import { fetchAllMapel } from '../services/MateriService';
 import { getActiveSchedule } from '../services/historyService';
+import {
+    getMateriTerfavoritMurid,
+    getRekomendasiMateriAcakList,
+    formatJenjangTampilan,
+} from '../services/homeService';
 
 
 import { Calendar, BookOpen, Wallet, FileText, Search, MessageSquare, User, Home } from 'lucide-react-native';
@@ -38,7 +43,8 @@ const formatRupiah = (angka) => {
 
 const HomePage = ({
     namaLengkap, email, onLogout, onSelectSubject,
-    onNavigate, showSuccessAlert, onAlertClose, userId, userRole
+    onNavigate, onPesanSesiPrefill, onLihatDetailMateri,
+    jenjangMurid, showSuccessAlert, onAlertClose, userId, userRole
 }) => {
     const role = userRole ? userRole.toLowerCase() : 'murid';
 
@@ -48,6 +54,9 @@ const HomePage = ({
     const [loadingMapel, setLoadingMapel] = useState(false);
     const [activeSessions, setActiveSessions] = useState([]);
     const [loadingSessions, setLoadingSessions] = useState(false);
+    const [materiFavorit, setMateriFavorit] = useState(null);
+    const [rekomendasiList, setRekomendasiList] = useState([]);
+    const [loadingMateriRekom, setLoadingMateriRekom] = useState(false);
     const [alertConfig, setAlertConfig] = useState({
         visible: false, type: 'success', title: '', message: ''
     });
@@ -117,6 +126,36 @@ const HomePage = ({
         };
         load();
     }, [userId, userRole]);
+
+    useEffect(() => {
+        if (role !== 'murid' || !userId) return;
+
+        let aktif = true;
+        const muatMateriRekom = async () => {
+            setLoadingMateriRekom(true);
+            try {
+                const [favorit, rekomendasi] = await Promise.all([
+                    getMateriTerfavoritMurid(userId),
+                    getRekomendasiMateriAcakList(5, jenjangMurid),
+                ]);
+                if (!aktif) return;
+
+                setMateriFavorit(favorit);
+                setRekomendasiList(Array.isArray(rekomendasi) ? rekomendasi : []);
+            } catch (err) {
+                console.error('[HomePage] Gagal muat materi rekom:', err);
+                if (aktif) {
+                    setMateriFavorit(null);
+                    setRekomendasiList([]);
+                }
+            } finally {
+                if (aktif) setLoadingMateriRekom(false);
+            }
+        };
+
+        muatMateriRekom();
+        return () => { aktif = false; };
+    }, [userId, role, jenjangMurid]);
 
     useEffect(() => {
         if (showSuccessAlert) {
@@ -278,6 +317,7 @@ const HomePage = ({
 
         return (
             <Animated.FlatList
+                nestedScrollEnabled
                 data={activeSessions}
                 // Kirimkan lebar card yang baru ke renderItem secara inline jika diperlukan, 
                 // atau pastikan di renderSessionItem menggunakan `width: width - 40`
@@ -313,56 +353,46 @@ const HomePage = ({
         <View style={styles.homeContainer}>
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-            {/* ══════════════════════════════════════════════════════════════ */}
-            {/* BAGIAN ATAS — TIDAK IKUT SCROLL                               */}
-            {/* ══════════════════════════════════════════════════════════════ */}
-            <View>
-                {/* Header Background */}
-                <View style={styles.headerBackground}>
-                    <Image source={LOGO_SOURCE} style={styles.headerWatermark} resizeMode="contain" />
-                </View>
-
-                {/* Greeting */}
-                <View style={styles.greetingContainer}>
-                    <Text style={styles.greetingLabel}>
-                        {role === 'guru' ? 'Halo,' : 'Selamat datang,'}
-                    </Text>
-                    <Text style={styles.greetingName}>{namaLengkap}</Text>
-                </View>
-
-                {/* Card Sesi Hari Ini */}
-                <View >
-                    {renderSessionCard()}
-                </View>
-
-                {/* Menu Grid */}
-                <View style={styles.menuGrid}>
-                    {role === 'guru' ? (
-                        <>
-                            <MenuItem icon={<Calendar color="#FFF" size={22} />} label="Jadwal Saya" onPress={() => onNavigate?.('Activity', 'aktif')} />
-                            <MenuItem icon={<BookOpen color="#FFF" size={22} />} label="Materi" onPress={() => setIsMateriVisible(true)} />
-                            <MenuItem icon={<Wallet color="#FFF" size={22} />} label="Pendapatan" />
-                            <MenuItem icon={<FileText color="#FFF" size={22} />} label="Permintaan" />
-                        </>
-                    ) : (
-                        <>
-                            <MenuItem icon={<Image source={require('../assets/pesansesi.png')} style={{ width: 37, height: 40, tintColor: '#FFF' }} />} label="Pesan Sesi" onPress={() => onNavigate?.('PesanSesi')} />
-                            <MenuItem icon={<Image source={require('../assets/materi.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Materi" onPress={() => setIsMateriVisible(true)} />
-                            <MenuItem icon={<Image source={require('../assets/kalender.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Jadwal Saya" onPress={() => onNavigate?.('Activity', 'aktif')} />
-                        </>
-                    )}
-                </View>
-
-                <View style={styles.divider} />
-            </View>
-
-            {/* ══════════════════════════════════════════════════════════════ */}
-            {/* BAGIAN BAWAH — BISA DI-SCROLL                                 */}
-            {/* ══════════════════════════════════════════════════════════════ */}
             <ScrollView
+                style={styles.mainScroll}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 110 }}
+                contentContainerStyle={styles.scrollContent}
+                nestedScrollEnabled
             >
+                <View style={styles.headerSection}>
+                    <View style={styles.headerBackground}>
+                        <Image source={LOGO_SOURCE} style={styles.headerWatermark} resizeMode="contain" />
+                    </View>
+
+                    <View style={styles.greetingContainer}>
+                        <Text style={styles.greetingLabel}>
+                            {role === 'guru' ? 'Halo,' : 'Selamat datang,'}
+                        </Text>
+                        <Text style={styles.greetingName}>{namaLengkap}</Text>
+                    </View>
+
+                    <View>{renderSessionCard()}</View>
+
+                    <View style={styles.menuGrid}>
+                        {role === 'guru' ? (
+                            <>
+                                <MenuItem icon={<Calendar color="#FFF" size={22} />} label="Jadwal Saya" onPress={() => onNavigate?.('Activity', 'aktif')} />
+                                <MenuItem icon={<BookOpen color="#FFF" size={22} />} label="Materi" onPress={() => setIsMateriVisible(true)} />
+                                <MenuItem icon={<Wallet color="#FFF" size={22} />} label="Pendapatan" />
+                                <MenuItem icon={<FileText color="#FFF" size={22} />} label="Permintaan" />
+                            </>
+                        ) : (
+                            <>
+                                <MenuItem icon={<Image source={require('../assets/pesansesi.png')} style={{ width: 37, height: 40, tintColor: '#FFF' }} />} label="Pesan Sesi" onPress={() => onNavigate?.('PesanSesi')} />
+                                <MenuItem icon={<Image source={require('../assets/materi.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Materi" onPress={() => setIsMateriVisible(true)} />
+                                <MenuItem icon={<Image source={require('../assets/kalender.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Jadwal Saya" onPress={() => onNavigate?.('Activity', 'aktif')} />
+                            </>
+                        )}
+                    </View>
+
+                    <View style={styles.divider} />
+                </View>
+
                 {role === 'guru' ? (
                     <View style={styles.sectionPadding}>
                         <View style={styles.sectionHeader}>
@@ -408,43 +438,89 @@ const HomePage = ({
                     </View>
                 ) : (
                     <View style={styles.sectionPadding}>
-                        <Text style={styles.sectionTitle}>PESAN LAGI</Text>
-                        <View style={styles.pesanLagiCard}>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.pesanLagiSub}>Lanjutkan sesi favoritmu</Text>
-                                <Text style={styles.pesanLagiTitle} numberOfLines={2}>
-                                    <Text style={{ fontFamily: FONTS.bold }}>Matematika</Text> - Relasi & Fungsi
-                                </Text>
-                                <TouchableOpacity style={styles.pesanBtn} onPress={() => onNavigate?.('PesanSesi')}>
-                                    <Text style={styles.pesanBtnText}>Pesan Sesi →</Text>
-                                </TouchableOpacity>
+                        {loadingMateriRekom ? (
+                            <View style={[styles.centerContent, { paddingVertical: 32 }]}>
+                                <ActivityIndicator size="small" color="#284B7A" />
+                                <Text style={styles.loadingText}>Memuat rekomendasi...</Text>
                             </View>
-                            <View style={styles.pesanDecor}>
-                                <Text style={styles.mathSymbols}>+ ={"\n"}- x</Text>
-                            </View>
-                        </View>
+                        ) : (
+                            <>
+                                {materiFavorit ? (
+                                    <>
+                                        <Text style={styles.sectionTitle}>PESAN LAGI</Text>
+                                        <View style={styles.pesanLagiCard}>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.pesanLagiSub}>Lanjutkan sesi favoritmu</Text>
+                                                <Text style={styles.pesanLagiTitle} numberOfLines={2}>
+                                                    <Text style={{ fontFamily: FONTS.bold }}>
+                                                        {materiFavorit.nama_mapel}
+                                                    </Text>
+                                                    {' - '}{materiFavorit.nama_materi}
+                                                </Text>
+                                                <TouchableOpacity
+                                                    style={styles.pesanBtn}
+                                                    onPress={() => {
+                                                        if (materiFavorit.prefill && onPesanSesiPrefill) {
+                                                            onPesanSesiPrefill(materiFavorit.prefill);
+                                                        } else {
+                                                            onNavigate?.('PesanSesi');
+                                                        }
+                                                    }}
+                                                >
+                                                    <Text style={styles.pesanBtnText}>Pesan Sesi →</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            <View style={styles.pesanDecor}>
+                                                <Text style={styles.mathSymbols}>+ ={'\n'}- x</Text>
+                                            </View>
+                                        </View>
+                                    </>
+                                ) : null}
 
-                        <View style={[styles.sectionHeader, { marginTop: 28 }]}>
-                            <Text style={styles.sectionTitle}>REKOMENDASI MATERI</Text>
-                            <TouchableOpacity><Text style={styles.linkText}>Lihat Semua</Text></TouchableOpacity>
-                        </View>
-                        <View style={styles.rekomendasiCard}>
-                            <View style={styles.rekomendasiIcon}>
-                                <BookOpen color="#284B7A" size={22} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.rekomendasiTitle} numberOfLines={1}>Aljabar Linear</Text>
-                                <Text style={styles.rekomendasiSub} numberOfLines={1}>Sekolah Menengah Atas</Text>
-                            </View>
-                            <TouchableOpacity style={styles.btnPrimary} onPress={() => setIsMateriVisible(true)}>
-                                <Text style={styles.btnPrimaryText}>Lihat</Text>
-                            </TouchableOpacity>
-                        </View>
+                                <View style={[styles.sectionHeader, styles.sectionHeaderRekom, { marginTop: materiFavorit ? 28 : 0 }]}>
+                                    <Text style={[styles.sectionTitle, styles.sectionTitleCompact]}>REKOMENDASI MATERI</Text>
+                                    <TouchableOpacity onPress={() => setIsMateriVisible(true)}>
+                                        <Text style={styles.linkText}>Lihat Semua</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                {rekomendasiList.length > 0 ? (
+                                    rekomendasiList.map(item => (
+                                        <View key={item.id_materi} style={styles.rekomendasiCard}>
+                                            <View style={styles.rekomendasiIcon}>
+                                                <BookOpen color="#284B7A" size={22} />
+                                            </View>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.rekomendasiTitle} numberOfLines={1}>
+                                                    {item.nama_materi}
+                                                </Text>
+                                                <Text style={styles.rekomendasiSub} numberOfLines={1}>
+                                                    {formatJenjangTampilan(item.jenjang, item.jurusan) || item.nama_mapel}
+                                                </Text>
+                                            </View>
+                                            <TouchableOpacity
+                                                style={styles.btnLihatDetail}
+                                                onPress={() => {
+                                                    if (item.chapterData && onLihatDetailMateri) {
+                                                        onLihatDetailMateri(item.chapterData);
+                                                    }
+                                                }}
+                                                activeOpacity={0.7}
+                                            >
+                                                <Text style={styles.btnLihatDetailText}>Lihat Detail</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))
+                                ) : (
+                                    <Text style={styles.emptyRekomText}>Belum ada materi untuk ditampilkan.</Text>
+                                )}
+                            </>
+                        )}
                     </View>
                 )}
             </ScrollView>
 
-            {/* ── Bottom Navbar ─────────────────────────────────────────── */}
+            {/* Bottom Navbar */}
             <BottomNavbar
                 currentScreen="Home"
                 onNavigate={onNavigate}
@@ -506,6 +582,9 @@ const MenuItem = ({ icon, label, onPress }) => (
 
 const styles = StyleSheet.create({
     homeContainer: { flex: 1, backgroundColor: '#F5F7FA' },
+    mainScroll: { flex: 1 },
+    scrollContent: { paddingBottom: 110 },
+    headerSection: { position: 'relative', zIndex: 1 },
     sectionPadding: { paddingHorizontal: 20, marginBottom: 4 },
     centerContent: { justifyContent: 'center', alignItems: 'center' },
 
@@ -616,15 +695,17 @@ const styles = StyleSheet.create({
         height: 1,
         backgroundColor: '#EAEEF3',
         marginHorizontal: 20,
-        marginTop: 16,    // 👈 Atur jarak tipis antara teks menu dengan garis
-        marginBottom: 0   // 👈 Ubah jadi 0 supaya menempel langsung dengan area ScrollView di bawahnya
+        marginTop: 16,
+        marginBottom: 8,
     },
 
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+    sectionHeaderRekom: { marginBottom: 4 },
     sectionTitle: {
         fontFamily: 'SF-Pro-Display-Bold',
         fontSize: 11, color: '#ABABAB', letterSpacing: 1, marginBottom: 10,
     },
+    sectionTitleCompact: { marginBottom: 0 },
     linkText: { fontFamily: 'SF-Pro-Display-Bold', fontSize: 12, color: '#284B7A' },
 
     pesanLagiCard: {
@@ -651,8 +732,27 @@ const styles = StyleSheet.create({
     },
 
     rekomendasiCard: {
-        marginTop: 1, backgroundColor: '#FFF', borderRadius: 16, padding: 14,
-        flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#EAEEF3',
+        marginTop: 4,
+        marginBottom: 2,
+        backgroundColor: '#FFF',
+        borderRadius: 16,
+        padding: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#EAEEF3',
+    },
+    btnLihatDetail: {
+        backgroundColor: '#284B7A',
+        paddingHorizontal: 10,
+        paddingVertical: 7,
+        borderRadius: 8,
+        marginLeft: 8,
+    },
+    btnLihatDetailText: {
+        fontFamily: 'SF-Pro-Display-Bold',
+        color: '#FFF',
+        fontSize: 11,
     },
     rekomendasiIcon: {
         width: 44, height: 44, borderRadius: 12,
@@ -660,6 +760,14 @@ const styles = StyleSheet.create({
     },
     rekomendasiTitle: { fontFamily: 'SF-Pro-Display-Bold', fontSize: 14, color: '#1A1A2E', marginBottom: 2 },
     rekomendasiSub: { fontFamily: 'SF-Pro-Display-Regular', fontSize: 12, color: '#999' },
+    emptyRekomText: {
+        fontFamily: 'SF-Pro-Display-Regular',
+        fontSize: 13,
+        color: '#ABABAB',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        marginTop: 8,
+    },
 
     navbar: {
         position: 'absolute', bottom: 0, width: '100%', height: 72,

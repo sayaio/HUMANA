@@ -6,7 +6,6 @@ import {
     ScrollView,
     TouchableOpacity,
     StatusBar,
-    TextInput,
     Switch,
     Alert,
     Image,
@@ -114,24 +113,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
     const [portofolios, setPortofolios] = useState([]);
     const [materiDiajar, setMateriDiajar] = useState([]);
-
-    const [newJudul, setNewJudul] = useState('');
-    const [newDeskripsi, setNewDeskripsi] = useState('');
-    const [newTipe, setNewTipe] = useState('');
-    const [newBukti, setNewBukti] = useState('');
-    const [openTipe, setOpenTipe] = useState(false);
-    const [isAdding, setIsAdding] = useState(false);
-    const [newTanggalMulai, setNewTanggalMulai] = useState('');
-    const [newTanggalSelesai, setNewTanggalSelesai] = useState('');
     const [sesiHariIni, setSesiHariIni] = useState(0);
-
-    const tipeOptions = [
-        'Penghargaan',
-        'Pengalaman',
-        'Sertifikat',
-        'Karya',
-        'Pendidikan',
-    ];
 
     const loadSesiHariIni = useCallback(async () => {
         if (!idGuru) return;
@@ -155,42 +137,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
             console.log('Gagal load sesi hari ini:', error.message);
         }
     }, [idGuru]);
-
-    const handleAddPorto = async () => {
-        if (
-            !newJudul.trim() ||
-            !newDeskripsi.trim() ||
-            !newTipe ||
-            !newBukti.trim() ||
-            !newTanggalMulai.trim() ||
-            !newTanggalSelesai.trim()
-        ) {
-            Alert.alert('Error', 'Semua field wajib diisi!');
-            return;
-        }
-        try {
-            await portfolioService.tambahPortfolio({
-                id_guru: idGuru,
-                judul: newJudul,
-                deskripsi: newDeskripsi,
-                tipe_portfolio: newTipe,
-                bukti: newBukti,
-                tanggal_mulai: newTanggalMulai,
-                tanggal_selesai: newTanggalSelesai,
-            });
-            await loadPortofolios();
-            setNewJudul('');
-            setNewDeskripsi('');
-            setNewTipe('');
-            setNewBukti('');
-            setNewTanggalMulai('');
-            setNewTanggalSelesai('');
-            setIsAdding(false);
-            Alert.alert('Sukses', 'Portofolio berhasil ditambahkan!');
-        } catch (error) {
-            Alert.alert('Error', error.message);
-        }
-    };
 
     const handleDeletePorto = idPortfolio => {
         Alert.alert('Hapus Portofolio', 'Apakah Anda yakin?', [
@@ -313,8 +259,13 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
                 <View style={styles.dataPribadiHeaderRow}>
                     <Text style={styles.sectionTitleMain}>Data Pribadi</Text>
-                    <TouchableOpacity onPress={() => onNavigate('EditBasicProfile')}>
-                        <Edit2 size={18} color="#284B7A" />
+                    <TouchableOpacity
+                        style={styles.editMateriBtn}
+                        onPress={() => onNavigate('EditBasicProfile')}
+                        activeOpacity={0.7}
+                    >
+                        <Edit2 size={14} color="#284B7A" />
+                        <Text style={styles.editMateriBtnText}>Edit</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -377,126 +328,12 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                     </View>
                     <TouchableOpacity
                         style={styles.addPortoBtn}
-                        onPress={() => onNavigate('Portofolio')}
+                        onPress={() => onNavigate('Portfolio')}
                     >
                         <Plus size={14} color="#FFF" />
                         <Text style={styles.addPortoBtnText}>Tambah</Text>
                     </TouchableOpacity>
                 </View>
-
-                {isAdding && (
-                    <View style={styles.addPortoForm}>
-                        <Text style={styles.formTitle}>🗂️ Portofolio Pengajaran</Text>
-                        <Text style={styles.formLabel}>Judul Pengalaman / Sertifikat</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Contoh: Mengajar Fisika SMA 2 Tahun"
-                            value={newJudul}
-                            onChangeText={setNewJudul}
-                            placeholderTextColor="#999"
-                        />
-                        <Text style={styles.formLabel}>Deskripsi Singkat</Text>
-                        <TextInput
-                            style={[styles.input, styles.textArea]}
-                            placeholder="Tuliskan detail pencapaian atau sertifikasi Anda..."
-                            value={newDeskripsi}
-                            onChangeText={setNewDeskripsi}
-                            multiline
-                            numberOfLines={3}
-                            placeholderTextColor="#999"
-                        />
-                        <Text style={styles.formLabel}>Tipe Portofolio</Text>
-                        <TouchableOpacity
-                            style={[styles.input, styles.tipeSelector]}
-                            onPress={() => setOpenTipe(!openTipe)}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={
-                                    newTipe ? styles.tipeSelectorText : styles.tipePlaceholder
-                                }
-                            >
-                                {newTipe || 'Pilih tipe portofolio'}
-                            </Text>
-                            <Text style={styles.chevron}>{openTipe ? '▲' : '▼'}</Text>
-                        </TouchableOpacity>
-
-                        {openTipe && (
-                            <View style={styles.tipeDropdown}>
-                                {tipeOptions.map(item => (
-                                    <TouchableOpacity
-                                        key={item}
-                                        style={[
-                                            styles.tipeItem,
-                                            newTipe === item && styles.tipeItemActive,
-                                        ]}
-                                        onPress={() => {
-                                            setNewTipe(item);
-                                            setOpenTipe(false);
-                                        }}
-                                        activeOpacity={0.7}
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.tipeItemText,
-                                                newTipe === item && styles.tipeItemTextActive,
-                                            ]}
-                                        >
-                                            {item}
-                                        </Text>
-                                        {newTipe === item && (
-                                            <Text style={styles.tipeCheckmark}>✓</Text>
-                                        )}
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        )}
-
-                        <Text style={styles.formLabel}>Link Bukti</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="https://drive.google.com/..."
-                            value={newBukti}
-                            onChangeText={setNewBukti}
-                            keyboardType="url"
-                            autoCapitalize="none"
-                            placeholderTextColor="#999"
-                        />
-                        <Text style={styles.formLabel}>Tanggal Mulai</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="YYYY-MM-DD  (contoh: 2022-01-15)"
-                            value={newTanggalMulai}
-                            onChangeText={setNewTanggalMulai}
-                            keyboardType="numbers-and-punctuation"
-                            placeholderTextColor="#999"
-                        />
-                        <Text style={styles.formLabel}>Tanggal Selesai</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="YYYY-MM-DD  (contoh: 2023-06-30)"
-                            value={newTanggalSelesai}
-                            onChangeText={setNewTanggalSelesai}
-                            keyboardType="numbers-and-punctuation"
-                            placeholderTextColor="#999"
-                        />
-
-                        <View style={styles.formActions}>
-                            <TouchableOpacity
-                                style={styles.cancelBtn}
-                                onPress={() => {
-                                    setIsAdding(false);
-                                    setOpenTipe(false);
-                                }}
-                            >
-                                <Text style={styles.cancelBtnText}>Batal</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.saveBtn} onPress={handleAddPorto}>
-                                <Text style={styles.saveBtnText}>Simpan</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                )}
 
                 <View style={styles.portoListWrapper}>
                     {portofolios.map(item => (
@@ -715,85 +552,6 @@ const styles = StyleSheet.create({
         marginRight: 8,
     },
     portoDesc: { fontSize: 13, color: '#555', marginTop: 6, lineHeight: 18 },
-    addPortoForm: {
-        backgroundColor: '#F8FAFC',
-        marginHorizontal: 24,
-        padding: 16,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: '#E2E8F0',
-        marginBottom: 16,
-    },
-    formLabel: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: '#4A5568',
-        marginBottom: 6,
-    },
-    input: {
-        backgroundColor: '#FFF',
-        borderWidth: 1,
-        borderColor: '#CBD5E1',
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        fontSize: 14,
-        marginBottom: 12,
-        color: '#333',
-    },
-    textArea: { height: 65, textAlignVertical: 'top' },
-    formActions: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-    },
-    cancelBtn: { paddingHorizontal: 14, paddingVertical: 8, marginRight: 8 },
-    cancelBtnText: { color: '#64748B', fontWeight: 'bold', fontSize: 14 },
-    saveBtn: {
-        backgroundColor: '#284B7A',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 8,
-    },
-    saveBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
-    formTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#1A1A2E',
-        marginBottom: 14,
-    },
-    tipeSelector: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 0,
-    },
-    tipeSelectorText: { fontSize: 14, color: '#333' },
-    tipePlaceholder: { fontSize: 14, color: '#999' },
-    chevron: { fontSize: 11, color: '#999' },
-    tipeDropdown: {
-        backgroundColor: '#FFF',
-        borderWidth: 1,
-        borderTopWidth: 0,
-        borderColor: '#284B7A',
-        borderBottomLeftRadius: 8,
-        borderBottomRightRadius: 8,
-        marginBottom: 12,
-        overflow: 'hidden',
-    },
-    tipeItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F2F5',
-    },
-    tipeItemActive: { backgroundColor: '#EBF0F8' },
-    tipeItemText: { fontSize: 14, color: '#333' },
-    tipeItemTextActive: { fontWeight: 'bold', color: '#284B7A' },
-    tipeCheckmark: { fontSize: 13, color: '#284B7A', fontWeight: 'bold' },
 });
 
 export default ProfileGuruPage;

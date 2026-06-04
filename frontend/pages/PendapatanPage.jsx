@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   StatusBar,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { ArrowLeft, Bell } from 'lucide-react-native';
 import { fetchPendapatan } from '../services/pendapatanService';
@@ -19,14 +20,14 @@ const FONTS = {
 };
 
 const SUBJECT_ICONS = {
-  Matematika: '⊞',
-  Informatika: '⊟',
-  Biologi: '⊕',
-  Kimia: '⊗',
-  Fisika: '⊘',
-  Sejarah: '⊙',
-  Sosiologi: '⊚',
-  'Bahasa Inggris': '⊛',
+  Matematika: require('../assets/matematika.png'),
+  Informatika: require('../assets/informatika.png'),
+  Biologi: require('../assets/biologi.png'),
+  Kimia: require('../assets/kimia.png'),
+  Fisika: require('../assets/fisika.png'),
+  Sejarah: require('../assets/sejarah.png'),
+  Sosiologi: require('../assets/sosiologi.png'),
+  'Bahasa Inggris': require('../assets/inggris.png'),
 };
 
 const formatRupiah = angka => {
@@ -69,16 +70,16 @@ const PendapatanPage = ({ guruData, onNavigate }) => {
 
       {/* Header */}
       <View style={styles.header}>
+        {/* ✅ DIUBAH: Menggunakan format tombol kembali dengan tulisan teks */}
         <TouchableOpacity
           onPress={() => onNavigate?.('HomeGuru')}
-          style={styles.backBtn}
+          style={styles.backBtnWrapper}
         >
-          <ArrowLeft size={22} color="#1A1A2E" />
+          <Text style={styles.headerBack}>❮ Kembali</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pendapatan</Text>
-        <TouchableOpacity style={styles.backBtn}>
-          <Bell size={22} color="#1A1A2E" />
-        </TouchableOpacity>
+        {/* ✅ DIUBAH: Tombol bel di sebelah kanan dihapus sepenuhnya */}
+        <View style={{ width: 80 }} />
       </View>
 
       {loading ? (
@@ -128,9 +129,16 @@ const PendapatanPage = ({ guruData, onNavigate }) => {
               <View key={item.id_pemesanan || index} style={styles.riwayatCard}>
                 {/* Icon Mapel */}
                 <View style={styles.iconBox}>
-                  <Text style={styles.iconText}>
-                    {SUBJECT_ICONS[item.nama_mapel] || '⊞'}
-                  </Text>
+                  {/* ✅ DIUBAH: Icon sekarang menggunakan file Image dari assets */}
+                  {SUBJECT_ICONS[item.nama_mapel] ? (
+                    <Image 
+                      source={SUBJECT_ICONS[item.nama_mapel]} 
+                      style={styles.mapelIconImage} 
+                      resizeMode="contain" 
+                    />
+                  ) : (
+                    <Text style={styles.iconText}>⊞</Text>
+                  )}
                 </View>
 
                 {/* Info */}
@@ -185,11 +193,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EAEEF3',
   },
-  backBtn: {
-    width: 36,
-    height: 36,
+  backBtnWrapper: {
+    width: 80,
     justifyContent: 'center',
-    alignItems: 'center',
+  },
+  headerBack: { 
+    fontSize: 14, 
+    color: '#333', 
+    fontWeight: '600',
   },
   headerTitle: { fontFamily: FONTS.bold, fontSize: 18, color: '#1A1A2E' },
 
@@ -271,6 +282,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+  },
+  mapelIconImage: {
+    width: 32,
+    height: 32,
   },
   iconText: { fontSize: 20 },
   riwayatInfo: { flex: 1 },

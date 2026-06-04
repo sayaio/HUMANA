@@ -86,7 +86,7 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
     return filtered.map((materi) => (
       <View key={materi.id || Math.random()} style={styles.card}>
         <View style={styles.cardIconBox}>
-          <Image source={LOGO_SOURCE} style={styles.cardIcon} resizeMode="contain" />
+          <Image source={require('../assets/daftarmateri.png')} style={styles.cardIcon} resizeMode="contain" />
         </View>
         <View style={styles.cardTextContainer}>
           <Text style={styles.cardTitle}>{materi.namaMateri}</Text>
@@ -96,7 +96,6 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
         </View>
         <TouchableOpacity
           style={styles.lihatBtn}
-          // PENTING: Kita kirim seluruh object "materi" ke App.jsx
           onPress={() => onChapterSelect(materi)}
         >
           <Text style={styles.lihatBtnText}>Lihat</Text>
@@ -109,13 +108,16 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#284B7A" translucent={false} />
 
+      {/* FIXED NAVIGATION HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
           <BackIconSvg size={10} color="#ffffff" />
           <Text style={styles.backText}>Kembali</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{subjectName}</Text>
-        <View style={{ width: 40 }} />
+        
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>{subjectName}</Text>
+        </View>
       </View>
 
       <View style={styles.contentContainer}>
@@ -132,7 +134,12 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-          <Text style={{ fontSize: 16, color: '#A9A9A9' }}>🔍</Text>
+          {/* ✅ DIUBAH: Menggunakan Image assets/mencari_icon.png pengganti emoji 🔍 */}
+          <Image 
+            source={require('../assets/mencari_icon.png')} 
+            style={styles.searchIconImage} 
+            resizeMode="contain"
+          />
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 50 }}>
@@ -146,29 +153,49 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#284B7A' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 45, paddingBottom: 30, paddingHorizontal: 20 },
+  header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingTop: 55, 
+    paddingBottom: 25, 
+    paddingHorizontal: 20,
+    position: 'relative', 
+  },
   backBtn: {
-    flexDirection: 'row',    // Membuat ikon dan teks berjejer ke samping
-    alignItems: 'center',    // Membuat ikon dan teks lurus sejajar secara vertikal
+    flexDirection: 'row',    
+    alignItems: 'center',    
     paddingVertical: 5,
     paddingHorizontal: 5,
+    zIndex: 10, 
   },
   backText: {
-    fontSize: 15,            // Ukuran teks 'Kembali'
-    color: '#ffffff',        // Warna teks hitam disamakan dengan ikon
-    marginLeft: 6,           // Memberikan jarak antara ikon panah dan teks
-    fontFamily: 'SF-Pro-Display-Bold',       // Membuat teks sedikit lebih tegas (opsional)
+    fontSize: 15,            
+    color: '#ffffff',        
+    marginLeft: 6,           
+    fontFamily: 'SF-Pro-Display-Bold',       
   },
   backIcon: { fontSize: 24, color: '#FFF', fontWeight: 'bold' },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
+  headerTitleContainer: {
+    position: 'absolute',
+    left: 80,
+    right: 80,
+    top: 55,
+    bottom: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF', textAlign: 'center' },
   contentContainer: { flex: 1, backgroundColor: '#FAFAFA', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 20, paddingTop: 25 },
   contentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   contentTitle: { fontSize: 18, color: '#333' },
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#EEE', borderRadius: 12, paddingHorizontal: 15, height: 50, marginBottom: 20 },
   searchInput: { flex: 1, height: '100%', color: '#333' },
+  // ✅ TAMBAHAN: Style khusus ukuran image icon search agar pas di dalam text input bar
+  searchIconImage: { width: 18, height: 18, tintColor: '#A9A9A9' },
   card: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 15, padding: 15, alignItems: 'center', marginBottom: 15, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 },
   cardIconBox: { width: 50, height: 50, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-  cardIcon: { width: 35, height: 35, tintColor: '#333' },
+  cardIcon: { width: 35, height: 35 },
   cardTextContainer: { flex: 1, paddingRight: 10 },
   cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 3 },
   cardSubtitle: { fontSize: 11, color: '#888', lineHeight: 14 },
@@ -182,4 +209,3 @@ const styles = StyleSheet.create({
 });
 
 export default MateriPage;
-//arkan

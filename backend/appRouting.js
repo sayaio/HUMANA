@@ -34,6 +34,7 @@ router.get('/sesi/detail/:id', bankerController.getSesiDetail);
 router.put('/sesi/bayar-simulasi', bankerController.bayarSimulasi);
 router.post('/sesi/proses-midtrans', bankerController.prosesPembayaranMidtrans);
 router.post('/sesi/proses-cod', bankerController.prosesPembayaranCod);
+router.get('/sesi/status-pembayaran/:id_pemesanan', bankerController.getStatusPembayaran);
 
 const webhookController = require('./src/controllers/webhookController');
 router.post('/webhook/midtrans', webhookController.handleMidtrans);

@@ -6,11 +6,12 @@ import {
   TouchableOpacity,
   StatusBar,
   ScrollView,
-  Image,
   ActivityIndicator,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview'; // 1. Import WebView di sini
 import BackIconSvg from '../components/BackIconSvg';
 import CustomAlert from '../components/CustomAlert';
 import { batalkanSesi } from '../services/batalSesiService';
@@ -19,8 +20,8 @@ import { pemesananService } from '../services/pemesananService';
 const { width, height } = Dimensions.get('window');
 
 const DetailSesiAktifPage = ({ onBack, sessionData }) => {
+  console.log('DATA DARI BACKEND:', JSON.stringify(sessionData, null, 2));
   const [isCanceling, setIsCanceling] = useState(false);
-
   const idPemesanan = sessionData?.id_pemesanan;
 
   const [alertVisible, setAlertVisible] = useState(false);
@@ -31,8 +32,29 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
     message: '',
     isConfirmation: false,
   });
+  const [alamatLengkap, setAlamatLengkap] = useState('Memuat alamat...');
 
-  // Deteksi jika GURU membatalkan sesi ini (kasus 4) selagi murid membuka halaman.
+  useEffect(() => {
+    const fetchAlamat = async () => {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitudeSesi}&lon=${longitudeSesi}&format=json`,
+          { headers: { 'User-Agent': 'HumanaApp/1.0' } },
+        );
+        const data = await response.json();
+        if (data && data.display_name) {
+          setAlamatLengkap(data.display_name);
+        } else {
+          setAlamatLengkap(`${latitudeSesi}, ${longitudeSesi}`);
+        }
+      } catch (err) {
+        setAlamatLengkap(`${latitudeSesi}, ${longitudeSesi}`);
+      }
+    };
+    fetchAlamat();
+  }, [latitudeSesi, longitudeSesi]);
+
+  // Deteksi jika GURU membatalkan sesi
   useEffect(() => {
     if (!idPemesanan) return;
     const interval = setInterval(async () => {
@@ -43,15 +65,14 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
           setAlertConfig({
             type: 'gagal',
             title: 'Sesi Dibatalkan Guru',
-            message: 'Guru membatalkan sesi ini. Dana kamu dikembalikan (refund).',
+            message:
+              'Guru membatalkan sesi ini. Dana kamu dikembalikan (refund).',
             isConfirmation: false,
           });
           setNavigateOnClose(true);
           setAlertVisible(true);
         }
-      } catch (e) {
-        // Diamkan error polling; biarkan interval berikutnya mencoba lagi.
-      }
+      } catch (e) {}
     }, 4000);
     return () => clearInterval(interval);
   }, [idPemesanan]);
@@ -90,37 +111,101 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
   // ==========================================
   // PEMETAAN VARIABEL DATA DARI SESSIONDATA
   // ==========================================
-  const namaMapel = sessionData?.mata_pelajaran?.nama_mapel || sessionData?.nama_mapel || 'Matematika';
-  const namaMateri = sessionData?.nama_materi || sessionData?.materi?.nama_materi || 'Aljabar Dasar';
-  const jenjangKelas = sessionData?.jenjang || '12 SMA – IPA';
-  const lokasiAlamat = sessionData?.lokasi || sessionData?.alamat || 'Jl. Telekomunikasi No.1, Sukapura.';
-  const tipeLokasi = sessionData?.tipe_lokasi || 'Sekolah';
+  const namaMapel = sessionData?.nama_mapel || 'Matematika';
+  const namaMateri = sessionData?.nama_materi || 'Aljabar Dasar';
 
-  // --- PARSING DATA TANGGAL ---
+  // Menyesuaikan dengan kelas_murid dari backend (contoh hasil: "Kelas 11")
+  const jenjangKelas = sessionData?.kelas_murid
+    ? `Kelas ${sessionData.kelas_murid}`
+    : '12 SMA – IPA';
+
+  const tipeLokasi = 'Lokasi Pertemuan';
+  // Karena tidak ada teks alamat jalan dari backend, kita tampilkan koordinatnya sebagai teks
+  const lokasiAlamat = sessionData?.lokasi_sesi
+    ? `Koordinat Sesi: ${sessionData.lokasi_sesi}`
+    : 'Jl. Telekomunikasi No.1, Sukapura.';
+
+  // ─── LOGIKA BARU: MEMECAH STRING KOORDINAT DARI BACKEND ───
+  let latitudeSesi = '-6.9744'; // default cadangan
+  let longitudeSesi = '107.6303'; // default cadangan
+
+  if (sessionData?.lokasi_sesi) {
+    const koordinatArray = sessionData.lokasi_sesi.split(','); // Memisahkan lat dan lng berdasarkan tanda koma
+    if (koordinatArray.length === 2) {
+      latitudeSesi = koordinatArray[0].trim(); // Mengambil angka depan (-6.97105)
+      longitudeSesi = koordinatArray[1].trim(); // Mengambil angka belakang (107.64674)
+    }
+  }
+  // ─────────────────────────────────────────────────────────
+  const bukaGoogleMapsEksternal = () => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${latitudeSesi},${longitudeSesi}`;
+    Linking.openURL(url).catch(err =>
+      console.error('Gagal membuka Google Maps:', err),
+    );
+  };
+
+  // 2. TEMPLATE HTML UNTUK MAPS GRATIS (LEAFLET + OPENSTREETMAP)
+  const mapHtmlTemplate = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100vw; }
+      </style>
+    </head>
+    <body>
+      <div id="map"></div>
+      <script>
+        // Inisialisasi map berdasarkan koordinat dinamis dari react native
+        var map = L.map('map', { zoomControl: false }).setView([${latitudeSesi}, ${longitudeSesi}], 15);
+        
+        // Load gambar peta dari server OpenStreetMap gratis
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Tambahkan marker pin merah di lokasi
+        L.marker([${latitudeSesi}, ${longitudeSesi}]).addTo(map);
+      </script>
+    </body>
+    </html>
+  `;
+
   const formatTanggalFigma = () => {
     const rawTanggal = sessionData?.tanggal || sessionData?.waktu_mulai;
     if (!rawTanggal) return '12 Juni 2023';
-
     try {
       const tglOnly = rawTanggal.toString().substring(0, 10);
       const tglParts = tglOnly.split('-');
       if (tglParts.length === 3) {
         const daftarBulan = [
-          'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+          'Januari',
+          'Februari',
+          'Maret',
+          'April',
+          'Mei',
+          'Juni',
+          'Juli',
+          'Agustus',
+          'September',
+          'Oktober',
+          'November',
+          'Desember',
         ];
-        const namaBulan = daftarBulan[parseInt(tglParts[1], 10) - 1] || tglParts[1];
-        return `${parseInt(tglParts[2], 10)} ${namaBulan} ${tglParts[0]}`;
+        return `${parseInt(tglParts[2], 10)} ${
+          daftarBulan[parseInt(tglParts[1], 10) - 1] || tglParts[1]
+        } ${tglParts[0]}`;
       }
-    } catch (e) {
-      console.log('Error parsing tanggal:', e);
-    }
+    } catch (e) {}
     return rawTanggal;
   };
 
-  const formatWaktuFigma = () => {
-    return sessionData?.waktu_string || sessionData?.waktu_sesi || '10:30 - 12:30';
-  };
+  const formatWaktuFigma = () =>
+    sessionData?.waktu_string || sessionData?.waktu_sesi || '10:30 - 12:30';
 
   const handleBatalkanPesanan = () => {
     setAlertConfig({
@@ -133,13 +218,32 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
     setAlertVisible(true);
   };
 
+  const cekApakahSudahMulai = () => {
+    if (!sessionData?.waktu_mulai) return false;
+    try {
+      const formatWaktuSesi = sessionData.waktu_mulai
+        .toString()
+        .replace(' ', 'T');
+      return new Date() >= new Date(formatWaktuSesi);
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const sudahMulai = cekApakahSudahMulai();
+  const tombolDisabled = isCanceling || sudahMulai;
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* FIXED NAVIGATION HEADER */}
       <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={onBack} style={styles.backButtonTarget} activeOpacity={0.6}>
+        <TouchableOpacity
+          onPress={onBack}
+          style={styles.backButtonTarget}
+          activeOpacity={0.6}
+        >
           <BackIconSvg size={12} color="#333333" />
           <Text style={styles.backButtonText}>Kembali</Text>
         </TouchableOpacity>
@@ -147,17 +251,23 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
         <View style={{ width: width * 0.2 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBodyPadding}>
-        
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollBodyPadding}
+      >
         {/* ROW GRID: TANGGAL & WAKTU SESI */}
         <View style={styles.metaGridRow}>
           <View style={styles.metaGridCard}>
             <Text style={styles.metaInputLabel}>Tanggal</Text>
-            <Text style={[styles.metaValueText, { color: '#4F46E5' }]}>{formatTanggalFigma()}</Text>
+            <Text style={[styles.metaValueText, { color: '#4F46E5' }]}>
+              {formatTanggalFigma()}
+            </Text>
           </View>
           <View style={styles.metaGridCard}>
             <Text style={styles.metaInputLabel}>Waktu Sesi</Text>
-            <Text style={[styles.metaValueText, { color: '#4F46E5' }]}>{formatWaktuFigma()}</Text>
+            <Text style={[styles.metaValueText, { color: '#4F46E5' }]}>
+              {formatWaktuFigma()}
+            </Text>
           </View>
         </View>
 
@@ -182,53 +292,59 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
           </View>
         </View>
 
-        {/* AREA PREVIEW MAPS */}
+        {/* 3. AREA MAPS INTERAKTIF TANPA API KEY GOOGLE */}
         <View style={styles.mapsContainerWrapper}>
-          <Image 
-            source={{ uri: 'https://maps.googleapis.com/maps/api/staticmap?center=-6.9744,107.6303&zoom=15&size=600x300&markers=color:red%7C-6.9744,107.6303&key=' }}
+          <WebView
+            originWhitelist={['*']}
+            source={{ html: mapHtmlTemplate }}
             style={styles.mapsStaticImageMedia}
-            resizeMode="cover"
+            geolocationEnabled={true}
           />
-          <View style={styles.floatingMapBadgeRow}>
-            <View style={styles.mapBadgeOptionActive}><Text style={styles.mapBadgeTextActive}>Map</Text></View>
-            <View style={styles.mapBadgeOptionInactive}><Text style={styles.mapBadgeTextInactive}>Satellite</Text></View>
-          </View>
-          <View style={styles.floatingMapZoomControlsColumn}>
-            <View style={styles.zoomBtnBox}><Text style={styles.zoomControlText}>+</Text></View>
-            <View style={styles.zoomBtnBox}><Text style={styles.zoomControlText}>-</Text></View>
-          </View>
-          <View style={styles.floatingPegmanBox}>
-            <Text style={{ fontSize: 16 }}>👤</Text>
-          </View>
         </View>
 
-        <TouchableOpacity style={styles.locationCardRow} activeOpacity={0.8}>
+        {/* AREA DETAIL ALAMAT (Klik untuk buka rute luar) */}
+        <TouchableOpacity
+          style={styles.locationCardRow}
+          activeOpacity={0.8}
+          onPress={bukaGoogleMapsEksternal}
+        >
           <View style={styles.locationIconMarkerCircle}>
             <Text style={{ fontSize: 16, color: '#284B7A' }}>📍</Text>
           </View>
           <View style={styles.locationTextMetaColumn}>
             <Text style={styles.locationTipeLabelText}>{tipeLokasi}</Text>
-            <Text style={styles.locationFullAlamatText} numberOfLines={2}>{lokasiAlamat}</Text>
+            <Text style={styles.locationFullAlamatText} numberOfLines={3}>
+              {alamatLengkap}
+            </Text>
           </View>
           <Text style={styles.locationChevronRightIcon}>❯</Text>
         </TouchableOpacity>
-
       </ScrollView>
 
-      {/* PERSISTENT FOOTER: TOMBOL BATALKAN PESANAN */}
+      {/* PERSISTENT FOOTER */}
       <View style={styles.persistentFooterContainer}>
-        <TouchableOpacity 
-          style={styles.cancelRequestSubmitButton}
+        <TouchableOpacity
+          style={[
+            styles.cancelRequestSubmitButton,
+            sudahMulai && styles.cancelButtonBlocked,
+          ]}
           onPress={handleBatalkanPesanan}
-          disabled={isCanceling}
+          disabled={tombolDisabled}
           activeOpacity={0.8}
         >
           {isCanceling ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <View style={styles.innerButtonFlexRow}>
-              <Text style={styles.cancelCrossIconText}>✕</Text>
-              <Text style={styles.cancelButtonMainLabelText}>Batalkan Pesanan</Text>
+              {!sudahMulai && <Text style={styles.cancelCrossIconText}>✕</Text>}
+              <Text
+                style={[
+                  styles.cancelButtonMainLabelText,
+                  sudahMulai && styles.cancelTextBlocked,
+                ]}
+              >
+                {sudahMulai ? 'Sesi Sudah Dimulai' : 'Batalkan Pesanan'}
+              </Text>
             </View>
           )}
         </TouchableOpacity>
@@ -243,10 +359,10 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
         onConfirm={prosesPembatalan}
         onClose={() => {
           setAlertVisible(false);
-          if (!alertConfig.isConfirmation && navigateOnClose) onBack && onBack();
+          if (!alertConfig.isConfirmation && navigateOnClose)
+            onBack && onBack();
         }}
       />
-
     </SafeAreaView>
   );
 };
@@ -274,11 +390,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 6,
   },
-  headerTitleText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000000',
-  },
+  headerTitleText: { fontSize: 18, fontWeight: 'bold', color: '#000000' },
   scrollBodyPadding: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -322,6 +434,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   disabledBoxValueText: { fontSize: 14, color: '#64748B', fontWeight: '500' },
+
   mapsContainerWrapper: {
     width: '100%',
     height: height * 0.22,
@@ -329,57 +442,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginTop: 8,
     marginBottom: 16,
-    position: 'relative',
-    overflow: 'hidden',
+    overflow: 'hidden', // Biar ujung-ujung WebView-nya ikut melengkung (border-radius)
   },
   mapsStaticImageMedia: { width: '100%', height: '100%' },
-  floatingMapBadgeRow: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 4,
-    padding: 2,
-    elevation: 2,
-  },
-  mapBadgeOptionActive: {
-    backgroundColor: '#EBF5FF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  mapBadgeTextActive: { fontSize: 11, fontWeight: 'bold', color: '#1E40AF' },
-  mapBadgeOptionInactive: { paddingHorizontal: 8, paddingVertical: 4 },
-  mapBadgeTextInactive: { fontSize: 11, color: '#64748B' },
-  floatingMapZoomControlsColumn: {
-    position: 'absolute',
-    right: 10,
-    top: 10,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 4,
-    elevation: 2,
-  },
-  zoomBtnBox: {
-    width: 28,
-    height: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#E2E8F0',
-  },
-  zoomControlText: { fontSize: 16, fontWeight: 'bold', color: '#555555' },
-  floatingPegmanBox: {
-    position: 'absolute',
-    right: 10,
-    bottom: 10,
-    backgroundColor: '#FFFFFF',
-    width: 28,
-    height: 28,
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
-  },
+
   locationCardRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -401,7 +467,11 @@ const styles = StyleSheet.create({
   locationTextMetaColumn: { flex: 1, marginRight: 8 },
   locationTipeLabelText: { fontSize: 14, fontWeight: 'bold', color: '#1E293B' },
   locationFullAlamatText: { fontSize: 12, color: '#64748B', lineHeight: 16 },
-  locationChevronRightIcon: { fontSize: 14, color: '#94A3B8', fontWeight: 'bold' },
+  locationChevronRightIcon: {
+    fontSize: 14,
+    color: '#94A3B8',
+    fontWeight: 'bold',
+  },
   persistentFooterContainer: {
     position: 'absolute',
     bottom: 0,
@@ -428,7 +498,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginRight: 8,
   },
-  cancelButtonMainLabelText: { color: '#FFFFFF', fontSize: 15, fontWeight: 'bold' },
+  cancelButtonMainLabelText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  cancelButtonBlocked: { backgroundColor: '#E0E0E0' },
+  cancelTextBlocked: { color: '#9E9E9E' },
 });
 
 export default DetailSesiAktifPage;

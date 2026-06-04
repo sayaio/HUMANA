@@ -34,7 +34,7 @@ import DetailPembayaranPage from './pages/DetailPembayaranPage';
 import PembayaranPage from './pages/PembayaranPage';
 import PendapatanPage from './pages/PendapatanPage';
 import RiwayatPendapatanPage from './pages/RiwayatPendapatanPage';
-import PortofolioPage from './pages/PortofolioPage';
+import PortfolioPage from './pages/PortfolioPage';
 
 const App = () => {
   const DEV_SKIP_TO_PAYMENT = false;
@@ -98,6 +98,7 @@ const App = () => {
 
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectedChapter, setSelectedChapter] = useState(null);
+  const [detailBackPage, setDetailBackPage] = useState('Materi');
   const [activityTab, setActivityTab] = useState('aktif');
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
@@ -108,6 +109,7 @@ const App = () => {
   const [selectedTipePermintaan, setSelectedTipePermintaan] =
     useState('Permintaan');
   const [selectedRiwayatData, setSelectedRiwayatData] = useState(null);
+  const [pesanSesiPrefill, setPesanSesiPrefill] = useState(null);
   const [activityGuruRefreshKey, setActivityGuruRefreshKey] = useState(0);
   const handleRefreshProfileData = useCallback(async newData => {
     console.log(
@@ -362,7 +364,12 @@ const App = () => {
       setCurrentPage('Pendapatan');
     } else if (page === 'RiwayatPendapatan') {
       setCurrentPage('RiwayatPendapatan');
+    } else if (page === 'Portfolio') {
+      setCurrentPage('Portfolio');
     } else {
+      if (page === 'PesanSesi') {
+        setPesanSesiPrefill(null);
+      }
       setCurrentPage(page);
     }
   };
@@ -470,6 +477,18 @@ const App = () => {
                     if (tab) setActivityTab(tab);
                     setCurrentPage(page);
                 }}
+                onPesanSesiPrefill={prefill => {
+                    setPesanSesiPrefill(prefill);
+                    setCurrentPage('PesanSesi');
+                }}
+                onLihatDetailMateri={chapterData => {
+                    setSelectedChapter(chapterData);
+                    setDetailBackPage('Home');
+                    setCurrentPage('Detail');
+                }}
+                jenjangMurid={
+                    profileData.jenjang_pendidikan || profileData.education
+                }
                 showSuccessAlert={showLoginSuccessAlert}
                 onAlertClose={() => setShowLoginSuccessAlert(false)}
                 userId={profileData.id}
@@ -481,10 +500,15 @@ const App = () => {
     if (currentPage === 'PesanSesi') {
         return (
             <PesanSesiPage
-                onBack={() => setCurrentPage('Home')}
+                onBack={() => {
+                    setPesanSesiPrefill(null);
+                    setCurrentPage('Home');
+                }}
                 userId={profileData.id}
+                prefillBooking={pesanSesiPrefill}
                 onConfirmOrder={data => {
                     setBookingSessionData(data);
+                    setPesanSesiPrefill(null);
                     setCurrentPage('MencariPengajar');
                 }}
             />
@@ -592,6 +616,7 @@ const App = () => {
                 onBack={() => setCurrentPage(isGuru ? 'RealActivityGuru' : 'Activity')}
                 sessionData={isGuru ? selectedRiwayatData : selectedSession}
                 userId={profileData.id}
+                userRole={(profileData.role || 'murid').toLowerCase()}
             />
         );
     }
@@ -649,6 +674,7 @@ const App = () => {
                 onBack={() => handleGlobalNavigate('Home')}
                 onChapterSelect={materiData => {
                     setSelectedChapter(materiData);
+                    setDetailBackPage('Materi');
                     setCurrentPage('Detail');
                 }}
             />
@@ -659,7 +685,7 @@ const App = () => {
         return (
             <DetailMateriPage
                 chapterData={selectedChapter}
-                onBack={() => setCurrentPage('Materi')}
+                onBack={() => setCurrentPage(detailBackPage)}
             />
         );
     }
@@ -711,14 +737,6 @@ const App = () => {
         return (
             <TambahMateriGuruPage
             onBack={() => setCurrentPage('RealProfileGuru')}
-                idGuru={profileData.id}
-            />
-        );
-    }
-    if (currentPage === 'Portofolio') {
-        return (
-            <PortofolioPage
-                onBack={() => setCurrentPage('RealProfileGuru')}
                 idGuru={profileData.id}
             />
         );
@@ -837,6 +855,18 @@ const App = () => {
           if (tab) setActivityTab(tab);
           setCurrentPage(page);
         }}
+        onPesanSesiPrefill={prefill => {
+          setPesanSesiPrefill(prefill);
+          setCurrentPage('PesanSesi');
+        }}
+        onLihatDetailMateri={chapterData => {
+          setSelectedChapter(chapterData);
+          setDetailBackPage('Home');
+          setCurrentPage('Detail');
+        }}
+        jenjangMurid={
+          profileData.jenjang_pendidikan || profileData.education
+        }
         showSuccessAlert={showLoginSuccessAlert}
         onAlertClose={() => setShowLoginSuccessAlert(false)}
         userId={profileData.id}
@@ -848,10 +878,15 @@ const App = () => {
   if (currentPage === 'PesanSesi') {
     return (
       <PesanSesiPage
-        onBack={() => setCurrentPage('Home')}
+        onBack={() => {
+          setPesanSesiPrefill(null);
+          setCurrentPage('Home');
+        }}
         userId={profileData.id}
+        prefillBooking={pesanSesiPrefill}
         onConfirmOrder={data => {
           setBookingSessionData(data);
+          setPesanSesiPrefill(null);
           setCurrentPage('MencariPengajar');
         }}
       />
@@ -963,6 +998,7 @@ const App = () => {
         onBack={() => setCurrentPage(isGuru ? 'RealActivityGuru' : 'Activity')}
         sessionData={isGuru ? selectedRiwayatData : selectedSession}
         userId={profileData.id}
+        userRole={(profileData.role || 'murid').toLowerCase()}
       />
     );
   }
@@ -1020,6 +1056,7 @@ const App = () => {
         onBack={() => handleGlobalNavigate('Home')}
         onChapterSelect={materiData => {
           setSelectedChapter(materiData);
+          setDetailBackPage('Materi');
           setCurrentPage('Detail');
         }}
       />
@@ -1030,7 +1067,7 @@ const App = () => {
     return (
       <DetailMateriPage
         chapterData={selectedChapter}
-        onBack={() => setCurrentPage('Materi')}
+        onBack={() => setCurrentPage(detailBackPage)}
       />
     );
   }
@@ -1086,9 +1123,9 @@ const App = () => {
       />
     );
   }
-  if (currentPage === 'Portofolio') {
+  if (currentPage === 'Portfolio') {
     return (
-      <PortofolioPage
+      <PortfolioPage
         onBack={() => setCurrentPage('RealProfileGuru')}
         idGuru={profileData.id}
       />
