@@ -85,7 +85,7 @@ router.get('/materi-guru/:id_guru', materiGuruController.getMateriGuru);
 router.post('/materi-guru', materiGuruController.simpanMateriGuru);
 router.delete('/materi-guru/:id_guru/:id_materi', materiGuruController.hapusMateriGuru);
 
-const { uploadDokumentasi } = require('./src/controllers/dokumentasiController');
-router.post('/dokumentasi/upload', uploadDokumentasi);
+const { upload, uploadDokumentasi } = require('./src/controllers/dokumentasiController');
+router.post('/dokumentasi/upload', upload.single('foto'), uploadDokumentasi);
 
 module.exports = router;
