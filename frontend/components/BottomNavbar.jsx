@@ -15,7 +15,6 @@ import Chat from './chatSVG';
 
 const { width } = Dimensions.get('window');
 
-
 const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
   const role = userRole ? userRole.toLowerCase() : 'murid';
 
@@ -92,15 +91,17 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
         style={styles.navBarItem}
         onPress={() => onNavigate && onNavigate('Chat')}
       >
-        <Chat
-          size={30}
-          color={currentScreen === 'Chat' ? '#284B7A' : '#A9A9A9'}
-        />
+        <View style={{ transform: [{ translateY: -3 }] }}>
+          <Chat
+            size={30}
+            color={currentScreen === 'Chat' ? '#284B7A' : '#A9A9A9'}
+          />
+        </View>
         <Text
           style={[
             styles.navBarLabel,
             currentScreen === 'Chat' && styles.activeLabel,
-            {marginTop: -2}
+            { marginTop: -2 },
           ]}
         >
           Chat
@@ -114,10 +115,7 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
           onNavigate && onNavigate(role === 'guru' ? 'ProfileGuru' : 'Profile')
         }
       >
-        <Profil
-          size={25}
-          color={isProfileActive ? '#284B7A' : '#A9A9A9'}
-        />
+        <Profil size={25} color={isProfileActive ? '#284B7A' : '#A9A9A9'} />
         <Text
           style={[styles.navBarLabel, isProfileActive && styles.activeLabel]}
         >
@@ -136,10 +134,7 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
           activeOpacity={0.8}
         >
           {/* 2. UBAH DI SINI: Panggil dengan <LogoH /> menggunakan huruf kapital */}
-          <LogoH
-            size={18}
-            color="#FFF" 
-          />
+          <LogoH size={18} color="#FFF" />
         </TouchableOpacity>
       </View>
     </View>
