@@ -315,6 +315,7 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
 
     return (
       <Animated.FlatList
+        nestedScrollEnabled
         data={sesiDikonfirmasi}
         renderItem={({ item }) => (
           <View style={{ width: cardWidth, marginRight: gapSize }}>
@@ -350,10 +351,11 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
 
       <ScrollView
         style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
       >
-        <View style={styles.headerWrapper}>
-          {/* Header Background biru membulat + watermark logo (seperti HomePage) */}
+        <View style={styles.headerSection}>
           <View style={styles.headerBackground}>
             <Image
               source={LOGO_SOURCE}
@@ -362,64 +364,61 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
             />
           </View>
 
-          {/* Greeting */}
           <View style={styles.greetingContainer}>
             <Text style={styles.greetingLabel}>Selamat Datang,</Text>
             <Text style={styles.greetingName}>{guruData?.name || 'Guru'}</Text>
           </View>
 
-          {/* CONTAINER CAROUSEL SLIDER SESI DIKONFIRMASI */}
           <View>{renderSessionCard()}</View>
-        </View>
 
-        {/* GRID MENU BUTTONS DENGAN ICON ASSET GAMBAR BARU */}
-        <View style={styles.menuGridContainer}>
-          <View style={styles.menuRow}>
-            <TouchableOpacity
-              style={styles.menuItemButton}
-              onPress={() => onNavigate && onNavigate('ActivityGuru')}
-            >
-              <View style={styles.iconContainer}>
-                <Image
-                  source={require('../assets/kalender.png')}
-                  style={styles.menuIconImage}
-                  resizeMode="contain"
-                />
-              </View>
-              <Text style={styles.menuButtonText}>Jadwal Saya</Text>
-            </TouchableOpacity>
+          <View style={styles.menuGridContainer}>
+            <View style={styles.menuRow}>
+              <TouchableOpacity
+                style={styles.menuItemButton}
+                onPress={() => onNavigate && onNavigate('ActivityGuru')}
+              >
+                <View style={styles.iconContainer}>
+                  <Image
+                    source={require('../assets/kalender.png')}
+                    style={styles.menuIconImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={styles.menuButtonText}>Jadwal Saya</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.menuItemButton}
-              onPress={() => setIsMateriVisible(true)}
-            >
-              <View style={styles.iconContainer}>
-                <Image
-                  source={require('../assets/materi.png')}
-                  style={styles.menuIconImage}
-                  resizeMode="contain"
-                />
-              </View>
-              <Text style={styles.menuButtonText}>Materi</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuItemButton}
+                onPress={() => setIsMateriVisible(true)}
+              >
+                <View style={styles.iconContainer}>
+                  <Image
+                    source={require('../assets/materi.png')}
+                    style={styles.menuIconImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={styles.menuButtonText}>Materi</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.menuItemButton}
-              onPress={() => onNavigate && onNavigate('Pendapatan')}
-            >
-              <View style={styles.iconContainer}>
-                <Image
-                  source={require('../assets/pendapatan.png')}
-                  style={styles.menuIconImage}
-                  resizeMode="contain"
-                />
-              </View>
-              <Text style={styles.menuButtonText}>Pendapatan</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuItemButton}
+                onPress={() => onNavigate && onNavigate('Pendapatan')}
+              >
+                <View style={styles.iconContainer}>
+                  <Image
+                    source={require('../assets/pendapatan.png')}
+                    style={styles.menuIconImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={styles.menuButtonText}>Pendapatan</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.divider} />
+          <View style={styles.divider} />
+        </View>
 
         {/* SECTION: PERMINTAAN BARU */}
         <View style={styles.sectionHeaderRow}>
@@ -507,7 +506,6 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
             </View>
           ))
         )}
-        <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* BOTTOM NAVIGATION BAR */}
@@ -577,10 +575,11 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF' },
+  container: { flex: 1, backgroundColor: '#F5F7FA' },
   centerContent: { justifyContent: 'center', alignItems: 'center' },
   scrollContainer: { flex: 1 },
-  headerWrapper: { position: 'relative' },
+  scrollContent: { paddingBottom: 110 },
+  headerSection: { position: 'relative', zIndex: 1 },
   headerBackground: {
     position: 'absolute',
     top: 0,
@@ -745,7 +744,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  menuGridContainer: { paddingHorizontal: 24, marginTop: 24 },
+  menuGridContainer: { paddingHorizontal: 24, marginTop: 28 },
   menuRow: { flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' },
   menuItemButton: { alignItems: 'center', width: '28%' },
 
@@ -769,7 +768,13 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
   },
-  divider: { height: 6, backgroundColor: '#F0F2F5', marginTop: 24 },
+  divider: {
+    height: 1,
+    backgroundColor: '#EAEEF3',
+    marginHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 8,
+  },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

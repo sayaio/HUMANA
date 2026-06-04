@@ -278,6 +278,7 @@ const HomePage = ({
 
         return (
             <Animated.FlatList
+                nestedScrollEnabled
                 data={activeSessions}
                 // Kirimkan lebar card yang baru ke renderItem secara inline jika diperlukan, 
                 // atau pastikan di renderSessionItem menggunakan `width: width - 40`
@@ -313,56 +314,46 @@ const HomePage = ({
         <View style={styles.homeContainer}>
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-            {/* ══════════════════════════════════════════════════════════════ */}
-            {/* BAGIAN ATAS — TIDAK IKUT SCROLL                               */}
-            {/* ══════════════════════════════════════════════════════════════ */}
-            <View>
-                {/* Header Background */}
-                <View style={styles.headerBackground}>
-                    <Image source={LOGO_SOURCE} style={styles.headerWatermark} resizeMode="contain" />
-                </View>
-
-                {/* Greeting */}
-                <View style={styles.greetingContainer}>
-                    <Text style={styles.greetingLabel}>
-                        {role === 'guru' ? 'Halo,' : 'Selamat datang,'}
-                    </Text>
-                    <Text style={styles.greetingName}>{namaLengkap}</Text>
-                </View>
-
-                {/* Card Sesi Hari Ini */}
-                <View >
-                    {renderSessionCard()}
-                </View>
-
-                {/* Menu Grid */}
-                <View style={styles.menuGrid}>
-                    {role === 'guru' ? (
-                        <>
-                            <MenuItem icon={<Calendar color="#FFF" size={22} />} label="Jadwal Saya" onPress={() => onNavigate?.('Activity', 'aktif')} />
-                            <MenuItem icon={<BookOpen color="#FFF" size={22} />} label="Materi" onPress={() => setIsMateriVisible(true)} />
-                            <MenuItem icon={<Wallet color="#FFF" size={22} />} label="Pendapatan" />
-                            <MenuItem icon={<FileText color="#FFF" size={22} />} label="Permintaan" />
-                        </>
-                    ) : (
-                        <>
-                            <MenuItem icon={<Image source={require('../assets/pesansesi.png')} style={{ width: 37, height: 40, tintColor: '#FFF' }} />} label="Pesan Sesi" onPress={() => onNavigate?.('PesanSesi')} />
-                            <MenuItem icon={<Image source={require('../assets/materi.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Materi" onPress={() => setIsMateriVisible(true)} />
-                            <MenuItem icon={<Image source={require('../assets/kalender.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Jadwal Saya" onPress={() => onNavigate?.('Activity', 'aktif')} />
-                        </>
-                    )}
-                </View>
-
-                <View style={styles.divider} />
-            </View>
-
-            {/* ══════════════════════════════════════════════════════════════ */}
-            {/* BAGIAN BAWAH — BISA DI-SCROLL                                 */}
-            {/* ══════════════════════════════════════════════════════════════ */}
             <ScrollView
+                style={styles.mainScroll}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 110 }}
+                contentContainerStyle={styles.scrollContent}
+                nestedScrollEnabled
             >
+                <View style={styles.headerSection}>
+                    <View style={styles.headerBackground}>
+                        <Image source={LOGO_SOURCE} style={styles.headerWatermark} resizeMode="contain" />
+                    </View>
+
+                    <View style={styles.greetingContainer}>
+                        <Text style={styles.greetingLabel}>
+                            {role === 'guru' ? 'Halo,' : 'Selamat datang,'}
+                        </Text>
+                        <Text style={styles.greetingName}>{namaLengkap}</Text>
+                    </View>
+
+                    <View>{renderSessionCard()}</View>
+
+                    <View style={styles.menuGrid}>
+                        {role === 'guru' ? (
+                            <>
+                                <MenuItem icon={<Calendar color="#FFF" size={22} />} label="Jadwal Saya" onPress={() => onNavigate?.('Activity', 'aktif')} />
+                                <MenuItem icon={<BookOpen color="#FFF" size={22} />} label="Materi" onPress={() => setIsMateriVisible(true)} />
+                                <MenuItem icon={<Wallet color="#FFF" size={22} />} label="Pendapatan" />
+                                <MenuItem icon={<FileText color="#FFF" size={22} />} label="Permintaan" />
+                            </>
+                        ) : (
+                            <>
+                                <MenuItem icon={<Image source={require('../assets/pesansesi.png')} style={{ width: 37, height: 40, tintColor: '#FFF' }} />} label="Pesan Sesi" onPress={() => onNavigate?.('PesanSesi')} />
+                                <MenuItem icon={<Image source={require('../assets/materi.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Materi" onPress={() => setIsMateriVisible(true)} />
+                                <MenuItem icon={<Image source={require('../assets/kalender.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Jadwal Saya" onPress={() => onNavigate?.('Activity', 'aktif')} />
+                            </>
+                        )}
+                    </View>
+
+                    <View style={styles.divider} />
+                </View>
+
                 {role === 'guru' ? (
                     <View style={styles.sectionPadding}>
                         <View style={styles.sectionHeader}>
@@ -444,7 +435,7 @@ const HomePage = ({
                 )}
             </ScrollView>
 
-            {/* ── Bottom Navbar ─────────────────────────────────────────── */}
+            {/* Bottom Navbar */}
             <BottomNavbar
                 currentScreen="Home"
                 onNavigate={onNavigate}
@@ -506,6 +497,9 @@ const MenuItem = ({ icon, label, onPress }) => (
 
 const styles = StyleSheet.create({
     homeContainer: { flex: 1, backgroundColor: '#F5F7FA' },
+    mainScroll: { flex: 1 },
+    scrollContent: { paddingBottom: 110 },
+    headerSection: { position: 'relative', zIndex: 1 },
     sectionPadding: { paddingHorizontal: 20, marginBottom: 4 },
     centerContent: { justifyContent: 'center', alignItems: 'center' },
 
@@ -616,8 +610,8 @@ const styles = StyleSheet.create({
         height: 1,
         backgroundColor: '#EAEEF3',
         marginHorizontal: 20,
-        marginTop: 16,    // 👈 Atur jarak tipis antara teks menu dengan garis
-        marginBottom: 0   // 👈 Ubah jadi 0 supaya menempel langsung dengan area ScrollView di bawahnya
+        marginTop: 16,
+        marginBottom: 8,
     },
 
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
