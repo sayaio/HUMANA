@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -22,12 +22,16 @@ import { createChatRoom } from '../services/chatService';
 import CustomAlert from '../components/CustomAlert';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { uploadDokumentasi } from '../services/dokumentasiService';
-import { terimaPermintaanSesiAPI, selesaikanSesiAPI } from '../services/matchingService';
+import {
+  terimaPermintaanSesiAPI,
+  selesaikanSesiAPI,
+} from '../services/matchingService';
+import { getStatusPembayaran } from '../services/bankerService';
 
 const DetailPermintaanGuruPage = ({
   permintaanData,
   guruData,
-  tipePermintaan = 'Permintaan', // 'Permintaan' | 'Aktif' | 'Berlangsung'
+  tipePermintaan = 'Permintaan',
   onBack,
   onTolak,
   onChat,
@@ -36,6 +40,8 @@ const DetailPermintaanGuruPage = ({
   const data = permintaanData || {};
 
   const [loading, setLoading] = useState(false);
+  const [sudahLunas, setSudahLunas] = useState(false);
+  const [loadingStatusBayar, setLoadingStatusBayar] = useState(true);
   const [showDokModal, setShowDokModal] = useState(false);
   const [fotoUri, setFotoUri] = useState(null);
   const [fotoBase64, setFotoBase64] = useState(null);
@@ -49,6 +55,20 @@ const DetailPermintaanGuruPage = ({
     isConfirmation: false,
   });
 
+  useEffect(() => {
+    const cekPembayaran = async () => {
+      const id = data.id_pemesanan || data.id;
+      if (!id) {
+        setLoadingStatusBayar(false);
+        return;
+      }
+      const res = await getStatusPembayaran(id);
+      setSudahLunas(res?.status_pembayaran === 'lunas');
+      setLoadingStatusBayar(false);
+    };
+    cekPembayaran();
+  }, [data.id_pemesanan, data.id]);
+
   // ─── Helpers ─────────────────────────────────────────────────
   const namaInisial = data.nama_murid
     ? data.nama_murid.substring(0, 2).toUpperCase()
@@ -61,16 +81,19 @@ const DetailPermintaanGuruPage = ({
 
   const handleBukaMap = () => {
     const lokasi = data.lokasi_sesi || data.lokasi || '';
-    if (!lokasi) { Alert.alert('Info', 'Lokasi tidak tersedia.'); return; }
+    if (!lokasi) {
+      Alert.alert('Info', 'Lokasi tidak tersedia.');
+      return;
+    }
     const parts = lokasi.split(',');
     if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-      Linking.openURL(`https://www.google.com/maps?q=${parts[0].trim()},${parts[1].trim()}`).catch(() =>
-        Alert.alert('Error', 'Tidak dapat membuka Google Maps.'),
-      );
+      Linking.openURL(
+        `https://www.google.com/maps?q=${parts[0].trim()},${parts[1].trim()}`,
+      ).catch(() => Alert.alert('Error', 'Tidak dapat membuka Google Maps.'));
     } else {
-      Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lokasi)}`).catch(() =>
-        Alert.alert('Error', 'Tidak dapat membuka Google Maps.'),
-      );
+      Linking.openURL(
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lokasi)}`,
+      ).catch(() => Alert.alert('Error', 'Tidak dapat membuka Google Maps.'));
     }
   };
 
@@ -84,7 +107,9 @@ const DetailPermintaanGuruPage = ({
         {
           text: 'Tolak',
           style: 'destructive',
-          onPress: () => { if (onTolak) onTolak(data.id_pemesanan || data.id); },
+          onPress: () => {
+            if (onTolak) onTolak(data.id_pemesanan || data.id);
+          },
         },
       ],
     );
@@ -178,13 +203,16 @@ const DetailPermintaanGuruPage = ({
   };
 
   const handlePilihFoto = () => {
-    launchImageLibrary({ mediaType: 'photo', quality: 0.7, includeBase64: true }, response => {
-      if (!response.didCancel && !response.errorCode) {
-        const asset = response.assets[0];
-        setFotoUri(asset.uri);
-        setFotoBase64(asset.base64);
-      }
-    });
+    launchImageLibrary(
+      { mediaType: 'photo', quality: 0.7, includeBase64: true },
+      response => {
+        if (!response.didCancel && !response.errorCode) {
+          const asset = response.assets[0];
+          setFotoUri(asset.uri);
+          setFotoBase64(asset.base64);
+        }
+      },
+    );
   };
 
   const handleKonfirmasiSelesai = async () => {
@@ -245,35 +273,47 @@ const DetailPermintaanGuruPage = ({
     if (!raw) return data.tanggal || '-';
     try {
       return new Date(raw).toLocaleDateString('id-ID', {
-        day: 'numeric', month: 'long', year: 'numeric',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
       });
-    } catch { return '-'; }
+    } catch {
+      return '-';
+    }
   };
 
   const formatWaktu = () => {
     if (data.waktu_string) return data.waktu_string;
     if (data.waktu_mulai && data.waktu_selesai) {
       try {
-        const mulai = new Date(data.waktu_mulai).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        const selesai = new Date(data.waktu_selesai).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        const mulai = new Date(data.waktu_mulai).toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        const selesai = new Date(data.waktu_selesai).toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
         return `${mulai} - ${selesai}`;
-      } catch { return '-'; }
+      } catch {
+        return '-';
+      }
     }
     return data.waktu || '-';
   };
 
   const tanggal = formatTanggal(data.waktu_mulai);
   const waktuSesi = formatWaktu();
-  const lokasiAlamat = data.lokasi_sesi || data.lokasi || data.alamat || 'Alamat tidak tersedia';
+  const lokasiAlamat =
+    data.lokasi_sesi || data.lokasi || data.alamat || 'Alamat tidak tersedia';
 
-  // Penentu tombol: sebelum waktu mulai → bisa batal, sesudah → selesaikan
   const sekarang = new Date();
   const waktuMulaiObj = data.waktu_mulai ? new Date(data.waktu_mulai) : null;
-  const belumMulai = waktuMulaiObj && !isNaN(waktuMulaiObj.getTime())
-    ? sekarang < waktuMulaiObj
-    : true;
+  const belumMulai =
+    waktuMulaiObj && !isNaN(waktuMulaiObj.getTime())
+      ? sekarang < waktuMulaiObj
+      : true;
 
-  // Badge
   const badgeConfig = {
     Permintaan: { label: 'Menunggu Konfirmasi', bg: '#FFF3E0', text: '#E65100' },
     Aktif: { label: 'Terkonfirmasi', bg: '#E3F2FD', text: '#1565C0' },
@@ -286,11 +326,21 @@ const DetailPermintaanGuruPage = ({
     if (tipePermintaan === 'Permintaan') {
       return (
         <View style={styles.actionBar}>
-          <TouchableOpacity style={styles.btnTolak} onPress={handleTolak} disabled={loading}>
+          <TouchableOpacity
+            style={styles.btnTolak}
+            onPress={handleTolak}
+            disabled={loading}
+          >
             <Text style={styles.btnTolakText}>Tolak</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.btnTerima, loading && styles.btnDisabled]} onPress={handleTerima} disabled={loading}>
-            <Text style={styles.btnTerimaText}>{loading ? 'Memproses...' : 'Terima'}</Text>
+          <TouchableOpacity
+            style={[styles.btnTerima, loading && styles.btnDisabled]}
+            onPress={handleTerima}
+            disabled={loading}
+          >
+            <Text style={styles.btnTerimaText}>
+              {loading ? 'Memproses...' : 'Terima'}
+            </Text>
           </TouchableOpacity>
         </View>
       );
@@ -299,17 +349,41 @@ const DetailPermintaanGuruPage = ({
     if (belumMulai) {
       return (
         <View style={styles.actionBar}>
-          <TouchableOpacity style={[styles.btnBatal, loading && styles.btnDisabled]} onPress={handleAjukanBatal} disabled={loading}>
+          <TouchableOpacity
+            style={[styles.btnBatal, loading && styles.btnDisabled]}
+            onPress={handleAjukanBatal}
+            disabled={loading}
+          >
             <Text style={styles.btnBatalText}>Batalkan Sesi</Text>
           </TouchableOpacity>
         </View>
       );
     }
 
+    const tombolDisabled = loading || loadingStatusBayar || !sudahLunas;
+
     return (
       <View style={styles.actionBar}>
-        <TouchableOpacity style={[styles.btnSelesaikan, loading && styles.btnDisabled]} onPress={handleSelesaikan} disabled={loading}>
-          <Text style={styles.btnSelesaikanText}>Selesaikan Pesanan</Text>
+        <TouchableOpacity
+          style={[
+            styles.btnSelesaikan,
+            tombolDisabled && styles.btnSelesaikanBlocked,
+          ]}
+          onPress={handleSelesaikan}
+          disabled={tombolDisabled}
+        >
+          <Text
+            style={[
+              styles.btnSelesaikanText,
+              tombolDisabled && styles.btnSelesaikanBlockedText,
+            ]}
+          >
+            {loadingStatusBayar
+              ? 'Memeriksa pembayaran...'
+              : !sudahLunas
+              ? 'Menunggu Pembayaran'
+              : 'Selesaikan Pesanan'}
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -320,7 +394,6 @@ const DetailPermintaanGuruPage = ({
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
-      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={onBack}>
           <ChevronLeft size={20} color="#284B7A" />
@@ -330,9 +403,11 @@ const DetailPermintaanGuruPage = ({
         <View style={{ width: 80 }} />
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-
-        {/* Profil Murid + Badge + Chat */}
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
         <View style={styles.profileRow}>
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarText}>{namaInisial}</Text>
@@ -340,7 +415,9 @@ const DetailPermintaanGuruPage = ({
           <View style={{ flex: 1 }}>
             <Text style={styles.namaMurid}>{data.nama_murid || 'Nama Murid'}</Text>
             <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-              <Text style={[styles.badgeText, { color: badge.text }]}>{badge.label}</Text>
+              <Text style={[styles.badgeText, { color: badge.text }]}>
+                {badge.label}
+              </Text>
             </View>
           </View>
           {tipePermintaan !== 'Permintaan' && (
@@ -351,7 +428,6 @@ const DetailPermintaanGuruPage = ({
           )}
         </View>
 
-        {/* Tanggal & Waktu */}
         <View style={styles.dateTimeRow}>
           <View style={styles.dateTimeBox}>
             <Text style={styles.dtLabel}>Tanggal</Text>
@@ -363,51 +439,61 @@ const DetailPermintaanGuruPage = ({
           </View>
         </View>
 
-        {/* Jenjang */}
         <View style={styles.fieldSection}>
           <Text style={styles.fieldLabel}>Jenjang</Text>
           <View style={styles.fieldBox}>
-            <Text style={styles.fieldValue}>{data.jenjang_pendidikan || data.jenjang || '-'}</Text>
+            <Text style={styles.fieldValue}>
+              {data.jenjang_pendidikan || data.jenjang || '-'}
+            </Text>
           </View>
         </View>
 
-        {/* Mata Pelajaran */}
         <View style={styles.fieldSection}>
           <Text style={styles.fieldLabel}>Mata Pelajaran</Text>
           <View style={styles.fieldBox}>
-            <Text style={styles.fieldValue}>{data.nama_mapel || data.mata_pelajaran || '-'}</Text>
+            <Text style={styles.fieldValue}>
+              {data.nama_mapel || data.mata_pelajaran || '-'}
+            </Text>
           </View>
         </View>
 
-        {/* Materi */}
         <View style={styles.fieldSection}>
           <Text style={styles.fieldLabel}>Materi</Text>
           <View style={styles.fieldBox}>
-            <Text style={styles.fieldValue}>{data.nama_materi || data.materi || '-'}</Text>
+            <Text style={styles.fieldValue}>
+              {data.nama_materi || data.materi || '-'}
+            </Text>
           </View>
         </View>
 
-        {/* Map Placeholder */}
         <View style={styles.mapContainer}>
           <View style={styles.mapPlaceholder}>
             <Text style={styles.mapPlaceholderText}>📍 Peta Lokasi</Text>
-            <Text style={styles.mapPlaceholderSub}>Tap tombol lokasi di bawah untuk membuka Google Maps</Text>
+            <Text style={styles.mapPlaceholderSub}>
+              Tap tombol lokasi di bawah untuk membuka Google Maps
+            </Text>
           </View>
         </View>
 
-        {/* Lokasi Row */}
-        <TouchableOpacity style={styles.lokasiRow} onPress={handleBukaMap} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.lokasiRow}
+          onPress={handleBukaMap}
+          activeOpacity={0.7}
+        >
           <View style={styles.lokasiIconWrap}>
             <MapPin size={18} color="#284B7A" />
           </View>
           <View style={styles.lokasiInfo}>
-            <Text style={styles.lokasiTitle}>{data.tipe_lokasi || 'Lokasi Sesi'}</Text>
-            <Text style={styles.lokasiAlamat} numberOfLines={2}>{lokasiAlamat}</Text>
+            <Text style={styles.lokasiTitle}>
+              {data.tipe_lokasi || 'Lokasi Sesi'}
+            </Text>
+            <Text style={styles.lokasiAlamat} numberOfLines={2}>
+              {lokasiAlamat}
+            </Text>
           </View>
           <ChevronRight size={18} color="#ABABAB" />
         </TouchableOpacity>
 
-        {/* Rincian Bayaran */}
         <View style={styles.rincianCard}>
           <Text style={styles.rincianTitle}>Rincian Bayaran</Text>
           <View style={styles.rincianRow}>
@@ -426,19 +512,23 @@ const DetailPermintaanGuruPage = ({
         </View>
       </ScrollView>
 
-      {/* Action Bar */}
       {renderActionBar()}
 
-      {/* Modal Dokumentasi */}
       {showDokModal && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Dokumentasi Sesi</Text>
-            <Text style={styles.modalSubtitle}>Upload foto sebagai bukti sesi telah selesai</Text>
+            <Text style={styles.modalSubtitle}>
+              Upload foto sebagai bukti sesi telah selesai
+            </Text>
 
             <TouchableOpacity style={styles.fotoBox} onPress={handlePilihFoto}>
               {fotoUri ? (
-                <Image source={{ uri: fotoUri }} style={styles.fotoPreview} resizeMode="cover" />
+                <Image
+                  source={{ uri: fotoUri }}
+                  style={styles.fotoPreview}
+                  resizeMode="cover"
+                />
               ) : (
                 <>
                   <Text style={styles.fotoIcon}>📷</Text>
@@ -456,7 +546,10 @@ const DetailPermintaanGuruPage = ({
             <View style={styles.modalActionRow}>
               <TouchableOpacity
                 style={styles.modalBtnBatal}
-                onPress={() => { setShowDokModal(false); setFotoUri(null); }}
+                onPress={() => {
+                  setShowDokModal(false);
+                  setFotoUri(null);
+                }}
                 disabled={uploadingFoto}
               >
                 <Text style={styles.modalBtnBatalText}>Batal</Text>
@@ -466,17 +559,17 @@ const DetailPermintaanGuruPage = ({
                 onPress={handleKonfirmasiSelesai}
                 disabled={uploadingFoto}
               >
-                {uploadingFoto
-                  ? <ActivityIndicator color="#FFF" size="small" />
-                  : <Text style={styles.modalBtnSelesaiText}>Selesaikan</Text>
-                }
+                {uploadingFoto ? (
+                  <ActivityIndicator color="#FFF" size="small" />
+                ) : (
+                  <Text style={styles.modalBtnSelesaiText}>Selesaikan</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
         </View>
       )}
 
-      {/* Custom Alert */}
       <CustomAlert
         visible={alertVisible}
         type={alertConfig.type}
@@ -514,7 +607,10 @@ const styles = StyleSheet.create({
   },
   avatarText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
   namaMurid: { fontSize: 20, fontWeight: 'bold', color: '#000' },
-  badge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, marginTop: 6 },
+  badge: {
+    alignSelf: 'flex-start', paddingHorizontal: 10,
+    paddingVertical: 4, borderRadius: 20, marginTop: 6,
+  },
   badgeText: { fontSize: 11, fontWeight: '700' },
   btnChatHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -539,7 +635,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 24, marginBottom: 0,
     borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: '#E8EEF6',
   },
-  mapPlaceholder: { height: 160, backgroundColor: '#E8F0E9', justifyContent: 'center', alignItems: 'center' },
+  mapPlaceholder: {
+    height: 160, backgroundColor: '#E8F0E9',
+    justifyContent: 'center', alignItems: 'center',
+  },
   mapPlaceholderText: { fontSize: 20, marginBottom: 6 },
   mapPlaceholderSub: { fontSize: 12, color: '#666', textAlign: 'center', paddingHorizontal: 20 },
   lokasiRow: {
@@ -573,20 +672,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row', paddingHorizontal: 24, paddingBottom: 32, paddingTop: 16,
     backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#F0F0F0', gap: 12,
   },
-  btnTolak: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#E53935', justifyContent: 'center', alignItems: 'center' },
+  btnTolak: {
+    flex: 1, height: 50, borderRadius: 14,
+    backgroundColor: '#E53935', justifyContent: 'center', alignItems: 'center',
+  },
   btnTolakText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
-  btnTerima: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center' },
+  btnTerima: {
+    flex: 1, height: 50, borderRadius: 14,
+    backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center',
+  },
   btnTerimaText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
-  btnBatal: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#E53935', justifyContent: 'center', alignItems: 'center' },
+  btnBatal: {
+    flex: 1, height: 50, borderRadius: 14,
+    backgroundColor: '#E53935', justifyContent: 'center', alignItems: 'center',
+  },
   btnBatalText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
-  btnSelesaikan: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center' },
+  btnSelesaikan: {
+    flex: 1, height: 50, borderRadius: 14,
+    backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center',
+  },
   btnSelesaikanText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
   btnDisabled: { opacity: 0.6 },
+  btnSelesaikanBlocked: {
+    flex: 1, height: 50, borderRadius: 14,
+    backgroundColor: '#FFF', borderWidth: 1, borderColor: '#BDBDBD',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  btnSelesaikanBlockedText: { color: '#9E9E9E', fontWeight: 'bold', fontSize: 15 },
   modalOverlay: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 999,
   },
-  modalCard: { backgroundColor: '#FFF', borderRadius: 20, padding: 24, width: '85%', alignItems: 'center' },
+  modalCard: {
+    backgroundColor: '#FFF', borderRadius: 20, padding: 24, width: '85%', alignItems: 'center',
+  },
   modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#000', marginBottom: 6 },
   modalSubtitle: { fontSize: 13, color: '#888', textAlign: 'center', marginBottom: 20 },
   fotoBox: {
@@ -604,7 +723,10 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#E0E0E0', justifyContent: 'center', alignItems: 'center',
   },
   modalBtnBatalText: { fontSize: 14, color: '#888', fontWeight: '600' },
-  modalBtnSelesai: { flex: 1, height: 48, borderRadius: 12, backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center' },
+  modalBtnSelesai: {
+    flex: 1, height: 48, borderRadius: 12,
+    backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center',
+  },
   modalBtnSelesaiText: { fontSize: 14, color: '#FFF', fontWeight: 'bold' },
 });
 
