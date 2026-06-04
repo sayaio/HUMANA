@@ -249,7 +249,9 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
             {fotoDokumentasi ? (
               <Image
                 source={{
-                  uri: `${API_URL.replace('/api', '')}${fotoDokumentasi}`,
+                  uri: fotoDokumentasi.startsWith('http')
+                    ? fotoDokumentasi
+                    : `${API_URL.replace('/api', '')}${fotoDokumentasi}`,
                 }}
                 style={{ width: '100%', height: '100%', borderRadius: 10 }}
                 resizeMode="cover"
