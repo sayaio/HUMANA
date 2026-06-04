@@ -13,6 +13,7 @@ import {
     Alert,
     Modal,
 } from 'react-native';
+import { WebView } from 'react-native-webview'; // Import WebView untuk peta interaktif
 import Geolocation from '@react-native-community/geolocation';
 import { pemesananService } from '../services/pemesananService';
 import BackIconSvg from '../components/BackIconSvg';
@@ -86,7 +87,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
         }
     }, [userId]);
 
-    // === FETCH AUTO=SAVE
+    // === FETCH AUTO-SAVE
     useEffect(() => {
         if (!isLoadingDraft && userId) {
             // Cek apakah ada data yang terisi
@@ -94,7 +95,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
             if (hasData) {
                 const timer = setTimeout(() => {
                     saveDraft();
-                }, 1000); // delay 2 detik
+                }, 1000); // delay 1 detik
                 return () => clearTimeout(timer);
             }
         }
@@ -305,15 +306,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
     const saveDraft = async () => {
         console.log('💾 ===== SAVE DRAFT DIPANGGIL =====');
         console.log('📌 userId:', userId);
-        console.log('📋 Data form saat ini:');
-        console.log('   - tanggal:', tanggal);
-        console.log('   - waktuMulai:', waktuMulai);
-        console.log('   - waktuSelesai:', waktuSelesai);
-        console.log('   - jenjang:', jenjang);
-        console.log('   - kelas:', kelas);
-        console.log('   - mataPelajaran:', mataPelajaran);
-        console.log('   - materi:', materi);
-        console.log('   - locationAddress:', locationAddress);
         
         try {
             const draftData = {
@@ -350,7 +342,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
 
     // === CORE HANDLE CONFIRM ===
     const handleConfirm = async () => {
-        // Memastikan semua state esensial terisi
         if (!userId || !tanggal || !waktuMulai || !waktuSelesai || !jenjang || !kelas || !mapelSelected || !selectedMateriId || !locationAddress) {
             Alert.alert('Form Belum Lengkap', 'Mohon lengkapi semua field atau pastikan Anda sudah login kembali.');
             return;
@@ -362,13 +353,12 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
             const hari = String(tanggal.getDate()).padStart(2, '0');
             const tglDb = `${tahun}-${bulan}-${hari}`;
 
-            // Sesuaikan format datetime dengan requirement backend Anda (String biasa atau ISO String)
             const waktuMulaiFormatted = `${tglDb} ${waktuMulai}:00`;
             const waktuSelesaiFormatted = `${tglDb} ${waktuSelesai}:00`;
 
             const dataPemesanan = {
                 id_murid: userId,
-                id_mapel: mapelSelected.id, // Tambahkan ini jika backend membutuhkannya
+                id_mapel: mapelSelected.id,
                 id_materi: selectedMateriId,
                 waktu_mulai: waktuMulaiFormatted,
                 waktu_selesai: waktuSelesaiFormatted,
@@ -378,14 +368,11 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
             const result = await pemesananService.createPemesanan(dataPemesanan);
 
             if (result.success) {
-                // await pemesananService.clearDraft(userId);
-
                 if (onConfirmOrder) {
-                    // SINKRONISASI: Samakan nama properti ini dengan apa yang diminta oleh page tujuan/sebelumnya
                     onConfirmOrder({
                         id_pemesanan: result.id_pemesanan,
                         tanggal: formatTanggal(tanggal),
-                        waktu_sesi: `${waktuMulai} - ${waktuSelesai}`, // diubah ke snake_case jika perlu
+                        waktu_sesi: `${waktuMulai} - ${waktuSelesai}`,
                         jenjang: jenjang,
                         kelas: kelas,
                         id_mapel: mapelSelected.id,
@@ -405,12 +392,12 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
 
     const openInGoogleMaps = () => {
         const url = userLocation
-            ? `geo:${userLocation.latitude},${userLocation.longitude}?q=${userLocation.latitude},${userLocation.longitude}`
+            ? `https://www.google.com/maps/search/?api=1&query=${userLocation.latitude},${userLocation.longitude}`
             : 'https://maps.google.com';
 
         Linking.canOpenURL(url)
             ? Linking.openURL(url)
-            : Alert.alert("Eror", "Tidak dapat membuka Google Maps");
+            : Alert.alert("Error", "Tidak dapat membuka Google Maps");
     };
 
     // === KONSTANTA DROPDOWN ===
@@ -418,7 +405,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
     const TIME_ITEM_HEIGHT = 40;
     const MAX_VISIBLE = 5;
 
-    // === FLOATING DROPDOWN DENGAN SEARCH (ScrollView + map, bukan FlatList) ===
+    // === FLOATING DROPDOWN DENGAN SEARCH ===
     const FloatingDropdown = ({ label, value, placeholder, options, isOpen, onToggle, onSelect, zIndex = 10 }) => {
         const [searchQuery, setSearchQuery] = useState('');
         const filtered = options.filter(item =>
@@ -446,7 +433,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
 
                 {isOpen && (
                     <View style={styles.floatingList}>
-                        {/* Search bar */}
                         <View style={styles.searchBarWrap}>
                             <Text style={styles.searchIcon}>🔍</Text>
                             <TextInput
@@ -465,7 +451,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
                             )}
                         </View>
 
-                        {/* List hasil pakai ScrollView + map, BUKAN FlatList */}
                         <ScrollView
                             style={{ maxHeight: listHeight || ITEM_HEIGHT }}
                             nestedScrollEnabled={true}
@@ -504,7 +489,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
         );
     };
 
-    // === TIME FLOATING DROPDOWN DENGAN SEARCH (ScrollView + map, bukan FlatList) ===
+    // === TIME FLOATING DROPDOWN DENGAN SEARCH ===
     const TimeFloatingDropdown = ({ value, placeholder, options, isOpen, onToggle, onSelect, zIndex = 10 }) => {
         const [searchQuery, setSearchQuery] = useState('');
         const filtered = options.filter(item =>
@@ -531,7 +516,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
 
                 {isOpen && options.length > 0 && (
                     <View style={styles.floatingListTime}>
-                        {/* Search bar kecil */}
                         <View style={styles.searchBarWrapSmall}>
                             <Text style={styles.searchIconSmall}>🔍</Text>
                             <TextInput
@@ -551,7 +535,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
                             )}
                         </View>
 
-                        {/* List hasil pakai ScrollView + map, BUKAN FlatList */}
                         <ScrollView
                             style={{ maxHeight: listHeight || TIME_ITEM_HEIGHT }}
                             nestedScrollEnabled={true}
@@ -590,15 +573,39 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
         );
     };
 
-    // === RENDER ===
-    if (isLoadingDraft) {
-        return (
-            <View style={styles.centeredLoading}>
-                <ActivityIndicator size="large" color="#284B7A" />
-                <Text style={styles.loadingText}>Memuat draft tersimpan...</Text>
-            </View>
-        );
-    }
+    // === TEMPLATE HTML UNTUK MAPS GRATIS (LEAFLET + OPENSTREETMAP) ===
+    const latitudeSesi = userLocation?.latitude ? userLocation.latitude.toString() : '-6.9744';
+    const longitudeSesi = userLocation?.longitude ? userLocation.longitude.toString() : '107.6303';
+
+    const mapHtmlTemplate = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+          <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+          <style>
+            body { margin: 0; padding: 0; }
+            #map { height: 100vh; width: 100vw; }
+          </style>
+        </head>
+        <body>
+          <div id="map"></div>
+          <script>
+            // Inisialisasi map berdasarkan koordinat dinamis dari GPS murid
+            var map = L.map('map', { zoomControl: false }).setView([${latitudeSesi}, ${longitudeSesi}], 15);
+            
+            // Load peta dari OpenStreetMap gratis
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Tambahkan marker pin di lokasi koordinat murid
+            L.marker([${latitudeSesi}, ${longitudeSesi}]).addTo(map);
+          </script>
+        </body>
+        </html>
+    `;
 
     return (
         <View style={styles.container}>
@@ -619,7 +626,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
             >
                 {/* Tanggal & Waktu Row */}
                 <View style={[styles.rowContainer, { zIndex: 100 }]}>
-                    {/* Tanggal */}
                     <View style={[styles.fieldContainer, { flex: 1, marginRight: 8 }]}>
                         <Text style={styles.fieldLabel}>Tanggal</Text>
                         <TouchableOpacity
@@ -634,7 +640,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Waktu Sesi */}
                     <View style={[styles.fieldContainer, { flex: 1, marginLeft: 8 }]}>
                         <Text style={styles.fieldLabel}>Waktu Sesi</Text>
                         <View style={styles.timeRow}>
@@ -682,7 +687,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
                         setSelectedMateriId(null);
                         setOpenJenjang(false);
                     }}
-                    zIndex={90}  // ← TAMBAH INI
+                    zIndex={90}
                 />
 
                 {/* Kelas */}
@@ -706,7 +711,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
                     label="Mata Pelajaran"
                     value={mataPelajaran}
                     placeholder={loadingMapel ? "Memuat mapel..." : !jenjang ? "Pilih Jenjang dulu" : "Pilih Mata Pelajaran"}
-                    options={daftarMapelDB.map(m => m.namaMapel)} // ← dari DB
+                    options={daftarMapelDB.map(m => m.namaMapel)}
                     isOpen={openMapel}
                     onToggle={(val) => {
                         if (!jenjang) { Alert.alert('Pilih Jenjang', 'Pilih jenjang terlebih dahulu.'); return; }
@@ -717,19 +722,19 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
                         const found = daftarMapelDB.find(m => m.namaMapel === val);
                         setMataPelajaran(val);
                         setMapelSelected(found ? { id: found.id, namaMapel: found.namaMapel } : null);
-                        // Reset materi saat mapel berubah
                         setMateri('');
                         setMateriSelected(null);
                         setOpenMapel(false);
                     }}
                     zIndex={70}
                 />
+
                 {/* Materi */}
                 <FloatingDropdown
                     label="Materi"
                     value={materi}
                     placeholder={loadingMateri ? "Memuat materi..." : !mapelSelected || !kelas ? "Pilih Mapel & Kelas dulu" : "Pilih Materi"}
-                    options={daftarMateriDB.map(m => m.nama_materi)} // ← dari DB
+                    options={daftarMateriDB.map(m => m.nama_materi)}
                     isOpen={openMateri}
                     onToggle={(val) => {
                         if (!mapelSelected || !kelas) { Alert.alert('Belum Lengkap', 'Pilih mata pelajaran dan kelas terlebih dahulu.'); return; }
@@ -740,30 +745,31 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
                         const found = daftarMateriDB.find(m => m.nama_materi === val);
                         setMateri(val);
                         setMateriSelected(found || null);
-                        setSelectedMateriId(found?.id_materi || null); // ← TAMBAH INI, tanpa ini handleConfirm selalu gagal validasi
+                        setSelectedMateriId(found?.id_materi || null);
                         setOpenMateri(false);
                     }}
                     zIndex={60}
                 />
 
-                {/* Map Section */}
+                {/* Map Section - WebView Interaktif menggunakan Leaflet */}
                 <View style={[styles.mapSection, { zIndex: 1 }]}>
-                    <TouchableOpacity style={styles.mapPlaceholder} onPress={openInGoogleMaps} activeOpacity={0.8}>
+                    <View style={styles.mapsContainerWrapper}>
                         {loadingLocation ? (
                             <View style={styles.mapLoadingContainer}>
                                 <ActivityIndicator size="large" color="#284B7A" />
                                 <Text style={styles.mapLoadingText}>Mengambil lokasi GPS...</Text>
                             </View>
                         ) : userLocation ? (
-                            <View style={styles.mapPreview}>
-                                <Text style={styles.mapPinEmoji}>📍</Text>
-                                <Text style={styles.mapCoordText}>
-                                    {userLocation.latitude.toFixed(5)}, {userLocation.longitude.toFixed(5)}
-                                </Text>
-                                <Text style={styles.mapTapText}>Ketuk untuk buka di Google Maps</Text>
-                            </View>
+                            <WebView
+                                originWhitelist={['*']}
+                                source={{ html: mapHtmlTemplate }}
+                                style={styles.mapsStaticImageMedia}
+                                geolocationEnabled={true}
+                                javaScriptEnabled={true}
+                                domStorageEnabled={true}
+                            />
                         ) : (
-                            <View style={styles.mapPreview}>
+                            <View style={styles.mapPreviewFallback}>
                                 <Text style={styles.mapPinEmoji}>⚠️</Text>
                                 <Text style={styles.mapTapText}>Lokasi belum tersedia</Text>
                                 <TouchableOpacity style={styles.retryBtn} onPress={requestLocation}>
@@ -771,14 +777,17 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
                                 </TouchableOpacity>
                             </View>
                         )}
-                    </TouchableOpacity>
-                    <View style={styles.lokasiRow}>
+                    </View>
+                    
+                    {/* Klik kartu lokasi untuk membuka Google Maps Eksternal */}
+                    <TouchableOpacity style={styles.lokasiRow} onPress={openInGoogleMaps} activeOpacity={0.8}>
                         <Text style={styles.lokasiIcon}>📍</Text>
                         <View style={styles.lokasiTextWrap}>
-                            <Text style={styles.lokasiTitle}>Lokasi Anda</Text>
+                            <Text style={styles.lokasiTitle}>Lokasi Anda (Ketuk untuk Buka Rute)</Text>
                             <Text style={styles.lokasiAddress} numberOfLines={2}>{locationAddress}</Text>
                         </View>
-                    </View>
+                        <Text style={styles.locationChevronRightIcon}>❯</Text>
+                    </TouchableOpacity>
                 </View>
 
                 <View style={{ height: 120 }} />
@@ -849,20 +858,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        // Menyesuaikan tinggi agar pas di bawah notch sesuai gambar
         paddingTop: Platform.OS === 'ios' ? 60 : 40,
         paddingBottom: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#E8E8E8',
         backgroundColor: '#FFFFFF',
-        // PENTING: Menjamin Header berada di atas ScrollView
         zIndex: 999,
         elevation: 5,
     },
     backBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        // Memperbesar area klik (Hit Slop) agar mudah ditekan
         paddingVertical: 10,
         paddingHorizontal: 10,
         marginLeft: -10,
@@ -907,7 +913,7 @@ const styles = StyleSheet.create({
         borderColor: '#284B7A',
         borderBottomLeftRadius: 10,
         borderBottomRightRadius: 10,
-        elevation: 999,        // ← naikan sangat tinggi
+        elevation: 999,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
@@ -985,12 +991,11 @@ const styles = StyleSheet.create({
         borderColor: '#284B7A',
         borderBottomLeftRadius: 10,
         borderBottomRightRadius: 10,
-        elevation: 999,        // ← naikan
+        elevation: 999,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 6,
-        // HAPUS: overflow: 'hidden'
     },
 
     // Search bar kecil untuk waktu
@@ -1010,22 +1015,47 @@ const styles = StyleSheet.create({
         paddingVertical: 2, height: 32,
     },
 
-    // Map
-    mapSection: { marginTop: 4, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#E8E8E8' },
-    mapPlaceholder: { height: 180, backgroundColor: '#E8F5E9', justifyContent: 'center', alignItems: 'center' },
-    mapLoadingContainer: { alignItems: 'center' },
+    // Style Baru untuk Map Section dan WebView Leaflet
+    mapSection: { 
+        marginTop: 4, 
+        borderRadius: 16, 
+        overflow: 'hidden', 
+        borderWidth: 1, 
+        borderColor: '#E2E8F0',
+        backgroundColor: '#FFFFFF',
+    },
+    mapsContainerWrapper: {
+        width: '100%',
+        height: 180,
+        backgroundColor: '#E2E8F0',
+        overflow: 'hidden',
+    },
+    mapsStaticImageMedia: { width: '100%', height: '100%' },
+    mapLoadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' },
     mapLoadingText: { marginTop: 10, fontSize: 13, color: '#666' },
-    mapPreview: { alignItems: 'center' },
+    mapPreviewFallback: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' },
     mapPinEmoji: { fontSize: 40, marginBottom: 8 },
-    mapCoordText: { fontSize: 13, color: '#333', fontWeight: '600', marginBottom: 4 },
-    mapTapText: { fontSize: 12, color: '#2D9CDB', fontWeight: '500' },
+    mapTapText: { fontSize: 12, color: '#64748B', fontWeight: '500' },
     retryBtn: { marginTop: 12, backgroundColor: '#284B7A', paddingVertical: 8, paddingHorizontal: 20, borderRadius: 15 },
     retryBtnText: { color: '#FFF', fontSize: 12, fontWeight: '600' },
-    lokasiRow: { flexDirection: 'row', alignItems: 'center', padding: 14, backgroundColor: '#FFF' },
+    lokasiRow: { 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        padding: 14, 
+        backgroundColor: '#FFF',
+        borderTopWidth: 1,
+        borderTopColor: '#F1F5F9',
+    },
     lokasiIcon: { fontSize: 20, marginRight: 10 },
     lokasiTextWrap: { flex: 1 },
     lokasiTitle: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
     lokasiAddress: { fontSize: 12, color: '#777', marginTop: 2 },
+    locationChevronRightIcon: {
+        fontSize: 14,
+        color: '#94A3B8',
+        fontWeight: 'bold',
+        marginLeft: 6,
+    },
 
     // Bottom button
     bottomButtonContainer: {
