@@ -928,7 +928,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
           zIndex={60}
         />
 
-        {/* Map Section - WebView Interaktif menggunakan Leaflet */}
+        {/* Map Section - Atas: Visual Peta, Bawah: Keterangan Alamat */}
         <View style={[styles.mapSection, { zIndex: 1 }]}>
           <View style={styles.mapsContainerWrapper}>
             {loadingLocation ? (
@@ -939,16 +939,37 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
                 </Text>
               </View>
             ) : userLocation ? (
-              <View style={styles.mapPreview}>
-                <Text style={styles.mapPinEmoji}>📍</Text>
-                {/* 👇 DIUBAH DARI KOORDINAT MENJADI VARIABLE ALAMAT */}
-                <Text style={styles.mapCoordText} numberOfLines={2}>
-                  {locationAddress}
-                </Text>
-                <Text style={styles.mapTapText}>
-                  Ketuk untuk buka di Google Maps
-                </Text>
-              </View>
+              /* 🗺️ VISUAL MAP: Menampilkan peta jalan nyata */
+              <WebView
+                originWhitelist={['*']}
+                source={{
+                  html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                <style>
+                    html, body, #map { height: 100%; margin: 0; padding: 0; background-color: #FAFAFA; }
+                </style>
+            </head>
+            <body>
+                <div id="map"></div>
+                <script>
+                    var map = L.map('map', { zoomControl: false, attributionControl: false })
+                               .setView([${userLocation.latitude}, ${userLocation.longitude}], 16);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    L.marker([${userLocation.latitude}, ${userLocation.longitude}]).addTo(map);
+                </script>
+            </body>
+            </html>
+          `,
+                }}
+                style={styles.mapsStaticImageMedia}
+                scrollEnabled={false}
+              />
             ) : (
               <View style={styles.mapPreviewFallback}>
                 <Text style={styles.mapPinEmoji}>⚠️</Text>
@@ -963,7 +984,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
             )}
           </View>
 
-          {/* Klik kartu lokasi untuk membuka Google Maps Eksternal */}
+          {/* 📍 KETERANGAN ALAMAT: Menampilkan locationAddress, bukan koordinat */}
           <TouchableOpacity
             style={styles.lokasiRow}
             onPress={openInGoogleMaps}
@@ -981,7 +1002,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
             <Text style={styles.locationChevronRightIcon}>❯</Text>
           </TouchableOpacity>
         </View>
-
         <View style={{ height: 120 }} />
       </ScrollView>
 
@@ -1283,6 +1303,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
     backgroundColor: '#FFFFFF',
+    marginBottom: 10,
   },
   mapsContainerWrapper: {
     width: '100%',
@@ -1325,12 +1346,18 @@ const styles = StyleSheet.create({
   lokasiIcon: { fontSize: 20, marginRight: 10 },
   lokasiTextWrap: { flex: 1 },
   lokasiTitle: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
-  lokasiAddress: { fontSize: 12, color: '#777', marginTop: 2 },
+  lokasiAddress: {
+    fontSize: 12,
+    color: '#666', // Warna teks alamat agar lebih terbaca
+    marginTop: 2,
+    lineHeight: 18,
+  },
   locationChevronRightIcon: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: '#999',
     fontWeight: 'bold',
-    marginLeft: 6,
+    marginLeft: 8,
+    alignSelf: 'center',
   },
 
   // Bottom button
@@ -1428,6 +1455,14 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: '#666',
+  },
+  // Tambahkan baris ini di dalam StyleSheet.create({ ... })
+  locationChevronRightIcon: {
+    fontSize: 14,
+    color: '#999',
+    fontWeight: 'bold',
+    marginLeft: 8,
+    alignSelf: 'center',
   },
 });
 
