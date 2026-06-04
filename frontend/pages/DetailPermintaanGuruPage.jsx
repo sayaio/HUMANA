@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -31,7 +31,7 @@ import { getStatusPembayaran } from '../services/bankerService';
 const DetailPermintaanGuruPage = ({
   permintaanData,
   guruData,
-  tipePermintaan = 'Permintaan', // 'Permintaan' | 'Aktif' | 'Berlangsung'
+  tipePermintaan = 'Permintaan',
   onBack,
   onTolak,
   onChat,
@@ -54,6 +54,20 @@ const DetailPermintaanGuruPage = ({
     message: '',
     isConfirmation: false,
   });
+
+  useEffect(() => {
+    const cekPembayaran = async () => {
+      const id = data.id_pemesanan || data.id;
+      if (!id) {
+        setLoadingStatusBayar(false);
+        return;
+      }
+      const res = await getStatusPembayaran(id);
+      setSudahLunas(res?.status_pembayaran === 'lunas');
+      setLoadingStatusBayar(false);
+    };
+    cekPembayaran();
+  }, [data.id_pemesanan, data.id]);
 
   // ─── Helpers ─────────────────────────────────────────────────
   const namaInisial = data.nama_murid
@@ -78,9 +92,7 @@ const DetailPermintaanGuruPage = ({
       ).catch(() => Alert.alert('Error', 'Tidak dapat membuka Google Maps.'));
     } else {
       Linking.openURL(
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          lokasi,
-        )}`,
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lokasi)}`,
       ).catch(() => Alert.alert('Error', 'Tidak dapat membuka Google Maps.'));
     }
   };
@@ -129,10 +141,7 @@ const DetailPermintaanGuruPage = ({
                 });
               } else {
                 requestAnimationFrame(() => {
-                  Alert.alert(
-                    'Gagal',
-                    res.message || 'Terjadi kesalahan sistem.',
-                  );
+                  Alert.alert('Gagal', res.message || 'Terjadi kesalahan sistem.');
                 });
               }
             } catch (e) {
@@ -221,10 +230,7 @@ const DetailPermintaanGuruPage = ({
       }
       const selesaiResult = await selesaikanSesiAPI(id);
       if (!selesaiResult.success) {
-        Alert.alert(
-          'Gagal',
-          selesaiResult.message || 'Gagal menyelesaikan sesi.',
-        );
+        Alert.alert('Gagal', selesaiResult.message || 'Gagal menyelesaikan sesi.');
         return;
       }
       setShowDokModal(false);
@@ -284,10 +290,10 @@ const DetailPermintaanGuruPage = ({
           hour: '2-digit',
           minute: '2-digit',
         });
-        const selesai = new Date(data.waktu_selesai).toLocaleTimeString(
-          'id-ID',
-          { hour: '2-digit', minute: '2-digit' },
-        );
+        const selesai = new Date(data.waktu_selesai).toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
         return `${mulai} - ${selesai}`;
       } catch {
         return '-';
@@ -301,7 +307,6 @@ const DetailPermintaanGuruPage = ({
   const lokasiAlamat =
     data.lokasi_sesi || data.lokasi || data.alamat || 'Alamat tidak tersedia';
 
-  // Penentu tombol: sebelum waktu mulai → bisa batal, sesudah → selesaikan
   const sekarang = new Date();
   const waktuMulaiObj = data.waktu_mulai ? new Date(data.waktu_mulai) : null;
   const belumMulai =
@@ -309,35 +314,13 @@ const DetailPermintaanGuruPage = ({
       ? sekarang < waktuMulaiObj
       : true;
 
-  // Badge
   const badgeConfig = {
-    Permintaan: {
-      label: 'Menunggu Konfirmasi',
-      bg: '#FFF3E0',
-      text: '#E65100',
-    },
+    Permintaan: { label: 'Menunggu Konfirmasi', bg: '#FFF3E0', text: '#E65100' },
     Aktif: { label: 'Terkonfirmasi', bg: '#E3F2FD', text: '#1565C0' },
-    Berlangsung: {
-      label: 'Sedang Berlangsung',
-      bg: '#E8F5E9',
-      text: '#2E7D32',
-    },
+    Berlangsung: { label: 'Sedang Berlangsung', bg: '#E8F5E9', text: '#2E7D32' },
   };
   const badge = badgeConfig[tipePermintaan] || badgeConfig.Permintaan;
-  useEffect(() => {
-    const cekPembayaran = async () => {
-      const id = data.id_pemesanan || data.id;
-      if (!id) {
-        setLoadingStatusBayar(false);
-        return;
-      }
 
-      const res = await getStatusPembayaran(id);
-      setSudahLunas(res?.status_pembayaran === 'lunas');
-      setLoadingStatusBayar(false);
-    };
-    cekPembayaran();
-  }, [data.id_pemesanan, data.id]);
   // ─── Action bar dinamis ───────────────────────────────────────
   const renderActionBar = () => {
     if (tipePermintaan === 'Permintaan') {
@@ -411,7 +394,6 @@ const DetailPermintaanGuruPage = ({
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
-      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={onBack}>
           <ChevronLeft size={20} color="#284B7A" />
@@ -426,15 +408,12 @@ const DetailPermintaanGuruPage = ({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
       >
-        {/* Profil Murid + Badge + Chat */}
         <View style={styles.profileRow}>
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarText}>{namaInisial}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.namaMurid}>
-              {data.nama_murid || 'Nama Murid'}
-            </Text>
+            <Text style={styles.namaMurid}>{data.nama_murid || 'Nama Murid'}</Text>
             <View style={[styles.badge, { backgroundColor: badge.bg }]}>
               <Text style={[styles.badgeText, { color: badge.text }]}>
                 {badge.label}
@@ -443,17 +422,12 @@ const DetailPermintaanGuruPage = ({
           </View>
           {tipePermintaan !== 'Permintaan' && (
             <TouchableOpacity style={styles.btnChatHeader} onPress={handleChat}>
-              <MessageCircle
-                size={16}
-                color="#FFF"
-                style={{ marginRight: 6 }}
-              />
+              <MessageCircle size={16} color="#FFF" style={{ marginRight: 6 }} />
               <Text style={styles.btnChatHeaderText}>Chat Murid</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Tanggal & Waktu */}
         <View style={styles.dateTimeRow}>
           <View style={styles.dateTimeBox}>
             <Text style={styles.dtLabel}>Tanggal</Text>
@@ -465,7 +439,6 @@ const DetailPermintaanGuruPage = ({
           </View>
         </View>
 
-        {/* Jenjang */}
         <View style={styles.fieldSection}>
           <Text style={styles.fieldLabel}>Jenjang</Text>
           <View style={styles.fieldBox}>
@@ -475,7 +448,6 @@ const DetailPermintaanGuruPage = ({
           </View>
         </View>
 
-        {/* Mata Pelajaran */}
         <View style={styles.fieldSection}>
           <Text style={styles.fieldLabel}>Mata Pelajaran</Text>
           <View style={styles.fieldBox}>
@@ -485,7 +457,6 @@ const DetailPermintaanGuruPage = ({
           </View>
         </View>
 
-        {/* Materi */}
         <View style={styles.fieldSection}>
           <Text style={styles.fieldLabel}>Materi</Text>
           <View style={styles.fieldBox}>
@@ -495,7 +466,6 @@ const DetailPermintaanGuruPage = ({
           </View>
         </View>
 
-        {/* Map Placeholder */}
         <View style={styles.mapContainer}>
           <View style={styles.mapPlaceholder}>
             <Text style={styles.mapPlaceholderText}>📍 Peta Lokasi</Text>
@@ -505,7 +475,6 @@ const DetailPermintaanGuruPage = ({
           </View>
         </View>
 
-        {/* Lokasi Row */}
         <TouchableOpacity
           style={styles.lokasiRow}
           onPress={handleBukaMap}
@@ -525,7 +494,6 @@ const DetailPermintaanGuruPage = ({
           <ChevronRight size={18} color="#ABABAB" />
         </TouchableOpacity>
 
-        {/* Rincian Bayaran */}
         <View style={styles.rincianCard}>
           <Text style={styles.rincianTitle}>Rincian Bayaran</Text>
           <View style={styles.rincianRow}>
@@ -534,9 +502,7 @@ const DetailPermintaanGuruPage = ({
           </View>
           <View style={styles.rincianRow}>
             <Text style={styles.rincianLabel}>Biaya Transportasi</Text>
-            <Text style={styles.rincianValue}>
-              : {formatRupiah(biayaTransportasi)}
-            </Text>
+            <Text style={styles.rincianValue}>: {formatRupiah(biayaTransportasi)}</Text>
           </View>
           <View style={styles.rincianDivider} />
           <View style={styles.totalRow}>
@@ -546,10 +512,8 @@ const DetailPermintaanGuruPage = ({
         </View>
       </ScrollView>
 
-      {/* Action Bar */}
       {renderActionBar()}
 
-      {/* Modal Dokumentasi */}
       {showDokModal && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -591,10 +555,7 @@ const DetailPermintaanGuruPage = ({
                 <Text style={styles.modalBtnBatalText}>Batal</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  styles.modalBtnSelesai,
-                  uploadingFoto && { opacity: 0.6 },
-                ]}
+                style={[styles.modalBtnSelesai, uploadingFoto && { opacity: 0.6 }]}
                 onPress={handleKonfirmasiSelesai}
                 disabled={uploadingFoto}
               >
@@ -609,7 +570,6 @@ const DetailPermintaanGuruPage = ({
         </View>
       )}
 
-      {/* Custom Alert */}
       <CustomAlert
         visible={alertVisible}
         type={alertConfig.type}
@@ -619,8 +579,7 @@ const DetailPermintaanGuruPage = ({
         onConfirm={prosesBatalGuru}
         onClose={() => {
           setAlertVisible(false);
-          if (!alertConfig.isConfirmation && navigateOnClose)
-            onBack && onBack();
+          if (!alertConfig.isConfirmation && navigateOnClose) onBack && onBack();
         }}
       />
     </View>
@@ -630,323 +589,143 @@ const DetailPermintaanGuruPage = ({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 16,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingTop: 50, paddingBottom: 16,
+    backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
   backBtn: { flexDirection: 'row', alignItems: 'center', width: 80 },
-  backText: {
-    fontSize: 14,
-    color: '#284B7A',
-    fontWeight: '600',
-    marginLeft: 2,
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-  },
+  backText: { fontSize: 14, color: '#284B7A', fontWeight: '600', marginLeft: 2 },
+  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#000', textAlign: 'center' },
   scrollView: { flex: 1 },
   profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 20,
-    gap: 16,
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 24, paddingTop: 24, paddingBottom: 20, gap: 16,
   },
   avatarCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#284B7A',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center',
   },
   avatarText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
   namaMurid: { fontSize: 20, fontWeight: 'bold', color: '#000' },
   badge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginTop: 6,
+    alignSelf: 'flex-start', paddingHorizontal: 10,
+    paddingVertical: 4, borderRadius: 20, marginTop: 6,
   },
   badgeText: { fontSize: 11, fontWeight: '700' },
   btnChatHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#284B7A',
-    paddingHorizontal: 14,
-    height: 40,
-    borderRadius: 12,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#284B7A', paddingHorizontal: 14, height: 40, borderRadius: 12,
   },
   btnChatHeaderText: { color: '#FFF', fontWeight: 'bold', fontSize: 13 },
   dateTimeRow: { flexDirection: 'row', marginHorizontal: 24, marginBottom: 20 },
   dateTimeBox: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#E8EEF6',
-    borderRadius: 12,
-    padding: 14,
-    backgroundColor: '#F8FAFC',
+    flex: 1, borderWidth: 1, borderColor: '#E8EEF6',
+    borderRadius: 12, padding: 14, backgroundColor: '#F8FAFC',
   },
-  dtLabel: {
-    fontSize: 11,
-    color: '#ABABAB',
-    marginBottom: 6,
-    fontWeight: '500',
-  },
+  dtLabel: { fontSize: 11, color: '#ABABAB', marginBottom: 6, fontWeight: '500' },
   dtValue: { fontSize: 14, fontWeight: 'bold', color: '#284B7A' },
   fieldSection: { marginHorizontal: 24, marginBottom: 14 },
-  fieldLabel: {
-    fontSize: 13,
-    color: '#333',
-    fontWeight: '600',
-    marginBottom: 8,
-  },
+  fieldLabel: { fontSize: 13, color: '#333', fontWeight: '600', marginBottom: 8 },
   fieldBox: {
-    borderWidth: 1,
-    borderColor: '#E8EEF6',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    backgroundColor: '#FAFBFD',
-    alignItems: 'center',
+    borderWidth: 1, borderColor: '#E8EEF6', borderRadius: 12,
+    paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#FAFBFD', alignItems: 'center',
   },
   fieldValue: { fontSize: 14, color: '#444', fontWeight: '500' },
   mapContainer: {
-    marginHorizontal: 24,
-    marginBottom: 0,
-    borderRadius: 14,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E8EEF6',
+    marginHorizontal: 24, marginBottom: 0,
+    borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: '#E8EEF6',
   },
   mapPlaceholder: {
-    height: 160,
-    backgroundColor: '#E8F0E9',
-    justifyContent: 'center',
-    alignItems: 'center',
+    height: 160, backgroundColor: '#E8F0E9',
+    justifyContent: 'center', alignItems: 'center',
   },
   mapPlaceholderText: { fontSize: 20, marginBottom: 6 },
-  mapPlaceholderSub: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
+  mapPlaceholderSub: { fontSize: 12, color: '#666', textAlign: 'center', paddingHorizontal: 20 },
   lokasiRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 24,
-    marginTop: 0,
-    marginBottom: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderTopWidth: 0,
-    borderColor: '#E8EEF6',
-    borderBottomLeftRadius: 14,
-    borderBottomRightRadius: 14,
+    flexDirection: 'row', alignItems: 'center',
+    marginHorizontal: 24, marginTop: 0, marginBottom: 20,
+    paddingVertical: 14, paddingHorizontal: 16,
+    backgroundColor: '#FFF', borderWidth: 1, borderTopWidth: 0,
+    borderColor: '#E8EEF6', borderBottomLeftRadius: 14, borderBottomRightRadius: 14,
   },
   lokasiIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#EBF0F8',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: '#EBF0F8', justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
   lokasiInfo: { flex: 1 },
-  lokasiTitle: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 2,
-  },
+  lokasiTitle: { fontSize: 13, fontWeight: 'bold', color: '#000', marginBottom: 2 },
   lokasiAlamat: { fontSize: 12, color: '#666' },
   rincianCard: {
-    marginHorizontal: 24,
-    marginBottom: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E8EEF6',
-    padding: 18,
-    backgroundColor: '#FFF',
+    marginHorizontal: 24, marginBottom: 16,
+    borderRadius: 14, borderWidth: 1, borderColor: '#E8EEF6', padding: 18, backgroundColor: '#FFF',
   },
-  rincianTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 14,
-  },
-  rincianRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
+  rincianTitle: { fontSize: 15, fontWeight: 'bold', color: '#000', marginBottom: 14 },
+  rincianRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   rincianLabel: { fontSize: 13, color: '#555' },
   rincianValue: { fontSize: 13, color: '#333', fontWeight: '500' },
   rincianDivider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: 10 },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel: { fontSize: 16, fontWeight: 'bold', color: '#000' },
   totalValue: { fontSize: 17, fontWeight: 'bold', color: '#000' },
   actionBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    paddingBottom: 32,
-    paddingTop: 16,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    gap: 12,
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    flexDirection: 'row', paddingHorizontal: 24, paddingBottom: 32, paddingTop: 16,
+    backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#F0F0F0', gap: 12,
   },
   btnTolak: {
-    flex: 1,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: '#E53935',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1, height: 50, borderRadius: 14,
+    backgroundColor: '#E53935', justifyContent: 'center', alignItems: 'center',
   },
   btnTolakText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
   btnTerima: {
-    flex: 1,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: '#2A7A5E',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1, height: 50, borderRadius: 14,
+    backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center',
   },
   btnTerimaText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
   btnBatal: {
-    flex: 1,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: '#E53935',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1, height: 50, borderRadius: 14,
+    backgroundColor: '#E53935', justifyContent: 'center', alignItems: 'center',
   },
   btnBatalText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
   btnSelesaikan: {
-    flex: 1,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: '#2A7A5E',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1, height: 50, borderRadius: 14,
+    backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center',
   },
   btnSelesaikanText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
   btnDisabled: { opacity: 0.6 },
+  btnSelesaikanBlocked: {
+    flex: 1, height: 50, borderRadius: 14,
+    backgroundColor: '#FFF', borderWidth: 1, borderColor: '#BDBDBD',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  btnSelesaikanBlockedText: { color: '#9E9E9E', fontWeight: 'bold', fontSize: 15 },
   modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 999,
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 999,
   },
   modalCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 20,
-    padding: 24,
-    width: '85%',
-    alignItems: 'center',
+    backgroundColor: '#FFF', borderRadius: 20, padding: 24, width: '85%', alignItems: 'center',
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 6,
-  },
-  modalSubtitle: {
-    fontSize: 13,
-    color: '#888',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#000', marginBottom: 6 },
+  modalSubtitle: { fontSize: 13, color: '#888', textAlign: 'center', marginBottom: 20 },
   fotoBox: {
-    width: '100%',
-    height: 180,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-    overflow: 'hidden',
+    width: '100%', height: 180, backgroundColor: '#F5F5F5',
+    borderRadius: 14, borderWidth: 1, borderColor: '#E0E0E0', borderStyle: 'dashed',
+    justifyContent: 'center', alignItems: 'center', marginBottom: 12, overflow: 'hidden',
   },
   fotoPreview: { width: '100%', height: '100%' },
   fotoIcon: { fontSize: 40, marginBottom: 8 },
   fotoHint: { fontSize: 13, color: '#ABABAB' },
-  gantiText: {
-    fontSize: 13,
-    color: '#284B7A',
-    fontWeight: '600',
-    marginBottom: 20,
-  },
-  modalActionRow: {
-    flexDirection: 'row',
-    gap: 12,
-    width: '100%',
-    marginTop: 8,
-  },
+  gantiText: { fontSize: 13, color: '#284B7A', fontWeight: '600', marginBottom: 20 },
+  modalActionRow: { flexDirection: 'row', gap: 12, width: '100%', marginTop: 8 },
   modalBtnBatal: {
-    flex: 1,
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1, height: 48, borderRadius: 12,
+    borderWidth: 1, borderColor: '#E0E0E0', justifyContent: 'center', alignItems: 'center',
   },
   modalBtnBatalText: { fontSize: 14, color: '#888', fontWeight: '600' },
   modalBtnSelesai: {
-    flex: 1,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#2A7A5E',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  btnSelesaikanBlocked: {
-    flex: 1,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#BDBDBD',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  btnSelesaikanBlockedText: {
-    color: '#9E9E9E',
-    fontWeight: 'bold',
-    fontSize: 15,
+    flex: 1, height: 48, borderRadius: 12,
+    backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center',
   },
   modalBtnSelesaiText: { fontSize: 14, color: '#FFF', fontWeight: 'bold' },
 });
