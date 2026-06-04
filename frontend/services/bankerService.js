@@ -70,3 +70,20 @@ export const prosesCod = async (id_sesi) => {
         return { success: false, message: error.message };
     }
 };
+/**
+ * GET /sesi/status-pembayaran/:id_pemesanan
+ * Cek apakah pembayaran untuk sesi ini sudah lunas
+ */
+export const getStatusPembayaran = async (id_pemesanan) => {
+    try {
+        const response = await fetch(`${API_URL}/sesi/status-pembayaran/${id_pemesanan}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.log('[BankerService] Error fetching status pembayaran:', error);
+        return { success: false, message: error.message };
+    }
+};
