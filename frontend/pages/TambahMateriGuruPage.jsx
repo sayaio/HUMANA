@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 10 : 40, paddingBottom: 15,
+    paddingHorizontal: 30, paddingTop: Platform.OS === 'ios' ? 10 : 40, paddingBottom: 15,
     backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#F2F2F2'
   },
   backBtn: { width: 80 },

@@ -146,7 +146,7 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#284B7A' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 30, paddingHorizontal: 20 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 45, paddingBottom: 30, paddingHorizontal: 20 },
   backBtn: {
     flexDirection: 'row',    // Membuat ikon dan teks berjejer ke samping
     alignItems: 'center',    // Membuat ikon dan teks lurus sejajar secara vertikal
