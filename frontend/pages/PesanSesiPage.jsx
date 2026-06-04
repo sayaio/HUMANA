@@ -21,7 +21,7 @@ import BackIconSvg from '../components/BackIconSvg';
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
-const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
+const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }) => {
     // === STATE FORM ===
     const [tanggal, setTanggal] = useState(null);
     const [waktuMulai, setWaktuMulai] = useState('');
@@ -77,14 +77,34 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
         fetchMapel();
     }, [jenjang]);
 
-    // === FETCH LOAD DRAFT
+    const applyPrefillBooking = (prefill) => {
+        if (!prefill) return;
+        if (prefill.jenjang) setJenjang(prefill.jenjang);
+        if (prefill.kelas) setKelas(prefill.kelas);
+        if (prefill.mataPelajaran) setMataPelajaran(prefill.mataPelajaran);
+        if (prefill.materi) setMateri(prefill.materi);
+        if (prefill.mapelSelected) setMapelSelected(prefill.mapelSelected);
+        if (prefill.selectedMateriId) setSelectedMateriId(prefill.selectedMateriId);
+    };
+
+    // === FETCH LOAD DRAFT + PREFILL DARI HOME (PESAN LAGI)
     useEffect(() => {
-        if (userId) {
-            loadDraft();
-        } else {
-            console.log('❌ userId kosong! Draft tidak bisa di-load');
+        if (!userId) {
+            setIsLoadingDraft(false);
+            return;
         }
-    }, [userId]);
+
+        const initForm = async () => {
+            setIsLoadingDraft(true);
+            await loadDraft();
+            if (prefillBooking) {
+                applyPrefillBooking(prefillBooking);
+            }
+            setIsLoadingDraft(false);
+        };
+
+        initForm();
+    }, [userId, prefillBooking]);
 
     // === FETCH AUTO=SAVE
     useEffect(() => {
@@ -296,9 +316,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
             }
         } catch (error) {
             console.error('❌ Error loadDraft:', error);
-        } finally {
-            setIsLoadingDraft(false);
-            console.log('🏁 isLoadingDraft set ke false');
         }
     };
 

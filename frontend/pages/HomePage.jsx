@@ -8,6 +8,11 @@ import CustomAlert from '../components/CustomAlert';
 import BottomNavbar from '../components/BottomNavbar';
 import { fetchAllMapel } from '../services/MateriService';
 import { getActiveSchedule } from '../services/historyService';
+import {
+    getMateriTerfavoritMurid,
+    getRekomendasiMateriAcakList,
+    formatJenjangTampilan,
+} from '../services/homeService';
 
 
 import { Calendar, BookOpen, Wallet, FileText, Search, MessageSquare, User, Home } from 'lucide-react-native';
@@ -38,7 +43,8 @@ const formatRupiah = (angka) => {
 
 const HomePage = ({
     namaLengkap, email, onLogout, onSelectSubject,
-    onNavigate, showSuccessAlert, onAlertClose, userId, userRole
+    onNavigate, onPesanSesiPrefill, onLihatDetailMateri,
+    jenjangMurid, showSuccessAlert, onAlertClose, userId, userRole
 }) => {
     const role = userRole ? userRole.toLowerCase() : 'murid';
 
@@ -48,6 +54,9 @@ const HomePage = ({
     const [loadingMapel, setLoadingMapel] = useState(false);
     const [activeSessions, setActiveSessions] = useState([]);
     const [loadingSessions, setLoadingSessions] = useState(false);
+    const [materiFavorit, setMateriFavorit] = useState(null);
+    const [rekomendasiList, setRekomendasiList] = useState([]);
+    const [loadingMateriRekom, setLoadingMateriRekom] = useState(false);
     const [alertConfig, setAlertConfig] = useState({
         visible: false, type: 'success', title: '', message: ''
     });
@@ -117,6 +126,36 @@ const HomePage = ({
         };
         load();
     }, [userId, userRole]);
+
+    useEffect(() => {
+        if (role !== 'murid' || !userId) return;
+
+        let aktif = true;
+        const muatMateriRekom = async () => {
+            setLoadingMateriRekom(true);
+            try {
+                const [favorit, rekomendasi] = await Promise.all([
+                    getMateriTerfavoritMurid(userId),
+                    getRekomendasiMateriAcakList(5, jenjangMurid),
+                ]);
+                if (!aktif) return;
+
+                setMateriFavorit(favorit);
+                setRekomendasiList(Array.isArray(rekomendasi) ? rekomendasi : []);
+            } catch (err) {
+                console.error('[HomePage] Gagal muat materi rekom:', err);
+                if (aktif) {
+                    setMateriFavorit(null);
+                    setRekomendasiList([]);
+                }
+            } finally {
+                if (aktif) setLoadingMateriRekom(false);
+            }
+        };
+
+        muatMateriRekom();
+        return () => { aktif = false; };
+    }, [userId, role, jenjangMurid]);
 
     useEffect(() => {
         if (showSuccessAlert) {
@@ -399,38 +438,84 @@ const HomePage = ({
                     </View>
                 ) : (
                     <View style={styles.sectionPadding}>
-                        <Text style={styles.sectionTitle}>PESAN LAGI</Text>
-                        <View style={styles.pesanLagiCard}>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.pesanLagiSub}>Lanjutkan sesi favoritmu</Text>
-                                <Text style={styles.pesanLagiTitle} numberOfLines={2}>
-                                    <Text style={{ fontFamily: FONTS.bold }}>Matematika</Text> - Relasi & Fungsi
-                                </Text>
-                                <TouchableOpacity style={styles.pesanBtn} onPress={() => onNavigate?.('PesanSesi')}>
-                                    <Text style={styles.pesanBtnText}>Pesan Sesi →</Text>
-                                </TouchableOpacity>
+                        {loadingMateriRekom ? (
+                            <View style={[styles.centerContent, { paddingVertical: 32 }]}>
+                                <ActivityIndicator size="small" color="#284B7A" />
+                                <Text style={styles.loadingText}>Memuat rekomendasi...</Text>
                             </View>
-                            <View style={styles.pesanDecor}>
-                                <Text style={styles.mathSymbols}>+ ={"\n"}- x</Text>
-                            </View>
-                        </View>
+                        ) : (
+                            <>
+                                {materiFavorit ? (
+                                    <>
+                                        <Text style={styles.sectionTitle}>PESAN LAGI</Text>
+                                        <View style={styles.pesanLagiCard}>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.pesanLagiSub}>Lanjutkan sesi favoritmu</Text>
+                                                <Text style={styles.pesanLagiTitle} numberOfLines={2}>
+                                                    <Text style={{ fontFamily: FONTS.bold }}>
+                                                        {materiFavorit.nama_mapel}
+                                                    </Text>
+                                                    {' - '}{materiFavorit.nama_materi}
+                                                </Text>
+                                                <TouchableOpacity
+                                                    style={styles.pesanBtn}
+                                                    onPress={() => {
+                                                        if (materiFavorit.prefill && onPesanSesiPrefill) {
+                                                            onPesanSesiPrefill(materiFavorit.prefill);
+                                                        } else {
+                                                            onNavigate?.('PesanSesi');
+                                                        }
+                                                    }}
+                                                >
+                                                    <Text style={styles.pesanBtnText}>Pesan Sesi →</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            <View style={styles.pesanDecor}>
+                                                <Text style={styles.mathSymbols}>+ ={'\n'}- x</Text>
+                                            </View>
+                                        </View>
+                                    </>
+                                ) : null}
 
-                        <View style={[styles.sectionHeader, { marginTop: 28 }]}>
-                            <Text style={styles.sectionTitle}>REKOMENDASI MATERI</Text>
-                            <TouchableOpacity><Text style={styles.linkText}>Lihat Semua</Text></TouchableOpacity>
-                        </View>
-                        <View style={styles.rekomendasiCard}>
-                            <View style={styles.rekomendasiIcon}>
-                                <BookOpen color="#284B7A" size={22} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.rekomendasiTitle} numberOfLines={1}>Aljabar Linear</Text>
-                                <Text style={styles.rekomendasiSub} numberOfLines={1}>Sekolah Menengah Atas</Text>
-                            </View>
-                            <TouchableOpacity style={styles.btnPrimary} onPress={() => setIsMateriVisible(true)}>
-                                <Text style={styles.btnPrimaryText}>Lihat</Text>
-                            </TouchableOpacity>
-                        </View>
+                                <View style={[styles.sectionHeader, styles.sectionHeaderRekom, { marginTop: materiFavorit ? 28 : 0 }]}>
+                                    <Text style={[styles.sectionTitle, styles.sectionTitleCompact]}>REKOMENDASI MATERI</Text>
+                                    <TouchableOpacity onPress={() => setIsMateriVisible(true)}>
+                                        <Text style={styles.linkText}>Lihat Semua</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                {rekomendasiList.length > 0 ? (
+                                    rekomendasiList.map(item => (
+                                        <View key={item.id_materi} style={styles.rekomendasiCard}>
+                                            <View style={styles.rekomendasiIcon}>
+                                                <BookOpen color="#284B7A" size={22} />
+                                            </View>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.rekomendasiTitle} numberOfLines={1}>
+                                                    {item.nama_materi}
+                                                </Text>
+                                                <Text style={styles.rekomendasiSub} numberOfLines={1}>
+                                                    {formatJenjangTampilan(item.jenjang, item.jurusan) || item.nama_mapel}
+                                                </Text>
+                                            </View>
+                                            <TouchableOpacity
+                                                style={styles.btnLihatDetail}
+                                                onPress={() => {
+                                                    if (item.chapterData && onLihatDetailMateri) {
+                                                        onLihatDetailMateri(item.chapterData);
+                                                    }
+                                                }}
+                                                activeOpacity={0.7}
+                                            >
+                                                <Text style={styles.btnLihatDetailText}>Lihat Detail</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))
+                                ) : (
+                                    <Text style={styles.emptyRekomText}>Belum ada materi untuk ditampilkan.</Text>
+                                )}
+                            </>
+                        )}
                     </View>
                 )}
             </ScrollView>
@@ -615,10 +700,12 @@ const styles = StyleSheet.create({
     },
 
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+    sectionHeaderRekom: { marginBottom: 4 },
     sectionTitle: {
         fontFamily: 'SF-Pro-Display-Bold',
         fontSize: 11, color: '#ABABAB', letterSpacing: 1, marginBottom: 10,
     },
+    sectionTitleCompact: { marginBottom: 0 },
     linkText: { fontFamily: 'SF-Pro-Display-Bold', fontSize: 12, color: '#284B7A' },
 
     pesanLagiCard: {
@@ -645,8 +732,27 @@ const styles = StyleSheet.create({
     },
 
     rekomendasiCard: {
-        marginTop: 1, backgroundColor: '#FFF', borderRadius: 16, padding: 14,
-        flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#EAEEF3',
+        marginTop: 4,
+        marginBottom: 2,
+        backgroundColor: '#FFF',
+        borderRadius: 16,
+        padding: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#EAEEF3',
+    },
+    btnLihatDetail: {
+        backgroundColor: '#284B7A',
+        paddingHorizontal: 10,
+        paddingVertical: 7,
+        borderRadius: 8,
+        marginLeft: 8,
+    },
+    btnLihatDetailText: {
+        fontFamily: 'SF-Pro-Display-Bold',
+        color: '#FFF',
+        fontSize: 11,
     },
     rekomendasiIcon: {
         width: 44, height: 44, borderRadius: 12,
@@ -654,6 +760,14 @@ const styles = StyleSheet.create({
     },
     rekomendasiTitle: { fontFamily: 'SF-Pro-Display-Bold', fontSize: 14, color: '#1A1A2E', marginBottom: 2 },
     rekomendasiSub: { fontFamily: 'SF-Pro-Display-Regular', fontSize: 12, color: '#999' },
+    emptyRekomText: {
+        fontFamily: 'SF-Pro-Display-Regular',
+        fontSize: 13,
+        color: '#ABABAB',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        marginTop: 8,
+    },
 
     navbar: {
         position: 'absolute', bottom: 0, width: '100%', height: 72,

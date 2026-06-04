@@ -98,6 +98,7 @@ const App = () => {
 
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectedChapter, setSelectedChapter] = useState(null);
+  const [detailBackPage, setDetailBackPage] = useState('Materi');
   const [activityTab, setActivityTab] = useState('aktif');
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
@@ -108,6 +109,7 @@ const App = () => {
   const [selectedTipePermintaan, setSelectedTipePermintaan] =
     useState('Permintaan');
   const [selectedRiwayatData, setSelectedRiwayatData] = useState(null);
+  const [pesanSesiPrefill, setPesanSesiPrefill] = useState(null);
   const [activityGuruRefreshKey, setActivityGuruRefreshKey] = useState(0);
   const handleRefreshProfileData = useCallback(async newData => {
     console.log(
@@ -363,6 +365,9 @@ const App = () => {
     } else if (page === 'RiwayatPendapatan') {
       setCurrentPage('RiwayatPendapatan');
     } else {
+      if (page === 'PesanSesi') {
+        setPesanSesiPrefill(null);
+      }
       setCurrentPage(page);
     }
   };
@@ -470,6 +475,18 @@ const App = () => {
                     if (tab) setActivityTab(tab);
                     setCurrentPage(page);
                 }}
+                onPesanSesiPrefill={prefill => {
+                    setPesanSesiPrefill(prefill);
+                    setCurrentPage('PesanSesi');
+                }}
+                onLihatDetailMateri={chapterData => {
+                    setSelectedChapter(chapterData);
+                    setDetailBackPage('Home');
+                    setCurrentPage('Detail');
+                }}
+                jenjangMurid={
+                    profileData.jenjang_pendidikan || profileData.education
+                }
                 showSuccessAlert={showLoginSuccessAlert}
                 onAlertClose={() => setShowLoginSuccessAlert(false)}
                 userId={profileData.id}
@@ -481,10 +498,15 @@ const App = () => {
     if (currentPage === 'PesanSesi') {
         return (
             <PesanSesiPage
-                onBack={() => setCurrentPage('Home')}
+                onBack={() => {
+                    setPesanSesiPrefill(null);
+                    setCurrentPage('Home');
+                }}
                 userId={profileData.id}
+                prefillBooking={pesanSesiPrefill}
                 onConfirmOrder={data => {
                     setBookingSessionData(data);
+                    setPesanSesiPrefill(null);
                     setCurrentPage('MencariPengajar');
                 }}
             />
@@ -639,6 +661,7 @@ const App = () => {
                 onBack={() => handleGlobalNavigate('Home')}
                 onChapterSelect={materiData => {
                     setSelectedChapter(materiData);
+                    setDetailBackPage('Materi');
                     setCurrentPage('Detail');
                 }}
             />
@@ -649,7 +672,7 @@ const App = () => {
         return (
             <DetailMateriPage
                 chapterData={selectedChapter}
-                onBack={() => setCurrentPage('Materi')}
+                onBack={() => setCurrentPage(detailBackPage)}
             />
         );
     }
@@ -827,6 +850,18 @@ const App = () => {
           if (tab) setActivityTab(tab);
           setCurrentPage(page);
         }}
+        onPesanSesiPrefill={prefill => {
+          setPesanSesiPrefill(prefill);
+          setCurrentPage('PesanSesi');
+        }}
+        onLihatDetailMateri={chapterData => {
+          setSelectedChapter(chapterData);
+          setDetailBackPage('Home');
+          setCurrentPage('Detail');
+        }}
+        jenjangMurid={
+          profileData.jenjang_pendidikan || profileData.education
+        }
         showSuccessAlert={showLoginSuccessAlert}
         onAlertClose={() => setShowLoginSuccessAlert(false)}
         userId={profileData.id}
@@ -838,10 +873,15 @@ const App = () => {
   if (currentPage === 'PesanSesi') {
     return (
       <PesanSesiPage
-        onBack={() => setCurrentPage('Home')}
+        onBack={() => {
+          setPesanSesiPrefill(null);
+          setCurrentPage('Home');
+        }}
         userId={profileData.id}
+        prefillBooking={pesanSesiPrefill}
         onConfirmOrder={data => {
           setBookingSessionData(data);
+          setPesanSesiPrefill(null);
           setCurrentPage('MencariPengajar');
         }}
       />
@@ -995,6 +1035,7 @@ const App = () => {
         onBack={() => handleGlobalNavigate('Home')}
         onChapterSelect={materiData => {
           setSelectedChapter(materiData);
+          setDetailBackPage('Materi');
           setCurrentPage('Detail');
         }}
       />
@@ -1005,7 +1046,7 @@ const App = () => {
     return (
       <DetailMateriPage
         chapterData={selectedChapter}
-        onBack={() => setCurrentPage('Materi')}
+        onBack={() => setCurrentPage(detailBackPage)}
       />
     );
   }
