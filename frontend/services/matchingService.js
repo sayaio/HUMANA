@@ -45,3 +45,16 @@ export const fetchSesiDikonfirmasi = async (idGuru) => {
         return { success: false, message: error.message, data: null };
     }
 };
+export const selesaikanSesiAPI = async (id_pemesanan) => {
+    try {
+        const response = await fetch(`${API_URL}/sesi/selesaikan`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_pemesanan }),
+        });
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
+};

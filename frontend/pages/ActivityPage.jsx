@@ -80,8 +80,10 @@ const ActivityPage = ({
 
     setIsLoading(true);
     try {
-      const result = await getHistory(userRole, userId);
-      console.log('[DEBUG] Balasan API History:', result);
+      const result = await getHistory(userRole, userId); // ← result baru ada di sini
+      console.log('[DEBUG] userId:', userId);
+      console.log('[DEBUG] userRole:', userRole);
+      console.log('[DEBUG] Balasan API History:', result); // ← pindah ke sini
 
       if (Array.isArray(result)) {
         setHistoryData(result);
@@ -96,14 +98,13 @@ const ActivityPage = ({
       setIsLoading(false);
     }
   };
-
   const renderCard = (item, isHistory, index) => (
     <View style={styles.card} key={item.id_pemesanan || index}>
       <View style={styles.cardIconBox}>
         {/* PERUBAHAN: Emoji diganti dengan Image dari assets[cite: 11] */}
-        <Image 
-          source={require('../assets/buku.png')} 
-          style={{ width: 40, height: 40, resizeMode: 'contain' }} 
+        <Image
+          source={require('../assets/buku.png')}
+          style={{ width: 40, height: 40, resizeMode: 'contain' }}
         />
       </View>
       <View style={styles.cardInfo}>
@@ -144,8 +145,8 @@ const ActivityPage = ({
           style={[styles.actionBtn, { backgroundColor: '#387C65' }]}
           onPress={() => {
             if (onDetailClick) {
-                onDetailClick(item); 
-                onNavigate('SessionDetail'); 
+              onDetailClick(item);
+              onNavigate('SessionDetail');
             }
           }}
         >
@@ -153,12 +154,12 @@ const ActivityPage = ({
         </TouchableOpacity>
       ) : (
         /* PERUBAHAN: Saat lihat detail beralih ke DetailSesiAktif[cite: 12, 15] */
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.actionBtn}
           onPress={() => {
             if (onDetailClick) {
-              onDetailClick(item); 
-              onNavigate('DetailSesiAktif'); 
+              onDetailClick(item);
+              onNavigate('DetailSesiAktif');
             }
           }}
         >

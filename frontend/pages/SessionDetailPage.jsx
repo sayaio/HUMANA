@@ -12,12 +12,15 @@ import {
   useWindowDimensions,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 
 // Import SafeAreaView yang dari library khusus tetap biarkan di bawahnya:
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { postFeedback, fetchFeedbackBySesi } from '../services/feedbackService';
 import BackIconSvg from '../components/BackIconSvg';
+import { getDokumentasi } from '../services/dokumentasiService';
+import { API_URL } from '../src/config';
 
 const SessionDetailPage = ({ onBack, sessionData, userId }) => {
   const { width, height } = useWindowDimensions();
@@ -27,6 +30,29 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [checkingFeedback, setCheckingFeedback] = useState(true);
+  const [fotoDokumentasi, setFotoDokumentasi] = useState(
+    sessionData?.foto_dokumentasi || null,
+  );
+
+  useEffect(() => {
+    const fetchFoto = async () => {
+      try {
+        const id = sessionData?.id_pemesanan;
+        if (!id) return;
+        const resDok = await getDokumentasi(id);
+        console.log('=== FOTO DOKUMENTASI ===');
+        console.log('resDok:', JSON.stringify(resDok));
+        console.log('foto_dokumentasi:', resDok?.foto_dokumentasi);
+        console.log('Full URL:', `${API_URL}${resDok?.foto_dokumentasi}`);
+        if (resDok?.foto_dokumentasi) {
+          setFotoDokumentasi(resDok.foto_dokumentasi);
+        }
+      } catch (err) {
+        console.log('Gagal fetch foto dokumentasi:', err);
+      }
+    };
+    fetchFoto();
+  }, [sessionData?.id_pemesanan]);
 
   // Muat feedback yang sudah tersimpan agar saat dibuka lagi tampil & terkunci.
   useEffect(() => {
@@ -127,7 +153,10 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
           Alert.alert('Berhasil', 'Terima kasih atas ulasan Anda!');
         }, 100);
         setIsSubmitted(true);
-      } else if (result.message && result.message.toLowerCase().includes('sudah')) {
+      } else if (
+        result.message &&
+        result.message.toLowerCase().includes('sudah')
+      ) {
         // Sudah pernah dikirim (mis. dari perangkat/sesi lain) -> kunci form.
         setIsSubmitted(true);
         Alert.alert('Info', result.message);
@@ -212,7 +241,6 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
               </Text>
             </View>
           </View>
-
           {/* Dokumentasi */}
           <Text
             style={[styles.sectionTitle, { fontSize: dynamicFontSizeTitle }]}
@@ -222,7 +250,17 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
           <View
             style={[styles.imagePlaceholder, { height: dynamicImageHeight }]}
           >
-            <Text style={{ fontSize: width * 0.15, color: '#CCC' }}>🖼️</Text>
+            {fotoDokumentasi ? (
+              <Image
+                source={{
+                  uri: `${API_URL.replace('/api', '')}${fotoDokumentasi}`,
+                }}
+                style={{ width: '100%', height: '100%', borderRadius: 10 }}
+                resizeMode="cover"
+              />
+            ) : (
+              <Text style={{ fontSize: width * 0.15, color: '#CCC' }}>🖼️</Text>
+            )}
           </View>
 
           {/* Biaya */}
@@ -292,7 +330,9 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
             disabled={isSubmitted || isSubmitting || checkingFeedback}
           >
             {isSubmitting || checkingFeedback ? (
-              <ActivityIndicator color={checkingFeedback ? '#387C65' : '#FFF'} />
+              <ActivityIndicator
+                color={checkingFeedback ? '#387C65' : '#FFF'}
+              />
             ) : (
               <Text
                 style={[

@@ -224,8 +224,27 @@ const getSesiDikonfirmasi = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+const selesaikanSesi = async (req, res) => {
+    const { id_pemesanan } = req.body;
+
+    if (!id_pemesanan) {
+        return res.status(400).json({ success: false, message: 'id_pemesanan diperlukan.' });
+    }
+
+    try {
+        await pool.query(
+            `UPDATE Pemesanan SET status_pemesanan = 'selesai' WHERE id_pemesanan = ?`,
+            [id_pemesanan]
+        );
+
+        res.status(200).json({ success: true, message: 'Sesi berhasil diselesaikan.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 module.exports = {
     getPermintaanBaru,
     terimaPermintaanSesi,
-    getSesiDikonfirmasi // <-- Jangan lupa diekspor
+    getSesiDikonfirmasi, // <-- Jangan lupa diekspor
+    selesaikanSesi
 };

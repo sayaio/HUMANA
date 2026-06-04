@@ -52,6 +52,7 @@ const matchingController = require('./src/controllers/matchingController');
 router.get('/permintaan-baru', matchingController.getPermintaanBaru);
 router.post('/terima-permintaan', matchingController.terimaPermintaanSesi);
 router.get('/sesi-dikonfirmasi', matchingController.getSesiDikonfirmasi);
+router.post('/sesi/selesaikan', matchingController.selesaikanSesi);
 
 const chatController = require('./src/controllers/chatController'); // Pastikan path benar
 router.get('/chats', chatController.getChatList);
@@ -83,5 +84,8 @@ router.get('/semua-materi', pemesananController.getMateriDropdown);
 router.get('/materi-guru/:id_guru', materiGuruController.getMateriGuru);
 router.post('/materi-guru', materiGuruController.simpanMateriGuru);
 router.delete('/materi-guru/:id_guru/:id_materi', materiGuruController.hapusMateriGuru);
+
+const { upload, uploadDokumentasi } = require('./src/controllers/dokumentasiController');
+router.post('/dokumentasi/upload', upload.single('foto'), uploadDokumentasi);
 
 module.exports = router;

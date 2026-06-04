@@ -1,10 +1,10 @@
 const db = require('../database');
 // Asumsi path file Class OOP yang sudah kamu buat sebelumnya
-const PemesananSesi = require('../classes/PemesananSesi'); 
-const Pembayaran = require('../classes/Pembayaran');       
+const PemesananSesi = require('../classes/PemesananSesi');
+const Pembayaran = require('../classes/Pembayaran');
 
 const getDetailPemesanan = async (req, res) => {
-    const { id } = req.params; 
+    const { id } = req.params;
 
     try {
         // PERBAIKAN MARIADB: Menghilangkan destructuring [rows] agar tidak error
@@ -15,7 +15,7 @@ const getDetailPemesanan = async (req, res) => {
                 p.waktu_mulai,
                 p.waktu_selesai,
                 p.lokasi_sesi,
-                p.jarak_km,
+                p.foto_dokumentasi,
                 m.nama_materi,
                 m.kelas,
                 m.jurusan,
@@ -49,7 +49,7 @@ const getDetailPemesanan = async (req, res) => {
         // 1. Instansiasi Class PemesananSesi sesuai constructor
         // Gabungkan Mapel & Materi untuk parameter 'materi' di Class agar informatif di UI
         const materiLengkap = `${data.nama_mapel} (${data.nama_materi})`;
-        
+
         const pemesananSesi = new PemesananSesi(
             data.nama_murid,
             data.nama_guru || "Mencari Guru...", // Jika id_guru masih null
@@ -84,13 +84,11 @@ const getDetailPemesanan = async (req, res) => {
         // 3. Gabungkan output toJSON() dari kedua class untuk dikirim ke Frontend
         const responseData = {
             ...pemesananSesi.toJSON(),
-            // Tambahkan nama_guru karena di dalam PemesananSesi.toJSON() bawaanmu belum di-return
-            nama_guru: pemesananSesi.guru, 
+            nama_guru: pemesananSesi.guru,
             jenjang_lengkap: `${data.kelas} ${data.jenjang} ${data.jurusan !== 'Umum' ? `- ${data.jurusan}` : ''}`,
-            // Panggil format JSON internal milik class Pembayaran jika ada
-            rincian_pembayaran: pemesananSesi.pembayaran ? pemesananSesi.pembayaran.toJSON() : null
+            rincian_pembayaran: pemesananSesi.pembayaran ? pemesananSesi.pembayaran.toJSON() : null,
+            foto_dokumentasi: data.foto_dokumentasi || null,
         };
-
         return res.status(200).json(responseData);
 
     } catch (error) {
