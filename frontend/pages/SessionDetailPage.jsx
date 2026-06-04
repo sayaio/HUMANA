@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Modal,
 } from 'react-native';
 
 // Import SafeAreaView yang dari library khusus tetap biarkan di bawahnya:
@@ -22,8 +23,15 @@ import BackIconSvg from '../components/BackIconSvg';
 import { getDokumentasi } from '../services/dokumentasiService';
 import { API_URL } from '../src/config';
 
-const SessionDetailPage = ({ onBack, sessionData, userId }) => {
+const resolveFotoUri = fotoPath => {
+  if (!fotoPath) return null;
+  if (fotoPath.startsWith('http')) return fotoPath;
+  return `${API_URL.replace('/api', '')}${fotoPath}`;
+};
+
+const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) => {
   const { width, height } = useWindowDimensions();
+  const isGuru = userRole === 'guru';
 
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
@@ -33,6 +41,7 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
   const [fotoDokumentasi, setFotoDokumentasi] = useState(
     sessionData?.foto_dokumentasi || null,
   );
+  const [fotoFullscreen, setFotoFullscreen] = useState(false);
 
   useEffect(() => {
     const fetchFoto = async () => {
@@ -173,12 +182,25 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
   const dynamicImageHeight = height * 0.25;
 
   // PEMETAAN VARIABEL AKURAT 100% SESUAI DATA DEBUG KAMU:
-  const namaMapel = sessionData?.mata_pelajaran?.nama_mapel || 'Pelajaran';
+  const namaMapel =
+    sessionData?.mata_pelajaran?.nama_mapel ||
+    sessionData?.nama_mapel ||
+    'Pelajaran';
   const namaMateri =
     sessionData?.nama_materi || sessionData?.materi?.nama_materi || 'Materi';
-  const namaGuru = sessionData?.guru?.nama_guru || 'Guru';
+  const namaTampil = isGuru
+    ? sessionData?.murid?.nama_murid || sessionData?.nama_murid || 'Murid'
+    : sessionData?.guru?.nama_guru || sessionData?.nama_guru || 'Guru';
   const idPemesanan = sessionData?.id_pemesanan || '-';
-  const totalBiaya = sessionData?.harga_total || sessionData?.biaya_sesi;
+  const totalBiaya =
+    sessionData?.nominal ??
+    sessionData?.pembayaran?.nominal ??
+    sessionData?.harga_total ??
+    sessionData?.harga ??
+    (sessionData?.biaya_sesi != null && sessionData?.biaya_jarak != null
+      ? Number(sessionData.biaya_sesi) + Number(sessionData.biaya_jarak)
+      : sessionData?.biaya_sesi);
+  const fotoUri = resolveFotoUri(fotoDokumentasi);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -212,7 +234,11 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
                 { width: width * 0.15, height: width * 0.15 },
               ]}
             >
-              <Text style={{ fontSize: width * 0.06 }}>📖</Text>
+              <Image
+                source={require('../assets/buku.png')}
+                style={styles.iconBuku}
+                resizeMode="contain"
+              />
             </View>
             <View style={{ flex: 1 }}>
               <Text
@@ -243,23 +269,27 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
           >
             Dokumentasi
           </Text>
-          <View
+          <TouchableOpacity
             style={[styles.imagePlaceholder, { height: dynamicImageHeight }]}
+            onPress={() => fotoUri && setFotoFullscreen(true)}
+            activeOpacity={fotoUri ? 0.85 : 1}
+            disabled={!fotoUri}
           >
-            {fotoDokumentasi ? (
-              <Image
-                source={{
-                  uri: fotoDokumentasi.startsWith('http')
-                    ? fotoDokumentasi
-                    : `${API_URL.replace('/api', '')}${fotoDokumentasi}`,
-                }}
-                style={{ width: '100%', height: '100%', borderRadius: 10 }}
-                resizeMode="cover"
-              />
+            {fotoUri ? (
+              <>
+                <Image
+                  source={{ uri: fotoUri }}
+                  style={{ width: '100%', height: '100%', borderRadius: 10 }}
+                  resizeMode="cover"
+                />
+                <View style={styles.tapHint}>
+                  <Text style={styles.tapHintText}>Ketuk untuk memperbesar</Text>
+                </View>
+              </>
             ) : (
               <Text style={{ fontSize: width * 0.15, color: '#CCC' }}>🖼️</Text>
             )}
-          </View>
+          </TouchableOpacity>
 
           {/* Biaya */}
           <View style={styles.costRow}>
@@ -273,78 +303,145 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
 
           <View style={styles.divider} />
 
-          {/* Guru */}
-          <Text style={[styles.guruText, { fontSize: dynamicFontSizeTitle }]}>
-            👤 {namaGuru}
+          {/* Nama lawan bicara: guru → murid, murid → guru */}
+          <Text style={[styles.personText, { fontSize: dynamicFontSizeTitle }]}>
+            👤 {namaTampil}
           </Text>
 
-          {/* Feedback Section */}
-          <TextInput
-            style={[styles.feedbackInput, { height: height * 0.1 }]}
-            placeholder="Masukkan Feedback..."
-            placeholderTextColor="#A9A9A9"
-            multiline
-            value={feedback}
-            onChangeText={setFeedback}
-            editable={!isSubmitted && !isSubmitting && !checkingFeedback}
-          />
+          {isGuru ? (
+            <>
+              {checkingFeedback ? (
+                <ActivityIndicator
+                  color="#387C65"
+                  style={{ marginVertical: 24 }}
+                />
+              ) : (
+                <>
+                  <View
+                    style={[styles.feedbackReadonly, { minHeight: height * 0.08 }]}
+                  >
+                    <Text style={styles.feedbackReadonlyText}>
+                      {feedback || 'Murid belum memberikan ulasan.'}
+                    </Text>
+                  </View>
 
-          <Text style={[styles.ratingText, { fontSize: dynamicFontSizeTitle }]}>
-            Berikan Rating Anda
-          </Text>
-          <View style={styles.starsContainer}>
-            {[1, 2, 3, 4, 5].map(star => (
-              <TouchableOpacity
-                key={star}
-                onPress={() =>
-                  !isSubmitted &&
-                  !isSubmitting &&
-                  !checkingFeedback &&
-                  setRating(star)
-                }
-                activeOpacity={isSubmitted ? 1 : 0.7}
-                style={{ paddingHorizontal: 4 }}
-              >
-                <Text
-                  style={{
-                    fontSize: dynamicStarSize,
-                    color: star <= rating ? '#FFC107' : '#E0E0E0',
-                  }}
-                >
-                  ★
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Tombol Kirim */}
-          <TouchableOpacity
-            style={[
-              styles.submitBtn,
-              (isSubmitted || isSubmitting || checkingFeedback) &&
-                styles.submitBtnDisabled,
-            ]}
-            onPress={handleSubmit}
-            disabled={isSubmitted || isSubmitting || checkingFeedback}
-          >
-            {isSubmitting || checkingFeedback ? (
-              <ActivityIndicator
-                color={checkingFeedback ? '#387C65' : '#FFF'}
+                  <Text
+                    style={[styles.ratingText, { fontSize: dynamicFontSizeTitle }]}
+                  >
+                    Rating dari Murid
+                  </Text>
+                  <View style={styles.starsContainer}>
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Text
+                        key={star}
+                        style={{
+                          fontSize: dynamicStarSize,
+                          color: star <= rating ? '#FFC107' : '#E0E0E0',
+                          paddingHorizontal: 4,
+                        }}
+                      >
+                        ★
+                      </Text>
+                    ))}
+                  </View>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <TextInput
+                style={[styles.feedbackInput, { height: height * 0.1 }]}
+                placeholder="Masukkan Feedback..."
+                placeholderTextColor="#A9A9A9"
+                multiline
+                value={feedback}
+                onChangeText={setFeedback}
+                editable={!isSubmitted && !isSubmitting && !checkingFeedback}
               />
-            ) : (
+
               <Text
-                style={[
-                  styles.submitBtnText,
-                  isSubmitted && styles.submitBtnTextDisabled,
-                  { fontSize: width * 0.04 },
-                ]}
+                style={[styles.ratingText, { fontSize: dynamicFontSizeTitle }]}
               >
-                {isSubmitted ? 'Ulasan Terkirim' : 'Kirim Feedback'}
+                Berikan Rating Anda
               </Text>
-            )}
-          </TouchableOpacity>
+              <View style={styles.starsContainer}>
+                {[1, 2, 3, 4, 5].map(star => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() =>
+                      !isSubmitted &&
+                      !isSubmitting &&
+                      !checkingFeedback &&
+                      setRating(star)
+                    }
+                    activeOpacity={isSubmitted ? 1 : 0.7}
+                    style={{ paddingHorizontal: 4 }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: dynamicStarSize,
+                        color: star <= rating ? '#FFC107' : '#E0E0E0',
+                      }}
+                    >
+                      ★
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.submitBtn,
+                  (isSubmitted || isSubmitting || checkingFeedback) &&
+                    styles.submitBtnDisabled,
+                ]}
+                onPress={handleSubmit}
+                disabled={isSubmitted || isSubmitting || checkingFeedback}
+              >
+                {isSubmitting || checkingFeedback ? (
+                  <ActivityIndicator
+                    color={checkingFeedback ? '#387C65' : '#FFF'}
+                  />
+                ) : (
+                  <Text
+                    style={[
+                      styles.submitBtnText,
+                      isSubmitted && styles.submitBtnTextDisabled,
+                      { fontSize: width * 0.04 },
+                    ]}
+                  >
+                    {isSubmitted ? 'Ulasan Terkirim' : 'Kirim Feedback'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Fullscreen foto dokumentasi */}
+      <Modal
+        visible={fotoFullscreen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFotoFullscreen(false)}
+      >
+        <View style={styles.fullscreenOverlay}>
+          <TouchableOpacity
+            style={styles.fullscreenClose}
+            onPress={() => setFotoFullscreen(false)}
+          >
+            <Text style={styles.fullscreenCloseText}>✕ Tutup</Text>
+          </TouchableOpacity>
+          {fotoUri && (
+            <Image
+              source={{ uri: fotoUri }}
+              style={styles.fullscreenImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -381,6 +478,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 15,
   },
+  iconBuku: { width: 40, height: 40 },
   title: { color: '#333', marginBottom: 4 },
   subtitle: { color: '#888', marginBottom: 2 },
   sectionTitle: { fontWeight: 'bold', color: '#333', marginBottom: 10 },
@@ -401,7 +499,41 @@ const styles = StyleSheet.create({
   costLabel: { fontWeight: 'bold', color: '#333' },
   costValue: { fontWeight: 'bold', color: '#333' },
   divider: { height: 1, backgroundColor: '#EEE', marginBottom: 15 },
-  guruText: { color: '#333', marginBottom: 15 },
+  personText: { color: '#333', marginBottom: 15 },
+  tapHint: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  tapHintText: { color: '#FFF', fontSize: 10, fontWeight: '600' },
+  feedbackReadonly: {
+    borderWidth: 1,
+    borderColor: '#EEE',
+    borderRadius: 10,
+    padding: 12,
+    backgroundColor: '#FAFAFA',
+    marginBottom: 20,
+  },
+  feedbackReadonlyText: { fontSize: 14, color: '#333', lineHeight: 20 },
+  fullscreenOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenClose: {
+    position: 'absolute',
+    top: 48,
+    right: 20,
+    zIndex: 10,
+    padding: 8,
+  },
+  fullscreenCloseText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  fullscreenImage: { width: '100%', height: '85%' },
   feedbackInput: {
     borderWidth: 1,
     borderColor: '#EEE',

@@ -140,7 +140,13 @@ const ActivityGuruPage = ({
                             year: 'numeric',
                         })
                         : 'Tanggal tidak tersedia',
-                    harga: item.pembayaran?.total_bayar || 0,
+                    harga:
+                        item.nominal ??
+                        item.pembayaran?.nominal ??
+                        item.pembayaran?.total_bayar ??
+                        item.harga_total ??
+                        item.harga ??
+                        0,
                     tipe: 'Riwayat',
                     status_pemesanan: item.status_pemesanan,
                     rating: item.feedback?.rating || 0,

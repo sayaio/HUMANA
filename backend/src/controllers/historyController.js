@@ -25,7 +25,10 @@ const getHistory = async (req, res) => {
                 guru.id_guru, guru.nama_guru, guru.email_guru,
                 materi.id_materi, materi.nama_materi, materi.kelas AS kelas_materi, materi.jurusan,
                 mapel.id_mapel, mapel.nama_mapel,
-                bayar.nominal as harga
+                bayar.biaya_sesi,
+                bayar.biaya_jarak,
+                bayar.nominal,
+                bayar.status_pembayaran
             FROM Pemesanan pemesanan
             JOIN Murid murid ON murid.id_murid = pemesanan.id_murid
             JOIN Guru guru ON guru.id_guru = pemesanan.id_guru
@@ -50,20 +53,35 @@ const getHistory = async (req, res) => {
             );
             sesi.id_pemesanan = row.id_pemesanan;
             sesi.statusPemesanan = row.status_pemesanan;
-            sesi.harga = row.harga;
+
+            const nominalBayar = row.nominal != null ? Number(row.nominal) : null;
+            const biayaSesi = row.biaya_sesi != null ? Number(row.biaya_sesi) : null;
+            const biayaJarak = row.biaya_jarak != null ? Number(row.biaya_jarak) : null;
+
+            const jsonSesi = sesi.toJSON();
 
             return {
-                ...sesi.toJSON(),
-                
-                // 🔴 PERBAIKAN: Selipkan kembali data waktu asli agar terbaca oleh frontend React Native
+                ...jsonSesi,
                 waktu_mulai: row.waktu_mulai,
                 waktu_selesai: row.waktu_selesai,
-
+                biaya_sesi: biayaSesi ?? jsonSesi.biaya_sesi,
+                biaya_jarak: biayaJarak ?? jsonSesi.biaya_jarak,
+                nominal: nominalBayar,
+                harga: nominalBayar,
+                harga_total: nominalBayar ?? jsonSesi.harga_total,
                 murid: { id_murid: row.id_murid, nama_murid: row.nama_murid, email: row.email_murid, kelas: row.kelas_murid },
                 guru: { id_guru: row.id_guru, nama_guru: row.nama_guru, email_guru: row.email_guru },
                 mata_pelajaran: { id_mapel: row.id_mapel, nama_mapel: row.nama_mapel },
                 materi: { id_materi: row.id_materi, kelas: row.kelas_materi, jurusan: row.jurusan },
-                sesi: null, pembayaran: null, feedback: null
+                pembayaran: nominalBayar != null ? {
+                    biaya_sesi: biayaSesi,
+                    biaya_jarak: biayaJarak,
+                    nominal: nominalBayar,
+                    total_bayar: nominalBayar,
+                    status_pembayaran: row.status_pembayaran,
+                } : null,
+                sesi: null,
+                feedback: null,
             };
         });
 

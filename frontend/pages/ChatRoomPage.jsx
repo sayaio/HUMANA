@@ -2,23 +2,47 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { API_URL } from '../src/config';
 import {
-  StyleSheet, Text, View, TouchableOpacity, SafeAreaView,
-  StatusBar, ScrollView, TextInput, KeyboardAvoidingView, Platform, Image
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  StatusBar,
+  ScrollView,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  Keyboard,
 } from 'react-native';
-import BackIconSvg from '../components/BackIconSvg'; // <-- Sesuaikan dengan path foldermu
+import BackIconSvg from '../components/BackIconSvg';
+
+const HEADER_OFFSET =
+  Platform.OS === 'android'
+    ? (StatusBar.currentHeight || 0) + 55
+    : 90;
+
 const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
   const scrollViewRef = useRef();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  const scrollToBottom = (animated = true) => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated });
+    }, 80);
+  };
 
   const fetchMessages = async () => {
     const { id_guru, id_murid } = chatData;
     try {
-      const response = await axios.get(`${API_URL}/chats/messages/${id_guru}/${id_murid}`);
+      const response = await axios.get(
+        `${API_URL}/chats/messages/${id_guru}/${id_murid}`,
+      );
       const data = response.data.data || response.data;
       setMessages(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Gagal ambil chat:", error.response?.data || error.message);
+      console.error('Gagal ambil chat:', error.response?.data || error.message);
     }
   };
 
@@ -30,14 +54,15 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
         id_guru: chatData.id_guru,
         id_murid: chatData.id_murid,
         pengirim_role: userRole,
-        isi_pesan: message
+        isi_pesan: message,
       };
 
       await axios.post(`${API_URL}/chats/send`, payload);
       setMessage('');
-      fetchMessages();
+      await fetchMessages();
+      scrollToBottom();
     } catch (error) {
-      console.error("Gagal kirim chat:", error.response?.data || error.message);
+      console.error('Gagal kirim chat:', error.response?.data || error.message);
     }
   };
 
@@ -49,18 +74,60 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
     }
   }, [chatData]);
 
-  const name = userRole === "murid" ? chatData?.nama_guru : (userRole === "guru" ? chatData?.nama_murid : 'User');
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onShow = e => {
+      setKeyboardHeight(e.endCoordinates.height);
+      scrollToBottom();
+    };
+    const onHide = () => setKeyboardHeight(0);
+
+    const subShow = Keyboard.addListener(showEvent, onShow);
+    const subHide = Keyboard.addListener(hideEvent, onHide);
+
+    return () => {
+      subShow.remove();
+      subHide.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom(false);
+    }
+  }, [messages.length]);
+
+  const name =
+    userRole === 'murid'
+      ? chatData?.nama_guru
+      : userRole === 'guru'
+        ? chatData?.nama_murid
+        : 'User';
   const subject = chatData?.mapel || 'Chat';
   const initials = name.charAt(0).toUpperCase();
   const color = chatData?.color || '#FF9B9B';
 
-  return (
-    // Menggunakan View biasa sebagai root container agar warna background-nya konsisten terpotong rapi
-    <View style={styles.rootContainer}>
-      {/* Paksa status bar mengikuti warna header dan berikan paduan padding di atas header */}
-      <StatusBar barStyle="light-content" backgroundColor="#284B7A" translucent={true} />
+  const bottomPad =
+    keyboardHeight > 0
+      ? Platform.OS === 'ios'
+        ? 8
+        : 6
+      : Platform.OS === 'ios'
+        ? 24
+        : 16;
 
-      {/* Header Biru dengan tambahan aman dari Notch */}
+  return (
+    <View style={styles.rootContainer}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#284B7A"
+        translucent={true}
+      />
+
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
           <BackIconSvg size={16} color="#FFF" />
@@ -80,35 +147,48 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Area Konten */}
       <KeyboardAvoidingView
         style={styles.contentContainer}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={0}
+        behavior="padding"
+        keyboardVerticalOffset={HEADER_OFFSET}
       >
         <ScrollView
           ref={scrollViewRef}
-          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+          style={styles.chatScroll}
+          onContentSizeChange={() => scrollToBottom(false)}
           contentContainerStyle={styles.chatArea}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           {messages.length > 0 ? (
             messages.map((item, index) => (
               <View
                 key={item.id_chat || index}
-                style={item.pengirim_role === userRole ? styles.bubbleRight : styles.bubbleLeft}
+                style={
+                  item.pengirim_role === userRole
+                    ? styles.bubbleRight
+                    : styles.bubbleLeft
+                }
               >
-                <Text style={item.pengirim_role === userRole ? styles.textRight : styles.textLeft}>
+                <Text
+                  style={
+                    item.pengirim_role === userRole
+                      ? styles.textRight
+                      : styles.textLeft
+                  }
+                >
                   {item.isi_pesan}
                 </Text>
               </View>
             ))
           ) : (
-            <Text style={{ textAlign: 'center', color: '#888' }}>Belum ada pesan.</Text>
+            <Text style={{ textAlign: 'center', color: '#888' }}>
+              Belum ada pesan.
+            </Text>
           )}
         </ScrollView>
 
-        {/* Input Bottom Bar yang dibungkus container pengaman bawah */}
-        <View style={styles.bottomWrapper}>
+        <View style={[styles.bottomWrapper, { paddingBottom: bottomPad }]}>
           <View style={styles.inputBar}>
             <TouchableOpacity style={styles.plusBtn}>
               <Text style={styles.plusIcon}>⊕</Text>
@@ -121,6 +201,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
                 placeholderTextColor="#A9A9A9"
                 value={message}
                 onChangeText={setMessage}
+                onFocus={scrollToBottom}
               />
               <TouchableOpacity style={styles.sendBtn} onPress={sendMessage}>
                 <Image
@@ -139,14 +220,12 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#FFF'
+    backgroundColor: '#FFF',
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: '#FFF'
+    backgroundColor: '#FFF',
   },
-
-  // FIX ATAS (NOTCH): Ditambahkan paddingTop manual menggunakan tinggi status bar standar Android/iOS
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -156,25 +235,50 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 40 : 40,
   },
   backBtn: { padding: 5, marginRight: 10 },
-  avatar: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
   avatarText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   headerInfo: { flex: 1 },
   headerName: { fontSize: 16, fontWeight: 'bold', color: '#FFF' },
   headerSubject: { fontSize: 11, color: '#D0E1F9', fontStyle: 'italic' },
-  menuIcon: { fontSize: 24, color: '#FFF', fontWeight: 'bold', paddingHorizontal: 10 },
-
+  menuIcon: {
+    fontSize: 24,
+    color: '#FFF',
+    fontWeight: 'bold',
+    paddingHorizontal: 10,
+  },
+  chatScroll: { flex: 1 },
   chatArea: { padding: 20, flexGrow: 1, justifyContent: 'flex-end' },
-
-  bubbleRight: { backgroundColor: '#007AFF', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 15, borderBottomRightRadius: 2, alignSelf: 'flex-end', marginBottom: 15, maxWidth: '80%' },
+  bubbleRight: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 15,
+    borderBottomRightRadius: 2,
+    alignSelf: 'flex-end',
+    marginBottom: 15,
+    maxWidth: '80%',
+  },
   textRight: { color: '#FFF', fontSize: 14 },
-
-  bubbleLeft: { backgroundColor: '#E5E5EA', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 15, borderBottomLeftRadius: 2, alignSelf: 'flex-start', marginBottom: 15, maxWidth: '80%' },
+  bubbleLeft: {
+    backgroundColor: '#E5E5EA',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 15,
+    borderBottomLeftRadius: 2,
+    alignSelf: 'flex-start',
+    marginBottom: 15,
+    maxWidth: '80%',
+  },
   textLeft: { color: '#000', fontSize: 14 },
-
-  // FIX BAWAH (MEPET): Mengunci area bawah agar berjarak aman dengan sistem navigasi handphone
   bottomWrapper: {
     backgroundColor: '#FFF',
-    paddingBottom: Platform.OS === 'ios' ? 24 : 16, // Memberi jarak dari navigasi bar bawah ponsel modern
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
@@ -182,8 +286,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
-    paddingTop: 10, // Menggeser padding atas ke sini
-    backgroundColor: '#FFF'
+    paddingTop: 10,
+    backgroundColor: '#FFF',
   },
   plusBtn: { marginRight: 10 },
   plusIcon: { fontSize: 24, color: '#333' },
@@ -196,7 +300,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     borderRadius: 24,
     paddingLeft: 15,
-    height: 46
+    height: 46,
   },
   textInput: { flex: 1, fontSize: 14, color: '#333' },
   sendBtn: { marginLeft: 10 },
