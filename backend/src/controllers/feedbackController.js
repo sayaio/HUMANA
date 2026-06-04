@@ -1,5 +1,6 @@
 const pool = require('../database');
 const Guru = require('../classes/Guru');
+const Murid = require('../classes/Murid');
 const Feedback = require('../classes/Feedback');
 
 const submitFeedback = async (req, res) => {
@@ -186,6 +187,63 @@ const getGuruRating = async (req, res) => {
     }
 };
 
+const getMuridProfile = async (req, res) => {
+    const { id_murid } = req.params;
+
+    try {
+        const muridRows = await pool.query(
+            'SELECT id_murid, username, email, password, nama_murid, no_telepon, jenis_kelamin, alamat, kelas, jurusan FROM Murid WHERE id_murid = ?',
+            [id_murid],
+        );
+
+        const rows = muridRows.rows || muridRows;
+
+        if (!rows || rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Murid tidak ditemukan' });
+        }
+
+        const mData = rows[0];
+        const objekMurid = new Murid(
+            mData.username,
+            mData.email,
+            mData.password,
+            mData.nama_murid,
+            mData.id_murid,
+            mData.kelas,
+            mData.no_telepon,
+            mData.jenis_kelamin,
+            mData.alamat,
+            mData.jurusan,
+        );
+
+        const profilLengkap = objekMurid.getProfile();
+
+        const dataResponse = {
+            ...profilLengkap,
+            id: mData.id_murid,
+            id_murid: mData.id_murid,
+            username: mData.username,
+            email: mData.email,
+            name: mData.nama_murid,
+            nama: mData.nama_murid,
+            no_telepon: profilLengkap.no_telepon,
+            jenis_kelamin: profilLengkap.jenis_kelamin,
+            alamat: profilLengkap.alamat,
+            jenjang_pendidikan: profilLengkap.jenjang_pendidikan,
+            kelas_jurusan: profilLengkap.kelas_jurusan,
+            role: 'murid',
+        };
+
+        return res.status(200).json({
+            success: true,
+            data: dataResponse,
+        });
+    } catch (error) {
+        console.error('Error pada getMuridProfile:', error);
+        return res.status(500).json({ success: false, message: 'Gagal mengambil data profil' });
+    }
+};
+
 // Ambil feedback yang sudah tersimpan untuk satu sesi (id_pemesanan).
 // Dipakai murid agar saat membuka ulang detail sesi, ulasannya tampil & terkunci.
 const getFeedbackByPemesanan = async (req, res) => {
@@ -212,5 +270,6 @@ const getFeedbackByPemesanan = async (req, res) => {
 module.exports = {
     submitFeedback,
     getGuruRating,
+    getMuridProfile,
     getFeedbackByPemesanan
 };

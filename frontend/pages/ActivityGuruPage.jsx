@@ -9,6 +9,7 @@ import {
     Modal,
     Alert,
     ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
 import { Star, X, Clock, DollarSign } from 'lucide-react-native';
 
@@ -37,6 +38,7 @@ const ActivityGuruPage = ({
     const [riwayatData, setRiwayatData] = useState([]);
 
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [koordinat, setKoordinat] = useState({
         lat: -6.973416,
         lng: 107.630406,
@@ -57,8 +59,8 @@ const ActivityGuruPage = ({
         }
     }, []);
 
-    const muatUlangDataAktivitas = async () => {
-        setLoading(true);
+    const muatUlangDataAktivitas = async (isPullRefresh = false) => {
+        if (!isPullRefresh) setLoading(true);
         try {
             const [resPermintaan, resKonfirmasi, resRiwayat] = await Promise.all([
                 fetchPermintaanBaru(idGuru, koordinat.lat, koordinat.lng),
@@ -160,13 +162,19 @@ const ActivityGuruPage = ({
         } catch (err) {
             console.error('Gagal menarik data aktivitas guru:', err);
         } finally {
-            setLoading(false);
+            if (!isPullRefresh) setLoading(false);
         }
     };
 
     useEffect(() => {
         muatUlangDataAktivitas();
     }, [idGuru, koordinat]);
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        await muatUlangDataAktivitas(true);
+        setRefreshing(false);
+    };
 
     const openDetailModal = sesi => {
         setSelectedSesi(sesi);
@@ -307,6 +315,14 @@ const ActivityGuruPage = ({
                 <ScrollView
                     style={styles.listScrollBody}
                     showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={handleRefresh}
+                            colors={['#284B7A']}
+                            tintColor="#284B7A"
+                        />
+                    }
                 >
                     <View style={{ paddingHorizontal: 24, paddingTop: 4 }}>
                         {activeTab === 'Permintaan' &&

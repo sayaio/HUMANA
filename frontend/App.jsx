@@ -627,6 +627,7 @@ const App = () => {
                 profileData={profileData}
                 onNavigate={page => setCurrentPage(page)}
                 onLogout={handleLogout}
+                onRefreshData={handleRefreshProfileData}
             />
         );
     }
@@ -1009,6 +1010,7 @@ const App = () => {
         profileData={profileData}
         onNavigate={page => setCurrentPage(page)}
         onLogout={handleLogout}
+        onRefreshData={handleRefreshProfileData}
       />
     );
   }

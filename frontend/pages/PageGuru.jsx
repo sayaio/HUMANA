@@ -14,6 +14,7 @@ import {
   Modal,
   Dimensions,
   PanResponder,
+  RefreshControl,
 } from 'react-native';
 import {
   Calendar,
@@ -58,17 +59,18 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
   const [permintaan, setPermintaan] = useState([]);
   const [sesiDikonfirmasi, setSesiDikonfirmasi] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const LAT_GURU_MOCK = -6.9744;
   const LNG_GURU_MOCK = 107.6303;
 
-  const loadPermintaan = async () => {
+  const loadPermintaan = async (isPullRefresh = false) => {
     if (!guruData || !guruData.id) {
-      setLoading(false);
+      if (!isPullRefresh) setLoading(false);
       return;
     }
 
-    setLoading(true);
+    if (!isPullRefresh) setLoading(true);
     const resultReq = await fetchPermintaanBaru(
       guruData.id,
       LAT_GURU_MOCK,
@@ -87,12 +89,18 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
     } else {
       setSesiDikonfirmasi([]);
     }
-    setLoading(false);
+    if (!isPullRefresh) setLoading(false);
   };
 
   useEffect(() => {
     loadPermintaan();
   }, [guruData]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadPermintaan(true);
+    setRefreshing(false);
+  };
 
   // Notifikasi (mis. murid membatalkan sesi) -> tampilkan popup lalu bersihkan.
   const [notifAlertVisible, setNotifAlertVisible] = useState(false);
@@ -354,6 +362,14 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#284B7A']}
+            tintColor="#284B7A"
+          />
+        }
       >
         <View style={styles.headerSection}>
           <View style={styles.headerBackground}>

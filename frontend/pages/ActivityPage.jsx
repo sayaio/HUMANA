@@ -9,6 +9,7 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import BottomNavbar from '../components/BottomNavbar';
 import { getHistory, getActiveSchedule } from '../services/historyService';
@@ -32,13 +33,14 @@ const ActivityPage = ({
   const [activeData, setActiveData] = useState([]);
   const [historyData, setHistoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     setActiveTab(initialTab === 'aktif' ? 'Jadwal Aktif' : 'Riwayat Sesi');
   }, [initialTab]);
 
-  const fetchActiveData = async () => {
-    setIsLoading(true);
+  const fetchActiveData = async (isPullRefresh = false) => {
+    if (!isPullRefresh) setIsLoading(true);
     try {
       const result = await getActiveSchedule(userRole, userId);
       console.log('Hasil dari Backend:', result);
@@ -58,27 +60,17 @@ const ActivityPage = ({
       console.log('Error fetch active:', error);
       setActiveData([]);
     } finally {
-      setIsLoading(false);
+      if (!isPullRefresh) setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (!userId || !userRole) return;
-
-    if (activeTab === 'Jadwal Aktif') {
-      fetchActiveData();
-    } else if (activeTab === 'Riwayat Sesi') {
-      fetchHistoryData();
-    }
-  }, [activeTab, userId, userRole]);
-
-  const fetchHistoryData = async () => {
+  const fetchHistoryData = async (isPullRefresh = false) => {
     if (!userId || !userRole) {
       console.log('❌ FETCH DIBATALKAN KARENA ID ATAU ROLE KOSONG!');
       return;
     }
 
-    setIsLoading(true);
+    if (!isPullRefresh) setIsLoading(true);
     try {
       const result = await getHistory(userRole, userId); // ← result baru ada di sini
       console.log('[DEBUG] userId:', userId);
@@ -95,9 +87,31 @@ const ActivityPage = ({
     } catch (error) {
       console.log('[DEBUG] Error fetch history:', error);
     } finally {
-      setIsLoading(false);
+      if (!isPullRefresh) setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!userId || !userRole) return;
+
+    if (activeTab === 'Jadwal Aktif') {
+      fetchActiveData();
+    } else if (activeTab === 'Riwayat Sesi') {
+      fetchHistoryData();
+    }
+  }, [activeTab, userId, userRole]);
+
+  const handleRefresh = async () => {
+    if (!userId || !userRole) return;
+    setRefreshing(true);
+    if (activeTab === 'Jadwal Aktif') {
+      await fetchActiveData(true);
+    } else {
+      await fetchHistoryData(true);
+    }
+    setRefreshing(false);
+  };
+
   const renderCard = (item, isHistory, index) => (
     <View style={styles.card} key={item.id_pemesanan || index}>
       <View style={styles.cardIconBox}>
@@ -201,6 +215,14 @@ const ActivityPage = ({
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#284B7A']}
+            tintColor="#284B7A"
+          />
+        }
       >
         {activeTab === 'Jadwal Aktif' ? (
           isLoading ? (

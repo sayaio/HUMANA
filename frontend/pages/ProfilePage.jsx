@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,7 +10,9 @@ import {
   SafeAreaView,
   Dimensions,
   Platform,
+  RefreshControl,
 } from 'react-native';
+import { fetchMuridProfile } from '../services/feedbackService';
 import BottomNavbar from '../components/BottomNavbar';
 // Import Ikon Lucide (Calendar, MessageSquare, User, Home, dan LogOut)
 import {
@@ -25,9 +27,47 @@ import {
 const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
-const ProfilePage = ({ profileData, onNavigate, onLogout }) => {
+const mapMuridProfileToApp = (data, existing) => ({
+  id: data.id ?? data.id_murid ?? existing?.id,
+  role: (data.role || existing?.role || 'murid').toLowerCase(),
+  name: data.name || data.nama || existing?.name || '-',
+  email: data.email || existing?.email || '-',
+  username: data.username || existing?.username || '-',
+  phone: data.no_telepon || existing?.phone || '-',
+  no_telepon: data.no_telepon || existing?.no_telepon || '-',
+  gender: data.jenis_kelamin || existing?.gender || '-',
+  jenis_kelamin: data.jenis_kelamin || existing?.jenis_kelamin || '-',
+  domicile: data.alamat || existing?.domicile || '-',
+  domisili: data.alamat || existing?.domisili || '-',
+  alamat: data.alamat || existing?.alamat || '-',
+  education: data.jenjang_pendidikan || existing?.education || '-',
+  jenjang_pendidikan:
+    data.jenjang_pendidikan || existing?.jenjang_pendidikan || '-',
+  major: data.kelas_jurusan || existing?.major || '-',
+  kelas_jurusan: data.kelas_jurusan || existing?.kelas_jurusan || '-',
+  is_active: existing?.is_active ?? false,
+});
+
+const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
   const role =
     profileData && profileData.role ? profileData.role.toLowerCase() : 'murid';
+
+  const idMurid = profileData?.id;
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadLatestProfileData = useCallback(async () => {
+    if (!idMurid) return;
+    const response = await fetchMuridProfile(idMurid);
+    if (response?.success && response.data && onRefreshData) {
+      onRefreshData(mapMuridProfileToApp(response.data, profileData));
+    }
+  }, [idMurid, onRefreshData, profileData]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadLatestProfileData();
+    setRefreshing(false);
+  };
 
   const DataRow = ({ label, value }) => (
     <View style={styles.dataRow}>
@@ -58,6 +98,14 @@ const ProfilePage = ({ profileData, onNavigate, onLogout }) => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#284B7A']}
+            tintColor="#284B7A"
+          />
+        }
       >
         {/* USER CARD RESPONSIVE */}
         <View style={styles.userCard}>

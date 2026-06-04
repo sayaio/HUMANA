@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     StyleSheet, Text, View, Image, TouchableOpacity,
-    StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator, Animated, PanResponder
+    StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator, Animated, PanResponder, RefreshControl,
 } from 'react-native';
 
 import CustomAlert from '../components/CustomAlert';
@@ -57,6 +57,7 @@ const HomePage = ({
     const [materiFavorit, setMateriFavorit] = useState(null);
     const [rekomendasiList, setRekomendasiList] = useState([]);
     const [loadingMateriRekom, setLoadingMateriRekom] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [alertConfig, setAlertConfig] = useState({
         visible: false, type: 'success', title: '', message: ''
     });
@@ -106,56 +107,58 @@ const HomePage = ({
         load();
     }, [isMateriVisible]);
 
-    useEffect(() => {
+    const loadActiveSessions = useCallback(async () => {
         if (!userId || !userRole || userRole === '-') return;
-        const load = async () => {
-            setLoadingSessions(true);
-            try {
-                const result = await getActiveSchedule(userRole, userId);
-                if (result?.success) {
-                    const raw = result.data;
-                    setActiveSessions(Array.isArray(raw) ? raw : (raw ? [raw] : []));
-                } else {
-                    setActiveSessions([]);
-                }
-            } catch (e) {
+        setLoadingSessions(true);
+        try {
+            const result = await getActiveSchedule(userRole, userId);
+            if (result?.success) {
+                const raw = result.data;
+                setActiveSessions(Array.isArray(raw) ? raw : (raw ? [raw] : []));
+            } else {
                 setActiveSessions([]);
-            } finally {
-                setLoadingSessions(false);
             }
-        };
-        load();
+        } catch {
+            setActiveSessions([]);
+        } finally {
+            setLoadingSessions(false);
+        }
     }, [userId, userRole]);
 
-    useEffect(() => {
+    const loadMateriRekom = useCallback(async () => {
         if (role !== 'murid' || !userId) return;
-
-        let aktif = true;
-        const muatMateriRekom = async () => {
-            setLoadingMateriRekom(true);
-            try {
-                const [favorit, rekomendasi] = await Promise.all([
-                    getMateriTerfavoritMurid(userId),
-                    getRekomendasiMateriAcakList(5, jenjangMurid),
-                ]);
-                if (!aktif) return;
-
-                setMateriFavorit(favorit);
-                setRekomendasiList(Array.isArray(rekomendasi) ? rekomendasi : []);
-            } catch (err) {
-                console.error('[HomePage] Gagal muat materi rekom:', err);
-                if (aktif) {
-                    setMateriFavorit(null);
-                    setRekomendasiList([]);
-                }
-            } finally {
-                if (aktif) setLoadingMateriRekom(false);
-            }
-        };
-
-        muatMateriRekom();
-        return () => { aktif = false; };
+        setLoadingMateriRekom(true);
+        try {
+            const [favorit, rekomendasi] = await Promise.all([
+                getMateriTerfavoritMurid(userId),
+                getRekomendasiMateriAcakList(5, jenjangMurid),
+            ]);
+            setMateriFavorit(favorit);
+            setRekomendasiList(Array.isArray(rekomendasi) ? rekomendasi : []);
+        } catch (err) {
+            console.error('[HomePage] Gagal muat materi rekom:', err);
+            setMateriFavorit(null);
+            setRekomendasiList([]);
+        } finally {
+            setLoadingMateriRekom(false);
+        }
     }, [userId, role, jenjangMurid]);
+
+    useEffect(() => {
+        loadActiveSessions();
+    }, [loadActiveSessions]);
+
+    useEffect(() => {
+        loadMateriRekom();
+    }, [loadMateriRekom]);
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        const tasks = [loadActiveSessions()];
+        if (role === 'murid') tasks.push(loadMateriRekom());
+        await Promise.all(tasks);
+        setRefreshing(false);
+    };
 
     useEffect(() => {
         if (showSuccessAlert) {
@@ -358,6 +361,14 @@ const HomePage = ({
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
                 nestedScrollEnabled
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        colors={['#284B7A']}
+                        tintColor="#284B7A"
+                    />
+                }
             >
                 <View style={styles.headerSection}>
                     <View style={styles.headerBackground}>
