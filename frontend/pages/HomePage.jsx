@@ -41,9 +41,44 @@ const formatRupiah = (angka) => {
     return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
 };
 
+/** Pemetaan sesi header guru — sama tab Jadwal Aktif di ActivityGuruPage (bukan Permintaan). */
+const mapSesiKeJadwalAktifGuru = raw => {
+    const status = (raw.status_pemesanan || 'dikonfirmasi').toLowerCase();
+    const tipe = status === 'berlangsung' ? 'Berlangsung' : 'Aktif';
+    const harga =
+        raw.harga_total ||
+        raw.tarif ||
+        raw.bayaran ||
+        ((raw.biaya_sesi || 0) + (raw.biaya_jarak || 0));
+    return {
+        item: {
+            id: raw.id_pemesanan,
+            id_pemesanan: raw.id_pemesanan,
+            id_murid: raw.id_murid,
+            nama_murid: raw.nama_murid,
+            materi: raw.nama_materi || raw.materi?.nama_materi,
+            nama_materi: raw.nama_materi || raw.materi?.nama_materi,
+            nama_mapel: raw.nama_mapel || raw.mata_pelajaran?.nama_mapel,
+            jenjang_pendidikan: raw.jenjang_pendidikan,
+            waktu_mulai: raw.waktu_mulai,
+            waktu_selesai: raw.waktu_selesai,
+            waktu_string: raw.waktu_string,
+            harga_total: harga,
+            biaya_sesi: raw.biaya_sesi,
+            biaya_jarak: raw.biaya_jarak,
+            harga,
+            lokasi_sesi: raw.lokasi_sesi || raw.lokasi || raw.alamat,
+            status_pemesanan:
+                status === 'berlangsung' ? 'berlangsung' : 'dikonfirmasi',
+            tipe,
+        },
+        tipe,
+    };
+};
+
 const HomePage = ({
     namaLengkap, email, onLogout, onSelectSubject,
-    onNavigate, onPesanSesiPrefill, onLihatDetailMateri,
+    onNavigate, onPesanSesiPrefill, onLihatDetailMateri, onDetailPermintaan, onDetailSesiAktif,
     jenjangMurid, showSuccessAlert, onAlertClose, userId, userRole
 }) => {
     const role = userRole ? userRole.toLowerCase() : 'murid';
@@ -225,9 +260,22 @@ const HomePage = ({
         // Lebar card murni dihitung dinamis agar card kedua sedikit mengintip secara estetis
         const cardWidth = width - 40;
 
-        return (
-            // Jarak antar-card (gap) diatur langsung menggunakan marginRight di sini
-            <View style={{ width: cardWidth, marginRight: 16 }}>
+        const bukaDetailSesi = () => {
+            if (role === 'murid') {
+                if (onDetailSesiAktif) onDetailSesiAktif(s);
+                return;
+            }
+            if (role === 'guru' && onDetailPermintaan) {
+                const { item, tipe } = mapSesiKeJadwalAktifGuru(s);
+                onDetailPermintaan(item, tipe);
+            }
+        };
+
+        const cardDapatDiklik =
+            (role === 'murid' && onDetailSesiAktif) ||
+            (role === 'guru' && onDetailPermintaan);
+
+        const cardInner = (
                 <View style={[styles.sessionCard, { marginBottom: 0, marginRight: 0, width: '100%' }]}>
                     <Text style={styles.cardLabel}>SESI HARI INI</Text>
 
@@ -289,6 +337,17 @@ const HomePage = ({
                         </View>
                     )}
                 </View>
+        );
+
+        return (
+            <View style={{ width: cardWidth, marginRight: 16 }}>
+                {cardDapatDiklik ? (
+                    <TouchableOpacity activeOpacity={1} onPress={bukaDetailSesi}>
+                        {cardInner}
+                    </TouchableOpacity>
+                ) : (
+                    cardInner
+                )}
             </View>
         );
     };
@@ -330,7 +389,9 @@ const HomePage = ({
                         {renderSessionItem({ item })}
                     </View>
                 )}
-                keyExtractor={(item, index) => item.id_jadwal?.toString() || index.toString()}
+                keyExtractor={(item, index) =>
+                    item.id_pemesanan?.toString() || item.id_jadwal?.toString() || index.toString()
+                }
                 horizontal
 
                 pagingEnabled={false}

@@ -53,6 +53,39 @@ const FONTS = {
   regular: 'SF-Pro-Display-Regular',
 };
 
+/** Card header = sesi dikonfirmasi (Jadwal Aktif), bukan permintaan baru. */
+const mapSesiHeaderKeJadwalAktif = raw => {
+  const status = (raw.status_pemesanan || 'dikonfirmasi').toLowerCase();
+  const tipe = status === 'berlangsung' ? 'Berlangsung' : 'Aktif';
+  const harga =
+    raw.harga_total ||
+    ((raw.biaya_sesi || 0) + (raw.biaya_jarak || 0));
+  return {
+    item: {
+      id: raw.id_pemesanan,
+      id_pemesanan: raw.id_pemesanan,
+      id_murid: raw.id_murid,
+      nama_murid: raw.nama_murid,
+      materi: raw.nama_materi,
+      nama_materi: raw.nama_materi,
+      nama_mapel: raw.nama_mapel,
+      jenjang_pendidikan: raw.jenjang_pendidikan,
+      waktu_mulai: raw.waktu_mulai,
+      waktu_selesai: raw.waktu_selesai,
+      waktu_string: raw.waktu_string,
+      harga_total: harga,
+      biaya_sesi: raw.biaya_sesi,
+      biaya_jarak: raw.biaya_jarak,
+      harga,
+      lokasi_sesi: raw.lokasi_sesi,
+      status_pemesanan:
+        status === 'berlangsung' ? 'berlangsung' : 'dikonfirmasi',
+      tipe,
+    },
+    tipe,
+  };
+};
+
 const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan }) => {
   const { width: windowWidth } = useWindowDimensions();
 
@@ -235,8 +268,19 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
   };
 
   const renderSessionItem = ({ item }) => {
+    const bukaDetailSesi = () => {
+      if (!onDetailPermintaan) return;
+      const { item: mapped, tipe } = mapSesiHeaderKeJadwalAktif(item);
+      onDetailPermintaan(mapped, tipe);
+    };
+
     return (
-      <View style={styles.sessionCard}>
+      <TouchableOpacity
+        style={styles.sessionCard}
+        activeOpacity={1}
+        onPress={bukaDetailSesi}
+        disabled={!onDetailPermintaan}
+      >
         <View style={styles.cardHeaderRow}>
           <Text style={styles.cardLabel}>SESI HARI INI</Text>
           <View style={styles.badgeSegera}>
@@ -279,7 +323,7 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
             </Text>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
