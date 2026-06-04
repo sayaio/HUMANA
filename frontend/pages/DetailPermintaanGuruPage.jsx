@@ -346,13 +346,6 @@ const DetailPermintaanGuruPage = ({
       return (
         <View style={styles.actionBar}>
           <TouchableOpacity
-            style={styles.btnTolak}
-            onPress={handleTolak}
-            disabled={loading}
-          >
-            <Text style={styles.btnTolakText}>Tolak</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
             style={[styles.btnTerima, loading && styles.btnDisabled]}
             onPress={handleTerima}
             disabled={loading}
