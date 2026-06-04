@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -92,7 +92,10 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
         const data = await pemesananService.getDaftarMapel(jenjang);
         setDaftarMapelDB(data);
       } catch (error) {
-        Alert.alert('Error', error.message || 'Gagal memuat daftar mata pelajaran');
+        Alert.alert(
+          'Error',
+          error.message || 'Gagal memuat daftar mata pelajaran',
+        );
       } finally {
         setLoadingMapel(false);
       }
@@ -100,7 +103,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
     fetchMapel();
   }, [jenjang]);
 
-  const applyPrefillBooking = (prefill) => {
+  const applyPrefillBooking = prefill => {
     if (!prefill) return;
     if (prefill.jenjang) setJenjang(prefill.jenjang);
     if (prefill.kelas) setKelas(prefill.kelas);
@@ -110,30 +113,40 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
     if (prefill.selectedMateriId) setSelectedMateriId(prefill.selectedMateriId);
   };
 
-  // === FETCH LOAD DRAFT + PREFILL DARI HOME (PESAN LAGI)
+  // === FETCH LOAD DRAFT + PREFILL dari Home (Pesan Lagi)
   useEffect(() => {
     if (!userId) {
       setIsLoadingDraft(false);
       return;
     }
 
+    let cancelled = false;
+
     const initForm = async () => {
-      setIsLoadingDraft(true);
       await loadDraft();
-      if (prefillBooking) {
+      if (!cancelled && prefillBooking) {
         applyPrefillBooking(prefillBooking);
       }
-      setIsLoadingDraft(false);
     };
 
     initForm();
+    return () => {
+      cancelled = true;
+    };
   }, [userId, prefillBooking]);
 
   // === FETCH AUTO-SAVE
   useEffect(() => {
     if (!isLoadingDraft && userId) {
       // Cek apakah ada data yang terisi
-      const hasData = tanggal || waktuMulai || waktuSelesai || jenjang || kelas || mataPelajaran || materi;
+      const hasData =
+        tanggal ||
+        waktuMulai ||
+        waktuSelesai ||
+        jenjang ||
+        kelas ||
+        mataPelajaran ||
+        materi;
       if (hasData) {
         const timer = setTimeout(() => {
           saveDraft();
@@ -141,7 +154,18 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
         return () => clearTimeout(timer);
       }
     }
-  }, [tanggal, waktuMulai, waktuSelesai, jenjang, kelas, mataPelajaran, materi, locationAddress, isLoadingDraft, userId]);
+  }, [
+    tanggal,
+    waktuMulai,
+    waktuSelesai,
+    jenjang,
+    kelas,
+    mataPelajaran,
+    materi,
+    locationAddress,
+    isLoadingDraft,
+    userId,
+  ]);
 
   // Untuk save saat component unmount
   useEffect(() => {
@@ -165,10 +189,13 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
       setLoadingMateri(true);
       try {
         const kelasAngka = getKelasNumber(jenjang, kelas);
-        const data = await pemesananService.getDaftarMateri(mapelSelected.id, kelasAngka);
+        const data = await pemesananService.getDaftarMateri(
+          mapelSelected.id,
+          kelasAngka,
+        );
         setDaftarMateriDB(data);
       } catch (error) {
-        Alert.alert("Error", error.message || "Gagal memuat daftar materi");
+        Alert.alert('Error', error.message || 'Gagal memuat daftar materi');
       } finally {
         setLoadingMateri(false);
       }
@@ -226,7 +253,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const checkDate = new Date(calendarYear, calendarMonth, day);
-    return checkDate < today;
+    return checkDate < today; // Memblokir tanggal yang sudah lewat
   };
 
   const selectDate = day => {
@@ -235,6 +262,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
     setShowCalendar(false);
   };
 
+  // === DATA HELPER OPTIONS ===
   const generateTimeSlots = () => {
     const slots = [];
     for (let h = 6; h <= 21; h++) {
@@ -262,7 +290,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
   };
 
   const getKelasNumber = (jenjang, kelas) => {
-    const num = parseInt(kelas.replace('Kelas ', ''), 10);
+    const num = parseInt(kelas.replace('Kelas ', ''));
     if (jenjang === 'SD') return num;
     if (jenjang === 'SMP') return num + 6;
     if (jenjang === 'SMA') return num + 9;
@@ -303,16 +331,19 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
         position => {
           const { latitude, longitude } = position.coords;
           setUserLocation({ latitude, longitude });
+
+          // 👉 TAMBAHKAN HEADER USER-AGENT DI SINI
           fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
             {
               headers: {
-                'User-Agent': 'HumanaApp/1.0 (Aplikasi Bimbingan Belajar)',
+                'User-Agent': 'HumanaApp/1.0 (Aplikasi Bimbingan Belajar)', // Beri nama bebas yang unik
               },
             },
           )
             .then(res => res.json())
             .then(data => {
+              // Memastikan data display_name ada
               if (data && data.display_name) {
                 setLocationAddress(data.display_name);
               } else {
@@ -321,29 +352,37 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
                 );
               }
             })
-            .catch(() => {
+            .catch(err => {
+              console.log('Error Reverse Geocoding:', err);
               setLocationAddress(
                 `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
               );
             });
           setLoadingLocation(false);
         },
-        () => {
+        error => {
+          console.log('Error GPS:', error);
           setLocationAddress('Gagal mendapatkan lokasi. Pastikan GPS aktif.');
           setLoadingLocation(false);
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
       );
-    } catch {
+    } catch (err) {
+      console.log('Error Permission:', err);
       setLocationAddress('Error mendapatkan lokasi');
       setLoadingLocation(false);
     }
   };
-
+  // === FUNGSI DRAFT ===
   const loadDraft = async () => {
+    console.log('🔄 ===== LOAD DRAFT DIPANGGIL =====');
+    console.log('📌 userId:', userId);
     try {
       const draft = await pemesananService.getDraft(userId);
+      console.log('📦 Draft dari server:', draft);
       if (draft && Object.keys(draft).length > 0) {
+        console.log('✅ Draft ditemukan, memuat data...');
+        // ========== ISI FORM DENGAN DATA DRAFT ==========
         if (draft.tanggal) setTanggal(new Date(draft.tanggal));
         if (draft.waktuMulai) setWaktuMulai(draft.waktuMulai);
         if (draft.waktuSelesai) setWaktuSelesai(draft.waktuSelesai);
@@ -355,44 +394,63 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
         if (draft.selectedMateriId) setSelectedMateriId(draft.selectedMateriId);
         if (draft.locationAddress) setLocationAddress(draft.locationAddress);
         if (draft.userLocation) setUserLocation(draft.userLocation);
+        // ==============================================
+        console.log('✅ State form sudah diisi dengan draft');
+      } else {
+        console.log('ℹ️ Tidak ada draft untuk userId:', userId);
       }
     } catch (error) {
-      console.error('Error loadDraft:', error);
+      console.error('❌ Error loadDraft:', error);
+    } finally {
+      setIsLoadingDraft(false);
+      console.log('🏁 isLoadingDraft set ke false');
     }
   };
 
   const saveDraft = async () => {
-    if (!userId) return;
+    console.log('💾 ===== SAVE DRAFT DIPANGGIL =====');
+    console.log('📌 userId:', userId);
+
     try {
       const draftData = {
         tanggal: tanggal ? tanggal.toISOString() : null,
-        waktuMulai,
-        waktuSelesai,
-        jenjang,
-        kelas,
-        mataPelajaran,
-        materi,
-        mapelSelected,
-        selectedMateriId,
-        locationAddress,
-        userLocation,
+        waktuMulai: waktuMulai,
+        waktuSelesai: waktuSelesai,
+        jenjang: jenjang,
+        kelas: kelas,
+        mataPelajaran: mataPelajaran,
+        materi: materi,
+        mapelSelected: mapelSelected,
+        selectedMateriId: selectedMateriId,
+        locationAddress: locationAddress,
+        userLocation: userLocation,
       };
+      console.log(
+        '📦 Data yang akan dikirim:',
+        JSON.stringify(draftData, null, 2),
+      );
       await pemesananService.saveDraft(userId, draftData);
+      console.log('✅ Draft tersimpan');
     } catch (error) {
-      console.error('Gagal save draft:', error);
+      console.error('❌ Gagal save draft:', error);
     }
   };
 
   const handleBackPress = () => {
-    saveDraft();
-    if (onBack) onBack();
+    console.log('👆 Tombol back ditekan, menyimpan draft...');
+    saveDraft(); // Simpan draft terlebih dahulu
+    if (onBack) {
+      onBack(); // Panggil fungsi back dari props
+    }
   };
 
+  // === FORMAT TANGGAL HELPER ===
   const formatTanggal = date =>
     date
       ? `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`
       : '';
 
+  // === CORE HANDLE CONFIRM ===
   const handleConfirm = async () => {
     if (
       !userId ||
@@ -417,6 +475,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
       const bulan = String(tanggal.getMonth() + 1).padStart(2, '0');
       const hari = String(tanggal.getDate()).padStart(2, '0');
       const tglDb = `${tahun}-${bulan}-${hari}`;
+
       const waktuMulaiFormatted = `${tglDb} ${waktuMulai}:00`;
       const waktuSelesaiFormatted = `${tglDb} ${waktuSelesai}:00`;
 
@@ -431,20 +490,22 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
 
       const result = await pemesananService.createPemesanan(dataPemesanan);
 
-      if (result.success && onConfirmOrder) {
-        onConfirmOrder({
-          id_pemesanan: result.id_pemesanan,
-          tanggal: formatTanggal(tanggal),
-          waktu_sesi: `${waktuMulai} - ${waktuSelesai}`,
-          jenjang,
-          kelas,
-          id_mapel: mapelSelected.id,
-          nama_mapel: mataPelajaran,
-          id_materi: selectedMateriId,
-          nama_materi: materi,
-          lokasi: locationAddress,
-          koordinat: userLocation,
-        });
+      if (result.success) {
+        if (onConfirmOrder) {
+          onConfirmOrder({
+            id_pemesanan: result.id_pemesanan,
+            tanggal: formatTanggal(tanggal),
+            waktu_sesi: `${waktuMulai} - ${waktuSelesai}`,
+            jenjang: jenjang,
+            kelas: kelas,
+            id_mapel: mapelSelected.id,
+            nama_mapel: mataPelajaran,
+            id_materi: selectedMateriId,
+            nama_materi: materi,
+            lokasi: locationAddress,
+            koordinat: userLocation,
+          });
+        }
       }
     } catch (error) {
       console.error('Error pada saat submit form:', error);
@@ -465,6 +526,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
       : Alert.alert('Error', 'Tidak dapat membuka Google Maps');
   };
 
+  // === KONSTANTA DROPDOWN ===
   const ITEM_HEIGHT = 44;
   const TIME_ITEM_HEIGHT = 40;
   const MAX_VISIBLE = 5;
