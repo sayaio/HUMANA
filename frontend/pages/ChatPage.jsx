@@ -122,7 +122,11 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
             value={searchText} // Hubungkan ke state
             onChangeText={text => setSearchText(text)} // Update state saat mengetik
           />
-          <Text style={{ fontSize: 16, color: '#888' }}>🔍</Text>
+          {/* ✅ DIUBAH: Menggunakan Image assets/mencari_icon.png pengganti emoji */}
+          <Image 
+            source={require('../assets/mencari_icon.png')} 
+            style={{ width: 18, height: 18, resizeMode: 'contain', tintColor: '#888' }} 
+          />
         </View>
       </View>
 
