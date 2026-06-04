@@ -1,25 +1,83 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { API_URL } from '../src/config';
 
-const PembayaranPage = ({ snapUrl, onFinish }) => {
+const PembayaranPage = ({ snapUrl, idPemesanan, onFinish }) => {
 
-  // Handler saat status halaman web Midtrans berubah (deteksi sukses/gagal/close)
   const hasFinished = useRef(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
+  useEffect(() => {
+    if (!idPemesanan) return;
+    if (hasFinished.current) return;
+
+    console.log('🔄 Memulai polling status pemesanan untuk ID:', idPemesanan);
+
+    const interval = setInterval(async () => {
+      if (hasFinished.current) {
+        clearInterval(interval);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/pemesanan/cek-status?id_pemesanan=${idPemesanan}`);
+        const result = await response.json();
+        console.log('📊 Polling status:', result.status_pemesanan);
+
+        // Jika status 'selesai' atau 'dikonfirmasi', anggap sukses
+        if (result.success && result.status_pemesanan === 'selesai') {
+          console.log('✅ Polling mendeteksi sukses! Redirect ke Home dalam 5 detik...');
+          clearInterval(interval);
+          hasFinished.current = true;
+          setIsSuccess(true);
+          setTimeout(() => onFinish('success_close'), 5000);
+        }
+      } catch (error) {
+        console.warn('Polling error:', error);
+      }
+    }, 3000); // Cek setiap 3 detik
+
+    return () => clearInterval(interval);
+  }, [idPemesanan]);
+
+  // Handler tombol Tutup — kembali ke detail pembayaran tanpa membatalkan sesi
+  const handleTutup = () => {
+    console.log('🔴 Tombol Tutup ditekan, isSuccess:', isSuccess, 'hasFinished:', hasFinished.current);
+    if (hasFinished.current) return;
+    hasFinished.current = true;
+
+    if (isSuccess) {
+      console.log('✅ Sudah sukses, kirim success_close');
+      onFinish('success_close');
+      return;
+    }
+
+    onFinish('closed');
+  };
+
+  // Handler saat status halaman web Midtrans berubah (deteksi sukses/gagal)
   const handleNavigationStateChange = (navState) => {
     const { url, loading } = navState;
-    if (loading || hasFinished.current) return; // ← tambah ini
+    if (loading || hasFinished.current) return;
 
-    if (url.includes('status_code=200') || url.includes('success')) {
-      hasFinished.current = true; // ← set flag
-      setTimeout(() => onFinish('success'), 200);
-    } else if (url.includes('status_code=201') || url.includes('pending')) {
+    console.log('🌐 [WebView] URL:', url);
+
+    // Deteksi halaman sukses (termasuk simulator)
+    if (
+      url.includes('status_code=200') ||
+      url.includes('success') ||
+      url.includes('finish') ||
+      url.includes('gopay-finish') ||
+      url.includes('deeplink/finish') ||
+      url.includes('transaction/success') ||
+      url.includes('gopay-finish-deeplink') ||
+      url.includes('simulator') && url.includes('payment') // ← deteksi simulator
+    ) {
+      console.log('✅ WebView mendeteksi sukses!');
       hasFinished.current = true;
-      setTimeout(() => onFinish('pending'), 200);
-    } else if (url.includes('status_code=202') || url.includes('error') || url.includes('failure')) {
-      hasFinished.current = true;
-      setTimeout(() => onFinish('failed'), 200);
+      setIsSuccess(true);
+      setTimeout(() => onFinish('success_close'), 2000);
     }
   };
 
@@ -35,9 +93,9 @@ const PembayaranPage = ({ snapUrl, onFinish }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header Kecil untuk navigasi keluar manual jika terjebak */}
+      {/* Header Kecil untuk navigasi keluar manual */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.closeButton} onPress={() => onFinish('closed')}>
+        <TouchableOpacity style={styles.closeButton} onPress={handleTutup}>
           <Text style={styles.closeText}>✕ Tutup</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Sistem Pembayaran</Text>

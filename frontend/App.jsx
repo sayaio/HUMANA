@@ -523,27 +523,38 @@ const App = () => {
     }
 
     if (currentPage === 'Pembayaran') {
-        return (
-            <PembayaranPage
-                snapUrl={paymentSnapUrl}
-                onFinish={status => {
-                    if (status === 'closed') {
-                        // ✅ DIUBAH: Beralih ke DetailPembayaran jika ditutup manual[cite: 22]
-                        setCurrentPage('DetailPembayaran');
-                    } else {
-                        setCurrentPage('Home');
-                    }
-                    InteractionManager.runAfterInteractions(() => {
-                        if (status === 'success')
-                            Alert.alert('Sukses', 'Pembayaran berhasil!');
-                        else if (status === 'pending')
-                            Alert.alert('Info', 'Pembayaran pending.');
-                        else if (status === 'failed')
-                            Alert.alert('Gagal', 'Pembayaran gagal.');
-                    });
-                }}
-            />
-        );
+      return (
+        <PembayaranPage
+          snapUrl={paymentSnapUrl}
+          idPemesanan={bookingSessionData?.id_pemesanan}
+          onFinish={status => {
+            // ========== INI PENTING ==========
+            if (status === 'success_close') {
+              setCurrentPage('Home');
+              InteractionManager.runAfterInteractions(() => {
+                Alert.alert('Sukses', 'Pembayaran berhasil!');
+              });
+              return;
+            }
+            // ================================
+
+            if (status === 'closed') {
+              setCurrentPage('DetailPembayaran');
+            } else if (status === 'success') {
+              setCurrentPage('Home');
+              Alert.alert('Sukses', 'Pembayaran berhasil!');
+            } else if (status === 'pending') {
+              setCurrentPage('Home');
+              Alert.alert('Info', 'Pembayaran pending.');
+            } else if (status === 'failed') {
+              setCurrentPage('DetailPembayaran');
+              Alert.alert('Gagal', 'Pembayaran gagal.');
+            } else {
+              setCurrentPage('Home');
+            }
+          }}
+        />
+      );
     }
 
     if (currentPage === 'Activity') {
@@ -882,9 +893,25 @@ const App = () => {
     return (
       <PembayaranPage
         snapUrl={paymentSnapUrl}
+        idPemesanan={bookingSessionData?.id_pemesanan}
         onFinish={status => {
+          if (status === 'success_close') {
+            setCurrentPage('Home');
+            InteractionManager.runAfterInteractions(() => {
+              Alert.alert('Sukses', 'Pembayaran berhasil!');
+            });
+            return;
+          }
           if (status === 'closed') {
-            setCurrentPage('PesanSesi');
+            setCurrentPage('DetailPembayaran');
+            return;
+          }
+          if (status === 'success') {
+            setCurrentPage('Home');
+          } else if (status === 'pending') {
+            setCurrentPage('Home');
+          } else if (status === 'failed') {
+            setCurrentPage('DetailPembayaran');
           } else {
             setCurrentPage('Home');
           }

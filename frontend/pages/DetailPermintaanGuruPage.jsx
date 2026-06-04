@@ -323,7 +323,7 @@ const DetailPermintaanGuruPage = ({
           <ChevronLeft size={20} color="#284B7A" />
           <Text style={styles.backText}>Kembali</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detail Permintaan</Text>
+        <Text style={styles.headerTitle}>Detail Pememsanan</Text>
         <View style={{ width: 80 }} />
       </View>
 
