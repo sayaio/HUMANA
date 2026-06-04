@@ -370,6 +370,348 @@ const App = () => {
   if (isAppLoading) {
     return <SplashScreen />;
   }
+    if (currentPage === 'ResetPassword') {
+        return <ResetPasswordPage onBack={() => setCurrentPage('Login')} />;
+    }
+
+    if (currentPage === 'PageGuru') {
+        return (
+            <PageGuru
+                guruData={profileData}
+                onNavigate={handleGlobalNavigate}
+                onSelectSubject={subjectData => {
+                    setSelectedSubject(subjectData);
+                    setCurrentPage('Materi');
+                }}
+                onDetailPermintaan={(item, tipe) => {
+                    setSelectedPermintaanGuru(item);
+                    setSelectedTipePermintaan(tipe);
+                    setCurrentPage('DetailPermintaanGuru');
+                }}
+            />
+        );
+    }
+
+    if (currentPage === 'RealProfileGuru') {
+        return (
+            <ProfileGuruPage
+                guruData={profileData}
+                onNavigate={handleGlobalNavigate}
+                onLogout={handleLogout}
+                onRefreshData={handleRefreshProfileData}
+            />
+        );
+    }
+
+    if (currentPage === 'RealActivityGuru') {
+        return (
+            <ActivityGuruPage
+                guruData={profileData}
+                onNavigate={handleGlobalNavigate}
+                onDetailPermintaan={(item, tipe) => {
+                    setSelectedPermintaanGuru(item);
+                    setSelectedTipePermintaan(tipe);
+                    setCurrentPage('DetailPermintaanGuru');
+                }}
+                onDetailRiwayat={(rawData) => {
+                    setSelectedRiwayatData(rawData);
+                    setCurrentPage('SessionDetail');
+                }}
+            />
+        );
+    }
+
+    // ✅ TAMBAH: routing halaman detail permintaan guru
+    if (currentPage === 'DetailPermintaanGuru') {
+        return (
+            <DetailPermintaanGuruPage
+                permintaanData={selectedPermintaanGuru}
+                guruData={profileData}
+                tipePermintaan={selectedTipePermintaan}
+                onBack={() => setCurrentPage('RealActivityGuru')}
+                onTolak={async (idPemesanan) => {
+                    // Panggil API tolak permintaan
+                    // Contoh: await tolakPermintaanAPI(idPemesanan);
+                    Alert.alert('Info', 'Permintaan ditolak');
+                    setCurrentPage('RealActivityGuru');
+                }}
+                onChat={(chatData) => {
+                    // chatData sudah berisi id_guru, id_murid, id_chat, nama_murid, mapel
+                    setSelectedChatUser(chatData);
+                    setCurrentPage('ChatRoom');
+                }}
+                onSelesaikan={async (idPemesanan) => {
+                    // Panggil API selesaikan sesi
+                    // await selesaikanSesiAPI(idPemesanan);
+                    Alert.alert('Sukses', 'Sesi telah selesai');
+                    setCurrentPage('RealActivityGuru');
+                }}
+                onAjukanBatal={async (idPemesanan) => {
+                    // Panggil API ajukan pembatalan
+                    // await ajukanBatalAPI(idPemesanan);
+                    Alert.alert('Info', 'Pembatalan diajukan');
+                    setCurrentPage('RealActivityGuru');
+                }}
+            />
+        );
+    }
+
+    if (currentPage === 'Home') {
+        return (
+            <HomePage
+                namaLengkap={namaLengkap}
+                email={email}
+                onLogout={handleLogout}
+                onSelectSubject={subjectData => {
+                    setSelectedSubject(subjectData);
+                    setCurrentPage('Materi');
+                }}
+                onNavigate={(page, tab) => {
+                    if (tab) setActivityTab(tab);
+                    setCurrentPage(page);
+                }}
+                showSuccessAlert={showLoginSuccessAlert}
+                onAlertClose={() => setShowLoginSuccessAlert(false)}
+                userId={profileData.id}
+                userRole={(profileData.role || 'murid').toLowerCase()}
+            />
+        );
+    }
+
+    if (currentPage === 'PesanSesi') {
+        return (
+            <PesanSesiPage
+                onBack={() => setCurrentPage('Home')}
+                userId={profileData.id}
+                onConfirmOrder={data => {
+                    setBookingSessionData(data);
+                    setCurrentPage('MencariPengajar');
+                }}
+            />
+        );
+    }
+
+    if (currentPage === 'MencariPengajar') {
+        return (
+            <MencariPengajarPage
+                sessionData={bookingSessionData}
+                onCancel={() => setCurrentPage('PesanSesi')}
+                onMatchSuccess={() => setCurrentPage('DetailPembayaran')}
+                onMatchFailed={() => setCurrentPage('PesanSesi')}
+            />
+        );
+    }
+
+    if (currentPage === 'DetailPembayaran') {
+        return (
+            <DetailPembayaranPage
+                sessionData={bookingSessionData}
+                onBack={() => {
+                    if (DEV_SKIP_TO_PAYMENT) {
+                        setCurrentPage('Login');
+                    } else {
+                        setCurrentPage('PesanSesi');
+                    }
+                }}
+                onPaymentSuccess={snapUrl => {
+                    setPaymentSnapUrl(snapUrl);
+                    setCurrentPage('Pembayaran');
+                }}
+                onSesiDilepas={() => setCurrentPage('MencariPengajar')}
+            />
+        );
+    }
+
+    if (currentPage === 'Pembayaran') {
+        return (
+            <PembayaranPage
+                snapUrl={paymentSnapUrl}
+                onFinish={status => {
+                    if (status === 'closed') {
+                        // ✅ DIUBAH: Beralih ke DetailPembayaran jika ditutup manual[cite: 22]
+                        setCurrentPage('DetailPembayaran');
+                    } else {
+                        setCurrentPage('Home');
+                    }
+                    InteractionManager.runAfterInteractions(() => {
+                        if (status === 'success')
+                            Alert.alert('Sukses', 'Pembayaran berhasil!');
+                        else if (status === 'pending')
+                            Alert.alert('Info', 'Pembayaran pending.');
+                        else if (status === 'failed')
+                            Alert.alert('Gagal', 'Pembayaran gagal.');
+                    });
+                }}
+            />
+        );
+    }
+
+    if (currentPage === 'Activity') {
+        return (
+            <ActivityPage
+                initialTab={activityTab}
+                onNavigate={page => setCurrentPage(page)}
+                onDetailClick={item => {
+                    setSelectedSession(item);
+                    if (activityTab === 'aktif') {
+                        setCurrentPage('DetailSesiAktif');
+                    } else {
+                        setCurrentPage('SessionDetail');
+                    }
+                }}
+                userId={profileData.id}
+                userRole={(profileData.role || 'murid').toLowerCase()}
+            />
+        );
+    }
+
+    if (currentPage === 'DetailSesiAktif') {
+        return (
+            <DetailSesiAktifPage
+                onBack={() => setCurrentPage('Activity')}
+                sessionData={selectedSession}
+            />
+        );
+    }
+
+    if (currentPage === 'SessionDetail') {
+        const isGuru = profileData.role?.toLowerCase() === 'guru';
+        return (
+            <SessionDetailPage
+                onBack={() => setCurrentPage(isGuru ? 'RealActivityGuru' : 'Activity')}
+                sessionData={isGuru ? selectedRiwayatData : selectedSession}
+                userId={profileData.id}
+            />
+        );
+    }
+
+    if (currentPage === 'Profile') {
+        return (
+            <ProfilePage
+                profileData={profileData}
+                onNavigate={page => setCurrentPage(page)}
+                onLogout={handleLogout}
+            />
+        );
+    }
+
+    if (currentPage === 'EditBasicProfile') {
+        return (
+            <EditBasicProfilePage
+                profileData={profileData}
+                onCancel={() => {
+                    const currentRole = (profileData.role || 'murid').toLowerCase();
+                    setCurrentPage(
+                        currentRole === 'guru' ? 'RealProfileGuru' : 'Profile',
+                    );
+                }}
+                onSave={updatedData => {
+                    setProfileData(updatedData);
+                    setNamaLengkap(updatedData.name || updatedData.username);
+                    const currentRole = (profileData.role || 'murid').toLowerCase();
+                    setCurrentPage(
+                        currentRole === 'guru' ? 'RealProfileGuru' : 'Profile',
+                    );
+                }}
+            />
+        );
+    }
+
+    if (currentPage === 'EditAcademicProfile') {
+        return (
+            <EditAcademicProfilePage
+                profileData={profileData}
+                onCancel={() => setCurrentPage('Profile')}
+                onSave={updatedData => {
+                    setProfileData(updatedData);
+                    setCurrentPage('Profile');
+                }}
+            />
+        );
+    }
+
+    if (currentPage === 'Materi') {
+        return (
+            <MateriPage
+                id_mapel={selectedSubject?.id_mapel}
+                subjectName={selectedSubject?.subjectName}
+                onBack={() => handleGlobalNavigate('Home')}
+                onChapterSelect={materiData => {
+                    setSelectedChapter(materiData);
+                    setCurrentPage('Detail');
+                }}
+            />
+        );
+    }
+
+    if (currentPage === 'Detail') {
+        return (
+            <DetailMateriPage
+                chapterData={selectedChapter}
+                onBack={() => setCurrentPage('Materi')}
+            />
+        );
+    }
+
+    if (currentPage === 'Chat') {
+        return (
+            <ChatPage
+                onNavigate={handleGlobalNavigate}
+                onChatPress={chatData => {
+                    setSelectedChatUser(chatData);
+                    setCurrentPage('ChatRoom');
+                }}
+                userId={profileData.id}
+                userRole={(profileData.role || 'murid').toLowerCase()}
+            />
+        );
+    }
+
+    if (currentPage === 'ChatRoom') {
+        return (
+            <ChatRoomPage
+                chatData={selectedChatUser}
+                onBack={() => setCurrentPage('Chat')}
+                userId={profileData.id}
+                userRole={(profileData.role || 'murid').toLowerCase()}
+            />
+        );
+    }
+
+    if (currentPage === 'Pendapatan') {
+        return (
+            <PendapatanPage
+                guruData={profileData}
+                onNavigate={handleGlobalNavigate}
+            />
+        );
+    }
+
+    if (currentPage === 'RiwayatPendapatan') {
+        return (
+            <RiwayatPendapatanPage
+                guruData={profileData}
+                onNavigate={handleGlobalNavigate}
+            />
+        );
+    }
+
+    if (currentPage === 'TambahMateri') {
+        return (
+            <TambahMateriGuruPage
+            onBack={() => setCurrentPage('RealProfileGuru')}
+                idGuru={profileData.id}
+            />
+        );
+    }
+    if (currentPage === 'Portofolio') {
+        return (
+            <PortofolioPage
+                onBack={() => setCurrentPage('RealProfileGuru')}
+                idGuru={profileData.id}
+            />
+        );
+    }
 
   if (currentPage === 'Login') {
     return (

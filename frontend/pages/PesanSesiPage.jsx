@@ -380,8 +380,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId }) => {
             if (result.success) {
                 // await pemesananService.clearDraft(userId);
 
-                Alert.alert('Sukses 🎉', 'Pemesanan sesi berhasil disimpan!');
-
                 if (onConfirmOrder) {
                     // SINKRONISASI: Samakan nama properti ini dengan apa yang diminta oleh page tujuan/sebelumnya
                     onConfirmOrder({

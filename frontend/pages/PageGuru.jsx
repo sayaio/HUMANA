@@ -416,20 +416,6 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
               </View>
               <Text style={styles.menuButtonText}>Pendapatan</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.menuItemButton}
-              onPress={() => onNavigate && onNavigate('ActivityGuru')}
-            >
-              <View style={styles.iconContainer}>
-                <Image
-                  source={require('../assets/permintaan.png')}
-                  style={styles.menuIconImage}
-                  resizeMode="contain"
-                />
-              </View>
-              <Text style={styles.menuButtonText}>Permintaan</Text>
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -760,8 +746,8 @@ const styles = StyleSheet.create({
   },
 
   menuGridContainer: { paddingHorizontal: 24, marginTop: 24 },
-  menuRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  menuItemButton: { alignItems: 'center', width: '22%' },
+  menuRow: { flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' },
+  menuItemButton: { alignItems: 'center', width: '28%' },
 
   iconContainer: {
     width: 65,
