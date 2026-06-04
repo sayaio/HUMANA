@@ -20,6 +20,7 @@ import { pemesananService } from '../services/pemesananService';
 const { width, height } = Dimensions.get('window');
 
 const DetailSesiAktifPage = ({ onBack, sessionData }) => {
+  console.log('DATA DARI BACKEND:', JSON.stringify(sessionData, null, 2));
   const [isCanceling, setIsCanceling] = useState(false);
   const idPemesanan = sessionData?.id_pemesanan;
 
@@ -31,6 +32,27 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
     message: '',
     isConfirmation: false,
   });
+  const [alamatLengkap, setAlamatLengkap] = useState('Memuat alamat...');
+
+  useEffect(() => {
+    const fetchAlamat = async () => {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitudeSesi}&lon=${longitudeSesi}&format=json`,
+          { headers: { 'User-Agent': 'HumanaApp/1.0' } },
+        );
+        const data = await response.json();
+        if (data && data.display_name) {
+          setAlamatLengkap(data.display_name);
+        } else {
+          setAlamatLengkap(`${latitudeSesi}, ${longitudeSesi}`);
+        }
+      } catch (err) {
+        setAlamatLengkap(`${latitudeSesi}, ${longitudeSesi}`);
+      }
+    };
+    fetchAlamat();
+  }, [latitudeSesi, longitudeSesi]);
 
   // Deteksi jika GURU membatalkan sesi
   useEffect(() => {
@@ -43,7 +65,8 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
           setAlertConfig({
             type: 'gagal',
             title: 'Sesi Dibatalkan Guru',
-            message: 'Guru membatalkan sesi ini. Dana kamu dikembalikan (refund).',
+            message:
+              'Guru membatalkan sesi ini. Dana kamu dikembalikan (refund).',
             isConfirmation: false,
           });
           setNavigateOnClose(true);
@@ -88,19 +111,37 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
   // ==========================================
   // PEMETAAN VARIABEL DATA DARI SESSIONDATA
   // ==========================================
-  const namaMapel = sessionData?.mata_pelajaran?.nama_mapel || sessionData?.nama_mapel || 'Matematika';
-  const namaMateri = sessionData?.nama_materi || sessionData?.materi?.nama_materi || 'Aljabar Dasar';
-  const jenjangKelas = sessionData?.jenjang || '12 SMA – IPA';
-  const lokasiAlamat = sessionData?.lokasi || sessionData?.alamat || 'Jl. Telekomunikasi No.1, Sukapura.';
-  const tipeLokasi = sessionData?.tipe_lokasi || 'Sekolah';
-  
-  // Koordinat Dinamis (Ganti dengan data dari API kamu jika ada)
-  const latitudeSesi = sessionData?.latitude || '-6.9744';
-  const longitudeSesi = sessionData?.longitude || '107.6303';
+  const namaMapel = sessionData?.nama_mapel || 'Matematika';
+  const namaMateri = sessionData?.nama_materi || 'Aljabar Dasar';
 
+  // Menyesuaikan dengan kelas_murid dari backend (contoh hasil: "Kelas 11")
+  const jenjangKelas = sessionData?.kelas_murid
+    ? `Kelas ${sessionData.kelas_murid}`
+    : '12 SMA – IPA';
+
+  const tipeLokasi = 'Lokasi Pertemuan';
+  // Karena tidak ada teks alamat jalan dari backend, kita tampilkan koordinatnya sebagai teks
+  const lokasiAlamat = sessionData?.lokasi_sesi
+    ? `Koordinat Sesi: ${sessionData.lokasi_sesi}`
+    : 'Jl. Telekomunikasi No.1, Sukapura.';
+
+  // ─── LOGIKA BARU: MEMECAH STRING KOORDINAT DARI BACKEND ───
+  let latitudeSesi = '-6.9744'; // default cadangan
+  let longitudeSesi = '107.6303'; // default cadangan
+
+  if (sessionData?.lokasi_sesi) {
+    const koordinatArray = sessionData.lokasi_sesi.split(','); // Memisahkan lat dan lng berdasarkan tanda koma
+    if (koordinatArray.length === 2) {
+      latitudeSesi = koordinatArray[0].trim(); // Mengambil angka depan (-6.97105)
+      longitudeSesi = koordinatArray[1].trim(); // Mengambil angka belakang (107.64674)
+    }
+  }
+  // ─────────────────────────────────────────────────────────
   const bukaGoogleMapsEksternal = () => {
     const url = `https://www.google.com/maps/search/?api=1&query=${latitudeSesi},${longitudeSesi}`;
-    Linking.openURL(url).catch((err) => console.error('Gagal membuka Google Maps:', err));
+    Linking.openURL(url).catch(err =>
+      console.error('Gagal membuka Google Maps:', err),
+    );
   };
 
   // 2. TEMPLATE HTML UNTUK MAPS GRATIS (LEAFLET + OPENSTREETMAP)
@@ -141,14 +182,30 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
       const tglOnly = rawTanggal.toString().substring(0, 10);
       const tglParts = tglOnly.split('-');
       if (tglParts.length === 3) {
-        const daftarBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-        return `${parseInt(tglParts[2], 10)} ${daftarBulan[parseInt(tglParts[1], 10) - 1] || tglParts[1]} ${tglParts[0]}`;
+        const daftarBulan = [
+          'Januari',
+          'Februari',
+          'Maret',
+          'April',
+          'Mei',
+          'Juni',
+          'Juli',
+          'Agustus',
+          'September',
+          'Oktober',
+          'November',
+          'Desember',
+        ];
+        return `${parseInt(tglParts[2], 10)} ${
+          daftarBulan[parseInt(tglParts[1], 10) - 1] || tglParts[1]
+        } ${tglParts[0]}`;
       }
     } catch (e) {}
     return rawTanggal;
   };
 
-  const formatWaktuFigma = () => sessionData?.waktu_string || sessionData?.waktu_sesi || '10:30 - 12:30';
+  const formatWaktuFigma = () =>
+    sessionData?.waktu_string || sessionData?.waktu_sesi || '10:30 - 12:30';
 
   const handleBatalkanPesanan = () => {
     setAlertConfig({
@@ -164,7 +221,9 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
   const cekApakahSudahMulai = () => {
     if (!sessionData?.waktu_mulai) return false;
     try {
-      const formatWaktuSesi = sessionData.waktu_mulai.toString().replace(' ', 'T');
+      const formatWaktuSesi = sessionData.waktu_mulai
+        .toString()
+        .replace(' ', 'T');
       return new Date() >= new Date(formatWaktuSesi);
     } catch (error) {
       return false;
@@ -180,7 +239,11 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
 
       {/* FIXED NAVIGATION HEADER */}
       <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={onBack} style={styles.backButtonTarget} activeOpacity={0.6}>
+        <TouchableOpacity
+          onPress={onBack}
+          style={styles.backButtonTarget}
+          activeOpacity={0.6}
+        >
           <BackIconSvg size={12} color="#333333" />
           <Text style={styles.backButtonText}>Kembali</Text>
         </TouchableOpacity>
@@ -188,16 +251,23 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
         <View style={{ width: width * 0.2 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBodyPadding}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollBodyPadding}
+      >
         {/* ROW GRID: TANGGAL & WAKTU SESI */}
         <View style={styles.metaGridRow}>
           <View style={styles.metaGridCard}>
             <Text style={styles.metaInputLabel}>Tanggal</Text>
-            <Text style={[styles.metaValueText, { color: '#4F46E5' }]}>{formatTanggalFigma()}</Text>
+            <Text style={[styles.metaValueText, { color: '#4F46E5' }]}>
+              {formatTanggalFigma()}
+            </Text>
           </View>
           <View style={styles.metaGridCard}>
             <Text style={styles.metaInputLabel}>Waktu Sesi</Text>
-            <Text style={[styles.metaValueText, { color: '#4F46E5' }]}>{formatWaktuFigma()}</Text>
+            <Text style={[styles.metaValueText, { color: '#4F46E5' }]}>
+              {formatWaktuFigma()}
+            </Text>
           </View>
         </View>
 
@@ -233,8 +303,8 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
         </View>
 
         {/* AREA DETAIL ALAMAT (Klik untuk buka rute luar) */}
-        <TouchableOpacity 
-          style={styles.locationCardRow} 
+        <TouchableOpacity
+          style={styles.locationCardRow}
           activeOpacity={0.8}
           onPress={bukaGoogleMapsEksternal}
         >
@@ -243,7 +313,9 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
           </View>
           <View style={styles.locationTextMetaColumn}>
             <Text style={styles.locationTipeLabelText}>{tipeLokasi}</Text>
-            <Text style={styles.locationFullAlamatText} numberOfLines={2}>{lokasiAlamat}</Text>
+            <Text style={styles.locationFullAlamatText} numberOfLines={3}>
+              {alamatLengkap}
+            </Text>
           </View>
           <Text style={styles.locationChevronRightIcon}>❯</Text>
         </TouchableOpacity>
@@ -252,7 +324,10 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
       {/* PERSISTENT FOOTER */}
       <View style={styles.persistentFooterContainer}>
         <TouchableOpacity
-          style={[styles.cancelRequestSubmitButton, sudahMulai && styles.cancelButtonBlocked]}
+          style={[
+            styles.cancelRequestSubmitButton,
+            sudahMulai && styles.cancelButtonBlocked,
+          ]}
           onPress={handleBatalkanPesanan}
           disabled={tombolDisabled}
           activeOpacity={0.8}
@@ -262,7 +337,12 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
           ) : (
             <View style={styles.innerButtonFlexRow}>
               {!sudahMulai && <Text style={styles.cancelCrossIconText}>✕</Text>}
-              <Text style={[styles.cancelButtonMainLabelText, sudahMulai && styles.cancelTextBlocked]}>
+              <Text
+                style={[
+                  styles.cancelButtonMainLabelText,
+                  sudahMulai && styles.cancelTextBlocked,
+                ]}
+              >
                 {sudahMulai ? 'Sesi Sudah Dimulai' : 'Batalkan Pesanan'}
               </Text>
             </View>
@@ -279,7 +359,8 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
         onConfirm={prosesPembatalan}
         onClose={() => {
           setAlertVisible(false);
-          if (!alertConfig.isConfirmation && navigateOnClose) onBack && onBack();
+          if (!alertConfig.isConfirmation && navigateOnClose)
+            onBack && onBack();
         }}
       />
     </SafeAreaView>
@@ -298,11 +379,28 @@ const styles = StyleSheet.create({
     borderColor: '#F1F5F9',
     backgroundColor: '#FFFFFF',
   },
-  backButtonTarget: { flexDirection: 'row', alignItems: 'center', width: width * 0.22 },
-  backButtonText: { fontSize: 14, color: '#333333', fontWeight: '600', marginLeft: 6 },
+  backButtonTarget: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: width * 0.22,
+  },
+  backButtonText: {
+    fontSize: 14,
+    color: '#333333',
+    fontWeight: '600',
+    marginLeft: 6,
+  },
   headerTitleText: { fontSize: 18, fontWeight: 'bold', color: '#000000' },
-  scrollBodyPadding: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 120 },
-  metaGridRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  scrollBodyPadding: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 120,
+  },
+  metaGridRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
   metaGridCard: {
     width: '47%',
     backgroundColor: '#F8FAFC',
@@ -312,10 +410,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  metaInputLabel: { fontSize: 11, color: '#94A3B8', fontWeight: '600', marginBottom: 4 },
+  metaInputLabel: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
   metaValueText: { fontSize: 14, fontWeight: 'bold' },
   fieldBlockWrapper: { marginBottom: 16 },
-  fieldSectionLabel: { fontSize: 13, fontWeight: '600', color: '#475569', marginBottom: 6 },
+  fieldSectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 6,
+  },
   disabledOutlineBox: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -326,7 +434,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   disabledBoxValueText: { fontSize: 14, color: '#64748B', fontWeight: '500' },
-  
+
   mapsContainerWrapper: {
     width: '100%',
     height: height * 0.22,
@@ -359,7 +467,11 @@ const styles = StyleSheet.create({
   locationTextMetaColumn: { flex: 1, marginRight: 8 },
   locationTipeLabelText: { fontSize: 14, fontWeight: 'bold', color: '#1E293B' },
   locationFullAlamatText: { fontSize: 12, color: '#64748B', lineHeight: 16 },
-  locationChevronRightIcon: { fontSize: 14, color: '#94A3B8', fontWeight: 'bold' },
+  locationChevronRightIcon: {
+    fontSize: 14,
+    color: '#94A3B8',
+    fontWeight: 'bold',
+  },
   persistentFooterContainer: {
     position: 'absolute',
     bottom: 0,
@@ -380,8 +492,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   innerButtonFlexRow: { flexDirection: 'row', alignItems: 'center' },
-  cancelCrossIconText: { color: '#FFFFFF', fontSize: 14, fontWeight: 'bold', marginRight: 8 },
-  cancelButtonMainLabelText: { color: '#FFFFFF', fontSize: 15, fontWeight: 'bold' },
+  cancelCrossIconText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginRight: 8,
+  },
+  cancelButtonMainLabelText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
   cancelButtonBlocked: { backgroundColor: '#E0E0E0' },
   cancelTextBlocked: { color: '#9E9E9E' },
 });

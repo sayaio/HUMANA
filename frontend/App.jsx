@@ -34,7 +34,7 @@ import DetailPembayaranPage from './pages/DetailPembayaranPage';
 import PembayaranPage from './pages/PembayaranPage';
 import PendapatanPage from './pages/PendapatanPage';
 import RiwayatPendapatanPage from './pages/RiwayatPendapatanPage';
-import PortofolioPage from './pages/PortofolioPage';
+import PortfolioPage from './pages/PortfolioPage';
 
 const App = () => {
   const DEV_SKIP_TO_PAYMENT = false;
@@ -364,6 +364,8 @@ const App = () => {
       setCurrentPage('Pendapatan');
     } else if (page === 'RiwayatPendapatan') {
       setCurrentPage('RiwayatPendapatan');
+    } else if (page === 'Portfolio') {
+      setCurrentPage('Portfolio');
     } else {
       if (page === 'PesanSesi') {
         setPesanSesiPrefill(null);
@@ -724,14 +726,6 @@ const App = () => {
         return (
             <TambahMateriGuruPage
             onBack={() => setCurrentPage('RealProfileGuru')}
-                idGuru={profileData.id}
-            />
-        );
-    }
-    if (currentPage === 'Portofolio') {
-        return (
-            <PortofolioPage
-                onBack={() => setCurrentPage('RealProfileGuru')}
                 idGuru={profileData.id}
             />
         );
@@ -1102,9 +1096,9 @@ const App = () => {
       />
     );
   }
-  if (currentPage === 'Portofolio') {
+  if (currentPage === 'Portfolio') {
     return (
-      <PortofolioPage
+      <PortfolioPage
         onBack={() => setCurrentPage('RealProfileGuru')}
         idGuru={profileData.id}
       />
