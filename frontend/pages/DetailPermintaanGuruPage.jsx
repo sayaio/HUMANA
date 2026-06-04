@@ -27,6 +27,53 @@ import {
   selesaikanSesiAPI,
 } from '../services/matchingService';
 import { getStatusPembayaran } from '../services/bankerService';
+import { WebView } from 'react-native-webview';
+
+const NOMINATIM_HEADERS = {
+  'User-Agent': 'HumanaApp/1.0 (Aplikasi Bimbingan Belajar)',
+};
+
+const parseKoordinatDariString = str => {
+  if (!str) return null;
+  const parts = String(str).split(',').map(s => s.trim());
+  if (parts.length !== 2) return null;
+  const latitude = parseFloat(parts[0]);
+  const longitude = parseFloat(parts[1]);
+  if (Number.isNaN(latitude) || Number.isNaN(longitude)) return null;
+  if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null;
+  return { latitude, longitude };
+};
+
+const buildMapHtml = (latitude, longitude) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body, #map { height: 100%; margin: 0; padding: 0; background: #E2E8F0; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    function initMap() {
+      if (typeof L === 'undefined') return;
+      var map = L.map('map', { zoomControl: false, attributionControl: false })
+        .setView([${latitude}, ${longitude}], 16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+      L.marker([${latitude}, ${longitude}]).addTo(map);
+    }
+    if (document.readyState === 'complete') {
+      initMap();
+    } else {
+      window.addEventListener('load', initMap);
+    }
+  </script>
+</body>
+</html>`;
 
 const DetailPermintaanGuruPage = ({
   permintaanData,
@@ -54,6 +101,87 @@ const DetailPermintaanGuruPage = ({
     message: '',
     isConfirmation: false,
   });
+  const [mapCoords, setMapCoords] = useState(null);
+  const [displayAddress, setDisplayAddress] = useState('');
+  const [loadingMap, setLoadingMap] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const resolveLokasiPeta = async () => {
+      setLoadingMap(true);
+      const alamatMentah =
+        data.lokasi_sesi || data.lokasi || data.alamat || '';
+
+      if (data.koordinat?.latitude != null && data.koordinat?.longitude != null) {
+        if (!cancelled) {
+          setMapCoords({
+            latitude: Number(data.koordinat.latitude),
+            longitude: Number(data.koordinat.longitude),
+          });
+          setDisplayAddress(
+            alamatMentah ||
+              `${data.koordinat.latitude}, ${data.koordinat.longitude}`,
+          );
+          setLoadingMap(false);
+        }
+        return;
+      }
+
+      const dariString = parseKoordinatDariString(alamatMentah);
+      if (dariString) {
+        if (!cancelled) {
+          setMapCoords(dariString);
+          setDisplayAddress(alamatMentah);
+          setLoadingMap(false);
+        }
+        return;
+      }
+
+      if (!alamatMentah) {
+        if (!cancelled) {
+          setMapCoords(null);
+          setDisplayAddress('Alamat tidak tersedia');
+          setLoadingMap(false);
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+            alamatMentah,
+          )}&limit=1`,
+          { headers: NOMINATIM_HEADERS },
+        );
+        const json = await res.json();
+        if (!cancelled) {
+          if (json?.[0]) {
+            setMapCoords({
+              latitude: parseFloat(json[0].lat),
+              longitude: parseFloat(json[0].lon),
+            });
+            setDisplayAddress(json[0].display_name || alamatMentah);
+          } else {
+            setMapCoords(null);
+            setDisplayAddress(alamatMentah);
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setMapCoords(null);
+          setDisplayAddress(alamatMentah);
+        }
+      } finally {
+        if (!cancelled) setLoadingMap(false);
+      }
+    };
+
+    resolveLokasiPeta();
+    return () => {
+      cancelled = true;
+    };
+  }, [data.lokasi_sesi, data.lokasi, data.alamat, data.koordinat]);
 
   useEffect(() => {
     const cekPembayaran = async () => {
@@ -80,23 +208,22 @@ const DetailPermintaanGuruPage = ({
   };
 
   const handleBukaMap = () => {
-    const lokasi = data.lokasi_sesi || data.lokasi || '';
-    if (!lokasi) {
+    if (mapCoords) {
+      Linking.openURL(
+        `https://www.google.com/maps/search/?api=1&query=${mapCoords.latitude},${mapCoords.longitude}`,
+      ).catch(() => Alert.alert('Error', 'Tidak dapat membuka Google Maps.'));
+      return;
+    }
+
+    const lokasi = displayAddress || data.lokasi_sesi || data.lokasi || '';
+    if (!lokasi || lokasi === 'Alamat tidak tersedia') {
       Alert.alert('Info', 'Lokasi tidak tersedia.');
       return;
     }
-    const parts = lokasi.split(',');
-    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-      Linking.openURL(
-        `https://www.google.com/maps?q=${parts[0].trim()},${parts[1].trim()}`,
-      ).catch(() => Alert.alert('Error', 'Tidak dapat membuka Google Maps.'));
-    } else {
-      Linking.openURL(
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          lokasi,
-        )}`,
-      ).catch(() => Alert.alert('Error', 'Tidak dapat membuka Google Maps.'));
-    }
+
+    Linking.openURL(
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lokasi)}`,
+    ).catch(() => Alert.alert('Error', 'Tidak dapat membuka Google Maps.'));
   };
 
   // ─── Handler: Permintaan ──────────────────────────────────────
@@ -315,8 +442,6 @@ const DetailPermintaanGuruPage = ({
 
   const tanggal = formatTanggal(data.waktu_mulai);
   const waktuSesi = formatWaktu();
-  const lokasiAlamat =
-    data.lokasi_sesi || data.lokasi || data.alamat || 'Alamat tidak tersedia';
 
   const sekarang = new Date();
   const waktuMulaiObj = data.waktu_mulai ? new Date(data.waktu_mulai) : null;
@@ -488,33 +613,60 @@ const DetailPermintaanGuruPage = ({
           </View>
         </View>
 
-        <View style={styles.mapContainer}>
-          <View style={styles.mapPlaceholder}>
-            <Text style={styles.mapPlaceholderText}>📍 Peta Lokasi</Text>
-            <Text style={styles.mapPlaceholderSub}>
-              Tap tombol lokasi di bawah untuk membuka Google Maps
-            </Text>
+        <View style={styles.mapSection}>
+          <View style={styles.mapsContainerWrapper}>
+            {loadingMap ? (
+              <View style={styles.mapLoadingContainer}>
+                <ActivityIndicator size="large" color="#284B7A" />
+                <Text style={styles.mapLoadingText}>Memuat peta lokasi...</Text>
+              </View>
+            ) : mapCoords ? (
+              <WebView
+                key={`${mapCoords.latitude}-${mapCoords.longitude}`}
+                originWhitelist={['*']}
+                source={{
+                  html: buildMapHtml(
+                    mapCoords.latitude,
+                    mapCoords.longitude,
+                  ),
+                }}
+                style={styles.mapsStaticImageMedia}
+                scrollEnabled={false}
+                javaScriptEnabled
+                domStorageEnabled
+              />
+            ) : (
+              <View style={styles.mapPreviewFallback}>
+                <Text style={styles.mapPinEmoji}>📍</Text>
+                <Text style={styles.mapTapText}>
+                  Peta tidak dapat dimuat
+                </Text>
+                <Text style={styles.mapTapSub}>
+                  Ketuk baris lokasi di bawah untuk buka Google Maps
+                </Text>
+              </View>
+            )}
           </View>
-        </View>
 
-        <TouchableOpacity
-          style={styles.lokasiRow}
-          onPress={handleBukaMap}
-          activeOpacity={0.7}
-        >
-          <View style={styles.lokasiIconWrap}>
-            <MapPin size={18} color="#284B7A" />
-          </View>
-          <View style={styles.lokasiInfo}>
-            <Text style={styles.lokasiTitle}>
-              {data.tipe_lokasi || 'Lokasi Sesi'}
-            </Text>
-            <Text style={styles.lokasiAlamat} numberOfLines={2}>
-              {lokasiAlamat}
-            </Text>
-          </View>
-          <ChevronRight size={18} color="#ABABAB" />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.lokasiRow}
+            onPress={handleBukaMap}
+            activeOpacity={0.7}
+          >
+            <View style={styles.lokasiIconWrap}>
+              <MapPin size={18} color="#284B7A" />
+            </View>
+            <View style={styles.lokasiInfo}>
+              <Text style={styles.lokasiTitle}>
+                {data.tipe_lokasi || 'Lokasi Sesi (Ketuk untuk Buka Rute)'}
+              </Text>
+              <Text style={styles.lokasiAlamat} numberOfLines={3}>
+                {displayAddress || 'Alamat tidak tersedia'}
+              </Text>
+            </View>
+            <ChevronRight size={18} color="#ABABAB" />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.rincianCard}>
           <Text style={styles.rincianTitle}>Rincian Bayaran</Text>
@@ -710,41 +862,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fieldValue: { fontSize: 14, color: '#444', fontWeight: '500' },
-  mapContainer: {
+  mapSection: {
     marginHorizontal: 24,
-    marginBottom: 0,
+    marginBottom: 20,
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#E8EEF6',
+    backgroundColor: '#FFF',
   },
-  mapPlaceholder: {
-    height: 160,
-    backgroundColor: '#E8F0E9',
+  mapsContainerWrapper: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#E2E8F0',
+    overflow: 'hidden',
+  },
+  mapsStaticImageMedia: { width: '100%', height: '100%' },
+  mapLoadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
   },
-  mapPlaceholderText: { fontSize: 20, marginBottom: 6 },
-  mapPlaceholderSub: {
-    fontSize: 12,
-    color: '#666',
+  mapLoadingText: { marginTop: 10, fontSize: 13, color: '#666' },
+  mapPreviewFallback: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 16,
+  },
+  mapPinEmoji: { fontSize: 32, marginBottom: 6 },
+  mapTapText: { fontSize: 12, color: '#64748B', fontWeight: '600' },
+  mapTapSub: {
+    fontSize: 11,
+    color: '#94A3B8',
     textAlign: 'center',
-    paddingHorizontal: 20,
+    marginTop: 4,
   },
   lokasiRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 24,
-    marginTop: 0,
-    marginBottom: 20,
     paddingVertical: 14,
     paddingHorizontal: 16,
     backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderTopWidth: 0,
-    borderColor: '#E8EEF6',
-    borderBottomLeftRadius: 14,
-    borderBottomRightRadius: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
   },
   lokasiIconWrap: {
     width: 36,
