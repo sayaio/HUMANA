@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, ScrollView } from 'react-native';
 import { prosesCod, prosesMidtrans } from '../services/bankerService';
 import { getSesiDetail } from '../services/bankerService';
-import CustomAlert from '../components/CustomAlert'; // Import komponen CustomAlert[cite: 10]
+import CustomAlert from '../components/CustomAlert';
+import DimmedModal from '../components/DimmedModal';
 import { batalkanSesi } from '../services/batalSesiService';
 import { pemesananService } from '../services/pemesananService';
 
@@ -288,9 +289,11 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
             </View>
 
             {/* MODAL PILIHAN PEMBAYARAN */}
-            {showMethodModal && (
-                <View style={styles.customModalOverlay}>
-                    <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => setShowMethodModal(false)} />
+            <DimmedModal
+                visible={showMethodModal}
+                onRequestClose={() => setShowMethodModal(false)}
+                placement="bottom"
+            >
                     <View style={styles.bottomSheetContainer}>
                         <View style={styles.notchIndicator} />
                         <TouchableOpacity style={[styles.imageOptionBox, selectedMethod === 'va' && styles.selectedOptionBox]} onPress={() => { setShowMethodModal(false); setTimeout(() => { setSelectedMethod('va'); }, 100); }}>
@@ -306,8 +309,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                             <Text style={styles.imageOptionText}>Bayar di Tempat (COD)</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
-            )}
+            </DimmedModal>
 
             {/* CUSTOM ALERT KONFIRMASI / PERINGATAN[cite: 10] */}
             <CustomAlert 
@@ -376,8 +378,7 @@ const styles = StyleSheet.create({
     payButtonActive: { backgroundColor: '#3A7D6B', borderColor: '#3A7D6B' },
     payButtonDisabled: { backgroundColor: '#FFF', borderColor: '#E0E0E0' },
     payButtonText: { fontSize: 15, fontWeight: 'bold' },
-    customModalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end', zIndex: 9999 },
-    bottomSheetContainer: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 24, paddingTop: 15, paddingBottom: 50 },
+    bottomSheetContainer: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 24, paddingTop: 15, paddingBottom: 50, width: '100%' },
     notchIndicator: { width: 50, height: 5, backgroundColor: '#E0E0E0', borderRadius: 2.5, alignSelf: 'center', marginBottom: 25 },
     imageOptionBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#F0F0F0', borderRadius: 20, paddingVertical: 18, paddingHorizontal: 20, marginBottom: 12 },
     selectedOptionBox: { borderColor: '#3A7D6B', borderWidth: 1.5, backgroundColor: '#F4FAF8' },

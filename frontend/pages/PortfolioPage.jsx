@@ -9,9 +9,10 @@ import {
   StatusBar,
   Dimensions,
   Alert,
-  Modal,
   ActivityIndicator,
 } from 'react-native';
+import DimmedModal from '../components/DimmedModal';
+import { MODAL_WIDE_WIDTH, wideModalCardBase } from '../components/modalTheme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BackIconSvg from '../components/BackIconSvg';
 import { portfolioService } from '../services/portfolioService';
@@ -337,16 +338,15 @@ const PortfolioPage = ({ onBack, idGuru }) => {
         </TouchableOpacity>
       </View>
 
-      <Modal visible={showCalendar} transparent animationType="fade">
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => {
-            setShowCalendar(false);
-            setCalendarTarget(null);
-          }}
-        >
-          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+      <DimmedModal
+        visible={showCalendar}
+        onRequestClose={() => {
+          setShowCalendar(false);
+          setCalendarTarget(null);
+        }}
+        placement="center"
+        size="wide"
+      >
             <View style={styles.calendarContainer}>
               <View style={styles.calendarHeader}>
                 <TouchableOpacity onPress={prevMonth} style={styles.calendarNavBtn}>
@@ -401,9 +401,7 @@ const PortfolioPage = ({ onBack, idGuru }) => {
                 <Text style={styles.modalCloseBtnText}>Tutup</Text>
               </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
+      </DimmedModal>
     </SafeAreaView>
   );
 };
@@ -580,15 +578,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-  },
   calendarContainer: {
-    backgroundColor: '#FFF',
-    marginHorizontal: 20,
-    borderRadius: 20,
+    ...wideModalCardBase,
+    width: MODAL_WIDE_WIDTH,
     padding: 20,
     elevation: 10,
     shadowColor: '#000',

@@ -6,12 +6,13 @@ import {
     ScrollView,
     TouchableOpacity,
     StatusBar,
-    Modal,
     Alert,
     ActivityIndicator,
     RefreshControl,
 } from 'react-native';
 import { Star, X, Clock, DollarSign } from 'lucide-react-native';
+import DimmedModal from '../components/DimmedModal';
+import { MODAL_WIDE_WIDTH, wideModalCardBase } from '../components/modalTheme';
 
 import {
     fetchPermintaanBaru,
@@ -357,13 +358,12 @@ const ActivityGuruPage = ({
             )}
 
             {/* MODAL — hanya untuk tab Jadwal Aktif & Riwayat Sesi */}
-            <Modal
-                transparent={true}
+            <DimmedModal
                 visible={modalVisible}
-                animationType="fade"
                 onRequestClose={() => setModalVisible(false)}
+                placement="center"
+                size="wide"
             >
-                <View style={styles.modalOverlayBackground}>
                     <View style={styles.modalContentSheet}>
                         <View style={styles.modalHeaderTitleRow}>
                             <Text style={styles.modalTitleLabel}>Detail Sesi Kelas</Text>
@@ -455,8 +455,7 @@ const ActivityGuruPage = ({
                             </ScrollView>
                         )}
                     </View>
-                </View>
-            </Modal>
+            </DimmedModal>
 
             <BottomNavbar
                 currentScreen="ActivityGuru"
@@ -567,19 +566,13 @@ const styles = StyleSheet.create({
         marginLeft: 4,
     },
 
-    modalOverlayBackground: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     modalContentSheet: {
-        backgroundColor: '#FFF',
+        ...wideModalCardBase,
+        width: MODAL_WIDE_WIDTH,
         borderRadius: 24,
         paddingHorizontal: 24,
         paddingTop: 20,
         paddingBottom: 24,
-        width: '85%',
         maxHeight: '75%',
         elevation: 10,
         shadowColor: '#000',

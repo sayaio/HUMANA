@@ -11,8 +11,9 @@ import {
   ActivityIndicator,
   PermissionsAndroid,
   Alert,
-  Modal,
 } from 'react-native';
+import DimmedModal from '../components/DimmedModal';
+import { MODAL_WIDE_WIDTH, wideModalCardBase } from '../components/modalTheme';
 import { WebView } from 'react-native-webview'; // Import WebView untuk peta interaktif
 import Geolocation from '@react-native-community/geolocation';
 import { pemesananService } from '../services/pemesananService';
@@ -1079,12 +1080,12 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
       </View>
 
       {/* Calendar Modal */}
-      <Modal visible={showCalendar} transparent animationType="fade">
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowCalendar(false)}
-        >
+      <DimmedModal
+        visible={showCalendar}
+        onRequestClose={() => setShowCalendar(false)}
+        placement="center"
+        size="wide"
+      >
           <View style={styles.calendarContainer}>
             <View style={styles.calendarHeader}>
               <TouchableOpacity
@@ -1144,8 +1145,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
               <Text style={styles.modalCloseBtnText}>Tutup</Text>
             </TouchableOpacity>
           </View>
-        </TouchableOpacity>
-      </Modal>
+      </DimmedModal>
     </View>
   );
 };
@@ -1449,15 +1449,9 @@ const styles = StyleSheet.create({
   confirmButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
 
   // Calendar
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-  },
   calendarContainer: {
-    backgroundColor: '#FFF',
-    marginHorizontal: 20,
-    borderRadius: 20,
+    ...wideModalCardBase,
+    width: MODAL_WIDE_WIDTH,
     padding: 20,
     elevation: 10,
     shadowColor: '#000',

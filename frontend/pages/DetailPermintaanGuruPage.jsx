@@ -20,6 +20,8 @@ import {
 import { batalkanSesi } from '../services/batalSesiService';
 import { createChatRoom } from '../services/chatService';
 import CustomAlert from '../components/CustomAlert';
+import DimmedModal from '../components/DimmedModal';
+import { centerModalCardBase, MODAL_CARD_WIDTH } from '../components/modalTheme';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { uploadDokumentasi } from '../services/dokumentasiService';
 import {
@@ -683,8 +685,15 @@ const DetailPermintaanGuruPage = ({
 
       {renderActionBar()}
 
-      {showDokModal && (
-        <View style={styles.modalOverlay}>
+      <DimmedModal
+        visible={showDokModal}
+        onRequestClose={() => {
+          setShowDokModal(false);
+          setFotoUri(null);
+        }}
+        placement="center"
+        dismissOnBackdropPress={!uploadingFoto}
+      >
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Dokumentasi Sesi</Text>
             <Text style={styles.modalSubtitle}>
@@ -739,8 +748,7 @@ const DetailPermintaanGuruPage = ({
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      )}
+      </DimmedModal>
 
       <CustomAlert
         visible={alertVisible}
@@ -1013,22 +1021,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
   },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 999,
-  },
   modalCard: {
-    backgroundColor: '#FFF',
+    ...centerModalCardBase,
+    width: MODAL_CARD_WIDTH,
     borderRadius: 20,
     padding: 24,
-    width: '85%',
     alignItems: 'center',
   },
   modalTitle: {
