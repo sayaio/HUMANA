@@ -12,7 +12,6 @@ import {
   Image,
 } from 'react-native';
 import {
-  ChevronLeft,
   MapPin,
   ChevronRight,
   MessageCircle,
@@ -20,6 +19,7 @@ import {
 import { batalkanSesi } from '../services/batalSesiService';
 import { createChatRoom } from '../services/chatService';
 import CustomAlert from '../components/CustomAlert';
+import PageHeader from '../components/PageHeader';
 import DimmedModal from '../components/DimmedModal';
 import { centerModalCardBase, MODAL_CARD_WIDTH } from '../components/modalTheme';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -530,14 +530,7 @@ const DetailPermintaanGuruPage = ({
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-          <ChevronLeft size={20} color="#284B7A" />
-          <Text style={styles.backText}>Kembali</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detail Pemesanan</Text>
-        <View style={{ width: 80 }} />
-      </View>
+      <PageHeader title="Detail Pemesanan" onBack={onBack} />
 
       <ScrollView
         style={styles.scrollView}
@@ -769,30 +762,6 @@ const DetailPermintaanGuruPage = ({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 16,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  backBtn: { flexDirection: 'row', alignItems: 'center', width: 80 },
-  backText: {
-    fontSize: 14,
-    color: '#284B7A',
-    fontWeight: '600',
-    marginLeft: 2,
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-  },
   scrollView: { flex: 1 },
   profileRow: {
     flexDirection: 'row',

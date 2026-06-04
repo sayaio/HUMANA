@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  TextInput, Platform, Alert, ActivityIndicator, SafeAreaView, StatusBar,
+  TextInput, Alert, ActivityIndicator, StatusBar,
 } from 'react-native';
 import { materiGuruService } from '../services/materiGuruService';
+import PageHeader from '../components/PageHeader';
 
 const FONTS = { bold: 'SF-Pro-Display-Bold', regular: 'SF-Pro-Display-Regular' };
 const JENJANG_OPTIONS = ['Semua', 'SD', 'SMP', 'SMA'];
@@ -106,28 +107,31 @@ const TambahMateriGuruPage = ({ onBack, idGuru }) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#284B7A" />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
-      {/* Header Sesuai Figma */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={styles.headerBack}>❮ Kembali</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Tambah Materi</Text>
-        <TouchableOpacity onPress={handleSimpan} disabled={saving}>
-          {saving ? <ActivityIndicator size="small" color="#284B7A" /> : <Text style={styles.headerSimpan}>Simpan</Text>}
-        </TouchableOpacity>
-      </View>
+      <PageHeader
+        title="Tambah Materi"
+        onBack={onBack}
+        rightAction={
+          <TouchableOpacity onPress={handleSimpan} disabled={saving}>
+            {saving ? (
+              <ActivityIndicator size="small" color="#284B7A" />
+            ) : (
+              <Text style={styles.headerSimpan}>Simpan</Text>
+            )}
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Search Bar Sesuai Figma */}
@@ -200,22 +204,14 @@ const TambahMateriGuruPage = ({ onBack, idGuru }) => {
         ))}
         <View style={{ height: 100 }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#FFF' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 30, paddingTop: Platform.OS === 'ios' ? 10 : 40, paddingBottom: 15,
-    backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#F2F2F2'
-  },
-  backBtn: { width: 80 },
-  headerBack: { fontSize: 14, color: '#333', fontWeight: '600' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#1A1A2E' },
-  headerSimpan: { fontSize: 15, fontWeight: 'bold', color: '#2D669F', width: 80, textAlign: 'right' },
+  headerSimpan: { fontSize: 15, fontWeight: 'bold', color: '#2D669F', textAlign: 'right' },
   scrollContent: { flex: 1 },
   searchBar: {
     flexDirection: 'row', alignItems: 'center', margin: 20,

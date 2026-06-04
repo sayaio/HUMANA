@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
 import { fetchRiwayatPendapatan } from '../services/pendapatanService';
+import PageHeader from '../components/PageHeader';
 
 const FONTS = {
     bold: 'SF-Pro-Display-Bold',
@@ -83,15 +84,10 @@ const RiwayatPendapatanPage = ({ guruData, onNavigate }) => {
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
-            {/* Header */}
-            <View style={styles.header}>
-                {/* ✅ DIUBAH: Menggunakan format tombol kembali teks dengan panah */}
-                <TouchableOpacity onPress={() => onNavigate?.('Pendapatan')} style={styles.backBtnWrapper}>
-                    <Text style={styles.headerBack}>❮ Kembali</Text>
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Riwayat Pendapatan</Text>
-                <View style={{ width: 80 }} />
-            </View>
+            <PageHeader
+                title="Riwayat Pendapatan"
+                onBack={() => onNavigate?.('Pendapatan')}
+            />
 
             {/* Filter Tahun */}
             <View style={styles.filterSection}>
@@ -186,15 +182,6 @@ const RiwayatPendapatanPage = ({ guruData, onNavigate }) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F5F7FA' },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: 20, paddingTop: 55, paddingBottom: 16,
-        backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EAEEF3',
-    },
-    backBtnWrapper: { width: 80, justifyContent: 'center' },
-    headerBack: { fontSize: 14, color: '#333', fontWeight: '600' },
-    headerTitle: { fontFamily: FONTS.bold, fontSize: 18, color: '#1A1A2E' },
-
     filterSection: { backgroundColor: '#FFF', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
     filterLabel: { fontFamily: FONTS.bold, fontSize: 11, color: '#ABABAB', letterSpacing: 1, marginBottom: 8 },
     filterRow: { flexDirection: 'row' },

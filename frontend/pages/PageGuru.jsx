@@ -505,46 +505,41 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
         ) : (
           permintaan.slice(0, 2).map(item => (
             <View key={item.id_pemesanan} style={styles.requestCard}>
-              <View style={styles.profileRowRequest}>
-                <View
-                  style={[
-                    styles.avatarCircleRequest,
-                    { backgroundColor: '#284B7A' },
-                  ]}
-                >
+              <View style={styles.cardHeaderRequest}>
+                <View style={styles.avatarCircleRequest}>
                   <Text style={styles.avatarTextRequest}>
                     {item.nama_murid
                       ? item.nama_murid.substring(0, 2).toUpperCase()
                       : 'SN'}
                   </Text>
                 </View>
-                <View style={styles.profileInfoRequest}>
+                <View style={styles.cardMainMetaRequest}>
                   <Text style={styles.studentNameRequest}>
                     {item.nama_murid}
                   </Text>
-                  <Text style={styles.subjectTextRequest}>
+                  <Text style={styles.materiTextRequest} numberOfLines={1}>
                     {item.nama_materi}
                   </Text>
                 </View>
               </View>
 
-              <View style={styles.detailGridRequest}>
-                <View style={styles.detailItemRequest}>
-                  <Text style={styles.detailLabelRequest}>Tanggal</Text>
-                  <Text style={styles.detailValueRequest}>
+              <View style={styles.cardGridInfoRequest}>
+                <View style={styles.gridInfoBoxRequest}>
+                  <Text style={styles.infoLabelRequest}>Tanggal</Text>
+                  <Text style={styles.infoValueRequest}>
                     {formatTanggalCard(item.waktu_mulai)}
                   </Text>
                 </View>
-                <View style={styles.detailItemRequest}>
-                  <Text style={styles.detailLabelRequest}>Waktu</Text>
-                  <Text style={styles.detailValueRequest}>
+                <View style={styles.gridInfoBoxRequest}>
+                  <Text style={styles.infoLabelRequest}>Waktu</Text>
+                  <Text style={styles.infoValueRequest}>
                     {item.waktu_string}
                   </Text>
                 </View>
-                <View style={styles.detailItemRequest}>
-                  <Text style={styles.detailLabelRequest}>Bayaran</Text>
-                  <Text style={styles.detailValueRequest}>
-                    {formatRupiah(item.harga_total)}
+                <View style={styles.gridInfoBoxRequest}>
+                  <Text style={styles.infoLabelRequest}>Bayaran</Text>
+                  <Text style={styles.infoValueRequest}>
+                    Rp {item.harga_total.toLocaleString('id-ID')}
                   </Text>
                 </View>
               </View>
@@ -748,7 +743,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: FONTS.bold,
     color: '#000',
-    marginBottom: 2,
+    lineHeight: 18,
   },
   subjectText: {
     fontSize: 12,
@@ -759,14 +754,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 16,
   },
   gridCol2: { width: '45%' },
   detailLabel: {
     fontSize: 10,
     fontFamily: FONTS.regular,
     color: '#ABABAB',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   detailValue: {
     fontSize: 13,
@@ -856,10 +851,10 @@ const styles = StyleSheet.create({
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.02,
+    shadowOpacity: 0.04,
     shadowRadius: 6,
   },
-  profileRowRequest: {
+  cardHeaderRequest: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
@@ -872,54 +867,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarTextRequest: { color: '#FFF', fontFamily: FONTS.bold, fontSize: 14 },
-  profileInfoRequest: { flex: 1, marginLeft: 14 },
+  avatarTextRequest: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
+  cardMainMetaRequest: { flex: 1, marginLeft: 14 },
   studentNameRequest: {
     fontSize: 16,
-    fontFamily: FONTS.bold,
+    fontWeight: 'bold',
     color: '#000',
   },
-  subjectTextRequest: {
+  materiTextRequest: {
     fontSize: 12,
     color: '#777',
     marginTop: 2,
-    fontFamily: FONTS.regular,
   },
-  badgeBaru: {
-    backgroundColor: '#FFE6A3',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeTextBaru: { color: '#D4A017', fontSize: 12, fontFamily: FONTS.bold },
-  detailGridRequest: {
+  cardGridInfoRequest: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
     marginBottom: 16,
     paddingLeft: 2,
   },
-  detailItemRequest: { flex: 1, paddingRight: 8 },
-  detailLabelRequest: { fontSize: 11, color: '#999', fontFamily: FONTS.regular, marginBottom: 4 },
-  detailValueRequest: {
+  gridInfoBoxRequest: { flex: 1, paddingRight: 8 },
+  infoLabelRequest: { fontSize: 11, color: '#999', marginBottom: 4 },
+  infoValueRequest: {
     fontSize: 13,
-    fontFamily: FONTS.bold,
+    fontWeight: 'bold',
     color: '#333',
   },
-  actionButtonRowRequest: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  btnActionRequest: {
-    flex: 1,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  btnPrimaryRequest: { backgroundColor: '#284B7A' },
-  btnDangerRequest: { backgroundColor: '#DC3545' },
-  btnTextWhiteRequest: { color: '#FFF', fontFamily: FONTS.bold, fontSize: 14 },
   cardActionRowRequest: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   btnLihatDetailRequest: {
     backgroundColor: '#284B7A',
@@ -930,7 +902,7 @@ const styles = StyleSheet.create({
   btnTextLihatDetailRequest: {
     color: '#FFF',
     fontSize: 12,
-    fontFamily: FONTS.bold,
+    fontWeight: 'bold',
   },
 
   loadingText: {

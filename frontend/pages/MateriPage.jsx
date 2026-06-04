@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet, Text, View, TouchableOpacity,
-  SafeAreaView, StatusBar, ScrollView, TextInput,
+  StatusBar, ScrollView, TextInput,
   Image, ActivityIndicator
 } from 'react-native';
 import { fetchMateriBySubject } from '../services/MateriService';
-import BackIconSvg from '../components/BackIconSvg';
+import PageHeader from '../components/PageHeader';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
@@ -108,17 +108,7 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#284B7A" translucent={false} />
 
-      {/* FIXED NAVIGATION HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <BackIconSvg size={10} color="#ffffff" />
-          <Text style={styles.backText}>Kembali</Text>
-        </TouchableOpacity>
-        
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>{subjectName}</Text>
-        </View>
-      </View>
+      <PageHeader title={subjectName} onBack={onBack} variant="dark" borderBottom={false} />
 
       <View style={styles.contentContainer}>
         <View style={styles.contentHeader}>
@@ -153,39 +143,6 @@ const MateriPage = ({ subjectName, id_mapel, onBack, onChapterSelect }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#284B7A' },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingTop: 55, 
-    paddingBottom: 25, 
-    paddingHorizontal: 20,
-    position: 'relative', 
-  },
-  backBtn: {
-    flexDirection: 'row',    
-    alignItems: 'center',    
-    paddingVertical: 5,
-    paddingHorizontal: 5,
-    zIndex: 10, 
-  },
-  backText: {
-    fontSize: 15,            
-    color: '#ffffff',        
-    marginLeft: 6,           
-    fontFamily: 'SF-Pro-Display-Bold',       
-  },
-  backIcon: { fontSize: 24, color: '#FFF', fontWeight: 'bold' },
-  headerTitleContainer: {
-    position: 'absolute',
-    left: 80,
-    right: 80,
-    top: 55,
-    bottom: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF', textAlign: 'center' },
   contentContainer: { flex: 1, backgroundColor: '#FAFAFA', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 20, paddingTop: 25 },
   contentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   contentTitle: { fontSize: 18, color: '#333' },

@@ -17,9 +17,9 @@ import {
 } from 'react-native';
 
 // Import SafeAreaView yang dari library khusus tetap biarkan di bawahnya:
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { postFeedback, fetchFeedbackBySesi } from '../services/feedbackService';
-import BackIconSvg from '../components/BackIconSvg';
+import PageHeader from '../components/PageHeader';
 import { getDokumentasi } from '../services/dokumentasiService';
 import { API_URL } from '../src/config';
 
@@ -31,6 +31,7 @@ const resolveFotoUri = fotoPath => {
 
 const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) => {
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isGuru = userRole === 'guru';
 
   const [rating, setRating] = useState(0);
@@ -49,8 +50,12 @@ const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) 
         const id = sessionData?.id_pemesanan;
         if (!id) return;
         const resDok = await getDokumentasi(id);
-        if (resDok?.foto_dokumentasi) {
-          setFotoDokumentasi(resDok.foto_dokumentasi);
+        const foto =
+          resDok?.foto_dokumentasi ||
+          resDok?.data?.foto_dokumentasi ||
+          null;
+        if (foto) {
+          setFotoDokumentasi(foto);
         }
       } catch (err) {
         console.log('Gagal fetch foto dokumentasi:', err);
@@ -203,28 +208,19 @@ const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) 
   const fotoUri = resolveFotoUri(fotoDokumentasi);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-            <BackIconSvg size={10} color="#000000" />
-            <Text style={styles.backText}>Kembali</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Session Detail</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <PageHeader title="Session Detail" onBack={onBack} />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingHorizontal: width * 0.05,
-            paddingBottom: 30,
-          }}
+          contentContainerStyle={styles.scrollContent}
         >
           {/* Info Top */}
           <View style={styles.infoRow}>
@@ -271,18 +267,19 @@ const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) 
           </Text>
           <TouchableOpacity
             style={[styles.imagePlaceholder, { height: dynamicImageHeight }]}
-            onPress={() => fotoUri && setFotoFullscreen(true)}
-            activeOpacity={fotoUri ? 0.85 : 1}
+            onPress={() => setFotoFullscreen(true)}
+            activeOpacity={0.85}
             disabled={!fotoUri}
           >
             {fotoUri ? (
               <>
                 <Image
                   source={{ uri: fotoUri }}
-                  style={{ width: '100%', height: '100%', borderRadius: 10 }}
+                  style={styles.documentationImage}
                   resizeMode="cover"
+                  pointerEvents="none"
                 />
-                <View style={styles.tapHint}>
+                <View style={styles.tapHint} pointerEvents="none">
                   <Text style={styles.tapHintText}>Ketuk untuk memperbesar</Text>
                 </View>
               </>
@@ -418,58 +415,57 @@ const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) 
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+    </SafeAreaView>
 
-      {/* Fullscreen foto dokumentasi */}
+      {/* Fullscreen foto dokumentasi — di luar SafeAreaView agar Modal tampil konsisten di Android */}
       <Modal
         visible={fotoFullscreen}
         transparent
         animationType="fade"
+        statusBarTranslucent
         onRequestClose={() => setFotoFullscreen(false)}
       >
         <View style={styles.fullscreenOverlay}>
           <TouchableOpacity
-            style={styles.fullscreenClose}
+            style={[styles.fullscreenClose, { top: insets.top + 12 }]}
             onPress={() => setFotoFullscreen(false)}
+            activeOpacity={0.7}
           >
             <Text style={styles.fullscreenCloseText}>✕ Tutup</Text>
           </TouchableOpacity>
           {fotoUri && (
-            <Image
-              source={{ uri: fotoUri }}
-              style={styles.fullscreenImage}
-              resizeMode="contain"
-            />
+            <ScrollView
+              style={styles.fullscreenScroll}
+              contentContainerStyle={styles.fullscreenScrollContent}
+              maximumZoomScale={Platform.OS === 'ios' ? 4 : 1}
+              minimumZoomScale={1}
+              centerContent
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
+              <Image
+                source={{ uri: fotoUri }}
+                style={{
+                  width: width,
+                  height: height - insets.top - insets.bottom - 60,
+                }}
+                resizeMode="contain"
+              />
+            </ScrollView>
           )}
         </View>
       </Modal>
-    </SafeAreaView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 15,
-    marginTop: -15,
-    paddingBottom: 10,
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 30,
   },
-  backBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 5,
-    paddingHorizontal: 5,
-  },
-  backText: {
-    fontSize: 15,
-    color: '#000000',
-    marginLeft: 6,
-    fontFamily: 'SF-Pro-Display-Bold',
-  },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#000' },
   infoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   iconBox: {
     backgroundColor: '#387C65',
@@ -489,6 +485,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
+    overflow: 'hidden',
+  },
+  documentationImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
   },
   costRow: {
     flexDirection: 'row',
@@ -522,18 +524,22 @@ const styles = StyleSheet.create({
   fullscreenOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.92)',
+  },
+  fullscreenScroll: {
+    flex: 1,
+  },
+  fullscreenScrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   fullscreenClose: {
     position: 'absolute',
-    top: 48,
     right: 20,
     zIndex: 10,
     padding: 8,
   },
   fullscreenCloseText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
-  fullscreenImage: { width: '100%', height: '85%' },
   feedbackInput: {
     borderWidth: 1,
     borderColor: '#EEE',

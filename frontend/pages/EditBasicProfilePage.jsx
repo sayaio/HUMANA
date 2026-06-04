@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import {
-    StyleSheet, Text, View, TouchableOpacity, SafeAreaView,
+    StyleSheet, Text, View, TouchableOpacity,
     StatusBar, ScrollView, TextInput, ActivityIndicator, Alert
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import BackIconSvg from '../components/BackIconSvg';
+import PageHeader from '../components/PageHeader';
 // Import API dari file service kamu
 import { updateBasicProfile } from '../services/editProfileService';
 
@@ -105,17 +105,10 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={false} />
 
-            <View style={styles.header}>
-                <TouchableOpacity onPress={onCancel} style={styles.backBtn}>
-                    <BackIconSvg size={10} color="#000000" />
-                    <Text style={styles.backText}>Kembali</Text>
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Edit Basic Profile</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <PageHeader title="Edit Basic Profile" onBack={onCancel} />
 
             <ScrollView contentContainerStyle={styles.content}>
                 <InputField label="Username" value={username} onChangeText={setUsername} />
@@ -136,28 +129,12 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
                     )}
                 </TouchableOpacity>
             </View>
-        </SafeAreaView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFF' },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 35, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
-    backBtn: {
-        flexDirection: 'row',    // Membuat ikon dan teks berjejer ke samping
-        alignItems: 'center',    // Membuat ikon dan teks lurus sejajar secara vertikal
-        paddingVertical: 5,
-        paddingHorizontal: 5,
-    },
-    backText: {
-        fontSize: 15,            // Ukuran teks 'Kembali'
-        color: '#000000',        // Warna teks hitam disamakan dengan ikon
-        marginLeft: 6,           // Memberikan jarak antara ikon panah dan teks
-        fontFamily: 'SF-Pro-Display-Bold',       // Membuat teks sedikit lebih tegas (opsional)
-    },
-    backIcon: { fontSize: 20, color: '#000', fontWeight: 'bold' },
-    headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#000' },
-
     content: { padding: 20 },
     inputContainer: { marginBottom: 20 },
     label: { fontSize: 12, color: '#888', fontWeight: 'bold', marginBottom: 8 },

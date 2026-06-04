@@ -6,6 +6,7 @@ import CustomAlert from '../components/CustomAlert';
 import DimmedModal from '../components/DimmedModal';
 import { batalkanSesi } from '../services/batalSesiService';
 import { pemesananService } from '../services/pemesananService';
+import PageHeader from '../components/PageHeader';
 
 const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDilepas }) => {
     const [selectedMethod, setSelectedMethod] = useState(null);
@@ -181,16 +182,8 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
 
     return (
         <View style={styles.container}>
+            <PageHeader title="Detail Pembayaran" onBack={handleBackWithConfirmation} />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-                {/* HEADER */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={handleBackWithConfirmation}>
-                        <Text style={styles.backText}>❮ Kembali</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Detail Pembayaran</Text>
-                    <View style={{ width: 50 }} />
-                </View>
-
                 {/* INFO MATERI */}
                 <View style={styles.materiSection}>
                     <Text style={styles.subjectTitle}>{sessionData?.nama_mapel || 'Mata Pelajaran'}</Text>
@@ -340,10 +333,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FFF', paddingTop: 40 },
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginVertical: 15 },
-    backText: { fontSize: 15, color: '#666', marginRight: 20 },
-    headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    container: { flex: 1, backgroundColor: '#FFF' },
     materiSection: { paddingHorizontal: 20, marginBottom: 15 },
     subjectTitle: { fontSize: 22, fontWeight: 'bold', color: '#000' },
     chapterText: { fontSize: 15, color: '#666', marginTop: 2 },

@@ -4,6 +4,7 @@ import CustomAlert from '../components/CustomAlert';
 import axios from 'axios';
 import { API_URL } from '../src/config';
 import { pemesananService } from '../services/pemesananService';
+import PageHeader from '../components/PageHeader';
 
 const { width, height } = Dimensions.get('window');
 
@@ -166,10 +167,12 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                 </View>
 
                 {/* Header Tetap Di Atas */}
-                <View style={styles.header}>
-                    <View style={{ width: 60 }} />
-                    <Text style={styles.headerTitle}>Mencari Pengajar</Text>
-                    <View style={{ width: 60 }} />
+                <View style={styles.headerOverlay}>
+                    <PageHeader
+                        title="Mencari Pengajar"
+                        showBack={false}
+                        borderBottom={false}
+                    />
                 </View>
             </View>
 
@@ -255,9 +258,7 @@ const styles = StyleSheet.create({
     userDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#007AFF', borderWidth: 2, borderColor: '#FFF' },
     radar: { position: 'absolute', width: 80, height: 80, borderRadius: 40, backgroundColor: '#007AFF' },
 
-    header: { position: 'absolute', top: 50, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20 },
-    backText: { fontSize: 16, color: '#333', fontWeight: '500' },
-    headerTitle: { fontSize: 18, fontWeight: 'bold' },
+    headerOverlay: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
 
     detailSection: { flex: 1, paddingHorizontal: 20, backgroundColor: '#FFF' },
 

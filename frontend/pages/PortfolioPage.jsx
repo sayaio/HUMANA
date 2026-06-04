@@ -14,7 +14,7 @@ import {
 import DimmedModal from '../components/DimmedModal';
 import { MODAL_WIDE_WIDTH, wideModalCardBase } from '../components/modalTheme';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import BackIconSvg from '../components/BackIconSvg';
+import PageHeader from '../components/PageHeader';
 import { portfolioService } from '../services/portfolioService';
 
 const { width } = Dimensions.get('window');
@@ -195,17 +195,10 @@ const PortfolioPage = ({ onBack, idGuru }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={onBack} style={styles.backButtonTarget} activeOpacity={0.6}>
-          <BackIconSvg size={12} color="#333333" />
-          <Text style={styles.backButtonText}>Kembali</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitleText}>Tambah Portofolio</Text>
-        <View style={{ width: width * 0.22 }} />
-      </View>
+      <PageHeader title="Tambah Portofolio" onBack={onBack} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -410,34 +403,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    height: 60,
-    borderBottomWidth: 1,
-    borderColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF',
-  },
-  backButtonTarget: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: width * 0.22,
-    height: '100%',
-  },
-  backButtonText: {
-    fontSize: 14,
-    color: '#333333',
-    fontWeight: '600',
-    marginLeft: 6,
-  },
-  headerTitleText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000000',
-    textAlign: 'center',
   },
   scrollBodyPadding: {
     paddingHorizontal: 24,

@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { API_URL } from '../src/config';
+import PageHeader from '../components/PageHeader';
 
 const PembayaranPage = ({ snapUrl, idPemesanan, onFinish }) => {
 
@@ -93,14 +94,7 @@ const PembayaranPage = ({ snapUrl, idPemesanan, onFinish }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header Kecil untuk navigasi keluar manual */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.closeButton} onPress={handleTutup}>
-          <Text style={styles.closeText}>✕ Tutup</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sistem Pembayaran</Text>
-        <View style={{ width: 50 }} />
-      </View>
+      <PageHeader title="Sistem Pembayaran" onBack={handleTutup} />
 
       {/* WebView untuk merender Snap Midtrans */}
       <WebView
@@ -120,21 +114,9 @@ const PembayaranPage = ({ snapUrl, idPemesanan, onFinish }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF', paddingTop: 50 },
+  container: { flex: 1, backgroundColor: '#FFF' },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF' },
   loadingText: { marginTop: 15, fontSize: 14, color: '#666' },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderColor: '#EAEAEA',
-  },
-  closeButton: { paddingVertical: 5 },
-  closeText: { fontSize: 15, color: '#E12525', fontWeight: 'bold' },
-  headerTitle: { fontSize: 16, fontWeight: 'bold', color: '#333' },
   webViewLoading: {
     position: 'absolute',
     top: 0,

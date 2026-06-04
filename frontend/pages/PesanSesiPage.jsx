@@ -17,7 +17,7 @@ import { MODAL_WIDE_WIDTH, wideModalCardBase } from '../components/modalTheme';
 import { WebView } from 'react-native-webview'; // Import WebView untuk peta interaktif
 import Geolocation from '@react-native-community/geolocation';
 import { pemesananService } from '../services/pemesananService';
-import BackIconSvg from '../components/BackIconSvg';
+import PageHeader from '../components/PageHeader';
 
 // === KONSTANTA KALENDER ===
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
@@ -793,14 +793,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBackPress} style={styles.backBtn}>
-          <BackIconSvg size={10} color="#000000" />
-          <Text style={styles.backText}>Kembali</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Pesan Sesi</Text>
-        <View style={{ width: 70 }} />
-      </View>
+      <PageHeader title="Pesan Sesi" onBack={handleBackPress} />
 
       <ScrollView
         style={styles.scrollContent}
@@ -1152,33 +1145,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
-    backgroundColor: '#FFFFFF',
-    zIndex: 999,
-    elevation: 5,
-  },
-  backBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    marginLeft: -10,
-  },
-  backText: {
-    fontSize: 16,
-    color: '#000000',
-    marginLeft: 8,
-    fontWeight: '600',
-  },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
   scrollContent: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   rowContainer: { flexDirection: 'row', marginBottom: 4 },
   fieldContainer: { marginBottom: 14 },
