@@ -20,7 +20,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { postFeedback, fetchFeedbackBySesi } from '../services/feedbackService';
 import BackIconSvg from '../components/BackIconSvg';
 import { getDokumentasi } from '../services/dokumentasiService';
-import { API_URL } from '../src/config';
 
 const SessionDetailPage = ({ onBack, sessionData, userId }) => {
   const { width, height } = useWindowDimensions();
@@ -40,10 +39,6 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
         const id = sessionData?.id_pemesanan;
         if (!id) return;
         const resDok = await getDokumentasi(id);
-        console.log('=== FOTO DOKUMENTASI ===');
-        console.log('resDok:', JSON.stringify(resDok));
-        console.log('foto_dokumentasi:', resDok?.foto_dokumentasi);
-        console.log('Full URL:', `${API_URL}${resDok?.foto_dokumentasi}`);
         if (resDok?.foto_dokumentasi) {
           setFotoDokumentasi(resDok.foto_dokumentasi);
         }
@@ -252,9 +247,7 @@ const SessionDetailPage = ({ onBack, sessionData, userId }) => {
           >
             {fotoDokumentasi ? (
               <Image
-                source={{
-                  uri: `${API_URL.replace('/api', '')}${fotoDokumentasi}`,
-                }}
+                source={{ uri: fotoDokumentasi }}
                 style={{ width: '100%', height: '100%', borderRadius: 10 }}
                 resizeMode="cover"
               />
