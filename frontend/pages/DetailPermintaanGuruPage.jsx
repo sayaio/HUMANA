@@ -209,9 +209,6 @@ const DetailPermintaanGuruPage = ({
         if (tipePermintaan === 'Permintaan') {
             return (
                 <View style={styles.actionBar}>
-                    <TouchableOpacity style={styles.btnTolak} onPress={handleTolak} disabled={loading}>
-                        <Text style={styles.btnTolakText}>Tolak</Text>
-                    </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.btnTerima, loading && styles.btnDisabled]}
                         onPress={handleTerima}
@@ -320,7 +317,7 @@ const DetailPermintaanGuruPage = ({
                     <ChevronLeft size={20} color="#284B7A" />
                     <Text style={styles.backText}>Kembali</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Detail Pemesanan</Text>
+                <Text style={styles.headerTitle}>Detail Permintaan</Text>
                 <View style={{ width: 80 }} />
             </View>
 
