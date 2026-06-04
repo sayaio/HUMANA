@@ -82,7 +82,29 @@ const getSesiDetail = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Terjadi kesalahan saat mengambil detail sesi.' });
     }
 };
+const getStatusPembayaran = async (req, res) => {
+    const { id_pemesanan } = req.params;
+    if (!id_pemesanan) return res.status(400).json({ success: false, message: 'Parameter id_pemesanan wajib diisi.' });
 
+    try {
+        const rows = await pool.query(
+            `SELECT status_pembayaran FROM Pembayaran WHERE id_pemesanan = ? LIMIT 1`,
+            [id_pemesanan]
+        );
+
+        const data = Array.isArray(rows[0]) ? rows[0] : Array.isArray(rows) ? rows : [rows];
+
+        if (data.length === 0 || !data[0].status_pembayaran) {
+            return res.status(200).json({ success: true, status_pembayaran: 'menunggu' });
+        }
+
+        return res.status(200).json({ success: true, status_pembayaran: data[0].status_pembayaran });
+
+    } catch (error) {
+        console.error('[BankerController] Error getStatusPembayaran:', error);
+        return res.status(500).json({ success: false, message: 'Terjadi kesalahan saat mengambil status pembayaran.' });
+    }
+};
 const bayarSimulasi = async (req, res) => {
     const { id_sesi } = req.body;
     if (!id_sesi) return res.status(400).json({ success: false, message: 'Parameter id_sesi wajib diisi.' });
@@ -250,6 +272,6 @@ const prosesPembayaranMidtrans = async (req, res) => {
     }
 };
 
-module.exports = { getSesiDetail, bayarSimulasi, prosesPembayaranMidtrans, prosesPembayaranCod };
+module.exports = { getSesiDetail, bayarSimulasi, prosesPembayaranMidtrans, prosesPembayaranCod, getStatusPembayaran };
 
 

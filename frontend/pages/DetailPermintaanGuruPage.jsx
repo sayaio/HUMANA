@@ -22,7 +22,11 @@ import { createChatRoom } from '../services/chatService';
 import CustomAlert from '../components/CustomAlert';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { uploadDokumentasi } from '../services/dokumentasiService';
-import { terimaPermintaanSesiAPI, selesaikanSesiAPI } from '../services/matchingService';
+import {
+  terimaPermintaanSesiAPI,
+  selesaikanSesiAPI,
+} from '../services/matchingService';
+import { getStatusPembayaran } from '../services/bankerService';
 
 const DetailPermintaanGuruPage = ({
   permintaanData,
@@ -36,6 +40,8 @@ const DetailPermintaanGuruPage = ({
   const data = permintaanData || {};
 
   const [loading, setLoading] = useState(false);
+  const [sudahLunas, setSudahLunas] = useState(false);
+  const [loadingStatusBayar, setLoadingStatusBayar] = useState(true);
   const [showDokModal, setShowDokModal] = useState(false);
   const [fotoUri, setFotoUri] = useState(null);
   const [fotoBase64, setFotoBase64] = useState(null);
@@ -61,16 +67,21 @@ const DetailPermintaanGuruPage = ({
 
   const handleBukaMap = () => {
     const lokasi = data.lokasi_sesi || data.lokasi || '';
-    if (!lokasi) { Alert.alert('Info', 'Lokasi tidak tersedia.'); return; }
+    if (!lokasi) {
+      Alert.alert('Info', 'Lokasi tidak tersedia.');
+      return;
+    }
     const parts = lokasi.split(',');
     if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-      Linking.openURL(`https://www.google.com/maps?q=${parts[0].trim()},${parts[1].trim()}`).catch(() =>
-        Alert.alert('Error', 'Tidak dapat membuka Google Maps.'),
-      );
+      Linking.openURL(
+        `https://www.google.com/maps?q=${parts[0].trim()},${parts[1].trim()}`,
+      ).catch(() => Alert.alert('Error', 'Tidak dapat membuka Google Maps.'));
     } else {
-      Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lokasi)}`).catch(() =>
-        Alert.alert('Error', 'Tidak dapat membuka Google Maps.'),
-      );
+      Linking.openURL(
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          lokasi,
+        )}`,
+      ).catch(() => Alert.alert('Error', 'Tidak dapat membuka Google Maps.'));
     }
   };
 
@@ -84,7 +95,9 @@ const DetailPermintaanGuruPage = ({
         {
           text: 'Tolak',
           style: 'destructive',
-          onPress: () => { if (onTolak) onTolak(data.id_pemesanan || data.id); },
+          onPress: () => {
+            if (onTolak) onTolak(data.id_pemesanan || data.id);
+          },
         },
       ],
     );
@@ -116,7 +129,10 @@ const DetailPermintaanGuruPage = ({
                 });
               } else {
                 requestAnimationFrame(() => {
-                  Alert.alert('Gagal', res.message || 'Terjadi kesalahan sistem.');
+                  Alert.alert(
+                    'Gagal',
+                    res.message || 'Terjadi kesalahan sistem.',
+                  );
                 });
               }
             } catch (e) {
@@ -178,13 +194,16 @@ const DetailPermintaanGuruPage = ({
   };
 
   const handlePilihFoto = () => {
-    launchImageLibrary({ mediaType: 'photo', quality: 0.7, includeBase64: true }, response => {
-      if (!response.didCancel && !response.errorCode) {
-        const asset = response.assets[0];
-        setFotoUri(asset.uri);
-        setFotoBase64(asset.base64);
-      }
-    });
+    launchImageLibrary(
+      { mediaType: 'photo', quality: 0.7, includeBase64: true },
+      response => {
+        if (!response.didCancel && !response.errorCode) {
+          const asset = response.assets[0];
+          setFotoUri(asset.uri);
+          setFotoBase64(asset.base64);
+        }
+      },
+    );
   };
 
   const handleKonfirmasiSelesai = async () => {
@@ -202,7 +221,10 @@ const DetailPermintaanGuruPage = ({
       }
       const selesaiResult = await selesaikanSesiAPI(id);
       if (!selesaiResult.success) {
-        Alert.alert('Gagal', selesaiResult.message || 'Gagal menyelesaikan sesi.');
+        Alert.alert(
+          'Gagal',
+          selesaiResult.message || 'Gagal menyelesaikan sesi.',
+        );
         return;
       }
       setShowDokModal(false);
@@ -245,52 +267,97 @@ const DetailPermintaanGuruPage = ({
     if (!raw) return data.tanggal || '-';
     try {
       return new Date(raw).toLocaleDateString('id-ID', {
-        day: 'numeric', month: 'long', year: 'numeric',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
       });
-    } catch { return '-'; }
+    } catch {
+      return '-';
+    }
   };
 
   const formatWaktu = () => {
     if (data.waktu_string) return data.waktu_string;
     if (data.waktu_mulai && data.waktu_selesai) {
       try {
-        const mulai = new Date(data.waktu_mulai).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        const selesai = new Date(data.waktu_selesai).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        const mulai = new Date(data.waktu_mulai).toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        const selesai = new Date(data.waktu_selesai).toLocaleTimeString(
+          'id-ID',
+          { hour: '2-digit', minute: '2-digit' },
+        );
         return `${mulai} - ${selesai}`;
-      } catch { return '-'; }
+      } catch {
+        return '-';
+      }
     }
     return data.waktu || '-';
   };
 
   const tanggal = formatTanggal(data.waktu_mulai);
   const waktuSesi = formatWaktu();
-  const lokasiAlamat = data.lokasi_sesi || data.lokasi || data.alamat || 'Alamat tidak tersedia';
+  const lokasiAlamat =
+    data.lokasi_sesi || data.lokasi || data.alamat || 'Alamat tidak tersedia';
 
   // Penentu tombol: sebelum waktu mulai → bisa batal, sesudah → selesaikan
   const sekarang = new Date();
   const waktuMulaiObj = data.waktu_mulai ? new Date(data.waktu_mulai) : null;
-  const belumMulai = waktuMulaiObj && !isNaN(waktuMulaiObj.getTime())
-    ? sekarang < waktuMulaiObj
-    : true;
+  const belumMulai =
+    waktuMulaiObj && !isNaN(waktuMulaiObj.getTime())
+      ? sekarang < waktuMulaiObj
+      : true;
 
   // Badge
   const badgeConfig = {
-    Permintaan: { label: 'Menunggu Konfirmasi', bg: '#FFF3E0', text: '#E65100' },
+    Permintaan: {
+      label: 'Menunggu Konfirmasi',
+      bg: '#FFF3E0',
+      text: '#E65100',
+    },
     Aktif: { label: 'Terkonfirmasi', bg: '#E3F2FD', text: '#1565C0' },
-    Berlangsung: { label: 'Sedang Berlangsung', bg: '#E8F5E9', text: '#2E7D32' },
+    Berlangsung: {
+      label: 'Sedang Berlangsung',
+      bg: '#E8F5E9',
+      text: '#2E7D32',
+    },
   };
   const badge = badgeConfig[tipePermintaan] || badgeConfig.Permintaan;
+  useEffect(() => {
+    const cekPembayaran = async () => {
+      const id = data.id_pemesanan || data.id;
+      if (!id) {
+        setLoadingStatusBayar(false);
+        return;
+      }
 
+      const res = await getStatusPembayaran(id);
+      setSudahLunas(res?.status_pembayaran === 'lunas');
+      setLoadingStatusBayar(false);
+    };
+    cekPembayaran();
+  }, [data.id_pemesanan, data.id]);
   // ─── Action bar dinamis ───────────────────────────────────────
   const renderActionBar = () => {
     if (tipePermintaan === 'Permintaan') {
       return (
         <View style={styles.actionBar}>
-          <TouchableOpacity style={styles.btnTolak} onPress={handleTolak} disabled={loading}>
+          <TouchableOpacity
+            style={styles.btnTolak}
+            onPress={handleTolak}
+            disabled={loading}
+          >
             <Text style={styles.btnTolakText}>Tolak</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.btnTerima, loading && styles.btnDisabled]} onPress={handleTerima} disabled={loading}>
-            <Text style={styles.btnTerimaText}>{loading ? 'Memproses...' : 'Terima'}</Text>
+          <TouchableOpacity
+            style={[styles.btnTerima, loading && styles.btnDisabled]}
+            onPress={handleTerima}
+            disabled={loading}
+          >
+            <Text style={styles.btnTerimaText}>
+              {loading ? 'Memproses...' : 'Terima'}
+            </Text>
           </TouchableOpacity>
         </View>
       );
@@ -299,17 +366,41 @@ const DetailPermintaanGuruPage = ({
     if (belumMulai) {
       return (
         <View style={styles.actionBar}>
-          <TouchableOpacity style={[styles.btnBatal, loading && styles.btnDisabled]} onPress={handleAjukanBatal} disabled={loading}>
+          <TouchableOpacity
+            style={[styles.btnBatal, loading && styles.btnDisabled]}
+            onPress={handleAjukanBatal}
+            disabled={loading}
+          >
             <Text style={styles.btnBatalText}>Batalkan Sesi</Text>
           </TouchableOpacity>
         </View>
       );
     }
 
+    const tombolDisabled = loading || loadingStatusBayar || !sudahLunas;
+
     return (
       <View style={styles.actionBar}>
-        <TouchableOpacity style={[styles.btnSelesaikan, loading && styles.btnDisabled]} onPress={handleSelesaikan} disabled={loading}>
-          <Text style={styles.btnSelesaikanText}>Selesaikan Pesanan</Text>
+        <TouchableOpacity
+          style={[
+            styles.btnSelesaikan,
+            tombolDisabled && styles.btnSelesaikanBlocked,
+          ]}
+          onPress={handleSelesaikan}
+          disabled={tombolDisabled}
+        >
+          <Text
+            style={[
+              styles.btnSelesaikanText,
+              tombolDisabled && styles.btnSelesaikanBlockedText,
+            ]}
+          >
+            {loadingStatusBayar
+              ? 'Memeriksa pembayaran...'
+              : !sudahLunas
+              ? 'Menunggu Pembayaran'
+              : 'Selesaikan Pesanan'}
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -330,22 +421,33 @@ const DetailPermintaanGuruPage = ({
         <View style={{ width: 80 }} />
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
         {/* Profil Murid + Badge + Chat */}
         <View style={styles.profileRow}>
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarText}>{namaInisial}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.namaMurid}>{data.nama_murid || 'Nama Murid'}</Text>
+            <Text style={styles.namaMurid}>
+              {data.nama_murid || 'Nama Murid'}
+            </Text>
             <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-              <Text style={[styles.badgeText, { color: badge.text }]}>{badge.label}</Text>
+              <Text style={[styles.badgeText, { color: badge.text }]}>
+                {badge.label}
+              </Text>
             </View>
           </View>
           {tipePermintaan !== 'Permintaan' && (
             <TouchableOpacity style={styles.btnChatHeader} onPress={handleChat}>
-              <MessageCircle size={16} color="#FFF" style={{ marginRight: 6 }} />
+              <MessageCircle
+                size={16}
+                color="#FFF"
+                style={{ marginRight: 6 }}
+              />
               <Text style={styles.btnChatHeaderText}>Chat Murid</Text>
             </TouchableOpacity>
           )}
@@ -367,7 +469,9 @@ const DetailPermintaanGuruPage = ({
         <View style={styles.fieldSection}>
           <Text style={styles.fieldLabel}>Jenjang</Text>
           <View style={styles.fieldBox}>
-            <Text style={styles.fieldValue}>{data.jenjang_pendidikan || data.jenjang || '-'}</Text>
+            <Text style={styles.fieldValue}>
+              {data.jenjang_pendidikan || data.jenjang || '-'}
+            </Text>
           </View>
         </View>
 
@@ -375,7 +479,9 @@ const DetailPermintaanGuruPage = ({
         <View style={styles.fieldSection}>
           <Text style={styles.fieldLabel}>Mata Pelajaran</Text>
           <View style={styles.fieldBox}>
-            <Text style={styles.fieldValue}>{data.nama_mapel || data.mata_pelajaran || '-'}</Text>
+            <Text style={styles.fieldValue}>
+              {data.nama_mapel || data.mata_pelajaran || '-'}
+            </Text>
           </View>
         </View>
 
@@ -383,7 +489,9 @@ const DetailPermintaanGuruPage = ({
         <View style={styles.fieldSection}>
           <Text style={styles.fieldLabel}>Materi</Text>
           <View style={styles.fieldBox}>
-            <Text style={styles.fieldValue}>{data.nama_materi || data.materi || '-'}</Text>
+            <Text style={styles.fieldValue}>
+              {data.nama_materi || data.materi || '-'}
+            </Text>
           </View>
         </View>
 
@@ -391,18 +499,28 @@ const DetailPermintaanGuruPage = ({
         <View style={styles.mapContainer}>
           <View style={styles.mapPlaceholder}>
             <Text style={styles.mapPlaceholderText}>📍 Peta Lokasi</Text>
-            <Text style={styles.mapPlaceholderSub}>Tap tombol lokasi di bawah untuk membuka Google Maps</Text>
+            <Text style={styles.mapPlaceholderSub}>
+              Tap tombol lokasi di bawah untuk membuka Google Maps
+            </Text>
           </View>
         </View>
 
         {/* Lokasi Row */}
-        <TouchableOpacity style={styles.lokasiRow} onPress={handleBukaMap} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.lokasiRow}
+          onPress={handleBukaMap}
+          activeOpacity={0.7}
+        >
           <View style={styles.lokasiIconWrap}>
             <MapPin size={18} color="#284B7A" />
           </View>
           <View style={styles.lokasiInfo}>
-            <Text style={styles.lokasiTitle}>{data.tipe_lokasi || 'Lokasi Sesi'}</Text>
-            <Text style={styles.lokasiAlamat} numberOfLines={2}>{lokasiAlamat}</Text>
+            <Text style={styles.lokasiTitle}>
+              {data.tipe_lokasi || 'Lokasi Sesi'}
+            </Text>
+            <Text style={styles.lokasiAlamat} numberOfLines={2}>
+              {lokasiAlamat}
+            </Text>
           </View>
           <ChevronRight size={18} color="#ABABAB" />
         </TouchableOpacity>
@@ -416,7 +534,9 @@ const DetailPermintaanGuruPage = ({
           </View>
           <View style={styles.rincianRow}>
             <Text style={styles.rincianLabel}>Biaya Transportasi</Text>
-            <Text style={styles.rincianValue}>: {formatRupiah(biayaTransportasi)}</Text>
+            <Text style={styles.rincianValue}>
+              : {formatRupiah(biayaTransportasi)}
+            </Text>
           </View>
           <View style={styles.rincianDivider} />
           <View style={styles.totalRow}>
@@ -434,11 +554,17 @@ const DetailPermintaanGuruPage = ({
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Dokumentasi Sesi</Text>
-            <Text style={styles.modalSubtitle}>Upload foto sebagai bukti sesi telah selesai</Text>
+            <Text style={styles.modalSubtitle}>
+              Upload foto sebagai bukti sesi telah selesai
+            </Text>
 
             <TouchableOpacity style={styles.fotoBox} onPress={handlePilihFoto}>
               {fotoUri ? (
-                <Image source={{ uri: fotoUri }} style={styles.fotoPreview} resizeMode="cover" />
+                <Image
+                  source={{ uri: fotoUri }}
+                  style={styles.fotoPreview}
+                  resizeMode="cover"
+                />
               ) : (
                 <>
                   <Text style={styles.fotoIcon}>📷</Text>
@@ -456,20 +582,27 @@ const DetailPermintaanGuruPage = ({
             <View style={styles.modalActionRow}>
               <TouchableOpacity
                 style={styles.modalBtnBatal}
-                onPress={() => { setShowDokModal(false); setFotoUri(null); }}
+                onPress={() => {
+                  setShowDokModal(false);
+                  setFotoUri(null);
+                }}
                 disabled={uploadingFoto}
               >
                 <Text style={styles.modalBtnBatalText}>Batal</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalBtnSelesai, uploadingFoto && { opacity: 0.6 }]}
+                style={[
+                  styles.modalBtnSelesai,
+                  uploadingFoto && { opacity: 0.6 },
+                ]}
                 onPress={handleKonfirmasiSelesai}
                 disabled={uploadingFoto}
               >
-                {uploadingFoto
-                  ? <ActivityIndicator color="#FFF" size="small" />
-                  : <Text style={styles.modalBtnSelesaiText}>Selesaikan</Text>
-                }
+                {uploadingFoto ? (
+                  <ActivityIndicator color="#FFF" size="small" />
+                ) : (
+                  <Text style={styles.modalBtnSelesaiText}>Selesaikan</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -486,7 +619,8 @@ const DetailPermintaanGuruPage = ({
         onConfirm={prosesBatalGuru}
         onClose={() => {
           setAlertVisible(false);
-          if (!alertConfig.isConfirmation && navigateOnClose) onBack && onBack();
+          if (!alertConfig.isConfirmation && navigateOnClose)
+            onBack && onBack();
         }}
       />
     </View>
@@ -496,115 +630,324 @@ const DetailPermintaanGuruPage = ({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 50, paddingBottom: 16,
-    backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 50,
+    paddingBottom: 16,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
   backBtn: { flexDirection: 'row', alignItems: 'center', width: 80 },
-  backText: { fontSize: 14, color: '#284B7A', fontWeight: '600', marginLeft: 2 },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#000', textAlign: 'center' },
+  backText: {
+    fontSize: 14,
+    color: '#284B7A',
+    fontWeight: '600',
+    marginLeft: 2,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
+  },
   scrollView: { flex: 1 },
   profileRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 24, paddingTop: 24, paddingBottom: 20, gap: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 20,
+    gap: 16,
   },
   avatarCircle: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: '#284B7A', justifyContent: 'center', alignItems: 'center',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#284B7A',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   avatarText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
   namaMurid: { fontSize: 20, fontWeight: 'bold', color: '#000' },
-  badge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, marginTop: 6 },
+  badge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginTop: 6,
+  },
   badgeText: { fontSize: 11, fontWeight: '700' },
   btnChatHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#284B7A', paddingHorizontal: 14, height: 40, borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#284B7A',
+    paddingHorizontal: 14,
+    height: 40,
+    borderRadius: 12,
   },
   btnChatHeaderText: { color: '#FFF', fontWeight: 'bold', fontSize: 13 },
   dateTimeRow: { flexDirection: 'row', marginHorizontal: 24, marginBottom: 20 },
   dateTimeBox: {
-    flex: 1, borderWidth: 1, borderColor: '#E8EEF6',
-    borderRadius: 12, padding: 14, backgroundColor: '#F8FAFC',
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#E8EEF6',
+    borderRadius: 12,
+    padding: 14,
+    backgroundColor: '#F8FAFC',
   },
-  dtLabel: { fontSize: 11, color: '#ABABAB', marginBottom: 6, fontWeight: '500' },
+  dtLabel: {
+    fontSize: 11,
+    color: '#ABABAB',
+    marginBottom: 6,
+    fontWeight: '500',
+  },
   dtValue: { fontSize: 14, fontWeight: 'bold', color: '#284B7A' },
   fieldSection: { marginHorizontal: 24, marginBottom: 14 },
-  fieldLabel: { fontSize: 13, color: '#333', fontWeight: '600', marginBottom: 8 },
+  fieldLabel: {
+    fontSize: 13,
+    color: '#333',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
   fieldBox: {
-    borderWidth: 1, borderColor: '#E8EEF6', borderRadius: 12,
-    paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#FAFBFD', alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E8EEF6',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#FAFBFD',
+    alignItems: 'center',
   },
   fieldValue: { fontSize: 14, color: '#444', fontWeight: '500' },
   mapContainer: {
-    marginHorizontal: 24, marginBottom: 0,
-    borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: '#E8EEF6',
+    marginHorizontal: 24,
+    marginBottom: 0,
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E8EEF6',
   },
-  mapPlaceholder: { height: 160, backgroundColor: '#E8F0E9', justifyContent: 'center', alignItems: 'center' },
+  mapPlaceholder: {
+    height: 160,
+    backgroundColor: '#E8F0E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   mapPlaceholderText: { fontSize: 20, marginBottom: 6 },
-  mapPlaceholderSub: { fontSize: 12, color: '#666', textAlign: 'center', paddingHorizontal: 20 },
+  mapPlaceholderSub: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
   lokasiRow: {
-    flexDirection: 'row', alignItems: 'center',
-    marginHorizontal: 24, marginTop: 0, marginBottom: 20,
-    paddingVertical: 14, paddingHorizontal: 16,
-    backgroundColor: '#FFF', borderWidth: 1, borderTopWidth: 0,
-    borderColor: '#E8EEF6', borderBottomLeftRadius: 14, borderBottomRightRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 24,
+    marginTop: 0,
+    marginBottom: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: '#E8EEF6',
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
   },
   lokasiIconWrap: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#EBF0F8', justifyContent: 'center', alignItems: 'center', marginRight: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EBF0F8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   lokasiInfo: { flex: 1 },
-  lokasiTitle: { fontSize: 13, fontWeight: 'bold', color: '#000', marginBottom: 2 },
+  lokasiTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 2,
+  },
   lokasiAlamat: { fontSize: 12, color: '#666' },
   rincianCard: {
-    marginHorizontal: 24, marginBottom: 16,
-    borderRadius: 14, borderWidth: 1, borderColor: '#E8EEF6', padding: 18, backgroundColor: '#FFF',
+    marginHorizontal: 24,
+    marginBottom: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E8EEF6',
+    padding: 18,
+    backgroundColor: '#FFF',
   },
-  rincianTitle: { fontSize: 15, fontWeight: 'bold', color: '#000', marginBottom: 14 },
-  rincianRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  rincianTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 14,
+  },
+  rincianRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   rincianLabel: { fontSize: 13, color: '#555' },
   rincianValue: { fontSize: 13, color: '#333', fontWeight: '500' },
   rincianDivider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: 10 },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   totalLabel: { fontSize: 16, fontWeight: 'bold', color: '#000' },
   totalValue: { fontSize: 17, fontWeight: 'bold', color: '#000' },
   actionBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    flexDirection: 'row', paddingHorizontal: 24, paddingBottom: 32, paddingTop: 16,
-    backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#F0F0F0', gap: 12,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    paddingTop: 16,
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    gap: 12,
   },
-  btnTolak: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#E53935', justifyContent: 'center', alignItems: 'center' },
+  btnTolak: {
+    flex: 1,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: '#E53935',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   btnTolakText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
-  btnTerima: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center' },
+  btnTerima: {
+    flex: 1,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: '#2A7A5E',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   btnTerimaText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
-  btnBatal: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#E53935', justifyContent: 'center', alignItems: 'center' },
+  btnBatal: {
+    flex: 1,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: '#E53935',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   btnBatalText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
-  btnSelesaikan: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center' },
+  btnSelesaikan: {
+    flex: 1,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: '#2A7A5E',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   btnSelesaikanText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
   btnDisabled: { opacity: 0.6 },
   modalOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 999,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
   },
-  modalCard: { backgroundColor: '#FFF', borderRadius: 20, padding: 24, width: '85%', alignItems: 'center' },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#000', marginBottom: 6 },
-  modalSubtitle: { fontSize: 13, color: '#888', textAlign: 'center', marginBottom: 20 },
+  modalCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 24,
+    width: '85%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 6,
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
   fotoBox: {
-    width: '100%', height: 180, backgroundColor: '#F5F5F5',
-    borderRadius: 14, borderWidth: 1, borderColor: '#E0E0E0', borderStyle: 'dashed',
-    justifyContent: 'center', alignItems: 'center', marginBottom: 12, overflow: 'hidden',
+    width: '100%',
+    height: 180,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    overflow: 'hidden',
   },
   fotoPreview: { width: '100%', height: '100%' },
   fotoIcon: { fontSize: 40, marginBottom: 8 },
   fotoHint: { fontSize: 13, color: '#ABABAB' },
-  gantiText: { fontSize: 13, color: '#284B7A', fontWeight: '600', marginBottom: 20 },
-  modalActionRow: { flexDirection: 'row', gap: 12, width: '100%', marginTop: 8 },
+  gantiText: {
+    fontSize: 13,
+    color: '#284B7A',
+    fontWeight: '600',
+    marginBottom: 20,
+  },
+  modalActionRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+    marginTop: 8,
+  },
   modalBtnBatal: {
-    flex: 1, height: 48, borderRadius: 12,
-    borderWidth: 1, borderColor: '#E0E0E0', justifyContent: 'center', alignItems: 'center',
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalBtnBatalText: { fontSize: 14, color: '#888', fontWeight: '600' },
-  modalBtnSelesai: { flex: 1, height: 48, borderRadius: 12, backgroundColor: '#2A7A5E', justifyContent: 'center', alignItems: 'center' },
+  modalBtnSelesai: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#2A7A5E',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnSelesaikanBlocked: {
+    flex: 1,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#BDBDBD',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnSelesaikanBlockedText: {
+    color: '#9E9E9E',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
   modalBtnSelesaiText: { fontSize: 14, color: '#FFF', fontWeight: 'bold' },
 });
 
