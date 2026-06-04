@@ -373,7 +373,6 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
                 <View style={styles.portoSectionHeaderRow}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Briefcase size={18} color="#284B7A" style={{ marginRight: 6 }} />
                         <Text style={styles.sectionTitleMain}>Portofolio Pengajaran</Text>
                     </View>
                     <TouchableOpacity
