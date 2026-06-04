@@ -73,11 +73,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
 
-  // === FETCH LOKASI ===
-  useEffect(() => {
-    requestLocation();
-  }, []);
-
   // === FETCH MAPEL (Menggunakan Service) ===
   useEffect(() => {
     if (!jenjang) {
@@ -109,25 +104,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
     if (prefill.mapelSelected) setMapelSelected(prefill.mapelSelected);
     if (prefill.selectedMateriId) setSelectedMateriId(prefill.selectedMateriId);
   };
-
-  // === FETCH LOAD DRAFT + PREFILL DARI HOME (PESAN LAGI)
-  useEffect(() => {
-    if (!userId) {
-      setIsLoadingDraft(false);
-      return;
-    }
-
-    const initForm = async () => {
-      setIsLoadingDraft(true);
-      await loadDraft();
-      if (prefillBooking) {
-        applyPrefillBooking(prefillBooking);
-      }
-      setIsLoadingDraft(false);
-    };
-
-    initForm();
-  }, [userId, prefillBooking]);
 
   // === FETCH AUTO-SAVE
   useEffect(() => {
@@ -361,6 +337,42 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
     }
   };
 
+  // === FETCH LOKASI (setelah requestLocation didefinisikan)
+  useEffect(() => {
+    requestLocation();
+  }, []);
+
+  // === FETCH LOAD DRAFT + PREFILL DARI HOME (PESAN LAGI)
+  useEffect(() => {
+    if (!userId) {
+      setIsLoadingDraft(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const initForm = async () => {
+      setIsLoadingDraft(true);
+      try {
+        await loadDraft();
+        if (!cancelled && prefillBooking) {
+          applyPrefillBooking(prefillBooking);
+        }
+      } catch (error) {
+        console.error('Error initForm:', error);
+      } finally {
+        if (!cancelled) {
+          setIsLoadingDraft(false);
+        }
+      }
+    };
+
+    initForm();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, prefillBooking]);
+
   const saveDraft = async () => {
     if (!userId) return;
     try {
@@ -481,7 +493,10 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
     zIndex = 10,
   }) => {
     const [searchQuery, setSearchQuery] = useState('');
-    const filtered = options.filter(item =>
+    const safeOptions = (options || []).filter(
+      item => typeof item === 'string' && item.length > 0,
+    );
+    const filtered = safeOptions.filter(item =>
       item.toLowerCase().includes(searchQuery.toLowerCase()),
     );
     const listHeight = Math.min(
@@ -590,7 +605,10 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
     zIndex = 10,
   }) => {
     const [searchQuery, setSearchQuery] = useState('');
-    const filtered = options.filter(item =>
+    const safeOptions = (options || []).filter(
+      item => typeof item === 'string' && item.length > 0,
+    );
+    const filtered = safeOptions.filter(item =>
       item.toLowerCase().includes(searchQuery.toLowerCase()),
     );
     const listHeight = Math.min(
@@ -690,43 +708,50 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
     );
   };
 
-  // === TEMPLATE HTML UNTUK MAPS GRATIS (LEAFLET + OPENSTREETMAP) ===
-  const latitudeSesi = userLocation?.latitude
-    ? userLocation.latitude.toString()
-    : '-6.9744';
-  const longitudeSesi = userLocation?.longitude
-    ? userLocation.longitude.toString()
-    : '107.6303';
+  const mapLat = userLocation?.latitude ?? -6.9744;
+  const mapLng = userLocation?.longitude ?? 107.6303;
 
-  const mapHtmlTemplate = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-          <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-          <style>
-            body { margin: 0; padding: 0; }
-            #map { height: 100vh; width: 100vw; }
-          </style>
-        </head>
-        <body>
-          <div id="map"></div>
-          <script>
-            // Inisialisasi map berdasarkan koordinat dinamis dari GPS murid
-            var map = L.map('map', { zoomControl: false }).setView([${latitudeSesi}, ${longitudeSesi}], 15);
-            
-            // Load peta dari OpenStreetMap gratis
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
+  const buildMapHtml = (lat, lng) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body, #map { height: 100%; margin: 0; padding: 0; background: #E2E8F0; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    function initMap() {
+      if (typeof L === 'undefined') return;
+      var map = L.map('map', { zoomControl: false, attributionControl: false })
+        .setView([${lat}, ${lng}], 16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+      }).addTo(map);
+      L.marker([${lat}, ${lng}]).addTo(map);
+    }
+    if (document.readyState === 'complete') {
+      initMap();
+    } else {
+      window.addEventListener('load', initMap);
+    }
+  </script>
+</body>
+</html>`;
 
-            // Tambahkan marker pin di lokasi koordinat murid
-            L.marker([${latitudeSesi}, ${longitudeSesi}]).addTo(map);
-          </script>
-        </body>
-        </html>
-    `;
+  if (isLoadingDraft) {
+    return (
+      <View style={styles.centeredLoading}>
+        <ActivityIndicator size="large" color="#284B7A" />
+        <Text style={styles.loadingText}>Memuat formulir...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -905,7 +930,9 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
               ? 'Pilih Mapel & Kelas dulu'
               : 'Pilih Materi'
           }
-          options={daftarMateriDB.map(m => m.nama_materi)}
+          options={daftarMateriDB
+            .map(m => m.nama_materi || m.namaMateri || '')
+            .filter(Boolean)}
           isOpen={openMateri}
           onToggle={val => {
             if (!mapelSelected || !kelas) {
@@ -919,7 +946,9 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
             setOpenMateri(val);
           }}
           onSelect={val => {
-            const found = daftarMateriDB.find(m => m.nama_materi === val);
+            const found = daftarMateriDB.find(
+              m => (m.nama_materi || m.namaMateri) === val,
+            );
             setMateri(val);
             setMateriSelected(found || null);
             setSelectedMateriId(found?.id_materi || null);
@@ -939,36 +968,16 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
                 </Text>
               </View>
             ) : userLocation ? (
-              /* 🗺️ VISUAL MAP: Menampilkan peta jalan nyata */
               <WebView
+                key={`${mapLat}-${mapLng}`}
                 originWhitelist={['*']}
-                source={{
-                  html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-                <style>
-                    html, body, #map { height: 100%; margin: 0; padding: 0; background-color: #FAFAFA; }
-                </style>
-            </head>
-            <body>
-                <div id="map"></div>
-                <script>
-                    var map = L.map('map', { zoomControl: false, attributionControl: false })
-                               .setView([${userLocation.latitude}, ${userLocation.longitude}], 16);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                    L.marker([${userLocation.latitude}, ${userLocation.longitude}]).addTo(map);
-                </script>
-            </body>
-            </html>
-          `,
-                }}
+                source={{ html: buildMapHtml(mapLat, mapLng) }}
                 style={styles.mapsStaticImageMedia}
                 scrollEnabled={false}
+                javaScriptEnabled
+                domStorageEnabled
+                mixedContentMode="always"
+                setSupportMultipleWindows={false}
               />
             ) : (
               <View style={styles.mapPreviewFallback}>
