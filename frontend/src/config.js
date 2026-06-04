@@ -19,8 +19,8 @@ const getBaseURL = () => {
     // 2. Jika terdeteksi Emulator Android Studio, langsung arahkan ke IP sakti 10.0.2.2
     if (isEmulator && Platform.OS === 'android') {
       console.log('--- Connected to: Android Studio Emulator (10.0.2.2) ---');
-      // return `http://10.0.2.2:${PORT}/api`;
-      return `http://172.20.10.2:${PORT}/api`;
+      return `http://10.0.2.2:${PORT}/api`;
+      //return `http://172.20.10.2:${PORT}/api`;
     }
 
     // 3. Jika pakai HP Fisik (Wireless / Wi-Fi), gunakan IP Laptop kamu

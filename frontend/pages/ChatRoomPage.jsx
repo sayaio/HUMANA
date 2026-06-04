@@ -83,7 +83,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
       {/* Area Konten */}
       <KeyboardAvoidingView
         style={styles.contentContainer}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={0}
       >
         <ScrollView
