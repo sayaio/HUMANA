@@ -83,7 +83,8 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
       {/* Area Konten */}
       <KeyboardAvoidingView
         style={styles.contentContainer}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "android" ? StatusBar.currentHeight : 0}
       >
         <ScrollView
           ref={scrollViewRef}
@@ -193,14 +194,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FC',
     borderWidth: 1,
     borderColor: '#E0E0E0',
-    borderRadius: 24, 
-    paddingLeft: 15,  
-    height: 46        
+    borderRadius: 24,
+    paddingLeft: 15,
+    height: 46
   },
   textInput: { flex: 1, fontSize: 14, color: '#333' },
   sendBtn: { marginLeft: 10 },
   sendIcon: {
-    width: 40,      
+    width: 40,
     height: 40,
     resizeMode: 'contain',
   },
