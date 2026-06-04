@@ -547,7 +547,8 @@ const App = () => {
                 snapUrl={paymentSnapUrl}
                 onFinish={status => {
                     if (status === 'closed') {
-                        setCurrentPage('PesanSesi');
+                        // ✅ DIUBAH: Beralih ke DetailPembayaran jika ditutup manual[cite: 22]
+                        setCurrentPage('DetailPembayaran');
                     } else {
                         setCurrentPage('Home');
                     }
