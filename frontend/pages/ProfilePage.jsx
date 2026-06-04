@@ -19,8 +19,8 @@ import {
   User,
   Home,
   LogOut,
+  Edit2,
 } from 'lucide-react-native';
-import EditIconSvg from '../components/EditIconSvg'; // <-- Sesuaikan path ke folder komponenmu
 // Ambil lebar layar untuk kalkulasi responsive
 const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
@@ -91,8 +91,13 @@ const ProfilePage = ({ profileData, onNavigate, onLogout }) => {
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Basic</Text>
-            <TouchableOpacity onPress={() => onNavigate('EditBasicProfile')}>
-              <EditIconSvg size={20} />
+            <TouchableOpacity
+              style={styles.editSectionBtn}
+              onPress={() => onNavigate('EditBasicProfile')}
+              activeOpacity={0.7}
+            >
+              <Edit2 size={14} color="#284B7A" />
+              <Text style={styles.editSectionBtnText}>Edit</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.cardBox}>
@@ -116,8 +121,13 @@ const ProfilePage = ({ profileData, onNavigate, onLogout }) => {
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Academic</Text>
-            <TouchableOpacity onPress={() => onNavigate('EditAcademicProfile')}>
-              <EditIconSvg size={20} />
+            <TouchableOpacity
+              style={styles.editSectionBtn}
+              onPress={() => onNavigate('EditAcademicProfile')}
+              activeOpacity={0.7}
+            >
+              <Edit2 size={14} color="#284B7A" />
+              <Text style={styles.editSectionBtnText}>Edit</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.cardBox}>
@@ -247,7 +257,21 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: { fontSize: 19, fontWeight: 'bold', color: '#000' },
-  editIcon: { fontSize: 18 },
+  editSectionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#284B7A',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  editSectionBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#284B7A',
+    marginLeft: 4,
+  },
 
   cardBox: {
     backgroundColor: '#FFF',

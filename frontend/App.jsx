@@ -583,6 +583,7 @@ const App = () => {
                 onBack={() => setCurrentPage(isGuru ? 'RealActivityGuru' : 'Activity')}
                 sessionData={isGuru ? selectedRiwayatData : selectedSession}
                 userId={profileData.id}
+                userRole={(profileData.role || 'murid').toLowerCase()}
             />
         );
     }
@@ -930,6 +931,7 @@ const App = () => {
         onBack={() => setCurrentPage(isGuru ? 'RealActivityGuru' : 'Activity')}
         sessionData={isGuru ? selectedRiwayatData : selectedSession}
         userId={profileData.id}
+        userRole={(profileData.role || 'murid').toLowerCase()}
       />
     );
   }

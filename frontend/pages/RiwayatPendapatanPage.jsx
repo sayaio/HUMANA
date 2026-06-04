@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     StyleSheet, Text, View, ScrollView,
-    TouchableOpacity, StatusBar, ActivityIndicator
+    TouchableOpacity, StatusBar, ActivityIndicator, Image
 } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
 import { fetchRiwayatPendapatan } from '../services/pendapatanService';
@@ -14,9 +14,14 @@ const FONTS = {
 };
 
 const SUBJECT_ICONS = {
-    'Matematika': '⊞', 'Informatika': '⊟', 'Biologi': '⊕',
-    'Kimia': '⊗', 'Fisika': '⊘', 'Sejarah': '⊙',
-    'Sosiologi': '⊚', 'Bahasa Inggris': '⊛',
+    'Matematika': require('../assets/matematika.png'),
+    'Informatika': require('../assets/informatika.png'),
+    'Biologi': require('../assets/biologi.png'),
+    'Kimia': require('../assets/kimia.png'),
+    'Fisika': require('../assets/fisika.png'),
+    'Sejarah': require('../assets/sejarah.png'),
+    'Sosiologi': require('../assets/sosiologi.png'),
+    'Bahasa Inggris': require('../assets/inggris.png'),
 };
 
 const HARI_ID = {
@@ -80,11 +85,12 @@ const RiwayatPendapatanPage = ({ guruData, onNavigate }) => {
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => onNavigate?.('Pendapatan')} style={styles.backBtn}>
-                    <ArrowLeft size={22} color="#1A1A2E" />
+                {/* ✅ DIUBAH: Menggunakan format tombol kembali teks dengan panah */}
+                <TouchableOpacity onPress={() => onNavigate?.('Pendapatan')} style={styles.backBtnWrapper}>
+                    <Text style={styles.headerBack}>❮ Kembali</Text>
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Riwayat Pendapatan</Text>
-                <View style={{ width: 36 }} />
+                <View style={{ width: 80 }} />
             </View>
 
             {/* Filter Tahun */}
@@ -140,7 +146,16 @@ const RiwayatPendapatanPage = ({ guruData, onNavigate }) => {
                     {data.length > 0 ? data.map((item, index) => (
                         <View key={item.id_pemesanan || index} style={styles.riwayatCard}>
                             <View style={styles.iconBox}>
-                                <Text style={styles.iconText}>{SUBJECT_ICONS[item.nama_mapel] || '⊞'}</Text>
+                                {/* ✅ DIUBAH: Menggunakan komponen Image berbasis path asset lokal */}
+                                {SUBJECT_ICONS[item.nama_mapel] ? (
+                                    <Image 
+                                        source={SUBJECT_ICONS[item.nama_mapel]} 
+                                        style={styles.mapelIconImage} 
+                                        resizeMode="contain" 
+                                    />
+                                ) : (
+                                    <Text style={styles.iconText}>⊞</Text>
+                                )}
                             </View>
                             <View style={styles.riwayatInfo}>
                                 <Text style={styles.riwayatNama} numberOfLines={1}>
@@ -176,7 +191,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20, paddingTop: 55, paddingBottom: 16,
         backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EAEEF3',
     },
-    backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+    backBtnWrapper: { width: 80, justifyContent: 'center' },
+    headerBack: { fontSize: 14, color: '#333', fontWeight: '600' },
     headerTitle: { fontFamily: FONTS.bold, fontSize: 18, color: '#1A1A2E' },
 
     filterSection: { backgroundColor: '#FFF', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
@@ -210,6 +226,7 @@ const styles = StyleSheet.create({
         width: 44, height: 44, borderRadius: 12, backgroundColor: '#EBF0F8',
         justifyContent: 'center', alignItems: 'center', marginRight: 12,
     },
+    mapelIconImage: { width: 32, height: 32 },
     iconText: { fontSize: 20 },
     riwayatInfo: { flex: 1 },
     riwayatNama: { fontFamily: FONTS.bold, fontSize: 14, color: '#1A1A2E', marginBottom: 4 },

@@ -10,6 +10,8 @@
     "test": "jest"
   },
   "dependencies": {
+    "@cloudinary/react": "^1.14.4",
+    "@cloudinary/url-gen": "^1.22.0",
     "@react-native-async-storage/async-storage": "^3.1.0",
     "@react-native-community/geolocation": "^3.4.0",
     "@react-native-firebase/app": "^24.0.0",
@@ -22,6 +24,7 @@
     "express": "^5.2.1",
     "lucide-react-native": "^1.16.0",
     "mariadb": "^3.5.2",
+    "multer": "^2.1.1",
     "react": "19.2.3",
     "react-native": "0.85.0",
     "react-native-device-info": "^15.0.2",

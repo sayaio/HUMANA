@@ -259,8 +259,13 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
                 <View style={styles.dataPribadiHeaderRow}>
                     <Text style={styles.sectionTitleMain}>Data Pribadi</Text>
-                    <TouchableOpacity onPress={() => onNavigate('EditBasicProfile')}>
-                        <Edit2 size={18} color="#284B7A" />
+                    <TouchableOpacity
+                        style={styles.editMateriBtn}
+                        onPress={() => onNavigate('EditBasicProfile')}
+                        activeOpacity={0.7}
+                    >
+                        <Edit2 size={14} color="#284B7A" />
+                        <Text style={styles.editMateriBtnText}>Edit</Text>
                     </TouchableOpacity>
                 </View>
 
