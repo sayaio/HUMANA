@@ -4,76 +4,115 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
-    ScrollView,
     Alert,
     ActivityIndicator,
-    StatusBar
+    StatusBar,
+    SafeAreaView,
+    FlatList
 } from 'react-native';
 import BackButton from '../components/BackButton';
 import { fetchNotifikasi, clearNotifikasi } from '../services/notifikasiService';
 
-const NotifikasiPage = ({ guruData, onBack }) => {
+const NotifikasiPage = ({ userId, userRole, onBack }) => {
+    const role = userRole ? userRole.toLowerCase() : 'murid';
     const [notifikasi, setNotifikasi] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [offset, setOffset] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const limit = 20;
 
-    useEffect(() => {
-        const loadNotif = async () => {
-            if (!guruData?.id) return;
+    const loadNotif = async (isLoadMore = false) => {
+        if (!userId || (!isLoadMore && !loading) && hasMore === false) return;
+        
+        if (isLoadMore) {
+            setLoadingMore(true);
+        } else {
             setLoading(true);
-            const res = await fetchNotifikasi('guru', guruData.id);
-            if (res.success && Array.isArray(res.data)) {
+        }
+
+        const currentOffset = isLoadMore ? offset : 0;
+        const res = await fetchNotifikasi(role, userId, limit, currentOffset);
+        
+        if (res.success && Array.isArray(res.data)) {
+            if (res.data.length < limit) {
+                setHasMore(false);
+            } else {
+                setHasMore(true);
+            }
+
+            if (isLoadMore) {
+                setNotifikasi(prev => [...prev, ...res.data]);
+            } else {
                 setNotifikasi(res.data);
             }
-            setLoading(false);
-        };
-        loadNotif();
-    }, [guruData]);
-
-    const handleClear = async () => {
-        if (!guruData?.id) return;
-        const res = await clearNotifikasi('guru', guruData.id);
-        if (res.success) {
+            setOffset(currentOffset + limit);
+        } else if (!isLoadMore) {
             setNotifikasi([]);
-            Alert.alert('Sukses', 'Semua notifikasi telah dibersihkan');
-        } else {
-            Alert.alert('Gagal', 'Gagal membersihkan notifikasi');
+            setHasMore(false);
+        }
+        
+        setLoading(false);
+        setLoadingMore(false);
+    };
+
+    useEffect(() => {
+        setOffset(0);
+        setHasMore(true);
+        loadNotif(false);
+    }, [userId, role]);
+
+    const handleLoadMore = () => {
+        if (!loading && !loadingMore && hasMore) {
+            loadNotif(true);
         }
     };
 
+    const renderItem = ({ item }) => (
+        <View style={styles.notifCard}>
+            <Text style={styles.notifTitle}>{item.judul}</Text>
+            <Text style={styles.notifMessage}>{item.pesan}</Text>
+        </View>
+    );
+
+    const renderFooter = () => {
+        if (!loadingMore) return null;
+        return (
+            <View style={{ paddingVertical: 20 }}>
+                <ActivityIndicator size="small" color="#284B7A" />
+            </View>
+        );
+    };
+
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
             <View style={styles.header}>
-                <BackButton onPress={onBack} label="" />
+                <BackButton onPress={onBack} />
                 <View style={styles.headerTitleContainer}>
                     <Text style={styles.headerTitle}>Notifikasi</Text>
                 </View>
-                {notifikasi.length > 0 ? (
-                    <TouchableOpacity onPress={handleClear} style={styles.clearBtn}>
-                        <Text style={styles.clearText}>Bersihkan</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <View style={styles.clearBtnPlaceholder} />
-                )}
+                <View style={styles.clearBtnPlaceholder} />
             </View>
 
-            <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-                {loading ? (
-                    <ActivityIndicator size="large" color="#FF7A00" style={{ marginTop: 50 }} />
-                ) : notifikasi.length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>Tidak ada notifikasi saat ini.</Text>
-                    </View>
-                ) : (
-                    notifikasi.map((item, index) => (
-                        <View key={item.id_notifikasi || index} style={styles.notifCard}>
-                            <Text style={styles.notifTitle}>{item.judul}</Text>
-                            <Text style={styles.notifMessage}>{item.pesan}</Text>
-                        </View>
-                    ))
-                )}
-            </ScrollView>
-        </View>
+            {loading && offset === 0 ? (
+                <ActivityIndicator size="large" color="#284B7A" style={{ marginTop: 50 }} />
+            ) : notifikasi.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>Tidak ada notifikasi saat ini.</Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={notifikasi}
+                    keyExtractor={(item, index) => (item.id_notifikasi ? item.id_notifikasi.toString() : index.toString())}
+                    renderItem={renderItem}
+                    contentContainerStyle={styles.contentContainer}
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={renderFooter}
+                />
+            )}
+        </SafeAreaView>
     );
 };
 
@@ -85,6 +124,7 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingTop: 50,
         paddingBottom: 15,
@@ -96,26 +136,22 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
     },
     headerTitleContainer: {
-        flex: 1,
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: 50, // Adjust based on paddingTop of header
+        bottom: 15, // Adjust based on paddingBottom of header
+        justifyContent: 'center',
         alignItems: 'center',
-        marginRight: -10, // Adjust for back button
+        zIndex: -1,
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         color: '#000',
     },
-    clearBtn: {
-        paddingVertical: 5,
-        paddingHorizontal: 10,
-    },
     clearBtnPlaceholder: {
         width: 80,
-    },
-    clearText: {
-        color: '#FF7A00',
-        fontSize: 14,
-        fontWeight: 'bold',
     },
     content: {
         flex: 1,
