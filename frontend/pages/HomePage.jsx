@@ -32,6 +32,9 @@ const SUBJECT_ICONS = {
     'Sejarah': require('../assets/sejarah.png'),
     'Sosiologi': require('../assets/sosiologi.png'),
     'Bahasa Inggris': require('../assets/inggris.png'),
+    'Bahasa Indonesia': require('../assets/indonesia.png'),
+    'IPA': require('../assets/ipa.png'),
+    'IPS': require('../assets/ips.png'),
 };
 
 const FONTS = {
