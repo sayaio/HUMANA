@@ -14,9 +14,7 @@ import {
 import BottomNavbar from '../components/BottomNavbar';
 import { getHistory, getActiveSchedule } from '../services/historyService';
 
-// Import Ikon Lucide agar seragam dengan HomePage
-import { Calendar, MessageSquare, User, Home, Bell } from 'lucide-react-native';
-import { fetchNotifikasi } from '../services/notifikasiService';
+import { Calendar, MessageSquare, User, Home } from 'lucide-react-native';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
@@ -35,7 +33,6 @@ const ActivityPage = ({
   const [historyData, setHistoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [unreadNotif, setUnreadNotif] = useState(false);
 
   useEffect(() => {
     setActiveTab(initialTab === 'aktif' ? 'Jadwal Aktif' : 'Riwayat Sesi');
@@ -103,20 +100,6 @@ const ActivityPage = ({
     }
   }, [activeTab, userId, userRole]);
 
-  const loadNotif = async () => {
-    if (!userId || !userRole) return;
-    const resNotif = await fetchNotifikasi(role, userId);
-    if (resNotif && resNotif.success && Array.isArray(resNotif.data) && resNotif.data.length > 0) {
-      setUnreadNotif(true);
-    } else {
-      setUnreadNotif(false);
-    }
-  };
-
-  useEffect(() => {
-    loadNotif();
-  }, [userId, role]);
-
   const handleRefresh = async () => {
     if (!userId || !userRole) return;
     setRefreshing(true);
@@ -125,7 +108,6 @@ const ActivityPage = ({
     } else {
       await fetchHistoryData(true);
     }
-    await loadNotif();
     setRefreshing(false);
   };
 
@@ -206,10 +188,6 @@ const ActivityPage = ({
 
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Aktivitas</Text>
-        <TouchableOpacity onPress={() => onNavigate('Notifikasi')} style={styles.bellIconContainer}>
-          <Bell size={24} color="#000" />
-          {unreadNotif && <View style={styles.redDot} />}
-        </TouchableOpacity>
       </View>
 
       <View style={styles.tabSliderContainer}>
@@ -301,21 +279,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
   },
   headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#000' },
-  bellIconContainer: {
-    position: 'relative',
-    padding: 4,
-  },
-  redDot: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'red',
-    borderWidth: 1,
-    borderColor: '#FFF',
-  },
   tabSliderContainer: {
     flexDirection: 'row',
     marginHorizontal: 24,

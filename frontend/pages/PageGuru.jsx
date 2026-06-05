@@ -20,6 +20,7 @@ import {
   BookOpen,
   Wallet,
   MousePointerClick,
+  Bell,
 } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -99,6 +100,7 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
   const [sesiDikonfirmasi, setSesiDikonfirmasi] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [unreadNotif, setUnreadNotif] = useState(false);
 
   const LAT_GURU_MOCK = -6.9744;
   const LNG_GURU_MOCK = 107.6303;
@@ -128,6 +130,14 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
     } else {
       setSesiDikonfirmasi([]);
     }
+
+    const resNotif = await fetchNotifikasi('guru', guruData.id);
+    if (resNotif && resNotif.success && Array.isArray(resNotif.data) && resNotif.data.length > 0) {
+        setUnreadNotif(true);
+    } else {
+        setUnreadNotif(false);
+    }
+
     if (!isPullRefresh) setLoading(false);
   };
 
@@ -431,9 +441,15 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
             />
           </View>
 
-          <View style={styles.greetingContainer}>
-            <Text style={styles.greetingLabel}>Selamat Datang,</Text>
-            <Text style={styles.greetingName}>{guruData?.name || 'Guru'}</Text>
+          <View style={[styles.greetingContainer, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }]}>
+            <View>
+              <Text style={styles.greetingLabel}>Selamat Datang,</Text>
+              <Text style={styles.greetingName}>{guruData?.name || 'Guru'}</Text>
+            </View>
+            <TouchableOpacity onPress={() => onNavigate && onNavigate('Notifikasi')} style={{ position: 'relative', padding: 4, marginTop: 10 }}>
+                <Bell size={24} color="#FFF" />
+                {unreadNotif && <View style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: 4, backgroundColor: 'red', borderWidth: 1, borderColor: '#FFF' }} />}
+            </TouchableOpacity>
           </View>
 
           <View>{renderSessionCard()}</View>
@@ -729,16 +745,18 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
   },
   badgeSegera: {
-    backgroundColor: '#A2E9B4',
+    backgroundColor: '#E8F5E9',
     paddingVertical: 4,
     paddingHorizontal: 10,
-    borderRadius: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#4CAF50',
     flexDirection: 'row',
     alignItems: 'center',
   },
   badgeTextSegera: {
     fontFamily: FONTS.bold,
-    color: '#FFF',
+    color: '#4CAF50',
     fontSize: 11,
   },
   profileRow: {

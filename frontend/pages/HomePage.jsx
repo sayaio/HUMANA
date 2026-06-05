@@ -17,7 +17,8 @@ import {
 } from '../services/homeService';
 
 
-import { Calendar, BookOpen, Wallet, FileText, Search, MessageSquare, User, Home } from 'lucide-react-native';
+import { fetchNotifikasi } from '../services/notifikasiService';
+import { Calendar, BookOpen, Wallet, FileText, Search, MessageSquare, User, Home, Bell } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
@@ -107,6 +108,7 @@ const HomePage = ({
     const [alertConfig, setAlertConfig] = useState({
         visible: false, type: 'success', title: '', message: ''
     });
+    const [unreadNotif, setUnreadNotif] = useState(false);
 
     useEffect(() => {
         if (isMateriVisible) {
@@ -230,13 +232,31 @@ const HomePage = ({
         loadActiveSessions();
     }, [loadActiveSessions]);
 
+    const loadNotif = useCallback(async () => {
+        if (!userId || !userRole) return;
+        try {
+            const resNotif = await fetchNotifikasi(role, userId);
+            if (resNotif && resNotif.success && Array.isArray(resNotif.data) && resNotif.data.length > 0) {
+                setUnreadNotif(true);
+            } else {
+                setUnreadNotif(false);
+            }
+        } catch (error) {
+            setUnreadNotif(false);
+        }
+    }, [userId, role]);
+
+    useEffect(() => {
+        loadNotif();
+    }, [loadNotif]);
+
     useEffect(() => {
         loadMateriRekom();
     }, [loadMateriRekom]);
 
     const handleRefresh = async () => {
         setRefreshing(true);
-        const tasks = [loadActiveSessions()];
+        const tasks = [loadActiveSessions(), loadNotif()];
         if (role === 'murid') tasks.push(loadMateriRekom());
         await Promise.all(tasks);
         setRefreshing(false);
@@ -477,11 +497,17 @@ const HomePage = ({
                         <Image source={LOGO_SOURCE} style={styles.headerWatermark} resizeMode="contain" />
                     </View>
 
-                    <View style={styles.greetingContainer}>
-                        <Text style={styles.greetingLabel}>
-                            {role === 'guru' ? 'Halo,' : 'Selamat datang,'}
-                        </Text>
-                        <Text style={styles.greetingName}>{namaLengkap}</Text>
+                    <View style={[styles.greetingContainer, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }]}>
+                        <View>
+                            <Text style={styles.greetingLabel}>
+                                {role === 'guru' ? 'Halo,' : 'Selamat datang,'}
+                            </Text>
+                            <Text style={styles.greetingName}>{namaLengkap}</Text>
+                        </View>
+                        <TouchableOpacity onPress={() => onNavigate && onNavigate('Notifikasi')} style={{ position: 'relative', padding: 4, marginTop: 10 }}>
+                            <Bell size={24} color="#FFF" />
+                            {unreadNotif && <View style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: 4, backgroundColor: 'red', borderWidth: 1, borderColor: '#FFF' }} />}
+                        </TouchableOpacity>
                     </View>
 
                     <View>{renderSessionCard()}</View>
@@ -785,7 +811,7 @@ const styles = StyleSheet.create({
     },
     avatarText: { fontFamily: 'SF-Pro-Display-Bold', color: '#FFF', fontSize: 13 },
 
-    badgeGreen: { backgroundColor: '#E8F5E9', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 10 },
+    badgeGreen: { backgroundColor: '#E8F5E9', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#4CAF50' },
     badgeGreenText: { fontFamily: 'SF-Pro-Display-Bold', color: '#4CAF50', fontSize: 11 },
     badgeYellow: { backgroundColor: '#FFFDE7', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 10 },
     badgeYellowText: { fontFamily: 'SF-Pro-Display-Bold', color: '#F9A825', fontSize: 11 },

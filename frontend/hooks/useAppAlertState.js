@@ -69,6 +69,7 @@ export function useAppAlertState() {
       title,
       message,
       type: inferAlertType(title, options.type),
+      options,
     });
   }, []);
 
@@ -98,6 +99,7 @@ export function useAppAlertState() {
           isConfirmation
           onClose={closeConfirm}
           onConfirm={handleConfirm}
+          options={confirm.options}
         />
       </>
     ),

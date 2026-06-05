@@ -184,7 +184,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                         </View>
                         <TouchableOpacity
                             style={styles.editAvatarBtn}
-                            onPress={() => alert('Fitur ganti foto akan datang!')}
+                            onPress={() => showInfo('Segera Hadir', 'Fitur ganti profil akan segera hadir!')}
                         >
                             <Text style={{ fontSize: 11, color: '#FFF' }}>✏️</Text>
                         </TouchableOpacity>

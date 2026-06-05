@@ -15,6 +15,7 @@ import {
 import { fetchMuridProfile } from '../services/feedbackService';
 import BottomNavbar from '../components/BottomNavbar';
 import { Calendar, MessageSquare, User, Home, LogOut, Edit2 } from 'lucide-react-native';
+import { useAppAlert } from '../components/AppAlertProvider';
 
 const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
@@ -40,6 +41,7 @@ const mapMuridProfileToApp = (data, existing) => ({
 });
 
 const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
+  const { showInfo } = useAppAlert();
   const role = profileData && profileData.role ? profileData.role.toLowerCase() : 'murid';
   const idMurid = profileData?.id;
   const [refreshing, setRefreshing] = useState(false);
@@ -94,7 +96,7 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
             </View>
             <TouchableOpacity
               style={styles.editAvatarBtn}
-              onPress={() => alert('Fitur ganti foto akan datang!')}
+              onPress={() => showInfo('Segera Hadir', 'Fitur ganti profil akan segera hadir!')}
             >
               <Text style={{ fontSize: 11, color: '#FFF' }}>✏️</Text>
             </TouchableOpacity>

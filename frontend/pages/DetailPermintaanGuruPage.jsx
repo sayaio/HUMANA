@@ -256,6 +256,7 @@ const DetailPermintaanGuruPage = ({
           setLoading(false);
         }
       },
+      { hideIcon: true, swapButtons: true }
     );
   };
 

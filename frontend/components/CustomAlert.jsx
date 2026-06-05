@@ -17,11 +17,22 @@ const CustomAlert = ({
   onClose,
   onConfirm,
   isConfirmation,
+  options = {},
 }) => {
   const iconSource =
     type === 'success'
       ? require('../assets/sukses.png')
       : require('../assets/gagal.png');
+
+  const hideIcon = options.hideIcon || false;
+  const swapButtons = options.swapButtons || false;
+
+  const btnKiriProps = swapButtons
+    ? { text: 'Tidak', style: styles.noButtonSwap, onPress: onClose }
+    : { text: 'Ya', style: styles.yesButton, onPress: onConfirm };
+  const btnKananProps = swapButtons
+    ? { text: 'Ya', style: styles.yesButtonSwap, onPress: onConfirm }
+    : { text: 'Tidak', style: styles.noButton, onPress: onClose };
 
   return (
     <DimmedModal
@@ -30,25 +41,25 @@ const CustomAlert = ({
       placement="center"
     >
       <View style={styles.alertBox}>
-        <Image source={iconSource} style={styles.icon} />
+        {!hideIcon && <Image source={iconSource} style={styles.icon} />}
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.message}>{message}</Text>
 
         {isConfirmation && (
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={[styles.button, styles.yesButton]}
-              onPress={onConfirm}
+              style={[styles.button, btnKiriProps.style]}
+              onPress={btnKiriProps.onPress}
               activeOpacity={0.8}
             >
-              <Text style={styles.buttonText}>Ya</Text>
+              <Text style={styles.buttonText}>{btnKiriProps.text}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.button, styles.noButton]}
-              onPress={onClose}
+              style={[styles.button, btnKananProps.style]}
+              onPress={btnKananProps.onPress}
               activeOpacity={0.8}
             >
-              <Text style={styles.buttonText}>Tidak</Text>
+              <Text style={styles.buttonText}>{btnKananProps.text}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -107,6 +118,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#E12525',
   },
   noButton: {
+    backgroundColor: '#284B7A',
+  },
+  noButtonSwap: {
+    backgroundColor: '#E12525',
+  },
+  yesButtonSwap: {
     backgroundColor: '#284B7A',
   },
   buttonText: {
