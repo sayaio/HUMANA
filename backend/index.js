@@ -13,7 +13,7 @@ app.use('/api', apiRoutes);
 // Tambah baris ini setelah inisialisasi app
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server Backend Humana berjalan di http://10.0.2.2:${PORT}`);
+    console.log(`Server Backend Humana berjalan di port ${PORT}`);
 });

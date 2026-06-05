@@ -18,10 +18,13 @@ const pool = mariadb.createPool({
     // 5. Ubah sesuai nama database yang Anda buat (pake backticks jika namanya 'humana-dev')
     database: 'humana-dev',
 
-    // 6. WAJIB: Konfigurasi SSL untuk keamanan Aiven
+    // 6. WAJIB: Konfigurasi SSL untuk keamanan Aiven.
+    //    - Di server (Render): baca dari environment variable AIVEN_CA_CERT.
+    //    - Di lokal: baca dari file ca.pem.
     ssl: {
-        // Arahkan ke file ca.pem (CA Certificate) yang Anda unduh dari dasbor Aiven tadi
-        ca: fs.readFileSync(path.join(__dirname, '../../ca.pem'))
+        ca: process.env.AIVEN_CA_CERT
+            ? process.env.AIVEN_CA_CERT
+            : fs.readFileSync(path.join(__dirname, '../../ca.pem'))
     },
 
     // Opsional: Rekomendasi tambahan agar pool koneksi tim lebih stabil
