@@ -36,6 +36,7 @@ import PendapatanPage from './pages/PendapatanPage';
 import RiwayatPendapatanPage from './pages/RiwayatPendapatanPage';
 import PortfolioPage from './pages/PortfolioPage';
 import NotifikasiPage from './pages/NotifikasiPage';
+import { pemesananService } from './services/pemesananService';
 
 const App = () => {
   const { showInfo } = useAppAlert();
@@ -118,6 +119,7 @@ const App = () => {
   const [selectedRiwayatData, setSelectedRiwayatData] = useState(null);
   const [pesanSesiPrefill, setPesanSesiPrefill] = useState(null);
   const [activityGuruRefreshKey, setActivityGuruRefreshKey] = useState(0);
+  const [isFirstTimePesanSesi, setIsFirstTimePesanSesi] = useState(true);
   const handleRefreshProfileData = useCallback(async newData => {
     console.log(
       '🔄 [App.jsx] Memperbarui profileData & AsyncStorage dari child:',
@@ -578,21 +580,40 @@ const App = () => {
     }
 
     if (currentPage === 'PesanSesi') {
-        return (
-            <PesanSesiPage
-                onBack={() => {
-                    setPesanSesiPrefill(null);
-                    setCurrentPage('Home');
-                }}
-                userId={profileData.id}
-                prefillBooking={pesanSesiPrefill}
-                onConfirmOrder={data => {
-                    setBookingSessionData(data);
-                    setPesanSesiPrefill(null);
-                    setCurrentPage('MencariPengajar');
-                }}
-            />
-        );
+      // Hapus draft jika: (pertama kali && tidak ada prefill)
+      if (isFirstTimePesanSesi && !pesanSesiPrefill) {
+          if (profileData.id) {
+              pemesananService.clearDraft(profileData.id).catch(err => console.warn(err));
+              console.log('🗑️ Draft dihapus karena pertama kali buka PesanSesi');
+          }
+          setIsFirstTimePesanSesi(false);
+      }
+  
+      return (
+          <PesanSesiPage
+              onBack={async () => {
+                  // Hapus draft saat kembali ke Home
+                  if (profileData.id) {
+                      try {
+                          await pemesananService.clearDraft(profileData.id);
+                          console.log('🗑️ Draft dihapus karena kembali ke Home');
+                      } catch (error) {
+                          console.warn('Gagal hapus draft:', error);
+                      }
+                  }
+                  setPesanSesiPrefill(null);
+                  setIsFirstTimePesanSesi(true); // Reset flag untuk下次
+                  setCurrentPage('Home');
+              }}
+              userId={profileData.id}
+              prefillBooking={pesanSesiPrefill}
+              onConfirmOrder={data => {
+                  setBookingSessionData(data);
+                  setPesanSesiPrefill(null);
+                  setCurrentPage('MencariPengajar');
+              }}
+          />
+      );
     }
 
     if (currentPage === 'MencariPengajar') {
@@ -634,9 +655,20 @@ const App = () => {
         <PembayaranPage
           snapUrl={paymentSnapUrl}
           idPemesanan={bookingSessionData?.id_pemesanan}
-          onFinish={status => {
+          onFinish={async status => {
             // ========== INI PENTING ==========
             if (status === 'success_close') {
+              // Hapus draft setelah pembayaran sukses
+              if (bookingSessionData?.id_murid) {
+                try {
+                  await pemesananService.clearDraft(bookingSessionData.id_murid);
+                  console.log('🗑️ Draft dihapus setelah pembayaran sukses');
+                } catch (error) {
+                  console.warn('Gagal hapus draft:', error);
+                }
+              }
+              setIsFirstTimePesanSesi(true); // Reset flag untuk next buka PesanSesi
+              
               setCurrentPage('Home');
               InteractionManager.runAfterInteractions(() => {
                 showInfo('Sukses', 'Pembayaran berhasil!');
@@ -992,52 +1024,6 @@ const App = () => {
           showInfo('Info', 'Pembatalan diajukan');
           setCurrentPage(detailPermintaanBackPage);
         }}
-      />
-    );
-  }
-
-  if (currentPage === 'Home') {
-    return (
-      <HomePage
-        namaLengkap={namaLengkap}
-        email={email}
-        onLogout={handleLogout}
-        onSelectSubject={subjectData => {
-          setSelectedSubject(subjectData);
-          setCurrentPage('Materi');
-        }}
-        onNavigate={(page, tab) => {
-          if (tab) setActivityTab(tab);
-          setCurrentPage(page);
-        }}
-        onPesanSesiPrefill={prefill => {
-          setPesanSesiPrefill(prefill);
-          setCurrentPage('PesanSesi');
-        }}
-        onLihatDetailMateri={chapterData => {
-          setSelectedChapter(chapterData);
-          setDetailBackPage('Home');
-          setCurrentPage('Detail');
-        }}
-        onDetailPermintaan={(item, tipe) => {
-          setSelectedPermintaanGuru(item);
-          setSelectedTipePermintaan(tipe);
-          setDetailPermintaanBackPage('Home');
-          setCurrentPage('DetailPermintaanGuru');
-        }}
-        onDetailSesiAktif={item => {
-          setSelectedSession(item);
-          setDetailSesiAktifBackPage('Home');
-          setCurrentPage('DetailSesiAktif');
-        }}
-        jenjangMurid={
-          profileData.jenjang_pendidikan || profileData.education
-        }
-        showSuccessAlert={showLoginSuccessAlert}
-        onAlertClose={() => setShowLoginSuccessAlert(false)}
-        userId={profileData.id}
-        userRole={(profileData.role || 'murid').toLowerCase()}
-        kelasMurid={profileData.kelas}
       />
     );
   }

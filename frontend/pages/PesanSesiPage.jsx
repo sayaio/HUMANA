@@ -40,7 +40,7 @@ const MONTHS = [
   'Desember',
 ];
 
-const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }) => {
+const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, resetDraft = false }) => {
   // === STATE FORM ===
   const [tanggal, setTanggal] = useState(null);
   const [waktuMulai, setWaktuMulai] = useState('');
@@ -125,21 +125,28 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
       setIsLoadingDraft(false);
       return;
     }
-
+  
+    // Jika resetDraft = true, skip load draft dan langsung selesai loading
+    if (resetDraft) {
+      console.log('🚫 Skip load draft karena resetDraft = true');
+      setIsLoadingDraft(false);
+      return;
+    }
+  
     let cancelled = false;
-
+  
     const initForm = async () => {
       await loadDraft();
       if (!cancelled && prefillBooking) {
         applyPrefillBooking(prefillBooking);
       }
     };
-
+  
     initForm();
     return () => {
       cancelled = true;
     };
-  }, [userId, prefillBooking]);
+  }, [userId, prefillBooking, resetDraft]); // ← tambah resetDraft ke dependency
 
   // === FETCH AUTO-SAVE
   useEffect(() => {
@@ -443,8 +450,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
   };
 
   const handleBackPress = () => {
-    console.log('👆 Tombol back ditekan, menyimpan draft...');
-    saveDraft(); // Simpan draft terlebih dahulu
+    console.log('👆 Tombol back ditekan');
     if (onBack) {
       onBack(); // Panggil fungsi back dari props
     }
