@@ -26,32 +26,6 @@ export const fetchMateriBySubject = async (id_mapel) => {
  * Fetch semua mata pelajaran dari database
  * @returns {Promise<Array>} - Array of { id_mapel, nama_mapel }
  */
-/**
- * Fetch mata pelajaran yang sesuai jenjang murid (SD / SMP / SMA).
- */
-export const fetchMapelByJenjang = async jenjang => {
-  if (!jenjang) return fetchAllMapel();
-
-  const response = await fetch(
-    `${API_URL}/pemesanan/mapel?jenjang=${encodeURIComponent(jenjang)}`,
-  );
-
-  if (!response.ok) {
-    throw new Error(`Gagal mengambil mapel jenjang: ${response.status}`);
-  }
-
-  const json = await response.json();
-  if (!json.success) {
-    throw new Error(json.message || 'Gagal mengambil mata pelajaran.');
-  }
-
-  const rows = Array.isArray(json.data) ? json.data : [];
-  return rows.map(row => ({
-    id_mapel: row.id ?? row.id_mapel,
-    nama_mapel: row.namaMapel ?? row.nama_mapel,
-  }));
-};
-
 export const fetchAllMapel = async () => {
   const response = await fetch(`${API_URL}/mapel`);
 
@@ -66,6 +40,52 @@ export const fetchAllMapel = async () => {
   }
 
   return json.data;
+};
+
+/**
+ * Fetch mata pelajaran per jenjang (SD / SMP / SMA) — Metode A: GET /pemesanan/mapel
+ * @param {string} jenjang - Wajib: 'SD' | 'SMP' | 'SMA'
+ * @returns {Promise<Array<{ id_mapel: number, nama_mapel: string, jenjang: string }>>}
+ */
+export const fetchMapelByJenjang = async jenjang => {
+  if (!jenjang || typeof jenjang !== 'string' || !jenjang.trim()) {
+    throw new Error('Parameter jenjang wajib diisi (SD, SMP, atau SMA).');
+  }
+
+  const response = await fetch(
+    `${API_URL}/pemesanan/mapel?jenjang=${encodeURIComponent(jenjang.trim())}`,
+  );
+
+  if (!response.ok) {
+    throw new Error(`Gagal mengambil mapel jenjang: ${response.status}`);
+  }
+
+  const json = await response.json();
+  if (!json.success) {
+    throw new Error(json.message || 'Gagal mengambil mata pelajaran.');
+  }
+
+  if (!Array.isArray(json.data)) {
+    throw new Error('Format data mata pelajaran tidak valid.');
+  }
+
+  return json.data.map((row, index) => {
+    const id_mapel = row.id_mapel ?? row.id;
+    const nama_mapel = row.nama_mapel ?? row.namaMapel;
+    const jenjangRow = row.jenjang ?? jenjang.trim();
+
+    if (id_mapel == null || !nama_mapel) {
+      throw new Error(
+        `Data mata pelajaran tidak lengkap pada indeks ${index}.`,
+      );
+    }
+
+    return {
+      id_mapel: Number(id_mapel),
+      nama_mapel: String(nama_mapel),
+      jenjang: String(jenjangRow),
+    };
+  });
 };
 
 export const simpanMateriGuru = async (idGuru, daftarIdMateri) => {
