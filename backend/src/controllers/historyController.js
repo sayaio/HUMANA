@@ -28,13 +28,17 @@ const getHistory = async (req, res) => {
                 bayar.biaya_sesi,
                 bayar.biaya_jarak,
                 bayar.nominal,
-                bayar.status_pembayaran
+                bayar.status_pembayaran,
+                feedback.id_feedback,
+                feedback.komentar AS feedback_komentar,
+                feedback.rating AS feedback_rating
             FROM Pemesanan pemesanan
             JOIN Murid murid ON murid.id_murid = pemesanan.id_murid
             JOIN Guru guru ON guru.id_guru = pemesanan.id_guru
             LEFT JOIN Materi materi ON materi.id_materi = pemesanan.id_materi
             LEFT JOIN MataPelajaran mapel ON mapel.id_mapel = materi.id_mapel
             LEFT JOIN Pembayaran bayar ON bayar.id_pemesanan = pemesanan.id_pemesanan
+            LEFT JOIN Feedback feedback ON feedback.id_pemesanan = pemesanan.id_pemesanan
             WHERE pemesanan.status_pemesanan IN ('selesai', 'dibatalkan', 'dibatalkan_murid', 'dibatalkan_guru')
             AND (${whereClause} = ?)
             ORDER BY pemesanan.waktu_mulai DESC;
@@ -81,7 +85,11 @@ const getHistory = async (req, res) => {
                     status_pembayaran: row.status_pembayaran,
                 } : null,
                 sesi: null,
-                feedback: null,
+                feedback: row.feedback_rating != null ? {
+                    id_feedback: row.id_feedback,
+                    rating: Number(row.feedback_rating),
+                    komentar: row.feedback_komentar,
+                } : null,
             };
         });
 

@@ -18,6 +18,30 @@ import { Calendar, MessageSquare, User, Home } from 'lucide-react-native';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
+const resolveHargaTotal = item => {
+  const candidates = [
+    item.nominal,
+    item.pembayaran?.nominal,
+    item.pembayaran?.total_bayar,
+    item.harga_total,
+    item.harga,
+  ];
+
+  for (const value of candidates) {
+    if (value != null && !Number.isNaN(Number(value))) {
+      return Number(value);
+    }
+  }
+
+  if (item.biaya_sesi != null && item.biaya_jarak != null) {
+    return Number(item.biaya_sesi) + Number(item.biaya_jarak);
+  }
+
+  return null;
+};
+
+const formatRupiah = angka => `Rp ${Number(angka).toLocaleString('id-ID')}`;
+
 const ActivityPage = ({
   initialTab = 'aktif',
   onNavigate,
@@ -98,7 +122,10 @@ const ActivityPage = ({
       setIsLoading(false);
     }
   };
-  const renderCard = (item, isHistory, index) => (
+  const renderCard = (item, isHistory, index) => {
+    const hargaTotal = isHistory ? resolveHargaTotal(item) : null;
+
+    return (
     <View style={styles.card} key={item.id_pemesanan || index}>
       <View style={styles.cardIconBox}>
         {/* PERUBAHAN: Emoji diganti dengan Image dari assets[cite: 11] */}
@@ -137,6 +164,10 @@ const ActivityPage = ({
               })
             : item.waktu_string || 'Waktu tidak tersedia'}
         </Text>
+
+        {isHistory && hargaTotal != null ? (
+          <Text style={styles.cardHarga}>{formatRupiah(hargaTotal)}</Text>
+        ) : null}
       </View>
 
       {isHistory ? (
@@ -167,7 +198,8 @@ const ActivityPage = ({
         </TouchableOpacity>
       )}
     </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -305,6 +337,12 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 12, color: '#333', marginBottom: 5 },
   cardGuru: { fontSize: 11, color: '#555', marginBottom: 5 },
   cardTime: { fontSize: 10, color: '#A9A9A9' },
+  cardHarga: {
+    fontSize: 11,
+    color: '#284B7A',
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
   actionBtn: {
     backgroundColor: '#387C65',
     paddingVertical: 6,
