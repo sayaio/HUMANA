@@ -28,11 +28,11 @@ const PembayaranPage = ({ snapUrl, idPemesanan, onFinish }) => {
 
         // Jika status 'selesai' atau 'dikonfirmasi', anggap sukses
         if (result.success && result.status_pemesanan === 'selesai') {
-          console.log('✅ Polling mendeteksi sukses! Redirect ke Home dalam 3 detik...');
+          console.log('✅ Polling mendeteksi sukses! Redirect ke Home dalam 5 detik...');
           clearInterval(interval);
           hasFinished.current = true;
           setIsSuccess(true);
-          setTimeout(() => onFinish('success_close'), 3000);
+          setTimeout(() => onFinish('success_close'), 5000);
         }
       } catch (error) {
         console.warn('Polling error:', error);
