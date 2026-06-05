@@ -73,7 +73,7 @@ const updateAcademic = async (req, res) => {
 
         // Jalankan query ke nama kolom database yang asli: 'kelas' dan 'jurusan'
         await pool.query(
-            `UPDATE murid SET kelas = ?, jurusan = ? WHERE email = ?`,
+            `UPDATE Murid SET kelas = ?, jurusan = ? WHERE email = ?`,
             [kelasDb, jurusanDb, email]
         );
 
