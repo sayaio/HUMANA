@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -491,7 +491,9 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
         id_materi: selectedMateriId,
         waktu_mulai: waktuMulaiFormatted,
         waktu_selesai: waktuSelesaiFormatted,
-        lokasi_sesi: locationAddress,
+        lokasi_sesi: userLocation
+          ? `${userLocation.latitude},${userLocation.longitude}|${locationAddress}`
+          : locationAddress,
       };
 
       const result = await pemesananService.createPemesanan(dataPemesanan);
