@@ -322,7 +322,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                 {/* TOMBOL LOGOUT */}
                 <View style={styles.sectionContainer}>
                     <TouchableOpacity style={styles.logoutButton} onPress={onLogout} activeOpacity={0.6}>
-                        <LogOut color="#FF4D4D" size={20} style={{ marginRight: 10 }} />
+                        <LogOut color="#FF8A8A" size={20} style={{ marginRight: 10 }} />
                         <Text style={styles.logoutText}>Keluar dari Akun</Text>
                     </TouchableOpacity>
                 </View>
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         marginTop: 5,
     },
-    logoutText: { fontSize: 15, color: '#FF4D4D', fontWeight: 'bold' },
+    logoutText: { fontSize: 15, color: '#FF8A8A', fontWeight: 'bold' },
 });
 
 export default ProfileGuruPage;

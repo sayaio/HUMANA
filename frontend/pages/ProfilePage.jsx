@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   logoutIcon: { marginRight: 10 },
-  logoutText: { fontSize: 15, color: '#FF4D4D', fontWeight: 'bold' },
+  logoutText: { fontSize: 15, color: '#FF8A8A', fontWeight: 'bold' },
 });
 
 export default ProfilePage;
