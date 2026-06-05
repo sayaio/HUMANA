@@ -110,7 +110,7 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={false} />
 
-            <PageHeader title="Edit Basic Profile" onBack={onCancel} />
+            <PageHeader title="Edit Data Pribadi" onBack={onCancel} />
 
             <ScrollView contentContainerStyle={styles.content}>
                 <InputField label="Username" value={username} onChangeText={setUsername} />

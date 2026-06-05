@@ -208,213 +208,213 @@ const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) 
 
   return (
     <>
-    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <PageHeader title="Session Detail" onBack={onBack} />
-
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
         >
-          {/* Info Top */}
-          <View style={styles.infoRow}>
-            <View
-              style={[
-                styles.iconBox,
-                { width: width * 0.15, height: width * 0.15 },
-              ]}
-            >
-              <Image
-                source={require('../assets/buku.png')}
-                style={styles.iconBuku}
-                resizeMode="contain"
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={[styles.title, { fontSize: dynamicFontSizeTitle }]}
-                numberOfLines={2}
-              >
-                <Text style={{ fontWeight: 'bold' }}>{namaMapel}</Text> -{' '}
-                {namaMateri}
-              </Text>
+          <PageHeader title="Detail Sesi" onBack={onBack} />
 
-              {/* BAGIAN TANGGAL DAN WAKTU */}
-              <Text
-                style={[styles.subtitle, { fontSize: dynamicFontSizeSubtitle }]}
-              >
-                {formatSessionTime()}
-              </Text>
-
-              <Text
-                style={[styles.subtitle, { fontSize: dynamicFontSizeSubtitle }]}
-              >
-                No. Sesi: {idPemesanan}
-              </Text>
-            </View>
-          </View>
-          {/* Dokumentasi */}
-          <Text
-            style={[styles.sectionTitle, { fontSize: dynamicFontSizeTitle }]}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
           >
-            Dokumentasi
-          </Text>
-          <TouchableOpacity
-            style={[styles.imagePlaceholder, { height: dynamicImageHeight }]}
-            onPress={() => setFotoFullscreen(true)}
-            activeOpacity={0.85}
-            disabled={!fotoUri}
-          >
-            {fotoUri ? (
-              <>
+            {/* Info Top */}
+            <View style={styles.infoRow}>
+              <View
+                style={[
+                  styles.iconBox,
+                  { width: width * 0.15, height: width * 0.15 },
+                ]}
+              >
                 <Image
-                  source={{ uri: fotoUri }}
-                  style={styles.documentationImage}
-                  resizeMode="cover"
-                  pointerEvents="none"
+                  source={require('../assets/buku.png')}
+                  style={styles.iconBuku}
+                  resizeMode="contain"
                 />
-                <View style={styles.tapHint} pointerEvents="none">
-                  <Text style={styles.tapHintText}>Ketuk untuk memperbesar</Text>
-                </View>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={[styles.title, { fontSize: dynamicFontSizeTitle }]}
+                  numberOfLines={2}
+                >
+                  <Text style={{ fontWeight: 'bold' }}>{namaMapel}</Text> -{' '}
+                  {namaMateri}
+                </Text>
+
+                {/* BAGIAN TANGGAL DAN WAKTU */}
+                <Text
+                  style={[styles.subtitle, { fontSize: dynamicFontSizeSubtitle }]}
+                >
+                  {formatSessionTime()}
+                </Text>
+
+                <Text
+                  style={[styles.subtitle, { fontSize: dynamicFontSizeSubtitle }]}
+                >
+                  No. Sesi: {idPemesanan}
+                </Text>
+              </View>
+            </View>
+            {/* Dokumentasi */}
+            <Text
+              style={[styles.sectionTitle, { fontSize: dynamicFontSizeTitle }]}
+            >
+              Dokumentasi
+            </Text>
+            <TouchableOpacity
+              style={[styles.imagePlaceholder, { height: dynamicImageHeight }]}
+              onPress={() => setFotoFullscreen(true)}
+              activeOpacity={0.85}
+              disabled={!fotoUri}
+            >
+              {fotoUri ? (
+                <>
+                  <Image
+                    source={{ uri: fotoUri }}
+                    style={styles.documentationImage}
+                    resizeMode="cover"
+                    pointerEvents="none"
+                  />
+                  <View style={styles.tapHint} pointerEvents="none">
+                    <Text style={styles.tapHintText}>Ketuk untuk memperbesar</Text>
+                  </View>
+                </>
+              ) : (
+                <Text style={{ fontSize: width * 0.15, color: '#CCC' }}>🖼️</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Biaya */}
+            <View style={styles.costRow}>
+              <Text style={[styles.costLabel, { fontSize: width * 0.045 }]}>
+                Biaya:
+              </Text>
+              <Text style={[styles.costValue, { fontSize: width * 0.045 }]}>
+                {totalBiaya ? `Rp${totalBiaya.toLocaleString('id-ID')}` : 'Rp0'}
+              </Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            {/* Nama lawan bicara: guru → murid, murid → guru */}
+            <Text style={[styles.personText, { fontSize: dynamicFontSizeTitle }]}>
+              👤 {namaTampil}
+            </Text>
+
+            {isGuru ? (
+              <>
+                {checkingFeedback ? (
+                  <ActivityIndicator
+                    color="#387C65"
+                    style={{ marginVertical: 24 }}
+                  />
+                ) : (
+                  <>
+                    <View
+                      style={[styles.feedbackReadonly, { minHeight: height * 0.08 }]}
+                    >
+                      <Text style={styles.feedbackReadonlyText}>
+                        {feedback || 'Murid belum memberikan ulasan.'}
+                      </Text>
+                    </View>
+
+                    <Text
+                      style={[styles.ratingText, { fontSize: dynamicFontSizeTitle }]}
+                    >
+                      Rating dari Murid
+                    </Text>
+                    <View style={styles.starsContainer}>
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <Text
+                          key={star}
+                          style={{
+                            fontSize: dynamicStarSize,
+                            color: star <= rating ? '#FFC107' : '#E0E0E0',
+                            paddingHorizontal: 4,
+                          }}
+                        >
+                          ★
+                        </Text>
+                      ))}
+                    </View>
+                  </>
+                )}
               </>
             ) : (
-              <Text style={{ fontSize: width * 0.15, color: '#CCC' }}>🖼️</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Biaya */}
-          <View style={styles.costRow}>
-            <Text style={[styles.costLabel, { fontSize: width * 0.045 }]}>
-              Biaya:
-            </Text>
-            <Text style={[styles.costValue, { fontSize: width * 0.045 }]}>
-              {totalBiaya ? `Rp${totalBiaya.toLocaleString('id-ID')}` : 'Rp0'}
-            </Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          {/* Nama lawan bicara: guru → murid, murid → guru */}
-          <Text style={[styles.personText, { fontSize: dynamicFontSizeTitle }]}>
-            👤 {namaTampil}
-          </Text>
-
-          {isGuru ? (
-            <>
-              {checkingFeedback ? (
-                <ActivityIndicator
-                  color="#387C65"
-                  style={{ marginVertical: 24 }}
+              <>
+                <TextInput
+                  style={[styles.feedbackInput, { height: height * 0.1 }]}
+                  placeholder="Masukkan Feedback..."
+                  placeholderTextColor="#A9A9A9"
+                  multiline
+                  value={feedback}
+                  onChangeText={setFeedback}
+                  editable={!isSubmitted && !isSubmitting && !checkingFeedback}
                 />
-              ) : (
-                <>
-                  <View
-                    style={[styles.feedbackReadonly, { minHeight: height * 0.08 }]}
-                  >
-                    <Text style={styles.feedbackReadonlyText}>
-                      {feedback || 'Murid belum memberikan ulasan.'}
-                    </Text>
-                  </View>
 
-                  <Text
-                    style={[styles.ratingText, { fontSize: dynamicFontSizeTitle }]}
-                  >
-                    Rating dari Murid
-                  </Text>
-                  <View style={styles.starsContainer}>
-                    {[1, 2, 3, 4, 5].map(star => (
+                <Text
+                  style={[styles.ratingText, { fontSize: dynamicFontSizeTitle }]}
+                >
+                  Berikan Rating Anda
+                </Text>
+                <View style={styles.starsContainer}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <TouchableOpacity
+                      key={star}
+                      onPress={() =>
+                        !isSubmitted &&
+                        !isSubmitting &&
+                        !checkingFeedback &&
+                        setRating(star)
+                      }
+                      activeOpacity={isSubmitted ? 1 : 0.7}
+                      style={{ paddingHorizontal: 4 }}
+                    >
                       <Text
-                        key={star}
                         style={{
                           fontSize: dynamicStarSize,
                           color: star <= rating ? '#FFC107' : '#E0E0E0',
-                          paddingHorizontal: 4,
                         }}
                       >
                         ★
                       </Text>
-                    ))}
-                  </View>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              <TextInput
-                style={[styles.feedbackInput, { height: height * 0.1 }]}
-                placeholder="Masukkan Feedback..."
-                placeholderTextColor="#A9A9A9"
-                multiline
-                value={feedback}
-                onChangeText={setFeedback}
-                editable={!isSubmitted && !isSubmitting && !checkingFeedback}
-              />
+                    </TouchableOpacity>
+                  ))}
+                </View>
 
-              <Text
-                style={[styles.ratingText, { fontSize: dynamicFontSizeTitle }]}
-              >
-                Berikan Rating Anda
-              </Text>
-              <View style={styles.starsContainer}>
-                {[1, 2, 3, 4, 5].map(star => (
-                  <TouchableOpacity
-                    key={star}
-                    onPress={() =>
-                      !isSubmitted &&
-                      !isSubmitting &&
-                      !checkingFeedback &&
-                      setRating(star)
-                    }
-                    activeOpacity={isSubmitted ? 1 : 0.7}
-                    style={{ paddingHorizontal: 4 }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: dynamicStarSize,
-                        color: star <= rating ? '#FFC107' : '#E0E0E0',
-                      }}
-                    >
-                      ★
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <TouchableOpacity
-                style={[
-                  styles.submitBtn,
-                  (isSubmitted || isSubmitting || checkingFeedback) &&
+                <TouchableOpacity
+                  style={[
+                    styles.submitBtn,
+                    (isSubmitted || isSubmitting || checkingFeedback) &&
                     styles.submitBtnDisabled,
-                ]}
-                onPress={handleSubmit}
-                disabled={isSubmitted || isSubmitting || checkingFeedback}
-              >
-                {isSubmitting || checkingFeedback ? (
-                  <ActivityIndicator
-                    color={checkingFeedback ? '#387C65' : '#FFF'}
-                  />
-                ) : (
-                  <Text
-                    style={[
-                      styles.submitBtnText,
-                      isSubmitted && styles.submitBtnTextDisabled,
-                      { fontSize: width * 0.04 },
-                    ]}
-                  >
-                    {isSubmitted ? 'Ulasan Terkirim' : 'Kirim Feedback'}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </>
-          )}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+                  ]}
+                  onPress={handleSubmit}
+                  disabled={isSubmitted || isSubmitting || checkingFeedback}
+                >
+                  {isSubmitting || checkingFeedback ? (
+                    <ActivityIndicator
+                      color={checkingFeedback ? '#387C65' : '#FFF'}
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.submitBtnText,
+                        isSubmitted && styles.submitBtnTextDisabled,
+                        { fontSize: width * 0.04 },
+                      ]}
+                    >
+                      {isSubmitted ? 'Ulasan Terkirim' : 'Kirim Feedback'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
 
       {/* Fullscreen foto dokumentasi — di luar SafeAreaView agar Modal tampil konsisten di Android */}
       <Modal

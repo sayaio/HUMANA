@@ -94,7 +94,7 @@ const EditAcademicProfilePage = ({ profileData, onSave, onCancel }) => {
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={false} />
 
-            <PageHeader title="Edit Academic Profile" onBack={onCancel} />
+            <PageHeader title="Edit Data Akademis" onBack={onCancel} />
 
             <ScrollView contentContainerStyle={styles.content}>
                 <InputField label="Jenjang Pendidikan" value={education} onChangeText={setEducation} />
