@@ -2,8 +2,17 @@
 const db = require('../database');
 const getLatestChatList = async (userId, role) => {
   const field = role === 'murid' ? 'id_murid' : 'id_guru';
+  const senderField = role === 'murid' ? 'guru' : 'murid';
+
   const query = `
-  SELECT c.*, G.nama_guru, M.nama_murid
+  SELECT c.*, G.nama_guru, M.nama_murid,
+    CAST((
+  SELECT COUNT(*) FROM Chat unread
+  WHERE unread.id_guru = c.id_guru
+  AND unread.id_murid = c.id_murid
+  AND unread.is_read = 0
+  AND unread.pengirim_role = ?
+) AS UNSIGNED) AS unread_count
   FROM Chat c
   JOIN Guru G ON c.id_guru = G.id_guru
   JOIN Murid M ON c.id_murid = M.id_murid
@@ -26,8 +35,9 @@ const getLatestChatList = async (userId, role) => {
     )
   )
   ORDER BY c.timestamp DESC
-`;
-  return await db.query(query, [userId]);
+  `;
+
+  return await db.query(query, [senderField, userId]);
 };
 
 // Ambil semua pesan dalam satu percakapan
@@ -44,22 +54,31 @@ const getAllMessagesByChatId = async (id_guru, id_murid) => {
 // Simpan pesan baru
 const saveMessage = async (id_guru, id_murid, pengirim_role, isi_pesan) => {
   const query = `
-    INSERT INTO Chat (id_guru, id_murid, pengirim_role, isi_pesan, timestamp) 
-    VALUES (?, ?, ?, ?, NOW())
-  `;
+    INSERT INTO Chat (id_guru, id_murid, pengirim_role, isi_pesan, is_read, timestamp) 
+    VALUES (?, ?, ?, ?, 0, NOW())
+  `; // 👈 Kuncinya di sini: Tambahkan kolom is_read dan isi dengan angka 0
+  
   const result = await db.query(query, [id_guru, id_murid, pengirim_role, isi_pesan]);
   return result;
 };
 
 // Tandai pesan sebagai sudah dibaca
-const markAsRead = async (id_guru, id_murid) => {
+// ... (kode atas seperti getLatestChatList, getAllMessagesByChatId, saveMessage tetap sama)
+
+// Tandai pesan sebagai sudah dibaca (Hanya untuk pesan dari lawan bicara)
+const markAsRead = async (id_guru, id_murid, pembacaRole) => {
   const query = `
-    UPDATE Chat SET is_read = 1 
-    WHERE id_guru = ? AND id_murid = ?
+    UPDATE Chat 
+    SET is_read = 1 
+    WHERE id_guru = ? 
+      AND id_murid = ? 
+      AND pengirim_role != ?
   `;
-  const result = await db.query(query, [id_guru, id_murid]);
+  // Jika pembacaRole adalah 'murid', maka pengirim_role != 'murid' (artinya pesan dari guru yang di-mark)
+  const result = await db.query(query, [id_guru, id_murid, pembacaRole]);
   return result;
 };
+
 const findOrCreateChatRoom = async (id_guru, id_murid) => {
   // Cek apakah sudah ada row untuk pasangan ini
   const existing = await db.query(
@@ -84,8 +103,8 @@ const findOrCreateChatRoom = async (id_guru, id_murid) => {
 
 module.exports = {
   getLatestChatList,
-  getAllMessagesByChatId,  // ← pastikan ada ini
+  getAllMessagesByChatId,
   saveMessage,
-  markAsRead,
+  markAsRead, // ← Expose fungsi yang sudah di-update
   findOrCreateChatRoom
 };

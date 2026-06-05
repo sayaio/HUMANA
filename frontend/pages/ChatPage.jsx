@@ -65,6 +65,7 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
       );
 
       const data = await getChatList(userId, role);
+      console.log('chat data:', JSON.stringify(data[0]));
       setChats(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Gagal inisialisasi chat:', error);
@@ -91,6 +92,9 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
       return displayName.toLowerCase().includes(searchText.toLowerCase());
     });
   }, [chats, searchText, role]);
+  const totalUnread = useMemo(() => {
+    return chats.reduce((sum, chat) => sum + (chat.unread_count || 0), 0);
+  }, [chats]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -116,9 +120,9 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
             onChangeText={text => setSearchText(text)} // Update state saat mengetik
           />
           {/* ✅ DIUBAH: Menggunakan Image assets/mencari_icon.png pengganti emoji */}
-          <Image 
-            source={require('../assets/mencari_icon.png')} 
-            style={{ width: 18, height: 18, resizeMode: 'contain', tintColor: '#888' }} 
+          <Image
+            source={require('../assets/mencari_icon.png')}
+            style={{ width: 18, height: 18, resizeMode: 'contain', tintColor: '#888' }}
           />
         </View>
       </View>
@@ -156,21 +160,43 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
                   style={styles.chatItem}
                   onPress={() => onChatPress(chat)}
                 >
+                  {/* KIRI: Avatar */}
                   <View style={[styles.avatar, { backgroundColor: '#FF9B9B' }]}>
                     <Text style={styles.avatarText}>{firstLetter}</Text>
                   </View>
-                  <View style={styles.chatInfo}>
-                    <Text style={styles.chatName}>{displayName}</Text>
-                    <Text style={styles.chatMessage} numberOfLines={1}>
-                      {chat?.isi_pesan || 'Tidak ada pesan terbaru'}
-                    </Text>
-                  </View>
-                  <View style={styles.chatMeta}>
-                    <Text style={styles.chatTime}>
-                      {chat?.timestamp
-                        ? chat.timestamp.split(' ')[1]?.substring(0, 5)
-                        : ''}
-                    </Text>
+
+                  {/* KANAN: Gabungan Info & Meta dengan satu Border Bottom */}
+                  <View style={styles.rightContainer}>
+
+                    {/* Detail isi chat */}
+                    <View style={styles.chatInfo}>
+                      <Text style={styles.chatName}>{displayName}</Text>
+                      <Text style={styles.chatMessage} numberOfLines={1}>
+                        {chat?.isi_pesan || 'Tidak ada pesan terbaru'}
+                      </Text>
+                    </View>
+
+                    {/* Meta: Waktu & Badge */}
+                    <View style={styles.chatMeta}>
+                      <Text style={styles.chatTime}>
+                        {chat?.timestamp
+                          ? new Date(chat.timestamp).toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            timeZone: 'Asia/Jakarta'
+                          })
+                          : ''}
+                      </Text>
+
+                      {chat?.unread_count > 0 && (
+                        <View style={styles.unreadBadge}>
+                          <Text style={styles.unreadText}>
+                            {chat.unread_count > 99 ? '99+' : chat.unread_count}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
                   </View>
                 </TouchableOpacity>
               );
@@ -188,6 +214,7 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
         currentScreen="Chat"
         onNavigate={onNavigate}
         userRole={userRole}
+        totalUnread={totalUnread}
       />
     </SafeAreaView>
   );
@@ -244,42 +271,56 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 
-  chatItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  chatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16
+  },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
   },
   avatarText: { color: '#FFF', fontSize: 20, fontWeight: 'bold' },
+  rightContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    paddingBottom: 14,
+    marginLeft: 14,
+  },
   chatInfo: {
     flex: 1,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    paddingBottom: 10,
-    marginRight: 10,
+    justifyContent: 'center',
+    paddingRight: 10,
   },
-  chatName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
-  chatMessage: { fontSize: 13, color: '#555' },
+  chatName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4
+  },
+  chatMessage: { fontSize: 13, color: '#666' },
+
   chatMeta: {
     alignItems: 'flex-end',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    paddingBottom: 10,
-    height: '100%',
+    justifyContent: 'space-between',
+    height: 42, // Menjaga tinggi konstan agar waktu di atas dan badge di bawah tidak tabrakan
   },
-  chatTime: { fontSize: 10, color: '#888', marginBottom: 5 },
+  chatTime: { fontSize: 11, color: '#999' },
   unreadBadge: {
-    backgroundColor: '#284B7A',
-    width: 20,
+    backgroundColor: '#284B7A', // Menyelaraskan dengan tema utama HUMANA
+    minWidth: 20,
     height: 20,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 5,
   },
   unreadText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
 });
-
 export default ChatPage;
