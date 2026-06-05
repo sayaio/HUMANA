@@ -351,67 +351,67 @@ const HomePage = ({
             (role === 'guru' && onDetailPermintaan);
 
         const cardInner = (
-                <View style={[styles.sessionCard, { marginBottom: 0, marginRight: 0, width: '100%' }]}>
-                    <Text style={styles.cardLabel}>SESI HARI INI</Text>
+            <View style={[styles.sessionCard, { marginBottom: 0, marginRight: 0, width: '100%' }]}>
+                <Text style={styles.cardLabel}>SESI HARI INI</Text>
 
-                    {role === 'guru' ? (
-                        <View style={styles.rowCenter}>
-                            <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>
-                                    {(s.nama_murid || 'M').substring(0, 2).toUpperCase()}
-                                </Text>
-                            </View>
-                            <View style={{ flex: 1, marginLeft: 12 }}>
-                                <Text style={styles.sessionName} numberOfLines={1}>
-                                    {s.nama_murid || 'Nama Murid'}
-                                </Text>
-                                <Text style={styles.sessionSub} numberOfLines={1}>
-                                    {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'} — {s.materi?.nama_materi || s.nama_materi || 'Materi'}
-                                </Text>
-                            </View>
-                            <View style={styles.badgeGreen}>
-                                <Text style={styles.badgeGreenText}>• Segera</Text>
-                            </View>
-                        </View>
-                    ) : (
-                        <Text style={styles.sessionTitle} numberOfLines={2}>
-                            <Text style={{ fontFamily: FONTS.bold }}>
-                                {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'}
-                            </Text>
-                            {' – '}{s.materi?.nama_materi || s.nama_materi || 'Materi'}
-                        </Text>
-                    )}
-
-                    <View style={styles.detailGrid}>
-                        <View style={gridStyle}>
-                            <Text style={styles.detailLabel}>Waktu</Text>
-                            <Text style={styles.detailValue} numberOfLines={1}>{waktu}</Text>
-                        </View>
-                        <View style={gridStyle}>
-                            <Text style={styles.detailLabel}>{role === 'guru' ? 'Lokasi' : 'Guru'}</Text>
-                            <Text style={styles.detailValue} numberOfLines={2}>
-                                {role === 'guru' ? lokasi : (s.nama_guru || '–')}
+                {role === 'guru' ? (
+                    <View style={styles.rowCenter}>
+                        <View style={styles.avatar}>
+                            <Text style={styles.avatarText}>
+                                {(s.nama_murid || 'M').substring(0, 2).toUpperCase()}
                             </Text>
                         </View>
-                        {role === 'guru' && (
-                            <View style={gridStyle}>
-                                <Text style={styles.detailLabel}>Bayaran</Text>
-                                <Text style={styles.detailValue} numberOfLines={1}>{bayaran}</Text>
-                            </View>
-                        )}
+                        <View style={{ flex: 1, marginLeft: 12 }}>
+                            <Text style={styles.sessionName} numberOfLines={1}>
+                                {s.nama_murid || 'Nama Murid'}
+                            </Text>
+                            <Text style={styles.sessionSub} numberOfLines={1}>
+                                {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'} — {s.materi?.nama_materi || s.nama_materi || 'Materi'}
+                            </Text>
+                        </View>
+                        <View style={styles.badgeGreen}>
+                            <Text style={styles.badgeGreenText}>• Segera</Text>
+                        </View>
                     </View>
+                ) : (
+                    <Text style={styles.sessionTitle} numberOfLines={2}>
+                        <Text style={{ fontFamily: FONTS.bold }}>
+                            {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'}
+                        </Text>
+                        {' – '}{s.materi?.nama_materi || s.nama_materi || 'Materi'}
+                    </Text>
+                )}
 
+                <View style={styles.detailGrid}>
+                    <View style={gridStyle}>
+                        <Text style={styles.detailLabel}>Waktu</Text>
+                        <Text style={styles.detailValue} numberOfLines={1}>{waktu}</Text>
+                    </View>
+                    <View style={gridStyle}>
+                        <Text style={styles.detailLabel}>{role === 'guru' ? 'Lokasi' : 'Guru'}</Text>
+                        <Text style={styles.detailValue} numberOfLines={2}>
+                            {role === 'guru' ? lokasi : (s.nama_guru || '–')}
+                        </Text>
+                    </View>
                     {role === 'guru' && (
-                        <View style={styles.cardActions}>
-                            <TouchableOpacity style={styles.btnPrimary}>
-                                <Text style={styles.btnPrimaryText}>Lihat Rute</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.btnOutline}>
-                                <Text style={styles.btnOutlineText}>Chat Murid</Text>
-                            </TouchableOpacity>
+                        <View style={gridStyle}>
+                            <Text style={styles.detailLabel}>Bayaran</Text>
+                            <Text style={styles.detailValue} numberOfLines={1}>{bayaran}</Text>
                         </View>
                     )}
                 </View>
+
+                {role === 'guru' && (
+                    <View style={styles.cardActions}>
+                        <TouchableOpacity style={styles.btnPrimary}>
+                            <Text style={styles.btnPrimaryText}>Lihat Rute</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.btnOutline}>
+                            <Text style={styles.btnOutlineText}>Chat Murid</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+            </View>
         );
 
         return (
@@ -636,9 +636,9 @@ const HomePage = ({
                                         <View key={item.id_materi} style={styles.rekomendasiCard}>
                                             <View style={styles.rekomendasiIcon}>
                                                 {/* ✅ DIUBAH: Menggunakan Image langsung dan ukurannya diperbesar sesuai mockup gambar image_a5d046.png */}
-                                                <Image 
-                                                    source={require('../assets/daftarmateri.png')} 
-                                                    style={{ width: 44, height: 44, resizeMode: 'contain' }} 
+                                                <Image
+                                                    source={require('../assets/daftarmateri.png')}
+                                                    style={{ width: 44, height: 44, resizeMode: 'contain' }}
                                                 />
                                             </View>
                                             <View style={{ flex: 1 }}>
@@ -924,9 +924,9 @@ const styles = StyleSheet.create({
     },
     btnLihatDetail: {
         backgroundColor: '#284B7A',
-        paddingHorizontal: 10,
-        paddingVertical: 7,
-        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 15,
         marginLeft: 8,
     },
     btnLihatDetailText: {

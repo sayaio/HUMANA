@@ -15,7 +15,6 @@ import {
 import { fetchMuridProfile } from '../services/feedbackService';
 import BottomNavbar from '../components/BottomNavbar';
 import { Calendar, MessageSquare, User, Home, LogOut, Edit2 } from 'lucide-react-native';
-import { useAppAlert } from '../components/AppAlertProvider';
 
 const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
@@ -41,7 +40,6 @@ const mapMuridProfileToApp = (data, existing) => ({
 });
 
 const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
-  const { showInfo } = useAppAlert();
   const role = profileData && profileData.role ? profileData.role.toLowerCase() : 'murid';
   const idMurid = profileData?.id;
   const [refreshing, setRefreshing] = useState(false);
@@ -96,7 +94,7 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
             </View>
             <TouchableOpacity
               style={styles.editAvatarBtn}
-              onPress={() => showInfo('Segera Hadir', 'Fitur ganti profil akan segera hadir!')}
+              onPress={() => alert('Fitur ganti foto akan datang!')}
             >
               <Text style={{ fontSize: 11, color: '#FFF' }}>✏️</Text>
             </TouchableOpacity>
@@ -237,9 +235,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#284B7A',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
   },
   editSectionBtnText: { fontSize: 12, fontWeight: 'bold', color: '#284B7A', marginLeft: 4 },
 
@@ -267,8 +265,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF1F1',
     borderWidth: 1,
     borderColor: '#FFAAAA',
-    borderRadius: 15,
-    paddingVertical: 14,
+    borderRadius: 19,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     marginTop: 5,
   },
   logoutIcon: { marginRight: 10 },
