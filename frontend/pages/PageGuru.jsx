@@ -755,15 +755,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F5E9',
     paddingVertical: 4,
     paddingHorizontal: 10,
-    borderRadius: 8,
+    borderRadius: 15,
     borderWidth: 1,
-    borderColor: '#4CAF50',
+    borderColor: '#3A7D6B',
     flexDirection: 'row',
     alignItems: 'center',
   },
   badgeTextSegera: {
     fontFamily: FONTS.bold,
-    color: '#4CAF50',
+    color: '#3A7D6B',
     fontSize: 11,
   },
   profileRow: {

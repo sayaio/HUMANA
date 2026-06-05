@@ -665,10 +665,10 @@ const styles = StyleSheet.create({
     ratingBadgeDibatalkan: {
         backgroundColor: '#FFEBEE',
         borderWidth: 1,
-        borderColor: '#F44336',
+        borderColor: '#FF8A8A',
     },
     ratingTextSelesai: { color: '#387C65', fontWeight: 'bold' },
-    ratingTextDibatalkan: { color: '#F44336', fontWeight: 'bold' },
+    ratingTextDibatalkan: { color: '#FF8A8A', fontWeight: 'bold' },
     ratingTextOnly: { fontSize: 12, fontWeight: 'bold' },
     ratingStarIcon: { fontSize: 14, color: '#FFB800', marginRight: 3 },
     ratingStarValue: { fontSize: 13, fontWeight: 'bold', color: '#333' },

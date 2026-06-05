@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     smallValueText: { fontSize: 14, fontWeight: 'bold', color: '#333' },
 
     cancelButton: {
-        backgroundColor: '#F43F5E',
+        backgroundColor: '#FF8A8A',
         borderRadius: 25,
         paddingVertical: 16,
         alignItems: 'center',

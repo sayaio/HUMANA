@@ -908,7 +908,7 @@ const styles = StyleSheet.create({
   btnSelesaikan: {
     flex: 1,
     height: 50,
-    borderRadius: 14,
+    borderRadius: 25,
     backgroundColor: '#2A7A5E',
     justifyContent: 'center',
     alignItems: 'center',
@@ -918,7 +918,7 @@ const styles = StyleSheet.create({
   btnSelesaikanBlocked: {
     flex: 1,
     height: 50,
-    borderRadius: 14,
+    borderRadius: 25,
     backgroundColor: '#E0E0E0', // <-- Ubah background jadi abu-abu solid (hapus border)
     justifyContent: 'center',
     alignItems: 'center',
@@ -978,7 +978,7 @@ const styles = StyleSheet.create({
   modalBtnBatal: {
     flex: 1,
     height: 48,
-    borderRadius: 12,
+    borderRadius: 25,
     borderWidth: 1,
     borderColor: '#E0E0E0',
     justifyContent: 'center',
@@ -988,7 +988,7 @@ const styles = StyleSheet.create({
   modalBtnSelesai: {
     flex: 1,
     height: 48,
-    borderRadius: 12,
+    borderRadius: 25,
     backgroundColor: '#387C65',
     justifyContent: 'center',
     alignItems: 'center',
