@@ -35,6 +35,10 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
     try {
       const response = await axios.get(
         `${API_URL}/chats/messages/${id_guru}/${id_murid}`,
+        {
+          // SINKRONISASI: Kirim role pembaca lewat query param (?role=...)
+          params: { role: userRole.toLowerCase() }
+        }
       );
       const data = response.data.data || response.data;
       setMessages(Array.isArray(data) ? data : []);
@@ -187,9 +191,9 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
           <View style={styles.inputBar}>
             <TouchableOpacity style={styles.plusBtn}>
               {/* ✅ DIUBAH: Menggunakan Image assets/lingkaranplus.png pengganti emoji ⊕ */}
-              <Image 
-                source={require('../assets/lingkaranplus.png')} 
-                style={styles.plusIconImage} 
+              <Image
+                source={require('../assets/lingkaranplus.png')}
+                style={styles.plusIconImage}
                 resizeMode="contain"
               />
             </TouchableOpacity>
