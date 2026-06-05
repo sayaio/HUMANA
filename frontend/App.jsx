@@ -504,9 +504,66 @@ const App = () => {
                     setCurrentPage('DetailPermintaanGuru');
                 }}
                 onDetailSesiAktif={item => {
-                    setSelectedSession(item);
-                    setDetailSesiAktifBackPage('Home');
-                    setCurrentPage('DetailSesiAktif');
+                    const currentRole = (profileData.role || 'murid').toLowerCase();
+                    if (currentRole === 'murid' && item.status_pembayaran === 'menunggu') {
+                        // Map the session item to bookingSessionData structure
+                        const displayLokasi = item.lokasi_sesi && item.lokasi_sesi.includes('|') ? item.lokasi_sesi.split('|')[1] : item.lokasi_sesi;
+                        let displayKoordinat = null;
+                        if (item.lokasi_sesi && item.lokasi_sesi.includes('|')) {
+                            const coords = item.lokasi_sesi.split('|')[0].split(',');
+                            if (coords.length === 2) {
+                                displayKoordinat = {
+                                    latitude: Number(coords[0]),
+                                    longitude: Number(coords[1])
+                                };
+                            }
+                        }
+
+                        const formatDateIndonesian = (dateStr) => {
+                            if (!dateStr) return '';
+                            const date = new Date(dateStr.toString().replace(' ', 'T'));
+                            if (isNaN(date.getTime())) return '';
+                            const months = [
+                              'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                              'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                            ];
+                            return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+                        };
+
+                        const formatTimeSesi = (mulaiStr, selesaiStr) => {
+                            if (!mulaiStr || !selesaiStr) return '';
+                            const mulai = new Date(mulaiStr.toString().replace(' ', 'T'));
+                            const selesai = new Date(selesaiStr.toString().replace(' ', 'T'));
+                            if (isNaN(mulai.getTime()) || isNaN(selesai.getTime())) return '';
+                            const pad = (num) => String(num).padStart(2, '0');
+                            return `${pad(mulai.getHours())}:${pad(mulai.getMinutes())} - ${pad(selesai.getHours())}:${pad(selesai.getMinutes())}`;
+                        };
+
+                        const mappedSession = {
+                            id_pemesanan: item.id_pemesanan,
+                            id_sesi: item.id_pemesanan,
+                            nama_mapel: item.nama_mapel,
+                            nama_materi: item.nama_materi,
+                            jenjang: item.jenjang_pendidikan,
+                            kelas: item.kelas_murid,
+                            lokasi: displayLokasi,
+                            koordinat: displayKoordinat,
+                            tanggal: formatDateIndonesian(item.waktu_mulai),
+                            waktu_sesi: formatTimeSesi(item.waktu_mulai, item.waktu_selesai),
+                            biaya_sesi: item.biaya_sesi,
+                            biaya_jarak: item.biaya_jarak,
+                            nominal: item.nominal,
+                            total_harga: item.nominal,
+                        };
+
+                        setBookingSessionData(mappedSession);
+                        setPaymentBackPage('Home');
+                        setCurrentPage('DetailPembayaran');
+                    } else {
+                        setSelectedSession(item);
+                        setDetailSesiAktifBackPage('Home');
+                        setCurrentPage('DetailSesiAktif');
+                    }
                 }}
                 jenjangMurid={
                     profileData.jenjang_pendidikan || profileData.education

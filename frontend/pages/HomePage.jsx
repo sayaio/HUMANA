@@ -390,33 +390,7 @@ const HomePage = ({
                             </View>
                         </View>
                     )}
-                {role === 'guru' ? (
-                    <View style={styles.rowCenter}>
-                        <View style={styles.avatar}>
-                            <Text style={styles.avatarText}>
-                                {(s.nama_murid || 'M').substring(0, 2).toUpperCase()}
-                            </Text>
-                        </View>
-                        <View style={{ flex: 1, marginLeft: 12 }}>
-                            <Text style={styles.sessionName} numberOfLines={1}>
-                                {s.nama_murid || 'Nama Murid'}
-                            </Text>
-                            <Text style={styles.sessionSub} numberOfLines={1}>
-                                {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'} — {s.materi?.nama_materi || s.nama_materi || 'Materi'}
-                            </Text>
-                        </View>
-                        <View style={styles.badgeGreen}>
-                            <Text style={styles.badgeGreenText}>• Segera</Text>
-                        </View>
-                    </View>
-                ) : (
-                    <Text style={styles.sessionTitle} numberOfLines={2}>
-                        <Text style={{ fontFamily: FONTS.bold }}>
-                            {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'}
-                        </Text>
-                        {' – '}{s.materi?.nama_materi || s.nama_materi || 'Materi'}
-                    </Text>
-                )}
+
 
                 <View style={styles.detailGrid}>
                     <View style={gridStyle}>
