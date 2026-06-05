@@ -10,7 +10,7 @@ import {
     ActivityIndicator,
     RefreshControl,
 } from 'react-native';
-import { Star, X, Clock, DollarSign } from 'lucide-react-native';
+import { Star, X, Clock, DollarSign, Bell } from 'lucide-react-native';
 import DimmedModal from '../components/DimmedModal';
 import { MODAL_WIDE_WIDTH, wideModalCardBase } from '../components/modalTheme';
 
@@ -20,6 +20,7 @@ import {
     fetchSesiDikonfirmasi,
 } from '../services/matchingService';
 import { getHistory } from '../services/historyService';
+import { fetchNotifikasi } from '../services/notifikasiService';
 import BottomNavbar from '../components/BottomNavbar';
 
 const ActivityGuruPage = ({
@@ -40,6 +41,7 @@ const ActivityGuruPage = ({
 
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [unreadNotif, setUnreadNotif] = useState(false);
     const [koordinat, setKoordinat] = useState({
         lat: -6.973416,
         lng: 107.630406,
@@ -63,11 +65,18 @@ const ActivityGuruPage = ({
     const muatUlangDataAktivitas = async (isPullRefresh = false) => {
         if (!isPullRefresh) setLoading(true);
         try {
-            const [resPermintaan, resKonfirmasi, resRiwayat] = await Promise.all([
+            const [resPermintaan, resKonfirmasi, resRiwayat, resNotif] = await Promise.all([
                 fetchPermintaanBaru(idGuru, koordinat.lat, koordinat.lng),
                 fetchSesiDikonfirmasi(idGuru),
                 getHistory('guru', idGuru),
+                fetchNotifikasi('guru', idGuru)
             ]);
+
+            if (resNotif && resNotif.success && Array.isArray(resNotif.data) && resNotif.data.length > 0) {
+                setUnreadNotif(true);
+            } else {
+                setUnreadNotif(false);
+            }
 
             // 1. PERMINTAAN
             if (resPermintaan.success && resPermintaan.data) {
@@ -279,6 +288,10 @@ const ActivityGuruPage = ({
 
             <View style={styles.topHeaderTitleArea}>
                 <Text style={styles.pageMainTitle}>Aktivitas</Text>
+                <TouchableOpacity onPress={() => onNavigate('Notifikasi')} style={styles.bellIconContainer}>
+                    <Bell size={24} color="#000" />
+                    {unreadNotif && <View style={styles.redDot} />}
+                </TouchableOpacity>
             </View>
 
             <View style={styles.tabSliderContainer}>
@@ -472,8 +485,26 @@ const styles = StyleSheet.create({
         paddingTop: 50,
         paddingHorizontal: 24,
         paddingBottom: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     pageMainTitle: { fontSize: 24, fontWeight: 'bold', color: '#000' },
+    bellIconContainer: {
+        position: 'relative',
+        padding: 4,
+    },
+    redDot: {
+        position: 'absolute',
+        top: 4,
+        right: 4,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: 'red',
+        borderWidth: 1,
+        borderColor: '#FFF',
+    },
 
     tabSliderContainer: {
         flexDirection: 'row',
