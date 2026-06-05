@@ -96,6 +96,27 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
     return chats.reduce((sum, chat) => sum + (chat.unread_count || 0), 0);
   }, [chats]);
 
+  
+  const formatWIB = (timestamp) => {
+    if (!timestamp) return '';
+
+    // Pastikan input berupa string (jika objek Date, ubah ke ISO string)
+    const str = timestamp instanceof Date ? timestamp.toISOString() : String(timestamp);
+
+    // Ambil pola jam dan menit (HH:mm) langsung dari teksnya
+    const match = str.match(/(\d{2}):(\d{2})/);
+    if (!match) return '';
+
+    let hours = parseInt(match[1], 10);
+    const minutes = match[2];
+
+    // Tambah 7 jam secara murni matematika (UTC ke WIB)
+    hours = (hours + 7) % 24;
+
+    // Gabungkan kembali dengan format titik (.) sesuai desain HUMANA
+    return `${String(hours).padStart(2, '0')}.${minutes}`;
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
@@ -179,13 +200,7 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
                     {/* Meta: Waktu & Badge */}
                     <View style={styles.chatMeta}>
                       <Text style={styles.chatTime}>
-                        {chat?.timestamp
-                          ? new Date(chat.timestamp).toLocaleTimeString('id-ID', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            timeZone: 'Asia/Jakarta'
-                          })
-                          : ''}
+                        {formatWIB(chat?.timestamp)}
                       </Text>
 
                       {chat?.unread_count > 0 && (
