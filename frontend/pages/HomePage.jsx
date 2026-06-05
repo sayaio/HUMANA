@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     StyleSheet, Text, View, Image, TouchableOpacity,
-    StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator, Animated, PanResponder, RefreshControl,
+    StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator, Animated, PanResponder, RefreshControl, Alert,
 } from 'react-native';
 
 import CustomAlert from '../components/CustomAlert';
 import BottomNavbar from '../components/BottomNavbar';
-import { fetchAllMapel } from '../services/MateriService';
+import { fetchMapelByJenjang } from '../services/MateriService';
 import { getActiveSchedule } from '../services/historyService';
 import {
     getMateriTerfavoritMurid,
@@ -19,6 +19,8 @@ import { Calendar, BookOpen, Wallet, FileText, Search, MessageSquare, User, Home
 
 const { width, height } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
+
+const JENJANG_OPTIONS = ['SD', 'SMP', 'SMA'];
 
 const SUBJECT_ICONS = {
     'Matematika': require('../assets/matematika.png'),
@@ -84,6 +86,8 @@ const HomePage = ({
     const role = userRole ? userRole.toLowerCase() : 'murid';
 
     const [isMateriVisible, setIsMateriVisible] = useState(false);
+    const [selectedJenjang, setSelectedJenjang] = useState(null);
+    const [mapelCacheByJenjang, setMapelCacheByJenjang] = useState({});
     const [slideAnim] = useState(new Animated.Value(height));
     const [allSubjects, setAllSubjects] = useState([]);
     const [loadingMapel, setLoadingMapel] = useState(false);
@@ -105,10 +109,48 @@ const HomePage = ({
         }
     }, [isMateriVisible]);
 
+    const resetMateriSheetState = () => {
+        setSelectedJenjang(null);
+        setMapelCacheByJenjang({});
+        setAllSubjects([]);
+        setLoadingMapel(false);
+    };
+
+    const openMateriSheet = () => {
+        resetMateriSheetState();
+        setIsMateriVisible(true);
+    };
+
     const closeMateriSheet = () => {
         Animated.timing(slideAnim, {
             toValue: height, duration: 250, useNativeDriver: true,
-        }).start(() => setIsMateriVisible(false));
+        }).start(() => {
+            setIsMateriVisible(false);
+            resetMateriSheetState();
+        });
+    };
+
+    const handleSelectJenjang = async (jenjang) => {
+        setSelectedJenjang(jenjang);
+
+        if (jenjang in mapelCacheByJenjang) {
+            setAllSubjects(mapelCacheByJenjang[jenjang]);
+            return;
+        }
+
+        setLoadingMapel(true);
+        setAllSubjects([]);
+        try {
+            const data = await fetchMapelByJenjang(jenjang);
+            setMapelCacheByJenjang(prev => ({ ...prev, [jenjang]: data }));
+            setAllSubjects(data);
+        } catch (err) {
+            Alert.alert('Error', err.message);
+            setSelectedJenjang(null);
+            setAllSubjects([]);
+        } finally {
+            setLoadingMapel(false);
+        }
     };
 
     const panResponder = useState(
@@ -125,22 +167,6 @@ const HomePage = ({
             },
         })
     )[0];
-
-    useEffect(() => {
-        if (!isMateriVisible) return;
-        const load = async () => {
-            setLoadingMapel(true);
-            try {
-                const data = await fetchAllMapel();
-                setAllSubjects(Array.isArray(data) ? data : (data ? [data] : []));
-            } catch (err) {
-                console.error('[HomePage] Gagal fetch mapel:', err);
-            } finally {
-                setLoadingMapel(false);
-            }
-        };
-        load();
-    }, [isMateriVisible]);
 
     const loadActiveSessions = useCallback(async () => {
         if (!userId || !userRole || userRole === '-') return;
@@ -456,7 +482,7 @@ const HomePage = ({
                         ) : (
                             <>
                                 <MenuItem icon={<Image source={require('../assets/pesansesi.png')} style={{ width: 37, height: 40, tintColor: '#FFF' }} />} label="Pesan Sesi" onPress={() => onNavigate?.('PesanSesi')} />
-                                <MenuItem icon={<Image source={require('../assets/materi.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Materi" onPress={() => setIsMateriVisible(true)} />
+                                <MenuItem icon={<Image source={require('../assets/materi.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Materi" onPress={openMateriSheet} />
                                 <MenuItem icon={<Image source={require('../assets/kalender.png')} style={{ width: 35, height: 35, tintColor: '#FFF' }} />} label="Jadwal Saya" onPress={() => onNavigate?.('Activity', 'aktif')} />
                             </>
                         )}
@@ -622,22 +648,51 @@ const HomePage = ({
                         <View style={styles.sheetHandleArea} {...panResponder.panHandlers}>
                             <View style={styles.sheetHandle} />
                         </View>
-                        {loadingMapel ? (
-                            <View style={[styles.centerContent, { paddingVertical: 40 }]}>
-                                <ActivityIndicator size="large" color="#284B7A" />
-                                <Text style={styles.loadingText}>Memuat pelajaran...</Text>
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <View style={styles.jenjangChipRow}>
+                                {JENJANG_OPTIONS.map(jenjang => (
+                                    <TouchableOpacity
+                                        key={jenjang}
+                                        style={[
+                                            styles.jenjangChip,
+                                            selectedJenjang === jenjang && styles.jenjangChipActive,
+                                        ]}
+                                        onPress={() => handleSelectJenjang(jenjang)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.jenjangChipText,
+                                                selectedJenjang === jenjang && styles.jenjangChipTextActive,
+                                            ]}
+                                        >
+                                            {jenjang}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
                             </View>
-                        ) : (
-                            <ScrollView showsVerticalScrollIndicator={false}>
-                                <Text style={styles.sheetTitle}>Semua Pelajaran</Text>
+                            {!selectedJenjang ? (
+                                <Text style={styles.emptyText}>
+                                    Pilih jenjang untuk melihat mata pelajaran.
+                                </Text>
+                            ) : loadingMapel ? (
+                                <View style={[styles.centerContent, { paddingVertical: 40 }]}>
+                                    <ActivityIndicator size="large" color="#284B7A" />
+                                    <Text style={styles.loadingText}>Memuat pelajaran...</Text>
+                                </View>
+                            ) : (
                                 <View style={styles.subjectGrid}>
                                     {allSubjects.length > 0
                                         ? allSubjects.map(renderSubjectItem)
-                                        : <Text style={styles.emptyText}>Tidak ada data mata pelajaran.</Text>
+                                        : (
+                                            <Text style={styles.emptyText}>
+                                                {`Tidak ada mata pelajaran untuk jenjang ${selectedJenjang}.`}
+                                            </Text>
+                                        )
                                     }
                                 </View>
-                            </ScrollView>
-                        )}
+                            )}
+                        </ScrollView>
                     </Animated.View>
                 </View>
             </Modal>
@@ -870,7 +925,25 @@ const styles = StyleSheet.create({
     },
     sheetHandleArea: { width: '100%', alignItems: 'center', paddingVertical: 12 },
     sheetHandle: { width: 44, height: 4, backgroundColor: '#DDE2EA', borderRadius: 2 },
-    sheetTitle: { fontFamily: 'SF-Pro-Display-Bold', fontSize: 17, color: '#1A1A2E', marginBottom: 16 },
+    jenjangChipRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginBottom: 20,
+        gap: 8,
+    },
+    jenjangChip: {
+        paddingHorizontal: 18,
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: '#F0F3F8',
+    },
+    jenjangChipActive: { backgroundColor: '#284B7A' },
+    jenjangChipText: {
+        fontFamily: 'SF-Pro-Display-Bold',
+        fontSize: 13,
+        color: '#666',
+    },
+    jenjangChipTextActive: { color: '#FFF' },
     subjectGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' },
     subjectItemContainer: { width: '25%', alignItems: 'center', marginBottom: 20 },
     subjectIconBox: {
