@@ -755,7 +755,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F5E9',
     paddingVertical: 4,
     paddingHorizontal: 10,
-    borderRadius: 8,
+    borderRadius: 15,
     borderWidth: 1,
     borderColor: '#4CAF50',
     flexDirection: 'row',
