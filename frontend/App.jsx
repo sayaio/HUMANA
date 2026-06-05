@@ -226,6 +226,7 @@ const App = () => {
               userData?.jurusan ||
               userData?.major ||
               '-',
+            kelas: userData?.kelas ?? null,
             is_active: userData?.is_active ?? 0,
           });
 
@@ -289,6 +290,7 @@ const App = () => {
         userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
       kelas_jurusan:
         userData?.kelas_jurusan || userData?.jurusan || userData?.major || '-',
+      kelas: userData?.kelas ?? null,
       is_active: userData?.is_active ?? 0,
     };
 
@@ -511,6 +513,7 @@ const App = () => {
                 onAlertClose={() => setShowLoginSuccessAlert(false)}
                 userId={profileData.id}
                 userRole={(profileData.role || 'murid').toLowerCase()}
+                kelasMurid={profileData.kelas}
             />
         );
     }
@@ -915,6 +918,7 @@ const App = () => {
         onAlertClose={() => setShowLoginSuccessAlert(false)}
         userId={profileData.id}
         userRole={(profileData.role || 'murid').toLowerCase()}
+        kelasMurid={profileData.kelas}
       />
     );
   }

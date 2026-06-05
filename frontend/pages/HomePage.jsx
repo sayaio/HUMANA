@@ -12,6 +12,7 @@ import {
     getMateriTerfavoritMurid,
     getRekomendasiMateriAcakList,
     formatJenjangTampilan,
+    jenjangDariKelasMurid,
 } from '../services/homeService';
 
 
@@ -81,7 +82,7 @@ const mapSesiKeJadwalAktifGuru = raw => {
 const HomePage = ({
     namaLengkap, email, onLogout, onSelectSubject,
     onNavigate, onPesanSesiPrefill, onLihatDetailMateri, onDetailPermintaan, onDetailSesiAktif,
-    jenjangMurid, showSuccessAlert, onAlertClose, userId, userRole
+    jenjangMurid, showSuccessAlert, onAlertClose, userId, userRole, kelasMurid
 }) => {
     const role = userRole ? userRole.toLowerCase() : 'murid';
 
@@ -91,6 +92,7 @@ const HomePage = ({
     const [slideAnim] = useState(new Animated.Value(height));
     const [allSubjects, setAllSubjects] = useState([]);
     const [loadingMapel, setLoadingMapel] = useState(false);
+    const [pendingAutoJenjang, setPendingAutoJenjang] = useState(null);
     const [activeSessions, setActiveSessions] = useState([]);
     const [loadingSessions, setLoadingSessions] = useState(false);
     const [materiFavorit, setMateriFavorit] = useState(null);
@@ -114,11 +116,19 @@ const HomePage = ({
         setMapelCacheByJenjang({});
         setAllSubjects([]);
         setLoadingMapel(false);
+        setPendingAutoJenjang(null);
     };
 
     const openMateriSheet = () => {
         resetMateriSheetState();
         setIsMateriVisible(true);
+
+        if (role === 'murid') {
+            const jenjang = jenjangDariKelasMurid(kelasMurid);
+            setPendingAutoJenjang(jenjang);
+        } else {
+            setPendingAutoJenjang(null);
+        }
     };
 
     const closeMateriSheet = () => {
@@ -152,6 +162,12 @@ const HomePage = ({
             setLoadingMapel(false);
         }
     };
+
+    useEffect(() => {
+        if (!isMateriVisible || !pendingAutoJenjang) return;
+        handleSelectJenjang(pendingAutoJenjang);
+        setPendingAutoJenjang(null);
+    }, [isMateriVisible, pendingAutoJenjang]);
 
     const panResponder = useState(
         PanResponder.create({

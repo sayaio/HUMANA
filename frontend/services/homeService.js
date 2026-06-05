@@ -15,6 +15,18 @@ export const kelasAngkaKeJenjang = kelasNum => {
   return { jenjang: 'SMA', kelas: `Kelas ${n - 9}` };
 };
 
+/** Map kolom kelas Murid (1–12) ke jenjang SD | SMP | SMA */
+export const jenjangDariKelasMurid = kelas => {
+  const n = Number(kelas);
+  if (Number.isNaN(n) || kelas === '-' || kelas == null || kelas === '') {
+    return null;
+  }
+  if (n >= 1 && n <= 6) return 'SD';
+  if (n >= 7 && n <= 9) return 'SMP';
+  if (n >= 10 && n <= 12) return 'SMA';
+  return null;
+};
+
 export const formatJenjangTampilan = (jenjang, jurusan) => {
   if (!jenjang) return '-';
   if (jurusan && jurusan !== 'Umum') return `${jenjang} — ${jurusan}`;
