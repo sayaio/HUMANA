@@ -12,6 +12,7 @@ exports.getChatList = async (req, res) => {
         }
 
         const data = await chatService.getLatestChatList(userId, role);
+        console.log('sample data[0]:', data[0]);
         const formattedData = Array.isArray(data) ? data : (data ? [data] : []);
 
         // Fix BigInt serialization dari COUNT(*)

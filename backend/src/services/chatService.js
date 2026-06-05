@@ -4,15 +4,16 @@ const getLatestChatList = async (userId, role) => {
   const field = role === 'murid' ? 'id_murid' : 'id_guru';
   const senderField = role === 'murid' ? 'guru' : 'murid';
 
-  const query = `
+const query = `
   SELECT c.*, G.nama_guru, M.nama_murid,
+    DATE_FORMAT(CONVERT_TZ(c.timestamp, '+00:00', '+07:00'), '%H:%i') AS waktu_chat,
     CAST((
-  SELECT COUNT(*) FROM Chat unread
-  WHERE unread.id_guru = c.id_guru
-  AND unread.id_murid = c.id_murid
-  AND unread.is_read = 0
-  AND unread.pengirim_role = ?
-) AS UNSIGNED) AS unread_count
+      SELECT COUNT(*) FROM Chat unread
+      WHERE unread.id_guru = c.id_guru
+      AND unread.id_murid = c.id_murid
+      AND unread.is_read = 0
+      AND unread.pengirim_role = ?
+    ) AS UNSIGNED) AS unread_count
   FROM Chat c
   JOIN Guru G ON c.id_guru = G.id_guru
   JOIN Murid M ON c.id_murid = M.id_murid
@@ -43,7 +44,9 @@ const getLatestChatList = async (userId, role) => {
 // Ambil semua pesan dalam satu percakapan
 const getAllMessagesByChatId = async (id_guru, id_murid) => {
   const query = `
-    SELECT * FROM Chat 
+    SELECT *,
+      DATE_FORMAT(CONVERT_TZ(timestamp, '+00:00', '+07:00'), '%H:%i') AS waktu_pesan
+    FROM Chat 
     WHERE id_guru = ? AND id_murid = ? 
     ORDER BY timestamp ASC
   `;

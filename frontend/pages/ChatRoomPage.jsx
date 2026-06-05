@@ -42,6 +42,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
       );
       const data = response.data.data || response.data;
       setMessages(Array.isArray(data) ? data : []);
+      console.log('pesan[0]:', JSON.stringify(messages[0]));
     } catch (error) {
       console.error('Gagal ambil chat:', error.response?.data || error.message);
     }
@@ -163,20 +164,13 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
             messages.map((item, index) => (
               <View
                 key={item.id_chat || index}
-                style={
-                  item.pengirim_role === userRole
-                    ? styles.bubbleRight
-                    : styles.bubbleLeft
-                }
+                style={item.pengirim_role === userRole ? styles.bubbleRight : styles.bubbleLeft}
               >
-                <Text
-                  style={
-                    item.pengirim_role === userRole
-                      ? styles.textRight
-                      : styles.textLeft
-                  }
-                >
+                <Text style={item.pengirim_role === userRole ? styles.textRight : styles.textLeft}>
                   {item.isi_pesan}
+                </Text>
+                <Text style={item.pengirim_role === userRole ? styles.timeRight : styles.timeLeft}>
+                  {item.waktu_pesan}
                 </Text>
               </View>
             ))
@@ -313,6 +307,8 @@ const styles = StyleSheet.create({
     height: 40,
     resizeMode: 'contain',
   },
+  timeRight: { fontSize: 10, color: 'rgba(255,255,255,0.7)', textAlign: 'right', marginTop: 4 },
+  timeLeft: { fontSize: 10, color: '#999', textAlign: 'left', marginTop: 4 },
 });
 
 export default ChatRoomPage;
