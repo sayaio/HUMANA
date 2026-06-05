@@ -9,7 +9,6 @@ import {
   StatusBar,
   useWindowDimensions,
   ActivityIndicator,
-  Alert,
   Animated,
   Modal,
   Dimensions,
@@ -34,6 +33,7 @@ import { fetchMapelByJenjang } from '../services/MateriService';
 import { fetchNotifikasi, clearNotifikasi } from '../services/notifikasiService';
 import BottomNavbar from '../components/BottomNavbar';
 import CustomAlert from '../components/CustomAlert';
+import { useAppAlert } from '../components/AppAlertProvider';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
@@ -92,6 +92,7 @@ const mapSesiHeaderKeJadwalAktif = raw => {
 };
 
 const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan }) => {
+  const { showInfo } = useAppAlert();
   const { width: windowWidth } = useWindowDimensions();
 
   const [permintaan, setPermintaan] = useState([]);
@@ -218,7 +219,7 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
       setMapelCacheByJenjang(prev => ({ ...prev, [jenjang]: data }));
       setAllSubjects(data);
     } catch (err) {
-      Alert.alert('Error', err.message);
+      showInfo('Error', err.message);
       setSelectedJenjang(null);
       setAllSubjects([]);
     } finally {

@@ -3,9 +3,9 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Alert,
   InteractionManager,
 } from 'react-native';
+import { useAppAlert } from './components/AppAlertProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth from '@react-native-firebase/auth';
 import SplashScreen from './pages/SplashScreen';
@@ -38,6 +38,7 @@ import PortfolioPage from './pages/PortfolioPage';
 import NotifikasiPage from './pages/NotifikasiPage';
 
 const App = () => {
+  const { showInfo } = useAppAlert();
   const DEV_SKIP_TO_PAYMENT = false;
 
   const [isAppLoading, setIsAppLoading] = useState(
@@ -340,7 +341,7 @@ const App = () => {
       setCurrentPage('Login');
     } catch (error) {
       InteractionManager.runAfterInteractions(() => {
-        Alert.alert('Error', 'Gagal keluar dari akun.');
+        showInfo('Error', 'Gagal keluar dari akun.');
       });
     }
   };
@@ -448,7 +449,7 @@ const App = () => {
                 onTolak={async (idPemesanan) => {
                     // Panggil API tolak permintaan
                     // Contoh: await tolakPermintaanAPI(idPemesanan);
-                    Alert.alert('Info', 'Permintaan ditolak');
+                    showInfo('Info', 'Permintaan ditolak');
                     setCurrentPage(detailPermintaanBackPage);
                 }}
                 onChat={(chatData) => {
@@ -459,13 +460,13 @@ const App = () => {
                 onSelesaikan={async (idPemesanan) => {
                     // Panggil API selesaikan sesi
                     // await selesaikanSesiAPI(idPemesanan);
-                    Alert.alert('Sukses', 'Sesi telah selesai');
+                    showInfo('Sukses', 'Sesi telah selesai');
                     setCurrentPage(detailPermintaanBackPage);
                 }}
                 onAjukanBatal={async (idPemesanan) => {
                     // Panggil API ajukan pembatalan
                     // await ajukanBatalAPI(idPemesanan);
-                    Alert.alert('Info', 'Pembatalan diajukan');
+                    showInfo('Info', 'Pembatalan diajukan');
                     setCurrentPage(detailPermintaanBackPage);
                 }}
             />
@@ -577,7 +578,7 @@ const App = () => {
             if (status === 'success_close') {
               setCurrentPage('Home');
               InteractionManager.runAfterInteractions(() => {
-                Alert.alert('Sukses', 'Pembayaran berhasil!');
+                showInfo('Sukses', 'Pembayaran berhasil!');
               });
               return;
             }
@@ -587,13 +588,13 @@ const App = () => {
               setCurrentPage('DetailPembayaran');
             } else if (status === 'success') {
               setCurrentPage('Home');
-              Alert.alert('Sukses', 'Pembayaran berhasil!');
+              showInfo('Sukses', 'Pembayaran berhasil!');
             } else if (status === 'pending') {
               setCurrentPage('Home');
-              Alert.alert('Info', 'Pembayaran pending.');
+              showInfo('Info', 'Pembayaran pending.');
             } else if (status === 'failed') {
               setCurrentPage('DetailPembayaran');
-              Alert.alert('Gagal', 'Pembayaran gagal.');
+              showInfo('Gagal', 'Pembayaran gagal.');
             } else {
               setCurrentPage('Home');
             }
@@ -858,7 +859,7 @@ const App = () => {
         tipePermintaan={selectedTipePermintaan}
         onBack={() => setCurrentPage(detailPermintaanBackPage)}
         onTolak={async idPemesanan => {
-          Alert.alert('Info', 'Permintaan ditolak');
+          showInfo('Info', 'Permintaan ditolak');
           setCurrentPage(detailPermintaanBackPage);
         }}
         onChat={chatData => {
@@ -870,7 +871,7 @@ const App = () => {
           setCurrentPage(detailPermintaanBackPage);
         }}
         onAjukanBatal={idPemesanan => {
-          Alert.alert('Info', 'Pembatalan diajukan');
+          showInfo('Info', 'Pembatalan diajukan');
           setCurrentPage(detailPermintaanBackPage);
         }}
       />
@@ -981,7 +982,7 @@ const App = () => {
           if (status === 'success_close') {
             setCurrentPage('Home');
             InteractionManager.runAfterInteractions(() => {
-              Alert.alert('Sukses', 'Pembayaran berhasil!');
+              showInfo('Sukses', 'Pembayaran berhasil!');
             });
             return;
           }
@@ -1000,11 +1001,11 @@ const App = () => {
           }
           InteractionManager.runAfterInteractions(() => {
             if (status === 'success')
-              Alert.alert('Sukses', 'Pembayaran berhasil!');
+              showInfo('Sukses', 'Pembayaran berhasil!');
             else if (status === 'pending')
-              Alert.alert('Info', 'Pembayaran pending.');
+              showInfo('Info', 'Pembayaran pending.');
             else if (status === 'failed')
-              Alert.alert('Gagal', 'Pembayaran gagal.');
+              showInfo('Gagal', 'Pembayaran gagal.');
           });
         }}
       />

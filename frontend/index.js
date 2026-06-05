@@ -4,12 +4,15 @@
 
 import { AppRegistry } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AppAlertProvider } from './components/AppAlertProvider';
 import App from './App';
 import { name as appName } from './app.json';
 
 AppRegistry.registerComponent(appName, () => () => (
   <SafeAreaProvider>
-    <App />
+    <AppAlertProvider>
+      <App />
+    </AppAlertProvider>
   </SafeAreaProvider>
 ));
 

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import {
     StyleSheet, Text, View, TouchableOpacity,
-    StatusBar, ScrollView, TextInput, ActivityIndicator, Alert
+    StatusBar, ScrollView, TextInput, ActivityIndicator
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PageHeader from '../components/PageHeader';
+import { useAppAlert } from '../components/AppAlertProvider';
 // Import API dari file service kamu
 import { updateAcademicProfile } from '../services/editProfileService';
 
@@ -21,6 +22,7 @@ const InputField = ({ label, value, onChangeText }) => (
 );
 
 const EditAcademicProfilePage = ({ profileData, onSave, onCancel }) => {
+    const { showInfo } = useAppAlert();
     const [education, setEducation] = useState(profileData.education);
     const [major, setMajor] = useState(profileData.major);
 
@@ -78,11 +80,11 @@ const EditAcademicProfilePage = ({ profileData, onSave, onCancel }) => {
                 onSave(updatedFields);
 
             } else {
-                Alert.alert("Gagal Menyimpan", result.message || "Pastikan data sudah benar.");
+                showInfo('Gagal Menyimpan', result.message || 'Pastikan data sudah benar.');
             }
         } catch (error) {
             console.log("Error Update Academic Profile:", error);
-            Alert.alert("Error Jaringan", "Gagal terhubung ke server.");
+            showInfo('Error Jaringan', 'Gagal terhubung ke server.');
         } finally {
             setIsLoading(false);
         }

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     StyleSheet, Text, View, Image, TouchableOpacity,
-    StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator, Animated, PanResponder, RefreshControl, Alert,
+    StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator, Animated, PanResponder, RefreshControl,
 } from 'react-native';
 
 import CustomAlert from '../components/CustomAlert';
+import { useAppAlert } from '../components/AppAlertProvider';
 import BottomNavbar from '../components/BottomNavbar';
 import { fetchMapelByJenjang } from '../services/MateriService';
 import { getActiveSchedule } from '../services/historyService';
@@ -87,6 +88,7 @@ const HomePage = ({
     onNavigate, onPesanSesiPrefill, onLihatDetailMateri, onDetailPermintaan, onDetailSesiAktif,
     jenjangMurid, showSuccessAlert, onAlertClose, userId, userRole, kelasMurid
 }) => {
+    const { showInfo } = useAppAlert();
     const role = userRole ? userRole.toLowerCase() : 'murid';
 
     const [isMateriVisible, setIsMateriVisible] = useState(false);
@@ -158,7 +160,7 @@ const HomePage = ({
             setMapelCacheByJenjang(prev => ({ ...prev, [jenjang]: data }));
             setAllSubjects(data);
         } catch (err) {
-            Alert.alert('Error', err.message);
+            showInfo('Error', err.message);
             setSelectedJenjang(null);
             setAllSubjects([]);
         } finally {

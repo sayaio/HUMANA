@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  TextInput, Alert, ActivityIndicator, StatusBar,
+  TextInput, ActivityIndicator, StatusBar,
 } from 'react-native';
 import { materiGuruService } from '../services/materiGuruService';
 import PageHeader from '../components/PageHeader';
+import { useAppAlert } from '../components/AppAlertProvider';
 
 const FONTS = { bold: 'SF-Pro-Display-Bold', regular: 'SF-Pro-Display-Regular' };
 const JENJANG_OPTIONS = ['Semua', 'SD', 'SMP', 'SMA'];
 
 const TambahMateriGuruPage = ({ onBack, idGuru }) => {
+  const { showInfo } = useAppAlert();
   const [semuaMateri, setSemuaMateri]       = useState([]);
   const [terpilih, setTerpilih]             = useState(new Set()); 
   const [terpilihAwal, setTerpilihAwal]     = useState(new Set()); 
@@ -31,7 +33,7 @@ const TambahMateriGuruPage = ({ onBack, idGuru }) => {
         setTerpilih(new Set(idSet));
         setTerpilihAwal(new Set(idSet));
       } catch (error) {
-        Alert.alert('Error', error.message);
+        showInfo('Error', error.message);
       } finally {
         setLoading(false);
       }
@@ -64,7 +66,7 @@ const TambahMateriGuruPage = ({ onBack, idGuru }) => {
       terpilih.size === terpilihAwal.size &&
       [...terpilih].every(id => terpilihAwal.has(id));
     if (tidakAdaPerubahan) {
-      Alert.alert('Info', 'Tidak ada perubahan untuk disimpan.');
+      showInfo('Info', 'Tidak ada perubahan untuk disimpan.');
       return;
     }
     setSaving(true);
@@ -72,9 +74,9 @@ const TambahMateriGuruPage = ({ onBack, idGuru }) => {
       // Kirim SELURUH daftar terpilih; backend menyinkronkan (insert baru + hapus yang dilepas).
       await materiGuruService.simpanMateriGuru(idGuru, [...terpilih]);
       setTerpilihAwal(new Set(terpilih));
-      Alert.alert('Berhasil 🎉', 'Perubahan materi berhasil disimpan!');
+      showInfo('Berhasil', 'Perubahan materi berhasil disimpan!');
     } catch (error) {
-      Alert.alert('Error', error.message);
+      showInfo('Error', error.message);
     } finally {
       setSaving(false);
     }

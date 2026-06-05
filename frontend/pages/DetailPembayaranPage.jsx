@@ -2,30 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, ScrollView } from 'react-native';
 import { prosesCod, prosesMidtrans } from '../services/bankerService';
 import { getSesiDetail } from '../services/bankerService';
-import CustomAlert from '../components/CustomAlert';
 import DimmedModal from '../components/DimmedModal';
+import { useAppAlert } from '../components/AppAlertProvider';
 import { batalkanSesi } from '../services/batalSesiService';
 import { pemesananService } from '../services/pemesananService';
 import PageHeader from '../components/PageHeader';
 
 const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDilepas }) => {
+    const { showInfo, showConfirm } = useAppAlert();
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [showMethodModal, setShowMethodModal] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
     const [displayData, setDetailSesi] = useState(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
-
-    // State untuk mengontrol CustomAlert secara dinamis[cite: 10]
-    const [alertVisible, setAlertVisible] = useState(false);
-    // 'batal' = murid mengajukan batal, 'dilepas' = guru melepas sesi, '' = peringatan biasa
-    const [alertMode, setAlertMode] = useState('');
-    const [alertConfig, setAlertConfig] = useState({
-        type: 'success',
-        title: '',
-        message: '',
-        isConfirmation: false // Properti tambahan untuk membedakan mode Ya/Tidak
-    });
 
     const idSesi = sessionData?.id_sesi || sessionData?.id_pemesanan;
 
@@ -37,14 +27,14 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                 const res = await pemesananService.cekStatusPemesanan(idSesi);
                 if (res?.success && res.status_pemesanan === 'menunggu konfirmasi') {
                     clearInterval(interval);
-                    setAlertMode('dilepas');
-                    setAlertConfig({
-                        type: 'gagal',
-                        title: 'Mencari Guru Lain',
-                        message: 'Guru berhalangan. Kami carikan guru lain untuk sesimu.',
-                        isConfirmation: false,
-                    });
-                    setAlertVisible(true);
+                    showInfo(
+                        'Mencari Guru Lain',
+                        'Guru berhalangan. Kami carikan guru lain untuk sesimu.',
+                        {
+                            type: 'gagal',
+                            onClose: () => onSesiDilepas?.(),
+                        },
+                    );
                 }
             } catch (e) {
                 // Diamkan error polling.
@@ -90,23 +80,17 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
 
     // Fungsi navigasi kembali dengan CustomAlert (Ya/Tidak)[cite: 8, 10]
     const handleBackWithConfirmation = () => {
-        setAlertMode('batal');
-        setAlertConfig({
-            type: 'gagal', // Menggunakan ikon gagal sebagai tanda peringatan
-            title: 'Batalkan sesi?',
-            message: 'Pesanan akan dibatalkan dan kamu kembali ke halaman pemesanan.',
-            isConfirmation: true
-        });
-        setAlertVisible(true);
+        showConfirm(
+            'Batalkan sesi?',
+            'Pesanan akan dibatalkan dan kamu kembali ke halaman pemesanan.',
+            prosesBatalMurid,
+        );
     };
 
-    // Proses pembatalan oleh murid sebelum bayar (kasus 1: pemesanan dihapus).
     const prosesBatalMurid = async () => {
-        setAlertVisible(false);
         const id = sessionData?.id_sesi || sessionData?.id_pemesanan;
         if (!id) { onBack && onBack(); return; }
         await batalkanSesi(id, 'murid');
-        setAlertMode('');
         onBack && onBack();
     };
 
@@ -114,13 +98,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
         const idSesi = sessionData?.id_sesi || sessionData?.id_pemesanan;
 
         if (!selectedMethod) {
-            setAlertConfig({
-                type: 'gagal',
-                title: 'Peringatan',
-                message: 'Mohon pilih metode pembayaran terlebih dahulu.',
-                isConfirmation: false
-            });
-            setAlertVisible(true);
+            showInfo('Peringatan', 'Mohon pilih metode pembayaran terlebih dahulu.');
             return;
         }
 
@@ -137,13 +115,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                 }
             } catch (error) {
                 setIsProcessing(false);
-                setAlertConfig({
-                    type: 'gagal',
-                    title: 'Gagal',
-                    message: error.message || 'Terjadi kesalahan sistem.',
-                    isConfirmation: false
-                });
-                setAlertVisible(true);
+                showInfo('Gagal', error.message || 'Terjadi kesalahan sistem.');
             }
             return;
         }
@@ -162,13 +134,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                 }
             } catch (error) {
                 setIsProcessing(false);
-                setAlertConfig({
-                    type: 'gagal',
-                    title: 'Gagal Transaksi',
-                    message: error.message || 'Gagal terhubung ke sistem pembayaran.',
-                    isConfirmation: false
-                });
-                setAlertVisible(true);
+                showInfo('Gagal Transaksi', error.message || 'Gagal terhubung ke sistem pembayaran.');
             }
         }
     };
@@ -304,30 +270,6 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                     </View>
             </DimmedModal>
 
-            {/* CUSTOM ALERT KONFIRMASI / PERINGATAN[cite: 10] */}
-            <CustomAlert 
-                visible={alertVisible}
-                type={alertConfig.type}
-                title={alertConfig.title}
-                message={alertConfig.message}
-                isConfirmation={alertConfig.isConfirmation} // Mengirim mode Ya/Tidak ke CustomAlert
-                onClose={() => {
-                    setAlertVisible(false);
-                    // Jika guru melepas sesi, alihkan murid untuk mencari guru lain.
-                    if (alertMode === 'dilepas') {
-                        setAlertMode('');
-                        if (onSesiDilepas) onSesiDilepas();
-                    }
-                }}
-                onConfirm={() => {
-                    // "Ya" hanya muncul pada konfirmasi pembatalan oleh murid.
-                    if (alertMode === 'batal') {
-                        prosesBatalMurid();
-                    } else {
-                        setAlertVisible(false);
-                    }
-                }}
-            />
         </View>
     );
 };

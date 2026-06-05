@@ -10,7 +10,6 @@ import {
   Linking,
   ActivityIndicator,
   PermissionsAndroid,
-  Alert,
 } from 'react-native';
 import DimmedModal from '../components/DimmedModal';
 import { MODAL_WIDE_WIDTH, wideModalCardBase } from '../components/modalTheme';
@@ -18,6 +17,7 @@ import { WebView } from 'react-native-webview'; // Import WebView untuk peta int
 import Geolocation from '@react-native-community/geolocation';
 import { pemesananService } from '../services/pemesananService';
 import PageHeader from '../components/PageHeader';
+import { useAppAlert } from '../components/AppAlertProvider';
 import LocationPickerModal from '../components/LocationPickerModal';
 import PoinSVG from '../components/mapsPoint';
 import MapsSVG from '../components/mapsSVG';
@@ -41,6 +41,7 @@ const MONTHS = [
 ];
 
 const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }) => {
+  const { showInfo } = useAppAlert();
   // === STATE FORM ===
   const [tanggal, setTanggal] = useState(null);
   const [waktuMulai, setWaktuMulai] = useState('');
@@ -98,7 +99,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
         const data = await pemesananService.getDaftarMapel(jenjang);
         setDaftarMapelDB(data);
       } catch (error) {
-        Alert.alert(
+        showInfo(
           'Error',
           error.message || 'Gagal memuat daftar mata pelajaran',
         );
@@ -201,7 +202,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
         );
         setDaftarMateriDB(data);
       } catch (error) {
-        Alert.alert('Error', error.message || 'Gagal memuat daftar materi');
+        showInfo('Error', error.message || 'Gagal memuat daftar materi');
       } finally {
         setLoadingMateri(false);
       }
@@ -469,7 +470,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
       !selectedMateriId ||
       !locationAddress
     ) {
-      Alert.alert(
+      showInfo(
         'Form Belum Lengkap',
         'Mohon lengkapi semua field atau pastikan Anda sudah login kembali.',
       );
@@ -515,7 +516,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
       }
     } catch (error) {
       console.error('Error pada saat submit form:', error);
-      Alert.alert(
+      showInfo(
         'Gagal Menyimpan',
         error.message || 'Gagal terhubung ke server backend.',
       );
@@ -529,7 +530,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
 
     Linking.canOpenURL(url)
       ? Linking.openURL(url)
-      : Alert.alert('Error', 'Tidak dapat membuka Google Maps');
+      : showInfo('Error', 'Tidak dapat membuka Google Maps');
   };
 
   // === KONSTANTA DROPDOWN ===
@@ -857,7 +858,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
                 isOpen={openWaktuSelesai}
                 onToggle={val => {
                   if (!waktuMulai) {
-                    Alert.alert(
+                    showInfo(
                       'Pilih Waktu Mulai',
                       'Pilih waktu mulai terlebih dahulu.',
                     );
@@ -936,7 +937,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
           isOpen={openMapel}
           onToggle={val => {
             if (!jenjang) {
-              Alert.alert('Pilih Jenjang', 'Pilih jenjang terlebih dahulu.');
+              showInfo('Pilih Jenjang', 'Pilih jenjang terlebih dahulu.');
               return;
             }
             closeAllDropdowns('Mata Pelajaran');
@@ -970,7 +971,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
           isOpen={openMateri}
           onToggle={val => {
             if (!mapelSelected || !kelas) {
-              Alert.alert(
+              showInfo(
                 'Belum Lengkap',
                 'Pilih mata pelajaran dan kelas terlebih dahulu.',
               );

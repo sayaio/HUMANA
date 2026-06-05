@@ -7,7 +7,6 @@ import {
   StatusBar,
   ScrollView,
   TextInput,
-  Alert,
   ActivityIndicator,
   useWindowDimensions,
   KeyboardAvoidingView,
@@ -20,6 +19,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { postFeedback, fetchFeedbackBySesi } from '../services/feedbackService';
 import PageHeader from '../components/PageHeader';
+import { useAppAlert } from '../components/AppAlertProvider';
 import { getDokumentasi } from '../services/dokumentasiService';
 import { API_URL } from '../src/config';
 
@@ -32,6 +32,7 @@ const resolveFotoUri = fotoPath => {
 const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) => {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const { showInfo } = useAppAlert();
   const isGuru = userRole === 'guru';
 
   const [rating, setRating] = useState(0);
@@ -140,12 +141,12 @@ const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) 
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      Alert.alert('Perhatian', 'Silakan pilih bintang terlebih dahulu.');
+      showInfo('Perhatian', 'Silakan pilih bintang terlebih dahulu.');
       return;
     }
 
     if (!feedback.trim()) {
-      Alert.alert('Perhatian', 'Komentar tidak boleh kosong.');
+      showInfo('Perhatian', 'Komentar tidak boleh kosong.');
       return;
     }
 
@@ -159,9 +160,7 @@ const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) 
 
       const result = await postFeedback(payload);
       if (result.success) {
-        setTimeout(() => {
-          Alert.alert('Berhasil', 'Terima kasih atas ulasan Anda!');
-        }, 100);
+        showInfo('Berhasil', 'Terima kasih atas ulasan Anda!');
         setIsSubmitted(true);
       } else if (
         result.message &&
@@ -169,12 +168,12 @@ const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) 
       ) {
         // Sudah pernah dikirim (mis. dari perangkat/sesi lain) -> kunci form.
         setIsSubmitted(true);
-        Alert.alert('Info', result.message);
+        showInfo('Info', result.message);
       } else {
-        Alert.alert('Gagal', result.message || 'Gagal menyimpan feedback.');
+        showInfo('Gagal', result.message || 'Gagal menyimpan feedback.');
       }
     } catch (error) {
-      Alert.alert('Error', 'Terjadi kesalahan koneksi.');
+      showInfo('Error', 'Terjadi kesalahan koneksi.');
     } finally {
       setIsSubmitting(false);
     }
