@@ -227,13 +227,15 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                 <View style={styles.contentWrapper}>
                     <Text style={styles.sectionTitle}>DETAIL PERMINTAAN</Text>
 
-                    {/* MATA PELAJARAN DINAMIS */}
+                    {/* MATA PELAJARAN - MATERI DINAMIS */}
                     <View style={styles.subjectBox}>
                         <View style={styles.subjectRow}>
                             <View>
                                 <Text style={styles.label}>Mata Pelajaran</Text>
                                 <Text style={styles.valueText}>
                                     {sessionData?.mata_pelajaran || sessionData?.nama_mapel || 'Mata Pelajaran'}
+                                    {' - '}
+                                    {sessionData?.nama_materi || 'Materi'}
                                 </Text>
                             </View>
                             <Text style={styles.mathSymbol}>∑</Text>
@@ -241,11 +243,19 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                     </View>
 
                     <View style={styles.rowContainer}>
-                        {/* TINGKATAN DINAMIS */}
-                        <View style={[styles.smallBox, { marginRight: 15 }]}>
-                            <Text style={styles.label}>Tingkatan</Text>
+                        {/* KELAS DINAMIS */}
+                        <View style={[styles.smallBox, { marginRight: 10 }]}>
+                            <Text style={styles.label}>Kelas</Text>
                             <Text style={styles.smallValueText}>
-                                {sessionData?.jenjang ? `${sessionData.jenjang} - Kelas ${sessionData?.kelas || ''}` : (sessionData?.tingkatan || '-')}
+                                {sessionData?.kelas ? `${String(sessionData.kelas).replace(/^Kelas\s*/i, '')} - ${sessionData?.jenjang || ''}` : (sessionData?.jenjang || '-')}
+                            </Text>
+                        </View>
+
+                        {/* TANGGAL DINAMIS */}
+                        <View style={[styles.smallBox, { marginRight: 10 }]}>
+                            <Text style={styles.label}>Tanggal</Text>
+                            <Text style={styles.smallValueText}>
+                                {sessionData?.tanggal || '-'}
                             </Text>
                         </View>
 
@@ -328,7 +338,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'flex-end', // Memastikan elemen berkumpul di bawah
         paddingBottom: 60, // Jarak aman dari navigasi bar HP
-        marginTop: 60,
+        marginTop: 80,
     },
 
     sectionTitle: { fontSize: 12, fontWeight: 'bold', color: '#7A7A7A', marginBottom: 12 },
