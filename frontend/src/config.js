@@ -4,7 +4,7 @@
 // Tidak ada lagi logika rebutan IP — semua HP memakai alamat yang sama.
 
 // 1. URL backend yang sudah online (production). GANTI dengan URL Render kamu.
-const RENDER_URL = 'https://NAMA-APP-KAMU.onrender.com/api';
+const RENDER_URL = 'https://humana-test.onrender.com/api';
 
 // 2. (Opsional) Untuk development lokal di laptop:
 //    set USE_LOCAL = true dan isi LOCAL_URL dengan IP laptop kamu.
