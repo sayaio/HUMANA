@@ -51,3 +51,20 @@ export const fetchGuruRating = async (idGuru) => {
         return { success: false, message: "Gagal memuat profil dari server" };
     }
 };
+
+export const fetchMuridProfile = async (idMurid) => {
+    try {
+        const response = await fetch(`${API_URL}/profile-murid/${idMurid}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error pada fetchMuridProfile:', error);
+        return { success: false, message: 'Gagal memuat profil dari server' };
+    }
+};

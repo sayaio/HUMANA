@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     StyleSheet, Text, View, Image, TouchableOpacity,
-    StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator, Animated, PanResponder
+    StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator, Animated, PanResponder, RefreshControl,
 } from 'react-native';
 
 import CustomAlert from '../components/CustomAlert';
@@ -41,9 +41,44 @@ const formatRupiah = (angka) => {
     return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
 };
 
+/** Pemetaan sesi header guru — sama tab Jadwal Aktif di ActivityGuruPage (bukan Permintaan). */
+const mapSesiKeJadwalAktifGuru = raw => {
+    const status = (raw.status_pemesanan || 'dikonfirmasi').toLowerCase();
+    const tipe = status === 'berlangsung' ? 'Berlangsung' : 'Aktif';
+    const harga =
+        raw.harga_total ||
+        raw.tarif ||
+        raw.bayaran ||
+        ((raw.biaya_sesi || 0) + (raw.biaya_jarak || 0));
+    return {
+        item: {
+            id: raw.id_pemesanan,
+            id_pemesanan: raw.id_pemesanan,
+            id_murid: raw.id_murid,
+            nama_murid: raw.nama_murid,
+            materi: raw.nama_materi || raw.materi?.nama_materi,
+            nama_materi: raw.nama_materi || raw.materi?.nama_materi,
+            nama_mapel: raw.nama_mapel || raw.mata_pelajaran?.nama_mapel,
+            jenjang_pendidikan: raw.jenjang_pendidikan,
+            waktu_mulai: raw.waktu_mulai,
+            waktu_selesai: raw.waktu_selesai,
+            waktu_string: raw.waktu_string,
+            harga_total: harga,
+            biaya_sesi: raw.biaya_sesi,
+            biaya_jarak: raw.biaya_jarak,
+            harga,
+            lokasi_sesi: raw.lokasi_sesi || raw.lokasi || raw.alamat,
+            status_pemesanan:
+                status === 'berlangsung' ? 'berlangsung' : 'dikonfirmasi',
+            tipe,
+        },
+        tipe,
+    };
+};
+
 const HomePage = ({
     namaLengkap, email, onLogout, onSelectSubject,
-    onNavigate, onPesanSesiPrefill, onLihatDetailMateri,
+    onNavigate, onPesanSesiPrefill, onLihatDetailMateri, onDetailPermintaan, onDetailSesiAktif,
     jenjangMurid, showSuccessAlert, onAlertClose, userId, userRole
 }) => {
     const role = userRole ? userRole.toLowerCase() : 'murid';
@@ -57,6 +92,7 @@ const HomePage = ({
     const [materiFavorit, setMateriFavorit] = useState(null);
     const [rekomendasiList, setRekomendasiList] = useState([]);
     const [loadingMateriRekom, setLoadingMateriRekom] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [alertConfig, setAlertConfig] = useState({
         visible: false, type: 'success', title: '', message: ''
     });
@@ -106,56 +142,58 @@ const HomePage = ({
         load();
     }, [isMateriVisible]);
 
-    useEffect(() => {
+    const loadActiveSessions = useCallback(async () => {
         if (!userId || !userRole || userRole === '-') return;
-        const load = async () => {
-            setLoadingSessions(true);
-            try {
-                const result = await getActiveSchedule(userRole, userId);
-                if (result?.success) {
-                    const raw = result.data;
-                    setActiveSessions(Array.isArray(raw) ? raw : (raw ? [raw] : []));
-                } else {
-                    setActiveSessions([]);
-                }
-            } catch (e) {
+        setLoadingSessions(true);
+        try {
+            const result = await getActiveSchedule(userRole, userId);
+            if (result?.success) {
+                const raw = result.data;
+                setActiveSessions(Array.isArray(raw) ? raw : (raw ? [raw] : []));
+            } else {
                 setActiveSessions([]);
-            } finally {
-                setLoadingSessions(false);
             }
-        };
-        load();
+        } catch {
+            setActiveSessions([]);
+        } finally {
+            setLoadingSessions(false);
+        }
     }, [userId, userRole]);
 
-    useEffect(() => {
+    const loadMateriRekom = useCallback(async () => {
         if (role !== 'murid' || !userId) return;
-
-        let aktif = true;
-        const muatMateriRekom = async () => {
-            setLoadingMateriRekom(true);
-            try {
-                const [favorit, rekomendasi] = await Promise.all([
-                    getMateriTerfavoritMurid(userId),
-                    getRekomendasiMateriAcakList(5, jenjangMurid),
-                ]);
-                if (!aktif) return;
-
-                setMateriFavorit(favorit);
-                setRekomendasiList(Array.isArray(rekomendasi) ? rekomendasi : []);
-            } catch (err) {
-                console.error('[HomePage] Gagal muat materi rekom:', err);
-                if (aktif) {
-                    setMateriFavorit(null);
-                    setRekomendasiList([]);
-                }
-            } finally {
-                if (aktif) setLoadingMateriRekom(false);
-            }
-        };
-
-        muatMateriRekom();
-        return () => { aktif = false; };
+        setLoadingMateriRekom(true);
+        try {
+            const [favorit, rekomendasi] = await Promise.all([
+                getMateriTerfavoritMurid(userId),
+                getRekomendasiMateriAcakList(5, jenjangMurid),
+            ]);
+            setMateriFavorit(favorit);
+            setRekomendasiList(Array.isArray(rekomendasi) ? rekomendasi : []);
+        } catch (err) {
+            console.error('[HomePage] Gagal muat materi rekom:', err);
+            setMateriFavorit(null);
+            setRekomendasiList([]);
+        } finally {
+            setLoadingMateriRekom(false);
+        }
     }, [userId, role, jenjangMurid]);
+
+    useEffect(() => {
+        loadActiveSessions();
+    }, [loadActiveSessions]);
+
+    useEffect(() => {
+        loadMateriRekom();
+    }, [loadMateriRekom]);
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        const tasks = [loadActiveSessions()];
+        if (role === 'murid') tasks.push(loadMateriRekom());
+        await Promise.all(tasks);
+        setRefreshing(false);
+    };
 
     useEffect(() => {
         if (showSuccessAlert) {
@@ -222,9 +260,22 @@ const HomePage = ({
         // Lebar card murni dihitung dinamis agar card kedua sedikit mengintip secara estetis
         const cardWidth = width - 40;
 
-        return (
-            // Jarak antar-card (gap) diatur langsung menggunakan marginRight di sini
-            <View style={{ width: cardWidth, marginRight: 16 }}>
+        const bukaDetailSesi = () => {
+            if (role === 'murid') {
+                if (onDetailSesiAktif) onDetailSesiAktif(s);
+                return;
+            }
+            if (role === 'guru' && onDetailPermintaan) {
+                const { item, tipe } = mapSesiKeJadwalAktifGuru(s);
+                onDetailPermintaan(item, tipe);
+            }
+        };
+
+        const cardDapatDiklik =
+            (role === 'murid' && onDetailSesiAktif) ||
+            (role === 'guru' && onDetailPermintaan);
+
+        const cardInner = (
                 <View style={[styles.sessionCard, { marginBottom: 0, marginRight: 0, width: '100%' }]}>
                     <Text style={styles.cardLabel}>SESI HARI INI</Text>
 
@@ -286,6 +337,17 @@ const HomePage = ({
                         </View>
                     )}
                 </View>
+        );
+
+        return (
+            <View style={{ width: cardWidth, marginRight: 16 }}>
+                {cardDapatDiklik ? (
+                    <TouchableOpacity activeOpacity={1} onPress={bukaDetailSesi}>
+                        {cardInner}
+                    </TouchableOpacity>
+                ) : (
+                    cardInner
+                )}
             </View>
         );
     };
@@ -327,7 +389,9 @@ const HomePage = ({
                         {renderSessionItem({ item })}
                     </View>
                 )}
-                keyExtractor={(item, index) => item.id_jadwal?.toString() || index.toString()}
+                keyExtractor={(item, index) =>
+                    item.id_pemesanan?.toString() || item.id_jadwal?.toString() || index.toString()
+                }
                 horizontal
 
                 pagingEnabled={false}
@@ -358,6 +422,14 @@ const HomePage = ({
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
                 nestedScrollEnabled
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        colors={['#284B7A']}
+                        tintColor="#284B7A"
+                    />
+                }
             >
                 <View style={styles.headerSection}>
                     <View style={styles.headerBackground}>

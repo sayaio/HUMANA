@@ -14,14 +14,11 @@ import {
   Image,
   Keyboard,
 } from 'react-native';
-import BackIconSvg from '../components/BackIconSvg';
-
-const HEADER_OFFSET =
-  Platform.OS === 'android'
-    ? (StatusBar.currentHeight || 0) + 55
-    : 90;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BackButton from '../components/BackButton';
 
 const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
+  const insets = useSafeAreaInsets();
   const scrollViewRef = useRef();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
@@ -128,10 +125,8 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
         translucent={true}
       />
 
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <BackIconSvg size={16} color="#FFF" />
-        </TouchableOpacity>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <BackButton onPress={onBack} variant="dark" label="" style={styles.backBtn} />
 
         <View style={[styles.avatar, { backgroundColor: color }]}>
           <Text style={styles.avatarText}>{initials}</Text>
@@ -150,7 +145,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
       <KeyboardAvoidingView
         style={styles.contentContainer}
         behavior="padding"
-        keyboardVerticalOffset={HEADER_OFFSET}
+        keyboardVerticalOffset={insets.top + 55}
       >
         <ScrollView
           ref={scrollViewRef}
@@ -191,7 +186,12 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
         <View style={[styles.bottomWrapper, { paddingBottom: bottomPad }]}>
           <View style={styles.inputBar}>
             <TouchableOpacity style={styles.plusBtn}>
-              <Text style={styles.plusIcon}>⊕</Text>
+              {/* ✅ DIUBAH: Menggunakan Image assets/lingkaranplus.png pengganti emoji ⊕ */}
+              <Image 
+                source={require('../assets/lingkaranplus.png')} 
+                style={styles.plusIconImage} 
+                resizeMode="contain"
+              />
             </TouchableOpacity>
 
             <View style={styles.inputContainer}>
@@ -232,9 +232,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#284B7A',
     paddingHorizontal: 15,
     paddingBottom: 15,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 40 : 40,
   },
-  backBtn: { padding: 5, marginRight: 10 },
+  backBtn: { marginRight: 6, flexShrink: 0 },
   avatar: {
     width: 44,
     height: 44,
@@ -289,8 +288,9 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     backgroundColor: '#FFF',
   },
-  plusBtn: { marginRight: 10 },
-  plusIcon: { fontSize: 24, color: '#333' },
+  plusBtn: { marginRight: 10, justifyContent: 'center', alignItems: 'center' },
+  // ✅ TAMBAHAN: Style khusus image icon lingkaran plus agar pas di input bar
+  plusIconImage: { width: 24, height: 24 },
   inputContainer: {
     flex: 1,
     flexDirection: 'row',

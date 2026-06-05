@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, StatusBar } from 'react-native';
+import PageHeader from '../components/PageHeader';
 
 const ResetPasswordPage = ({ onBack }) => {
   const [email, setEmail] = useState('');
@@ -12,16 +13,10 @@ const ResetPasswordPage = ({ onBack }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={false} />
-      
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={styles.backIcon}>{'❮'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Reset password</Text>
-        <View style={{ width: 40 }} />
-      </View>
+
+      <PageHeader title="Reset password" onBack={onBack} />
 
       <View style={styles.content}>
         {!isSent ? (
@@ -65,16 +60,12 @@ const ResetPasswordPage = ({ onBack }) => {
           By continuing I agree with the <Text style={styles.linkText}>Terms & Conditions</Text>,{"\n"}<Text style={styles.linkText}>Privacy Policy.</Text>
         </Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FAFAFA' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
-  backBtn: { padding: 10, marginLeft: -10 },
-  backIcon: { fontSize: 20, color: '#000', fontWeight: 'bold' },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
   content: { flex: 1, paddingHorizontal: 30, paddingTop: 50 },
   subtitle: { fontSize: 14, color: '#555', textAlign: 'center', marginBottom: 30, lineHeight: 22 },
   inputContainer: { marginBottom: 30 },

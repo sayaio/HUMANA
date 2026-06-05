@@ -28,6 +28,7 @@ import { portfolioService } from '../services/portfolioService';
 import { fetchSesiDikonfirmasi } from '../services/matchingService';
 import BottomNavbar from '../components/BottomNavbar';
 import { materiGuruService } from '../services/materiGuruService';
+import EditSVG from '../components/EditIconSvg';
 
 // Import asset logo yang sama dengan HomePage.jsx
 const LOGO_SOURCE = require('../assets/logo_humana.png');
@@ -77,7 +78,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
     };
 
     const handleToggleAvailability = async newValue => {
-        const idGuruTerpilih = guruData?.id || guruData?.id_guru; 
+        const idGuruTerpilih = guruData?.id || guruData?.id_guru;
         if (!idGuruTerpilih) {
             Alert.alert(
                 'Data Tidak Valid',
@@ -147,7 +148,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                 onPress: async () => {
                     try {
                         await portfolioService.hapusPortfolio(idPortfolio);
-                        await loadPortofolios(); 
+                        await loadPortofolios();
                     } catch (error) {
                         Alert.alert('Error', error.message);
                     }
@@ -169,10 +170,10 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
     const loadMateriDiajar = useCallback(async () => {
         if (!idGuru) return;
         try {
-          const data = await materiGuruService.getMateriGuru(idGuru);
-          setMateriDiajar(data);
+            const data = await materiGuruService.getMateriGuru(idGuru);
+            setMateriDiajar(data);
         } catch (error) {
-          console.log('Gagal load materi diajar:', error.message);
+            console.log('Gagal load materi diajar:', error.message);
         }
     }, [idGuru]);
 
@@ -249,7 +250,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                             </Text>
                             <Switch
                                 value={isAktif}
-                                onValueChange={handleToggleAvailability} 
+                                onValueChange={handleToggleAvailability}
                                 trackColor={{ false: '#767577', true: '#C1F4D3' }}
                                 thumbColor={isAktif ? '#25A244' : '#f4f3f4'}
                             />
@@ -264,7 +265,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                         onPress={() => onNavigate('EditBasicProfile')}
                         activeOpacity={0.7}
                     >
-                        <Edit2 size={14} color="#284B7A" />
+                        <EditSVG size={14} />
                         <Text style={styles.editMateriBtnText}>Edit</Text>
                     </TouchableOpacity>
                 </View>
@@ -299,27 +300,27 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                 </View>
 
                 <View style={styles.materiHeaderRow}>
-                  <Text style={styles.sectionTitleMain}>Materi yang diajar</Text>
-                  <TouchableOpacity
-                    style={styles.editMateriBtn}
-                    onPress={() => onNavigate('TambahMateri')}
-                    activeOpacity={0.7}
-                  >
-                    <Edit2 size={14} color="#284B7A" />
-                    <Text style={styles.editMateriBtnText}>Edit</Text>
-                  </TouchableOpacity>
+                    <Text style={styles.sectionTitleMain}>Materi yang diajar</Text>
+                    <TouchableOpacity
+                        style={styles.editMateriBtn}
+                        onPress={() => onNavigate('TambahMateri')}
+                        activeOpacity={0.7}
+                    >
+                        <EditSVG size={14} />
+                        <Text style={styles.editMateriBtnText}>Edit</Text>
+                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.materiChipWrap}>
-                  {materiDiajar.length === 0 ? (
-                    <Text style={styles.materiEmptyText}>Belum ada materi. Tap Edit untuk menambah.</Text>
-                  ) : (
-                    materiDiajar.map(item => (
-                      <View key={item.id_materi} style={styles.materiChip}>
-                        <Text style={styles.materiChipText}>{item.nama_materi}</Text>
-                      </View>
-                    ))
-                  )}
+                    {materiDiajar.length === 0 ? (
+                        <Text style={styles.materiEmptyText}>Belum ada materi. Tap Edit untuk menambah.</Text>
+                    ) : (
+                        materiDiajar.map(item => (
+                            <View key={item.id_materi} style={styles.materiChip}>
+                                <Text style={styles.materiChipText}>{item.nama_materi}</Text>
+                            </View>
+                        ))
+                    )}
                 </View>
 
                 <View style={styles.portoSectionHeaderRow}>
@@ -330,7 +331,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                         style={styles.addPortoBtn}
                         onPress={() => onNavigate('Portfolio')}
                     >
-                        <Plus size={14} color="#FFF" />
+                        <Plus size={14} color="#007AFF" />
                         <Text style={styles.addPortoBtnText}>Tambah</Text>
                     </TouchableOpacity>
                 </View>
@@ -483,30 +484,36 @@ const styles = StyleSheet.create({
     fieldLabel: { fontSize: 12, color: '#999', fontWeight: '500' },
     fieldValue: { fontSize: 15, fontWeight: 'bold', color: '#000', marginTop: 4 },
     materiHeaderRow: {
-      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-      paddingHorizontal: 24, marginTop: 28, marginBottom: 12,
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+        paddingHorizontal: 24, marginTop: 28, marginBottom: 12,
     },
     editMateriBtn: {
-      flexDirection: 'row', alignItems: 'center',
-      borderWidth: 1, borderColor: '#284B7A',
-      paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#dceafd',               
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,                
     },
     editMateriBtnText: {
-      fontSize: 12, fontWeight: 'bold', color: '#284B7A', marginLeft: 4,
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#007AFF',                  
+        marginLeft: 4,
     },
     materiChipWrap: {
-      flexDirection: 'row', flexWrap: 'wrap',
-      paddingHorizontal: 24, gap: 8, marginBottom: 24,
+        flexDirection: 'row', flexWrap: 'wrap',
+        paddingHorizontal: 24, gap: 8, marginBottom: 24,
     },
     materiChip: {
-      borderWidth: 1.5, borderColor: '#284B7A',
-      paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
+        borderWidth: 1.5, borderColor: '#284B7A',
+        paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
     },
     materiChipText: {
-      fontSize: 13, fontWeight: 'bold', color: '#284B7A',
+        fontSize: 13, fontWeight: 'bold', color: '#284B7A',
     },
     materiEmptyText: {
-      fontSize: 13, color: '#ABABAB', fontStyle: 'italic',
+        fontSize: 13, color: '#ABABAB', fontStyle: 'italic',
     },
     portoSectionHeaderRow: {
         flexDirection: 'row',
@@ -519,13 +526,13 @@ const styles = StyleSheet.create({
     addPortoBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#284B7A',
+        backgroundColor: '#dceafd',       
         paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: 8,
+        borderRadius: 20,                  
     },
     addPortoBtnText: {
-        color: '#FFF',
+        color: '#007AFF',                
         fontSize: 12,
         fontWeight: 'bold',
         marginLeft: 4,

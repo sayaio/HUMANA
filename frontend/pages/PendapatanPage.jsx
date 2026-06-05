@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { ArrowLeft, Bell } from 'lucide-react-native';
 import { fetchPendapatan } from '../services/pendapatanService';
+import PageHeader from '../components/PageHeader';
 
 const FONTS = {
   bold: 'SF-Pro-Display-Bold',
@@ -68,19 +69,10 @@ const PendapatanPage = ({ guruData, onNavigate }) => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        {/* ✅ DIUBAH: Menggunakan format tombol kembali dengan tulisan teks */}
-        <TouchableOpacity
-          onPress={() => onNavigate?.('HomeGuru')}
-          style={styles.backBtnWrapper}
-        >
-          <Text style={styles.headerBack}>❮ Kembali</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Pendapatan</Text>
-        {/* ✅ DIUBAH: Tombol bel di sebelah kanan dihapus sepenuhnya */}
-        <View style={{ width: 80 }} />
-      </View>
+      <PageHeader
+        title="Pendapatan"
+        onBack={() => onNavigate?.('HomeGuru')}
+      />
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -181,28 +173,6 @@ const PendapatanPage = ({ guruData, onNavigate }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F7FA' },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 55,
-    paddingBottom: 16,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EAEEF3',
-  },
-  backBtnWrapper: {
-    width: 80,
-    justifyContent: 'center',
-  },
-  headerBack: { 
-    fontSize: 14, 
-    color: '#333', 
-    fontWeight: '600',
-  },
-  headerTitle: { fontFamily: FONTS.bold, fontSize: 18, color: '#1A1A2E' },
 
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: {

@@ -14,6 +14,7 @@ import {
   Modal,
   Dimensions,
   PanResponder,
+  RefreshControl,
 } from 'react-native';
 import {
   Calendar,
@@ -52,23 +53,57 @@ const FONTS = {
   regular: 'SF-Pro-Display-Regular',
 };
 
+/** Card header = sesi dikonfirmasi (Jadwal Aktif), bukan permintaan baru. */
+const mapSesiHeaderKeJadwalAktif = raw => {
+  const status = (raw.status_pemesanan || 'dikonfirmasi').toLowerCase();
+  const tipe = status === 'berlangsung' ? 'Berlangsung' : 'Aktif';
+  const harga =
+    raw.harga_total ||
+    ((raw.biaya_sesi || 0) + (raw.biaya_jarak || 0));
+  return {
+    item: {
+      id: raw.id_pemesanan,
+      id_pemesanan: raw.id_pemesanan,
+      id_murid: raw.id_murid,
+      nama_murid: raw.nama_murid,
+      materi: raw.nama_materi,
+      nama_materi: raw.nama_materi,
+      nama_mapel: raw.nama_mapel,
+      jenjang_pendidikan: raw.jenjang_pendidikan,
+      waktu_mulai: raw.waktu_mulai,
+      waktu_selesai: raw.waktu_selesai,
+      waktu_string: raw.waktu_string,
+      harga_total: harga,
+      biaya_sesi: raw.biaya_sesi,
+      biaya_jarak: raw.biaya_jarak,
+      harga,
+      lokasi_sesi: raw.lokasi_sesi,
+      status_pemesanan:
+        status === 'berlangsung' ? 'berlangsung' : 'dikonfirmasi',
+      tipe,
+    },
+    tipe,
+  };
+};
+
 const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan }) => {
   const { width: windowWidth } = useWindowDimensions();
 
   const [permintaan, setPermintaan] = useState([]);
   const [sesiDikonfirmasi, setSesiDikonfirmasi] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const LAT_GURU_MOCK = -6.9744;
   const LNG_GURU_MOCK = 107.6303;
 
-  const loadPermintaan = async () => {
+  const loadPermintaan = async (isPullRefresh = false) => {
     if (!guruData || !guruData.id) {
-      setLoading(false);
+      if (!isPullRefresh) setLoading(false);
       return;
     }
 
-    setLoading(true);
+    if (!isPullRefresh) setLoading(true);
     const resultReq = await fetchPermintaanBaru(
       guruData.id,
       LAT_GURU_MOCK,
@@ -87,37 +122,20 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
     } else {
       setSesiDikonfirmasi([]);
     }
-    setLoading(false);
+    if (!isPullRefresh) setLoading(false);
   };
 
   useEffect(() => {
     loadPermintaan();
   }, [guruData]);
 
-  // Notifikasi (mis. murid membatalkan sesi) -> tampilkan popup lalu bersihkan.
-  const [notifAlertVisible, setNotifAlertVisible] = useState(false);
-  const [notifAlert, setNotifAlert] = useState({ title: '', message: '' });
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadPermintaan(true);
+    setRefreshing(false);
+  };
 
-  useEffect(() => {
-    const cekNotifikasi = async () => {
-      if (!guruData?.id) return;
-      const res = await fetchNotifikasi('guru', guruData.id);
-      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-        const utama = res.data[0];
-        const sisa = res.data.length - 1;
-        setNotifAlert({
-          title: utama.judul || 'Pemberitahuan',
-          message:
-            sisa > 0
-              ? `${utama.pesan}\n\n(+${sisa} pemberitahuan lainnya)`
-              : utama.pesan,
-        });
-        setNotifAlertVisible(true);
-        await clearNotifikasi('guru', guruData.id);
-      }
-    };
-    cekNotifikasi();
-  }, [guruData?.id]);
+
 
   const formatRupiah = number => {
     if (!number) return 'Rp 0';
@@ -227,8 +245,19 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
   };
 
   const renderSessionItem = ({ item }) => {
+    const bukaDetailSesi = () => {
+      if (!onDetailPermintaan) return;
+      const { item: mapped, tipe } = mapSesiHeaderKeJadwalAktif(item);
+      onDetailPermintaan(mapped, tipe);
+    };
+
     return (
-      <View style={styles.sessionCard}>
+      <TouchableOpacity
+        style={styles.sessionCard}
+        activeOpacity={1}
+        onPress={bukaDetailSesi}
+        disabled={!onDetailPermintaan}
+      >
         <View style={styles.cardHeaderRow}>
           <Text style={styles.cardLabel}>SESI HARI INI</Text>
           <View style={styles.badgeSegera}>
@@ -271,7 +300,7 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
             </Text>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -354,6 +383,14 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#284B7A']}
+            tintColor="#284B7A"
+          />
+        }
       >
         <View style={styles.headerSection}>
           <View style={styles.headerBackground}>
@@ -445,46 +482,41 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
         ) : (
           permintaan.slice(0, 2).map(item => (
             <View key={item.id_pemesanan} style={styles.requestCard}>
-              <View style={styles.profileRowRequest}>
-                <View
-                  style={[
-                    styles.avatarCircleRequest,
-                    { backgroundColor: '#284B7A' },
-                  ]}
-                >
+              <View style={styles.cardHeaderRequest}>
+                <View style={styles.avatarCircleRequest}>
                   <Text style={styles.avatarTextRequest}>
                     {item.nama_murid
                       ? item.nama_murid.substring(0, 2).toUpperCase()
                       : 'SN'}
                   </Text>
                 </View>
-                <View style={styles.profileInfoRequest}>
+                <View style={styles.cardMainMetaRequest}>
                   <Text style={styles.studentNameRequest}>
                     {item.nama_murid}
                   </Text>
-                  <Text style={styles.subjectTextRequest}>
+                  <Text style={styles.materiTextRequest} numberOfLines={1}>
                     {item.nama_materi}
                   </Text>
                 </View>
               </View>
 
-              <View style={styles.detailGridRequest}>
-                <View style={styles.detailItemRequest}>
-                  <Text style={styles.detailLabelRequest}>Tanggal</Text>
-                  <Text style={styles.detailValueRequest}>
+              <View style={styles.cardGridInfoRequest}>
+                <View style={styles.gridInfoBoxRequest}>
+                  <Text style={styles.infoLabelRequest}>Tanggal</Text>
+                  <Text style={styles.infoValueRequest}>
                     {formatTanggalCard(item.waktu_mulai)}
                   </Text>
                 </View>
-                <View style={styles.detailItemRequest}>
-                  <Text style={styles.detailLabelRequest}>Waktu</Text>
-                  <Text style={styles.detailValueRequest}>
+                <View style={styles.gridInfoBoxRequest}>
+                  <Text style={styles.infoLabelRequest}>Waktu</Text>
+                  <Text style={styles.infoValueRequest}>
                     {item.waktu_string}
                   </Text>
                 </View>
-                <View style={styles.detailItemRequest}>
-                  <Text style={styles.detailLabelRequest}>Bayaran</Text>
-                  <Text style={styles.detailValueRequest}>
-                    {formatRupiah(item.harga_total)}
+                <View style={styles.gridInfoBoxRequest}>
+                  <Text style={styles.infoLabelRequest}>Bayaran</Text>
+                  <Text style={styles.infoValueRequest}>
+                    Rp {item.harga_total.toLocaleString('id-ID')}
                   </Text>
                 </View>
               </View>
@@ -562,14 +594,6 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
         </View>
       </Modal>
 
-      <CustomAlert
-        visible={notifAlertVisible}
-        type="gagal"
-        title={notifAlert.title}
-        message={notifAlert.message}
-        isConfirmation={false}
-        onClose={() => setNotifAlertVisible(false)}
-      />
     </View>
   );
 };
@@ -688,7 +712,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: FONTS.bold,
     color: '#000',
-    marginBottom: 2,
+    lineHeight: 18,
   },
   subjectText: {
     fontSize: 12,
@@ -699,14 +723,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 16,
   },
   gridCol2: { width: '45%' },
   detailLabel: {
     fontSize: 10,
     fontFamily: FONTS.regular,
     color: '#ABABAB',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   detailValue: {
     fontSize: 13,
@@ -796,10 +820,10 @@ const styles = StyleSheet.create({
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.02,
+    shadowOpacity: 0.04,
     shadowRadius: 6,
   },
-  profileRowRequest: {
+  cardHeaderRequest: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
@@ -812,54 +836,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarTextRequest: { color: '#FFF', fontFamily: FONTS.bold, fontSize: 14 },
-  profileInfoRequest: { flex: 1, marginLeft: 14 },
+  avatarTextRequest: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
+  cardMainMetaRequest: { flex: 1, marginLeft: 14 },
   studentNameRequest: {
     fontSize: 16,
-    fontFamily: FONTS.bold,
+    fontWeight: 'bold',
     color: '#000',
   },
-  subjectTextRequest: {
+  materiTextRequest: {
     fontSize: 12,
     color: '#777',
     marginTop: 2,
-    fontFamily: FONTS.regular,
   },
-  badgeBaru: {
-    backgroundColor: '#FFE6A3',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeTextBaru: { color: '#D4A017', fontSize: 12, fontFamily: FONTS.bold },
-  detailGridRequest: {
+  cardGridInfoRequest: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
     marginBottom: 16,
     paddingLeft: 2,
   },
-  detailItemRequest: { flex: 1, paddingRight: 8 },
-  detailLabelRequest: { fontSize: 11, color: '#999', fontFamily: FONTS.regular, marginBottom: 4 },
-  detailValueRequest: {
+  gridInfoBoxRequest: { flex: 1, paddingRight: 8 },
+  infoLabelRequest: { fontSize: 11, color: '#999', marginBottom: 4 },
+  infoValueRequest: {
     fontSize: 13,
-    fontFamily: FONTS.bold,
+    fontWeight: 'bold',
     color: '#333',
   },
-  actionButtonRowRequest: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  btnActionRequest: {
-    flex: 1,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  btnPrimaryRequest: { backgroundColor: '#284B7A' },
-  btnDangerRequest: { backgroundColor: '#DC3545' },
-  btnTextWhiteRequest: { color: '#FFF', fontFamily: FONTS.bold, fontSize: 14 },
   cardActionRowRequest: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   btnLihatDetailRequest: {
     backgroundColor: '#284B7A',
@@ -870,7 +871,7 @@ const styles = StyleSheet.create({
   btnTextLihatDetailRequest: {
     color: '#FFF',
     fontSize: 12,
-    fontFamily: FONTS.bold,
+    fontWeight: 'bold',
   },
 
   loadingText: {

@@ -24,6 +24,7 @@ const feedbackController = require('./src/controllers/feedbackController');
 router.post('/feedback', feedbackController.submitFeedback);
 router.get('/feedback/:id_pemesanan', feedbackController.getFeedbackByPemesanan);
 router.get('/profile-guru/:id_guru', feedbackController.getGuruRating);
+router.get('/profile-murid/:id_murid', feedbackController.getMuridProfile);
 
 const historyController = require('./src/controllers/historyController');
 router.get('/history/:role/:id', historyController.getHistory);

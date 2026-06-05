@@ -9,6 +9,7 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import BottomNavbar from '../components/BottomNavbar';
 import { getHistory, getActiveSchedule } from '../services/historyService';
@@ -17,30 +18,6 @@ import { getHistory, getActiveSchedule } from '../services/historyService';
 import { Calendar, MessageSquare, User, Home } from 'lucide-react-native';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
-
-const resolveHargaTotal = item => {
-  const candidates = [
-    item.nominal,
-    item.pembayaran?.nominal,
-    item.pembayaran?.total_bayar,
-    item.harga_total,
-    item.harga,
-  ];
-
-  for (const value of candidates) {
-    if (value != null && !Number.isNaN(Number(value))) {
-      return Number(value);
-    }
-  }
-
-  if (item.biaya_sesi != null && item.biaya_jarak != null) {
-    return Number(item.biaya_sesi) + Number(item.biaya_jarak);
-  }
-
-  return null;
-};
-
-const formatRupiah = angka => `Rp ${Number(angka).toLocaleString('id-ID')}`;
 
 const ActivityPage = ({
   initialTab = 'aktif',
@@ -56,13 +33,14 @@ const ActivityPage = ({
   const [activeData, setActiveData] = useState([]);
   const [historyData, setHistoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     setActiveTab(initialTab === 'aktif' ? 'Jadwal Aktif' : 'Riwayat Sesi');
   }, [initialTab]);
 
-  const fetchActiveData = async () => {
-    setIsLoading(true);
+  const fetchActiveData = async (isPullRefresh = false) => {
+    if (!isPullRefresh) setIsLoading(true);
     try {
       const result = await getActiveSchedule(userRole, userId);
       console.log('Hasil dari Backend:', result);
@@ -82,27 +60,17 @@ const ActivityPage = ({
       console.log('Error fetch active:', error);
       setActiveData([]);
     } finally {
-      setIsLoading(false);
+      if (!isPullRefresh) setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (!userId || !userRole) return;
-
-    if (activeTab === 'Jadwal Aktif') {
-      fetchActiveData();
-    } else if (activeTab === 'Riwayat Sesi') {
-      fetchHistoryData();
-    }
-  }, [activeTab, userId, userRole]);
-
-  const fetchHistoryData = async () => {
+  const fetchHistoryData = async (isPullRefresh = false) => {
     if (!userId || !userRole) {
       console.log('❌ FETCH DIBATALKAN KARENA ID ATAU ROLE KOSONG!');
       return;
     }
 
-    setIsLoading(true);
+    if (!isPullRefresh) setIsLoading(true);
     try {
       const result = await getHistory(userRole, userId); // ← result baru ada di sini
       console.log('[DEBUG] userId:', userId);
@@ -119,13 +87,32 @@ const ActivityPage = ({
     } catch (error) {
       console.log('[DEBUG] Error fetch history:', error);
     } finally {
-      setIsLoading(false);
+      if (!isPullRefresh) setIsLoading(false);
     }
   };
-  const renderCard = (item, isHistory, index) => {
-    const hargaTotal = isHistory ? resolveHargaTotal(item) : null;
 
-    return (
+  useEffect(() => {
+    if (!userId || !userRole) return;
+
+    if (activeTab === 'Jadwal Aktif') {
+      fetchActiveData();
+    } else if (activeTab === 'Riwayat Sesi') {
+      fetchHistoryData();
+    }
+  }, [activeTab, userId, userRole]);
+
+  const handleRefresh = async () => {
+    if (!userId || !userRole) return;
+    setRefreshing(true);
+    if (activeTab === 'Jadwal Aktif') {
+      await fetchActiveData(true);
+    } else {
+      await fetchHistoryData(true);
+    }
+    setRefreshing(false);
+  };
+
+  const renderCard = (item, isHistory, index) => (
     <View style={styles.card} key={item.id_pemesanan || index}>
       <View style={styles.cardIconBox}>
         {/* PERUBAHAN: Emoji diganti dengan Image dari assets[cite: 11] */}
@@ -164,10 +151,6 @@ const ActivityPage = ({
               })
             : item.waktu_string || 'Waktu tidak tersedia'}
         </Text>
-
-        {isHistory && hargaTotal != null ? (
-          <Text style={styles.cardHarga}>{formatRupiah(hargaTotal)}</Text>
-        ) : null}
       </View>
 
       {isHistory ? (
@@ -198,8 +181,7 @@ const ActivityPage = ({
         </TouchableOpacity>
       )}
     </View>
-    );
-  };
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -233,6 +215,14 @@ const ActivityPage = ({
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#284B7A']}
+            tintColor="#284B7A"
+          />
+        }
       >
         {activeTab === 'Jadwal Aktif' ? (
           isLoading ? (
@@ -337,12 +327,6 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 12, color: '#333', marginBottom: 5 },
   cardGuru: { fontSize: 11, color: '#555', marginBottom: 5 },
   cardTime: { fontSize: 10, color: '#A9A9A9' },
-  cardHarga: {
-    fontSize: 11,
-    color: '#284B7A',
-    fontWeight: 'bold',
-    marginTop: 4,
-  },
   actionBtn: {
     backgroundColor: '#387C65',
     paddingVertical: 6,

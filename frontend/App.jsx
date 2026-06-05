@@ -35,6 +35,7 @@ import PembayaranPage from './pages/PembayaranPage';
 import PendapatanPage from './pages/PendapatanPage';
 import RiwayatPendapatanPage from './pages/RiwayatPendapatanPage';
 import PortfolioPage from './pages/PortfolioPage';
+import NotifikasiPage from './pages/NotifikasiPage';
 
 const App = () => {
   const DEV_SKIP_TO_PAYMENT = false;
@@ -99,6 +100,10 @@ const App = () => {
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [detailBackPage, setDetailBackPage] = useState('Materi');
+  const [detailPermintaanBackPage, setDetailPermintaanBackPage] =
+    useState('RealActivityGuru');
+  const [detailSesiAktifBackPage, setDetailSesiAktifBackPage] =
+    useState('Activity');
   const [activityTab, setActivityTab] = useState('aktif');
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
@@ -393,6 +398,7 @@ const App = () => {
                 onDetailPermintaan={(item, tipe) => {
                     setSelectedPermintaanGuru(item);
                     setSelectedTipePermintaan(tipe);
+                    setDetailPermintaanBackPage('PageGuru');
                     setCurrentPage('DetailPermintaanGuru');
                 }}
             />
@@ -418,6 +424,7 @@ const App = () => {
                 onDetailPermintaan={(item, tipe) => {
                     setSelectedPermintaanGuru(item);
                     setSelectedTipePermintaan(tipe);
+                    setDetailPermintaanBackPage('RealActivityGuru');
                     setCurrentPage('DetailPermintaanGuru');
                 }}
                 onDetailRiwayat={(rawData) => {
@@ -435,12 +442,12 @@ const App = () => {
                 permintaanData={selectedPermintaanGuru}
                 guruData={profileData}
                 tipePermintaan={selectedTipePermintaan}
-                onBack={() => setCurrentPage('RealActivityGuru')}
+                onBack={() => setCurrentPage(detailPermintaanBackPage)}
                 onTolak={async (idPemesanan) => {
                     // Panggil API tolak permintaan
                     // Contoh: await tolakPermintaanAPI(idPemesanan);
                     Alert.alert('Info', 'Permintaan ditolak');
-                    setCurrentPage('RealActivityGuru');
+                    setCurrentPage(detailPermintaanBackPage);
                 }}
                 onChat={(chatData) => {
                     // chatData sudah berisi id_guru, id_murid, id_chat, nama_murid, mapel
@@ -451,13 +458,13 @@ const App = () => {
                     // Panggil API selesaikan sesi
                     // await selesaikanSesiAPI(idPemesanan);
                     Alert.alert('Sukses', 'Sesi telah selesai');
-                    setCurrentPage('RealActivityGuru');
+                    setCurrentPage(detailPermintaanBackPage);
                 }}
                 onAjukanBatal={async (idPemesanan) => {
                     // Panggil API ajukan pembatalan
                     // await ajukanBatalAPI(idPemesanan);
                     Alert.alert('Info', 'Pembatalan diajukan');
-                    setCurrentPage('RealActivityGuru');
+                    setCurrentPage(detailPermintaanBackPage);
                 }}
             />
         );
@@ -485,6 +492,17 @@ const App = () => {
                     setSelectedChapter(chapterData);
                     setDetailBackPage('Home');
                     setCurrentPage('Detail');
+                }}
+                onDetailPermintaan={(item, tipe) => {
+                    setSelectedPermintaanGuru(item);
+                    setSelectedTipePermintaan(tipe);
+                    setDetailPermintaanBackPage('Home');
+                    setCurrentPage('DetailPermintaanGuru');
+                }}
+                onDetailSesiAktif={item => {
+                    setSelectedSession(item);
+                    setDetailSesiAktifBackPage('Home');
+                    setCurrentPage('DetailSesiAktif');
                 }}
                 jenjangMurid={
                     profileData.jenjang_pendidikan || profileData.education
@@ -589,6 +607,7 @@ const App = () => {
                 onDetailClick={item => {
                     setSelectedSession(item);
                     if (activityTab === 'aktif') {
+                        setDetailSesiAktifBackPage('Activity');
                         setCurrentPage('DetailSesiAktif');
                     } else {
                         setCurrentPage('SessionDetail');
@@ -603,7 +622,7 @@ const App = () => {
     if (currentPage === 'DetailSesiAktif') {
         return (
             <DetailSesiAktifPage
-                onBack={() => setCurrentPage('Activity')}
+                onBack={() => setCurrentPage(detailSesiAktifBackPage)}
                 sessionData={selectedSession}
             />
         );
@@ -627,6 +646,7 @@ const App = () => {
                 profileData={profileData}
                 onNavigate={page => setCurrentPage(page)}
                 onLogout={handleLogout}
+                onRefreshData={handleRefreshProfileData}
             />
         );
     }
@@ -742,6 +762,15 @@ const App = () => {
         );
     }
 
+    if (currentPage === 'Notifikasi') {
+        return (
+            <NotifikasiPage
+                guruData={profileData}
+                onBack={() => setCurrentPage('RealActivityGuru')}
+            />
+        );
+    }
+
   if (currentPage === 'Login') {
     return (
       <LoginPage
@@ -777,6 +806,7 @@ const App = () => {
         onDetailPermintaan={(item, tipe) => {
           setSelectedPermintaanGuru(item);
           setSelectedTipePermintaan(tipe);
+          setDetailPermintaanBackPage('PageGuru');
           setCurrentPage('DetailPermintaanGuru');
         }}
       />
@@ -803,6 +833,7 @@ const App = () => {
         onDetailPermintaan={(item, tipe) => {
           setSelectedPermintaanGuru(item);
           setSelectedTipePermintaan(tipe);
+          setDetailPermintaanBackPage('RealActivityGuru');
           setCurrentPage('DetailPermintaanGuru');
         }}
         onDetailRiwayat={rawData => {
@@ -820,10 +851,10 @@ const App = () => {
         permintaanData={selectedPermintaanGuru}
         guruData={profileData}
         tipePermintaan={selectedTipePermintaan}
-        onBack={() => setCurrentPage('RealActivityGuru')}
+        onBack={() => setCurrentPage(detailPermintaanBackPage)}
         onTolak={async idPemesanan => {
           Alert.alert('Info', 'Permintaan ditolak');
-          setCurrentPage('RealActivityGuru');
+          setCurrentPage(detailPermintaanBackPage);
         }}
         onChat={chatData => {
           setSelectedChatUser(chatData);
@@ -831,11 +862,11 @@ const App = () => {
         }}
         onSelesaikan={idPemesanan => {
           setActivityGuruRefreshKey(prev => prev + 1); // trigger refresh
-          setCurrentPage('RealActivityGuru');
+          setCurrentPage(detailPermintaanBackPage);
         }}
         onAjukanBatal={idPemesanan => {
           Alert.alert('Info', 'Pembatalan diajukan');
-          setCurrentPage('RealActivityGuru');
+          setCurrentPage(detailPermintaanBackPage);
         }}
       />
     );
@@ -863,6 +894,17 @@ const App = () => {
           setSelectedChapter(chapterData);
           setDetailBackPage('Home');
           setCurrentPage('Detail');
+        }}
+        onDetailPermintaan={(item, tipe) => {
+          setSelectedPermintaanGuru(item);
+          setSelectedTipePermintaan(tipe);
+          setDetailPermintaanBackPage('Home');
+          setCurrentPage('DetailPermintaanGuru');
+        }}
+        onDetailSesiAktif={item => {
+          setSelectedSession(item);
+          setDetailSesiAktifBackPage('Home');
+          setCurrentPage('DetailSesiAktif');
         }}
         jenjangMurid={
           profileData.jenjang_pendidikan || profileData.education
@@ -971,6 +1013,7 @@ const App = () => {
         onDetailClick={item => {
           setSelectedSession(item);
           if (activityTab === 'aktif') {
+            setDetailSesiAktifBackPage('Activity');
             setCurrentPage('DetailSesiAktif');
           } else {
             setCurrentPage('SessionDetail');
@@ -985,7 +1028,7 @@ const App = () => {
   if (currentPage === 'DetailSesiAktif') {
     return (
       <DetailSesiAktifPage
-        onBack={() => setCurrentPage('Activity')}
+        onBack={() => setCurrentPage(detailSesiAktifBackPage)}
         sessionData={selectedSession}
       />
     );
@@ -1009,6 +1052,7 @@ const App = () => {
         profileData={profileData}
         onNavigate={page => setCurrentPage(page)}
         onLogout={handleLogout}
+        onRefreshData={handleRefreshProfileData}
       />
     );
   }

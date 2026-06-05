@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview'; // 1. Import WebView di sini
-import BackIconSvg from '../components/BackIconSvg';
+import PageHeader from '../components/PageHeader';
 import CustomAlert from '../components/CustomAlert';
 import { batalkanSesi } from '../services/batalSesiService';
 import { pemesananService } from '../services/pemesananService';
@@ -234,22 +234,10 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
   const tombolDisabled = isCanceling || sudahMulai;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* FIXED NAVIGATION HEADER */}
-      <View style={styles.headerContainer}>
-        <TouchableOpacity
-          onPress={onBack}
-          style={styles.backButtonTarget}
-          activeOpacity={0.6}
-        >
-          <BackIconSvg size={12} color="#333333" />
-          <Text style={styles.backButtonText}>Kembali</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitleText}>Detail Pemesanan</Text>
-        <View style={{ width: width * 0.2 }} />
-      </View>
+      <PageHeader title="Detail Pemesanan" onBack={onBack} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -369,28 +357,6 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    height: 60,
-    borderBottomWidth: 1,
-    borderColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF',
-  },
-  backButtonTarget: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: width * 0.22,
-  },
-  backButtonText: {
-    fontSize: 14,
-    color: '#333333',
-    fontWeight: '600',
-    marginLeft: 6,
-  },
-  headerTitleText: { fontSize: 18, fontWeight: 'bold', color: '#000000' },
   scrollBodyPadding: {
     paddingHorizontal: 20,
     paddingTop: 16,

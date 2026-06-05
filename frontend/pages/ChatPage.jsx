@@ -14,6 +14,8 @@ import {
   ScrollView,
   TextInput,
   Image,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import BottomNavbar from '../components/BottomNavbar';
 // Import Ikon Lucide agar seragam dengan HomePage & PageGuru
@@ -32,64 +34,55 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
   const [chats, setChats] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const role = userRole ? userRole.toLowerCase() : 'murid';
 
+  const loadChatData = async (isPullRefresh = false) => {
+    if (!userId || !userRole) {
+      if (!isPullRefresh) setLoading(false);
+      return;
+    }
+
+    if (!isPullRefresh) setLoading(true);
+
+    try {
+      const jadwalAktif = await getActiveSchedules(role, userId);
+      const uniqueGuru = [...new Set(jadwalAktif.map(j => j.id_guru))];
+
+      await Promise.all(
+        uniqueGuru.map(async id_guru => {
+          const jadwal = jadwalAktif.find(j => j.id_guru === id_guru);
+          if (!jadwal) return;
+          try {
+            await createChatRoom(jadwal.id_guru, jadwal.id_murid);
+          } catch (e) {
+            console.log(
+              `[ChatPage] Gagal buat room untuk guru ${id_guru}:`,
+              e?.message || e,
+            );
+          }
+        }),
+      );
+
+      const data = await getChatList(userId, role);
+      setChats(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Gagal inisialisasi chat:', error);
+      setChats([]);
+    } finally {
+      if (!isPullRefresh) setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const initChatData = async () => {
-      console.log('DEBUG SERVICE IMPORT:', {
-        getActiveSchedules,
-        createChatRoom,
-        getChatList,
-      });
-      if (!userId || !userRole) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // 1. Ambil jadwal aktif
-        const jadwalAktif = await getActiveSchedules(role, userId);
-
-        // 2. Deduplikasi & Buat Room
-        const uniqueGuru = [...new Set(jadwalAktif.map(j => j.id_guru))];
-
-        await Promise.all(
-          uniqueGuru.map(async id_guru => {
-            const jadwal = jadwalAktif.find(j => j.id_guru === id_guru);
-            try {
-              await createChatRoom(jadwal.id_guru, jadwal.id_murid);
-            } catch (e) {
-              await Promise.all(
-                uniqueGuru.map(async id_guru => {
-                  const jadwal = jadwalAktif.find(j => j.id_guru === id_guru);
-                  try {
-                    await createChatRoom(jadwal.id_guru, jadwal.id_murid);
-                  } catch (e) {
-                    // UBAH BAGIAN INI UNTUK MELIHAT DETAIL ERROR-NYA
-                    console.log(
-                      `[ChatPage] Gagal buat room untuk guru ${id_guru}. Detail:`,
-                      e.response?.data || e.message || e,
-                    );
-                  }
-                }),
-              );
-            }
-          }),
-        );
-
-        // 3. Fetch list chat
-        const data = await getChatList(userId, role);
-        setChats(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error('Gagal inisialisasi chat:', error.message);
-        console.error('Gagal inisialisasi chat:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initChatData();
+    loadChatData();
   }, [userId, role]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadChatData(true);
+    setRefreshing(false);
+  };
 
   const filteredChats = useMemo(() => {
     return chats.filter(chat => {
@@ -135,8 +128,21 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 110 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={['#284B7A']}
+              tintColor="#284B7A"
+            />
+          }
         >
-          {Array.isArray(filteredChats) && filteredChats.length > 0 ? (
+          {loading && !refreshing ? (
+            <View style={{ marginTop: 40, alignItems: 'center' }}>
+              <ActivityIndicator size="large" color="#284B7A" />
+              <Text style={{ marginTop: 10, color: '#999' }}>Memuat chat...</Text>
+            </View>
+          ) : Array.isArray(filteredChats) && filteredChats.length > 0 ? (
             filteredChats.map((chat, index) => {
               const displayName =
                 role === 'guru'

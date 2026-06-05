@@ -1,64 +1,66 @@
 import React from 'react';
-import { StyleSheet, Text, View, Modal, TouchableOpacity, Image } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
+import DimmedModal from './DimmedModal';
+import { MODAL_CARD_WIDTH, centerModalCardBase } from './modalTheme';
 
-const CustomAlert = ({ visible, type, title, message, onClose, onConfirm, isConfirmation }) => {
-  // Menentukan gambar berdasarkan tipe alert[cite: 9]
-  const iconSource = type === 'success' 
-    ? require('../assets/sukses.png') 
-    : require('../assets/gagal.png');
+const CustomAlert = ({
+  visible,
+  type,
+  title,
+  message,
+  onClose,
+  onConfirm,
+  isConfirmation,
+}) => {
+  const iconSource =
+    type === 'success'
+      ? require('../assets/sukses.png')
+      : require('../assets/gagal.png');
 
   return (
-    <Modal transparent visible={visible} animationType="fade">
-      {/* Overlay abu-abu transparan, jika di-klik akan menutup popup[cite: 9] */}
-      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
-        
-        {/* Kotak Putih Popup[cite: 9] */}
-        <TouchableOpacity activeOpacity={1} style={styles.alertBox}>
-          <Image source={iconSource} style={styles.icon} />
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+    <DimmedModal
+      visible={visible}
+      onRequestClose={onClose}
+      placement="center"
+    >
+      <View style={styles.alertBox}>
+        <Image source={iconSource} style={styles.icon} />
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.message}>{message}</Text>
 
-          {/* Logika Tombol: Hanya muncul jika mode konfirmasi (Ya/Tidak)[cite: 9] */}
-          {isConfirmation && (
-            <View style={styles.buttonContainer}>
-              {/* Tombol YA (Warna Merah) - Sekarang di KIRI[cite: 9] */}
-              <TouchableOpacity 
-                style={[styles.button, styles.yesButton]} 
-                onPress={onConfirm}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.buttonText}>Ya</Text>
-              </TouchableOpacity>
-
-              {/* Tombol TIDAK (Warna Hijau) - Sekarang di KANAN[cite: 9] */}
-              <TouchableOpacity 
-                style={[styles.button, styles.noButton]} 
-                onPress={onClose}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.buttonText}>Tidak</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          
-        </TouchableOpacity>
-
-      </TouchableOpacity>
-    </Modal>
+        {isConfirmation && (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.button, styles.yesButton]}
+              onPress={onConfirm}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.buttonText}>Ya</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.noButton]}
+              onPress={onClose}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.buttonText}>Tidak</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </DimmedModal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   alertBox: {
-    width: '80%',
-    backgroundColor: '#FFF',
-    borderRadius: 24,
+    ...centerModalCardBase,
+    width: MODAL_CARD_WIDTH,
     paddingVertical: 35,
     paddingHorizontal: 20,
     alignItems: 'center',
@@ -101,19 +103,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 5,
   },
-  // Tombol YA sekarang Merah[cite: 9]
   yesButton: {
-    backgroundColor: '#E12525', 
+    backgroundColor: '#E12525',
   },
-  // Tombol TIDAK sekarang Hijau[cite: 9]
   noButton: {
-    backgroundColor: '#3A7D6B', 
+    backgroundColor: '#3A7D6B',
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-  }
+  },
 });
 
 export default CustomAlert;

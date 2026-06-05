@@ -18,31 +18,30 @@ const getHistory = async (req, res) => {
         const whereClause = userRole === 'murid' ? 'murid.id_murid' : 'guru.id_guru';
 
         const query = `
-            SELECT 
-                pemesanan.id_pemesanan, pemesanan.status_pemesanan, 
-                pemesanan.waktu_mulai, pemesanan.waktu_selesai, pemesanan.lokasi_sesi,
-                murid.id_murid, murid.nama_murid, murid.email AS email_murid, murid.kelas AS kelas_murid,
-                guru.id_guru, guru.nama_guru, guru.email_guru,
-                materi.id_materi, materi.nama_materi, materi.kelas AS kelas_materi, materi.jurusan,
-                mapel.id_mapel, mapel.nama_mapel,
-                bayar.biaya_sesi,
-                bayar.biaya_jarak,
-                bayar.nominal,
-                bayar.status_pembayaran,
-                feedback.id_feedback,
-                feedback.komentar AS feedback_komentar,
-                feedback.rating AS feedback_rating
-            FROM Pemesanan pemesanan
-            JOIN Murid murid ON murid.id_murid = pemesanan.id_murid
-            JOIN Guru guru ON guru.id_guru = pemesanan.id_guru
-            LEFT JOIN Materi materi ON materi.id_materi = pemesanan.id_materi
-            LEFT JOIN MataPelajaran mapel ON mapel.id_mapel = materi.id_mapel
-            LEFT JOIN Pembayaran bayar ON bayar.id_pemesanan = pemesanan.id_pemesanan
-            LEFT JOIN Feedback feedback ON feedback.id_pemesanan = pemesanan.id_pemesanan
-            WHERE pemesanan.status_pemesanan IN ('selesai', 'dibatalkan', 'dibatalkan_murid', 'dibatalkan_guru')
-            AND (${whereClause} = ?)
-            ORDER BY pemesanan.waktu_mulai DESC;
-        `;
+    SELECT 
+        pemesanan.id_pemesanan, pemesanan.status_pemesanan, 
+        pemesanan.waktu_mulai, pemesanan.waktu_selesai, pemesanan.lokasi_sesi,
+        murid.id_murid, murid.nama_murid, murid.email AS email_murid, murid.kelas AS kelas_murid,
+        guru.id_guru, guru.nama_guru, guru.email_guru,
+        materi.id_materi, materi.nama_materi, materi.kelas AS kelas_materi, materi.jurusan,
+        mapel.id_mapel, mapel.nama_mapel,
+        bayar.biaya_sesi,
+        bayar.biaya_jarak,
+        bayar.nominal,
+        bayar.status_pembayaran,
+        feedback.rating AS feedback_rating,
+        feedback.komentar AS feedback_komentar
+    FROM Pemesanan pemesanan
+    JOIN Murid murid ON murid.id_murid = pemesanan.id_murid
+    JOIN Guru guru ON guru.id_guru = pemesanan.id_guru
+    LEFT JOIN Materi materi ON materi.id_materi = pemesanan.id_materi
+    LEFT JOIN MataPelajaran mapel ON mapel.id_mapel = materi.id_mapel
+    LEFT JOIN Pembayaran bayar ON bayar.id_pemesanan = pemesanan.id_pemesanan
+    LEFT JOIN Feedback feedback ON feedback.id_pemesanan = pemesanan.id_pemesanan
+    WHERE pemesanan.status_pemesanan IN ('selesai', 'dibatalkan', 'dibatalkan_murid', 'dibatalkan_guru')
+    AND (${whereClause} = ?)
+    ORDER BY pemesanan.waktu_mulai DESC;
+`;
 
         const rows = await pool.query(query, [id]);
 
@@ -86,9 +85,8 @@ const getHistory = async (req, res) => {
                 } : null,
                 sesi: null,
                 feedback: row.feedback_rating != null ? {
-                    id_feedback: row.id_feedback,
                     rating: Number(row.feedback_rating),
-                    komentar: row.feedback_komentar,
+                    komentar: row.feedback_komentar || '',
                 } : null,
             };
         });

@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, ScrollView } from 'react-native';
 import { prosesCod, prosesMidtrans } from '../services/bankerService';
 import { getSesiDetail } from '../services/bankerService';
-import CustomAlert from '../components/CustomAlert'; // Import komponen CustomAlert[cite: 10]
+import CustomAlert from '../components/CustomAlert';
+import DimmedModal from '../components/DimmedModal';
 import { batalkanSesi } from '../services/batalSesiService';
 import { pemesananService } from '../services/pemesananService';
+import PageHeader from '../components/PageHeader';
 
 const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDilepas }) => {
     const [selectedMethod, setSelectedMethod] = useState(null);
@@ -180,16 +182,8 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
 
     return (
         <View style={styles.container}>
+            <PageHeader title="Detail Pembayaran" onBack={handleBackWithConfirmation} />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-                {/* HEADER */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={handleBackWithConfirmation}>
-                        <Text style={styles.backText}>❮ Kembali</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Detail Pembayaran</Text>
-                    <View style={{ width: 50 }} />
-                </View>
-
                 {/* INFO MATERI */}
                 <View style={styles.materiSection}>
                     <Text style={styles.subjectTitle}>{sessionData?.nama_mapel || 'Mata Pelajaran'}</Text>
@@ -288,9 +282,11 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
             </View>
 
             {/* MODAL PILIHAN PEMBAYARAN */}
-            {showMethodModal && (
-                <View style={styles.customModalOverlay}>
-                    <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => setShowMethodModal(false)} />
+            <DimmedModal
+                visible={showMethodModal}
+                onRequestClose={() => setShowMethodModal(false)}
+                placement="bottom"
+            >
                     <View style={styles.bottomSheetContainer}>
                         <View style={styles.notchIndicator} />
                         <TouchableOpacity style={[styles.imageOptionBox, selectedMethod === 'va' && styles.selectedOptionBox]} onPress={() => { setShowMethodModal(false); setTimeout(() => { setSelectedMethod('va'); }, 100); }}>
@@ -306,8 +302,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                             <Text style={styles.imageOptionText}>Bayar di Tempat (COD)</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
-            )}
+            </DimmedModal>
 
             {/* CUSTOM ALERT KONFIRMASI / PERINGATAN[cite: 10] */}
             <CustomAlert 
@@ -338,10 +333,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FFF', paddingTop: 40 },
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginVertical: 15 },
-    backText: { fontSize: 15, color: '#666', marginRight: 20 },
-    headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    container: { flex: 1, backgroundColor: '#FFF' },
     materiSection: { paddingHorizontal: 20, marginBottom: 15 },
     subjectTitle: { fontSize: 22, fontWeight: 'bold', color: '#000' },
     chapterText: { fontSize: 15, color: '#666', marginTop: 2 },
@@ -376,8 +368,7 @@ const styles = StyleSheet.create({
     payButtonActive: { backgroundColor: '#3A7D6B', borderColor: '#3A7D6B' },
     payButtonDisabled: { backgroundColor: '#FFF', borderColor: '#E0E0E0' },
     payButtonText: { fontSize: 15, fontWeight: 'bold' },
-    customModalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end', zIndex: 9999 },
-    bottomSheetContainer: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 24, paddingTop: 15, paddingBottom: 50 },
+    bottomSheetContainer: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 24, paddingTop: 15, paddingBottom: 50, width: '100%' },
     notchIndicator: { width: 50, height: 5, backgroundColor: '#E0E0E0', borderRadius: 2.5, alignSelf: 'center', marginBottom: 25 },
     imageOptionBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#F0F0F0', borderRadius: 20, paddingVertical: 18, paddingHorizontal: 20, marginBottom: 12 },
     selectedOptionBox: { borderColor: '#3A7D6B', borderWidth: 1.5, backgroundColor: '#F4FAF8' },

@@ -16,6 +16,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { registerUser } from '../services/registerService';
 import CustomAlert from '../components/CustomAlert';
+import DimmedModal from '../components/DimmedModal';
+import { centerModalCardBase, MODAL_CARD_WIDTH } from '../components/modalTheme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -153,6 +155,18 @@ const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
   // Hanya pindah ke step 2
   const handleConfirmGoogleRole = () => {
     setModalStep(2);
+  };
+
+  const closeGoogleRoleModal = async () => {
+    setShowRoleModal(false);
+    setModalStep(1);
+    setGoogleUserTemp(null);
+    setGooglePassword('');
+    setGoogleConfirmPassword('');
+    try {
+      await auth().signOut();
+      await GoogleSignin.signOut();
+    } catch (_) {}
   };
 
   const handleConfirmGooglePassword = async () => {
@@ -378,8 +392,11 @@ const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
         </View>
 
         {/* Modal Pilih Role & Buat Password */}
-        {showRoleModal && (
-          <View style={styles.modalOverlay}>
+        <DimmedModal
+          visible={showRoleModal}
+          onRequestClose={closeGoogleRoleModal}
+          placement="center"
+        >
             <View style={styles.modalCard}>
 
               {/* STEP 1: Pilih Role */}
@@ -421,15 +438,7 @@ const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.modalCancelButton}
-                    onPress={async () => {
-                      setShowRoleModal(false);
-                      setModalStep(1);
-                      setGoogleUserTemp(null);
-                      setGooglePassword('');
-                      setGoogleConfirmPassword('');
-                      await auth().signOut();
-                      await GoogleSignin.signOut();
-                    }}
+                    onPress={closeGoogleRoleModal}
                   >
                     <Text style={styles.modalCancelText}>Batal</Text>
                   </TouchableOpacity>
@@ -512,8 +521,7 @@ const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
               )}
 
             </View>
-          </View>
-        )}
+        </DimmedModal>
       </SafeAreaView>
 
       <CustomAlert
@@ -708,22 +716,11 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
   linkText: { textDecorationLine: 'underline' },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 999,
-  },
   modalCard: {
-    backgroundColor: '#FFF',
+    ...centerModalCardBase,
+    width: MODAL_CARD_WIDTH,
     borderRadius: 20,
     padding: 30,
-    width: width * 0.8,
     alignItems: 'center',
   },
   modalTitle: {

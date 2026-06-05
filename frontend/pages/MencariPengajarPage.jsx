@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, Easing, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, Easing, } from 'react-native';
 import CustomAlert from '../components/CustomAlert';
 import axios from 'axios';
 import { API_URL } from '../src/config';
 import { pemesananService } from '../services/pemesananService';
+import PageHeader from '../components/PageHeader';
+import { WebView } from 'react-native-webview';
 
 const { width, height } = Dimensions.get('window');
 
@@ -58,7 +60,7 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
 
                         console.log('DATA GURU:', JSON.stringify(result.data_guru));
                         console.log('ID MURID dari sessionData:', sessionData?.id_murid);
-                        
+
                         try {
                             await axios.post(`${API_URL}/chats/create`, {
                                 id_guru: result.data_guru?.id_guru,
@@ -154,10 +156,41 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
         <View style={styles.container}>
             {/* ================= AREA PETA (DIPERBESAR) ================= */}
             <View style={styles.mapSection}>
-                <Image
-                    source={{ uri: 'https://api.mapbox.com/styles/v1/mapbox/light-v10/static/-86.8025,33.5207,14,0/800x800?access_token=pk.eyJ1IjoibWFyaW8iLCJhIjoiY200In0' }}
-                    style={StyleSheet.absoluteFill}
-                />
+                <View style={[StyleSheet.absoluteFill, { zIndex: 1 }]}>
+                    <WebView
+                        originWhitelist={['*']}
+                        source={{
+                            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+                    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                    <style>html, body, #map { height: 100%; margin: 0; padding: 0; }</style>
+                </head>
+                <body>
+                    <div id="map"></div>
+                    <script>
+                        L.map('map', {
+                            zoomControl: false,
+                            attributionControl: false,
+                            dragging: false,
+                            touchZoom: false,
+                            scrollWheelZoom: false,
+                            doubleClickZoom: false,
+                        }).setView([${sessionData?.koordinat?.latitude ?? -6.9744}, ${sessionData?.koordinat?.longitude ?? 107.6303}], 15)
+                        .addLayer(L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'));
+                    </script>
+                </body>
+                </html>
+            `,
+                        }}
+                        style={{ flex: 1 }}
+                        scrollEnabled={false}
+                    />
+                </View>
 
                 {/* Radar Tetap Ada */}
                 <View style={styles.markerContainer}>
@@ -166,10 +199,12 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                 </View>
 
                 {/* Header Tetap Di Atas */}
-                <View style={styles.header}>
-                    <View style={{ width: 60 }} />
-                    <Text style={styles.headerTitle}>Mencari Pengajar</Text>
-                    <View style={{ width: 60 }} />
+                <View style={styles.headerOverlay}>
+                    <PageHeader
+                        title="Mencari Pengajar"
+                        showBack={false}
+                        borderBottom={false}
+                    />
                 </View>
             </View>
 
@@ -251,15 +286,21 @@ const styles = StyleSheet.create({
 
     // Menambah porsi peta agar elemen di bawahnya terdorong ke bottom
     mapSection: { height: height * 0.58, justifyContent: 'center', alignItems: 'center' },
-    markerContainer: { justifyContent: 'center', alignItems: 'center' },
+    markerContainer: {
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 5,
+    },
+    detailSection: { flex: 1, paddingHorizontal: 20, backgroundColor: '#FFF', zIndex: 10 },
+    headerOverlay: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
     userDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#007AFF', borderWidth: 2, borderColor: '#FFF' },
     radar: { position: 'absolute', width: 80, height: 80, borderRadius: 40, backgroundColor: '#007AFF' },
 
-    header: { position: 'absolute', top: 50, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20 },
-    backText: { fontSize: 16, color: '#333', fontWeight: '500' },
-    headerTitle: { fontSize: 18, fontWeight: 'bold' },
 
-    detailSection: { flex: 1, paddingHorizontal: 20, backgroundColor: '#FFF' },
+
+
 
     floatingCard: {
         position: 'absolute',
@@ -271,11 +312,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         padding: 18,
         alignItems: 'center',
-        elevation: 6,
+        elevation: 2,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.1,
-        shadowRadius: 5,
+        shadowRadius: 16,
     },
     searchIcon: { width: 42, height: 42, resizeMode: 'contain' },
     statusTextContainer: { marginLeft: 15, flex: 1 },
