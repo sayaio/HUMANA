@@ -222,14 +222,14 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                         </View>
                         <View style={styles.statusDivider} />
                         <View style={styles.statusSubBox}>
-                            <Text style={[styles.activeStatusLabel, { color: isAktif ? '#25A244' : '#666' }]}>
+                            <Text style={[styles.activeStatusLabel, { color: isAktif ? '#387C65' : '#666' }]}>
                                 {isAktif ? 'Aktif' : 'Nonaktif'}
                             </Text>
                             <Switch
                                 value={isAktif}
                                 onValueChange={handleToggleAvailability}
                                 trackColor={{ false: '#767577', true: '#C1F4D3' }}
-                                thumbColor={isAktif ? '#25A244' : '#f4f3f4'}
+                                thumbColor={isAktif ? '#387C65' : '#f4f3f4'}
                             />
                         </View>
                     </View>
