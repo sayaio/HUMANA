@@ -946,7 +946,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#284B7A',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 20,
   },
   btnTextLihatDetailRequest: {
     color: '#FFF',

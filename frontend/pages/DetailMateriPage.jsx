@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#284B7A' },
 
   contentContainer: { flex: 1, backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 25, paddingTop: 30 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#2E7D32', marginBottom: 15 },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#387C65', marginBottom: 15 },
   paragraph: { fontSize: 14, color: '#333', lineHeight: 24, marginBottom: 15, textAlign: 'justify' }
 });
 

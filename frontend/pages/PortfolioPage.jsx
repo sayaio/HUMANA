@@ -477,12 +477,12 @@ const styles = StyleSheet.create({
     color: '#333333',
   },
   kategoriItemTextActive: {
-    color: '#1DB954',
+    color: '#387C65',
     fontWeight: '600',
   },
   kategoriCheckmark: {
     fontSize: 14,
-    color: '#1DB954',
+    color: '#387C65',
     fontWeight: 'bold',
   },
   metaGridRow: {
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 2,
   },
-  calendarDaySelected: { backgroundColor: '#1DB954', borderRadius: 20 },
+  calendarDaySelected: { backgroundColor: '#387C65', borderRadius: 20 },
   calendarDayDisabled: { opacity: 0.3 },
   calendarDayText: { fontSize: 14, color: '#333', fontWeight: '500' },
   calendarDayTextSelected: { color: '#FFF', fontWeight: '700' },

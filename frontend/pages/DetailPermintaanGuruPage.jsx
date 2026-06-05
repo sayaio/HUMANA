@@ -890,7 +890,7 @@ const styles = StyleSheet.create({
   btnTerima: {
     flex: 1,
     height: 50,
-    borderRadius: 14,
+    borderRadius: 25,
     backgroundColor: '#2A7A5E',
     justifyContent: 'center',
     alignItems: 'center',
@@ -989,7 +989,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#2A7A5E',
+    backgroundColor: '#387C65',
     justifyContent: 'center',
     alignItems: 'center',
   },

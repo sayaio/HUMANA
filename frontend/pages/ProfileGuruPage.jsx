@@ -222,14 +222,14 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                         </View>
                         <View style={styles.statusDivider} />
                         <View style={styles.statusSubBox}>
-                            <Text style={[styles.activeStatusLabel, { color: isAktif ? '#25A244' : '#666' }]}>
+                            <Text style={[styles.activeStatusLabel, { color: isAktif ? '#387C65' : '#666' }]}>
                                 {isAktif ? 'Aktif' : 'Nonaktif'}
                             </Text>
                             <Switch
                                 value={isAktif}
                                 onValueChange={handleToggleAvailability}
                                 trackColor={{ false: '#767577', true: '#C1F4D3' }}
-                                thumbColor={isAktif ? '#25A244' : '#f4f3f4'}
+                                thumbColor={isAktif ? '#387C65' : '#f4f3f4'}
                             />
                         </View>
                     </View>
@@ -342,11 +342,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: width * 0.05,
         // SOLUSI RESPONSIF: Menghitung padding atas berdasarkan platform OS & tinggi StatusBar asli
         paddingTop:
-          Platform.OS === 'android'
-            ? StatusBar.currentHeight
-              ? StatusBar.currentHeight + 10
-              : 20
-            : 15,
+            Platform.OS === 'android'
+                ? StatusBar.currentHeight
+                    ? StatusBar.currentHeight + 10
+                    : 20
+                : 15,
         paddingBottom: 15,
         backgroundColor: '#FFF',
     },
@@ -436,9 +436,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 1,
         borderColor: '#284B7A',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 15,
     },
     editSectionBtnText: { fontSize: 12, fontWeight: 'bold', color: '#284B7A', marginLeft: 4 },
 
@@ -477,8 +477,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF1F1',
         borderWidth: 1,
         borderColor: '#FFAAAA',
-        borderRadius: 15,
-        paddingVertical: 14,
+        borderRadius: 19,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
         marginTop: 5,
     },
     logoutText: { fontSize: 15, color: '#FF4D4D', fontWeight: 'bold' },
