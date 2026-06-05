@@ -40,10 +40,13 @@ class PemesananSesi {
         const biayaBelajar = totalJam * tarifPerJam;
         const biayaTransport = jarakKm * tarifPerKm;
 
+        const biayaPembelajaran = Math.round(biayaBelajar);
+        const biayaTransportGuru = Math.ceil(biayaTransport / 10) * 10;
+
         return {
-            biayaPembelajaran: Math.round(biayaBelajar),
-            biayaTransportGuru: Math.round(biayaTransport),
-            totalPembayaran: Math.round(biayaBelajar + biayaTransport)
+            biayaPembelajaran: biayaPembelajaran,
+            biayaTransportGuru: biayaTransportGuru,
+            totalPembayaran: biayaPembelajaran + biayaTransportGuru
         };
     }
     getInvoice() {

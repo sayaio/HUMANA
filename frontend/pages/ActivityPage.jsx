@@ -111,76 +111,83 @@ const ActivityPage = ({
     setRefreshing(false);
   };
 
-  const renderCard = (item, isHistory, index) => (
-    <View style={styles.card} key={item.id_pemesanan || index}>
-      <View style={styles.cardIconBox}>
-        {/* PERUBAHAN: Emoji diganti dengan Image dari assets[cite: 11] */}
-        <Image
-          source={require('../assets/buku.png')}
-          style={{ width: 40, height: 40, resizeMode: 'contain' }}
-        />
+  const renderCard = (item, isHistory, index) => {
+    const isUnpaid = !isHistory && userRole === 'murid' && item.status_pembayaran === 'menunggu';
+    return (
+      <View style={styles.card} key={item.id_pemesanan || index}>
+        <View style={styles.cardIconBox}>
+          {/* PERUBAHAN: Emoji diganti dengan Image dari assets */}
+          <Image
+            source={require('../assets/buku.png')}
+            style={{ width: 40, height: 40, resizeMode: 'contain' }}
+          />
+        </View>
+        <View style={[styles.cardInfo, { marginRight: isUnpaid ? 80 : 70 }]}>
+          <Text style={styles.cardTitle}>
+            <Text style={{ fontWeight: 'bold' }}>
+              {item.mata_pelajaran?.nama_mapel || item.nama_mapel || 'Pelajaran'}
+            </Text>{' '}
+            - {item.materi?.nama_materi || item.nama_materi || 'Materi'}
+          </Text>
+
+          <Text style={styles.cardGuru}>
+            👤{' '}
+            {userRole === 'murid'
+              ? item.nama_guru || item.guru?.nama_guru || 'Guru tidak terdaftar'
+              : item.nama_murid ||
+              item.murid?.nama_murid ||
+              'Murid tidak terdaftar'}
+          </Text>
+
+          <Text style={styles.cardTime}>
+            {item.waktu_mulai
+              ? new Date(
+                item.waktu_mulai.toString().replace(' ', 'T'),
+              ).toLocaleString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+              : item.waktu_string || 'Waktu tidak tersedia'}
+          </Text>
+        </View>
+
+        {isUnpaid && (
+          <View style={styles.badgeYellow}>
+            <Text style={styles.badgeYellowText}>Bayar</Text>
+          </View>
+        )}
+
+        {isHistory ? (
+          /* PERUBAHAN: Saat beri ulasan beralih ke SessionDetail */
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: '#387C65' }]}
+            onPress={() => {
+              if (onDetailClick) {
+                onDetailClick(item);
+              }
+            }}
+          >
+            <Text style={styles.actionBtnText}>Beri Ulasan</Text>
+          </TouchableOpacity>
+        ) : (
+          /* PERUBAHAN: Saat lihat detail beralih ke DetailSesiAktif */
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => {
+              if (onDetailClick) {
+                onDetailClick(item);
+              }
+            }}
+          >
+            <Text style={styles.actionBtnText}>Lihat Detail</Text>
+          </TouchableOpacity>
+        )}
       </View>
-      <View style={styles.cardInfo}>
-        <Text style={styles.cardTitle}>
-          <Text style={{ fontWeight: 'bold' }}>
-            {item.mata_pelajaran?.nama_mapel || item.nama_mapel || 'Pelajaran'}
-          </Text>{' '}
-          - {item.materi?.nama_materi || item.nama_materi || 'Materi'}
-        </Text>
-
-        <Text style={styles.cardGuru}>
-          👤{' '}
-          {userRole === 'murid'
-            ? item.nama_guru || item.guru?.nama_guru || 'Guru tidak terdaftar'
-            : item.nama_murid ||
-            item.murid?.nama_murid ||
-            'Murid tidak terdaftar'}
-        </Text>
-
-        <Text style={styles.cardTime}>
-          {item.waktu_mulai
-            ? new Date(
-              item.waktu_mulai.toString().replace(' ', 'T'),
-            ).toLocaleString('id-ID', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })
-            : item.waktu_string || 'Waktu tidak tersedia'}
-        </Text>
-      </View>
-
-      {isHistory ? (
-        /* PERUBAHAN: Saat beri ulasan beralih ke SessionDetail[cite: 12, 15] */
-        <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: '#387C65' }]}
-          onPress={() => {
-            if (onDetailClick) {
-              onDetailClick(item);
-              onNavigate('SessionDetail');
-            }
-          }}
-        >
-          <Text style={styles.actionBtnText}>Beri Ulasan</Text>
-        </TouchableOpacity>
-      ) : (
-        /* PERUBAHAN: Saat lihat detail beralih ke DetailSesiAktif[cite: 12, 15] */
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => {
-            if (onDetailClick) {
-              onDetailClick(item);
-              onNavigate('DetailSesiAktif');
-            }
-          }}
-        >
-          <Text style={styles.actionBtnText}>Lihat Detail</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -326,6 +333,22 @@ const styles = StyleSheet.create({
     marginRight: 15,
   },
   cardInfo: { flex: 1 },
+  badgeYellow: {
+    backgroundColor: '#FFFDE7',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F9A825',
+    position: 'absolute',
+    top: 15,
+    right: 15,
+  },
+  badgeYellowText: {
+    color: '#F9A825',
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
   cardTitle: { fontSize: 12, color: '#333', marginBottom: 5 },
   cardGuru: { fontSize: 11, color: '#555', marginBottom: 5 },
   cardTime: { fontSize: 10, color: '#A9A9A9' },

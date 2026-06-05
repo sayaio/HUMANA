@@ -354,6 +354,42 @@ const HomePage = ({
             <View style={[styles.sessionCard, { marginBottom: 0, marginRight: 0, width: '100%' }]}>
                 <Text style={styles.cardLabel}>SESI HARI INI</Text>
 
+                    {role === 'guru' ? (
+                        <View style={styles.rowCenter}>
+                            <View style={styles.avatar}>
+                                <Text style={styles.avatarText}>
+                                    {(s.nama_murid || 'M').substring(0, 2).toUpperCase()}
+                                </Text>
+                            </View>
+                            <View style={{ flex: 1, marginLeft: 12 }}>
+                                <Text style={styles.sessionName} numberOfLines={1}>
+                                    {s.nama_murid || 'Nama Murid'}
+                                </Text>
+                                <Text style={styles.sessionSub} numberOfLines={1}>
+                                    {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'} — {s.materi?.nama_materi || s.nama_materi || 'Materi'}
+                                </Text>
+                            </View>
+                            <View style={styles.badgeGreen}>
+                                <Text style={styles.badgeGreenText}>• Segera</Text>
+                            </View>
+                        </View>
+                    ) : (
+                        <View style={styles.rowCenter}>
+                            {s.status_pembayaran === 'menunggu' && (
+                                <View style={[styles.badgeYellow, { marginRight: 10 }]}>
+                                    <Text style={styles.badgeYellowText}>Bayar</Text>
+                                </View>
+                            )}
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.sessionTitle} numberOfLines={2}>
+                                    <Text style={{ fontFamily: FONTS.bold }}>
+                                        {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'}
+                                    </Text>
+                                    {' – '}{s.materi?.nama_materi || s.nama_materi || 'Materi'}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
                 {role === 'guru' ? (
                     <View style={styles.rowCenter}>
                         <View style={styles.avatar}>
@@ -821,6 +857,8 @@ const styles = StyleSheet.create({
 
     badgeGreen: { backgroundColor: '#E8F5E9', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#4CAF50' },
     badgeGreenText: { fontFamily: 'SF-Pro-Display-Bold', color: '#4CAF50', fontSize: 11 },
+    badgeRed: { backgroundColor: '#FFEEEE', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#E53935' },
+    badgeRedText: { fontFamily: 'SF-Pro-Display-Bold', color: '#E53935', fontSize: 11 },
     badgeYellow: { backgroundColor: '#FFFDE7', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 10 },
     badgeYellowText: { fontFamily: 'SF-Pro-Display-Bold', color: '#F9A825', fontSize: 11 },
 
