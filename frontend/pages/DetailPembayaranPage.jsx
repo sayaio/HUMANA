@@ -7,6 +7,8 @@ import { useAppAlert } from '../components/AppAlertProvider';
 import { batalkanSesi } from '../services/batalSesiService';
 import { pemesananService } from '../services/pemesananService';
 import PageHeader from '../components/PageHeader';
+import { fetchGuruRating } from '../services/feedbackService';
+import PoinSVG from '../components/mapsPoint';
 
 const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDilepas }) => {
     const { showInfo, showConfirm } = useAppAlert();
@@ -18,6 +20,18 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
     const [isLoadingData, setIsLoadingData] = useState(true);
 
     const idSesi = sessionData?.id_sesi || sessionData?.id_pemesanan;
+    const [guruRating, setGuruRating] = useState(null);
+
+    useEffect(() => {
+        const fetchRating = async () => {
+            const idGuru = displayData?.guru?.id_guru;
+            if (!idGuru) return;
+            const res = await fetchGuruRating(idGuru);
+            console.log('🔍 fetchGuruRating res:', JSON.stringify(res));
+            if (res?.success) setGuruRating(res.data?.rating ?? null);
+        };
+        fetchRating();
+    }, [displayData?.guru?.id_guru]);
 
     // Deteksi jika GURU melepas sesi sebelum dibayar (kasus 2) -> murid cari guru lain.
     useEffect(() => {
@@ -54,6 +68,8 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                 const response = await getSesiDetail(idSesi);
                 if (response && response.data) {
                     setDetailSesi(response.data);
+                    console.log('sessionData:', JSON.stringify(sessionData));
+                    console.log('displayData:', JSON.stringify(response.data));
                 } else if (response && !response.success && response.message) {
                     console.log('⚠️ Warning:', response.message);
                 } else {
@@ -78,7 +94,6 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
         return `Rp ${Number(angka).toLocaleString('id-ID')}`;
     };
 
-    // Fungsi navigasi kembali dengan CustomAlert (Ya/Tidak)[cite: 8, 10]
     const handleBackWithConfirmation = () => {
         showConfirm(
             'Batalkan sesi?',
@@ -146,27 +161,80 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
         return 'Belum Dipilih';
     };
 
+    // Helper: ambil 2 inisial dari nama guru
+    const getInitials = (nama) => {
+        if (!nama) return '?';
+        return nama.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    };
+
     return (
         <View style={styles.container}>
             <PageHeader title="Detail Pembayaran" onBack={handleBackWithConfirmation} />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-                {/* INFO MATERI */}
-                <View style={styles.materiSection}>
-                    <Text style={styles.subjectTitle}>{sessionData?.nama_mapel || 'Mata Pelajaran'}</Text>
-                    <Text style={styles.chapterText}>{sessionData?.nama_materi || 'Materi Pembahasan'}</Text>
-                    <View style={styles.divider} />
-                    <Text style={styles.gradeText}>
-                        {sessionData?.jenjang || 'Jenjang'} - Kelas {sessionData?.kelas || '-'}
+
+                {/* CARD INFO MATERI & GURU */}
+                <View style={styles.infoCard}>
+                    {/* Baris atas: Subject info */}
+                    <Text style={styles.subjectTitle}>
+                        {sessionData?.nama_mapel || displayData?.mata_pelajaran?.nama_mapel || 'Mata Pelajaran'}
                     </Text>
+                    <Text style={styles.chapterText}>
+                        {sessionData?.nama_materi || displayData?.materi?.nama_materi || 'Materi Pembahasan'}
+                    </Text>
+                    <View style={styles.gradeBadge}>
+                        <Text style={styles.gradeBadgeText}>
+                            {sessionData?.jenjang || 'Jenjang'} · Kelas {sessionData?.kelas || '-'}
+                        </Text>
+                    </View>
+
+                    {/* Divider + Info Guru (hanya jika ada data guru) */}
+                    {displayData?.guru && (
+                        <>
+                            <View style={styles.infoCardDivider} />
+                            <View style={styles.guruRow}>
+                                {/* Avatar */}
+                                <View style={styles.guruAvatar}>
+                                    <Text style={styles.guruAvatarText}>
+                                        {getInitials(displayData.guru.nama_guru)}
+                                    </Text>
+                                </View>
+                                {/* Info */}
+                                <View style={styles.guruInfo}>
+                                    <Text style={styles.guruName}>{displayData.guru.nama_guru}</Text>
+                                    <Text style={styles.guruMapel}>
+                                        {sessionData?.nama_mapel || displayData?.mata_pelajaran?.nama_mapel || ''}
+                                        {(sessionData?.nama_materi || displayData?.materi?.nama_materi)
+                                            ? ` — ${sessionData?.nama_materi || displayData?.materi?.nama_materi}`
+                                            : ''}
+                                    </Text>
+                                    {guruRating !== null && guruRating !== undefined && (
+                                        <Text style={Number(guruRating) > 0 ? styles.guruRating : styles.guruNoRating}>
+                                            {Number(guruRating) > 0
+                                                ? `★ ${Number(guruRating).toFixed(1)}`
+                                                : 'Belum ada rating'}
+                                        </Text>
+                                    )}
+                                </View>
+                            </View>
+                        </>
+                    )}
                 </View>
 
                 {/* CARD UTAMA */}
                 <View style={styles.mainCard}>
                     <Text style={styles.inputLabel}>Lokasi Belajar</Text>
-                    <TextInput style={styles.disabledInput} value={sessionData?.tipe_lokasi || "Alamat Tujuan"} editable={false} />
-                    <View style={styles.locationWrapper}>
-                        <Text style={styles.pinIcon}>📍</Text>
-                        <TextInput style={[styles.disabledInput, { flex: 1, borderWidth: 0, paddingLeft: 30 }]} value={sessionData?.lokasi || "Koordinat tidak ditemukan"} editable={false} />
+
+                    {/* Bar Alamat Tunggal yang Lebih Besar */}
+                    <View style={styles.largeLocationContainer}>
+                        <PoinSVG size={25} color="#284B7A" />
+                        <View style={styles.addressTextWrapper}>
+                            {sessionData?.tipe_lokasi && (
+                                <Text style={styles.locationTypeText}>{sessionData.tipe_lokasi}</Text>
+                            )}
+                            <Text style={styles.fullAddressText}>
+                                {sessionData?.lokasi || "Alamat lengkap tidak ditemukan"}
+                            </Text>
+                        </View>
                     </View>
 
                     <Text style={styles.inputLabel}>Jadwal Pemesanan</Text>
@@ -253,21 +321,21 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                 onRequestClose={() => setShowMethodModal(false)}
                 placement="bottom"
             >
-                    <View style={styles.bottomSheetContainer}>
-                        <View style={styles.notchIndicator} />
-                        <TouchableOpacity style={[styles.imageOptionBox, selectedMethod === 'va' && styles.selectedOptionBox]} onPress={() => { setShowMethodModal(false); setTimeout(() => { setSelectedMethod('va'); }, 100); }}>
-                            <Text style={styles.imageOptionIcon}>🏛️</Text>
-                            <Text style={styles.imageOptionText}>Virtual Account</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={[styles.imageOptionBox, selectedMethod === 'ewallet' && styles.selectedOptionBox]} onPress={() => { setShowMethodModal(false); setTimeout(() => { setSelectedMethod('ewallet'); }, 100); }}>
-                            <Text style={styles.imageOptionIcon}>💼</Text>
-                            <Text style={styles.imageOptionText}>E-Wallet / QR Code</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={[styles.imageOptionBox, selectedMethod === 'cod' && styles.selectedOptionBox]} onPress={() => { setShowMethodModal(false); setTimeout(() => { setSelectedMethod('cod'); }, 100); }}>
-                            <Text style={styles.imageOptionIcon}>💵</Text>
-                            <Text style={styles.imageOptionText}>Bayar di Tempat (COD)</Text>
-                        </TouchableOpacity>
-                    </View>
+                <View style={styles.bottomSheetContainer}>
+                    <View style={styles.notchIndicator} />
+                    <TouchableOpacity style={[styles.imageOptionBox, selectedMethod === 'va' && styles.selectedOptionBox]} onPress={() => { setShowMethodModal(false); setTimeout(() => { setSelectedMethod('va'); }, 100); }}>
+                        <Text style={styles.imageOptionIcon}>🏛️</Text>
+                        <Text style={styles.imageOptionText}>Virtual Account</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.imageOptionBox, selectedMethod === 'ewallet' && styles.selectedOptionBox]} onPress={() => { setShowMethodModal(false); setTimeout(() => { setSelectedMethod('ewallet'); }, 100); }}>
+                        <Text style={styles.imageOptionIcon}>💼</Text>
+                        <Text style={styles.imageOptionText}>E-Wallet / QR Code</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.imageOptionBox, selectedMethod === 'cod' && styles.selectedOptionBox]} onPress={() => { setShowMethodModal(false); setTimeout(() => { setSelectedMethod('cod'); }, 100); }}>
+                        <Text style={styles.imageOptionIcon}>💵</Text>
+                        <Text style={styles.imageOptionText}>Bayar di Tempat (COD)</Text>
+                    </TouchableOpacity>
+                </View>
             </DimmedModal>
 
         </View>
@@ -276,19 +344,129 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFF' },
-    materiSection: { paddingHorizontal: 20, marginBottom: 15 },
     subjectTitle: { fontSize: 22, fontWeight: 'bold', color: '#000' },
     chapterText: { fontSize: 15, color: '#666', marginTop: 2 },
-    gradeText: { fontSize: 14, color: '#888' },
     divider: { height: 1, backgroundColor: '#EAEAEA', marginVertical: 8 },
-    mainCard: {
-        backgroundColor: '#FFF', borderRadius: 20, padding: 20, marginHorizontal: 20,
-        borderWidth: 1, borderColor: '#EFEFEF', elevation: 3,
+
+    // Info Card (Materi + Guru)
+    infoCard: {
+        backgroundColor: '#FFF',
+        borderRadius: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 18,
+        marginHorizontal: 20,
+        marginBottom: 15,
+        borderWidth: 1,
+        borderColor: '#EFEFEF',
+        elevation: 3,
     },
-    inputLabel: { fontSize: 13, fontWeight: 'bold', color: '#000', marginBottom: 6, marginTop: 10 },
+    gradeBadge: {
+        marginTop: 8,
+        alignSelf: 'flex-start',
+        backgroundColor: '#EAF4F1',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+    },
+    gradeBadgeText: {
+        fontSize: 12,
+        color: '#3A7D6B',
+        fontWeight: '600',
+    },
+    infoCardDivider: {
+        height: 1,
+        backgroundColor: '#F0F0F0',
+        marginVertical: 14,
+    },
+    guruRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    guruAvatar: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#2C2C2C',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexShrink: 0,
+    },
+    guruAvatarText: {
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: 'bold',
+        letterSpacing: 0.5,
+    },
+    guruInfo: { flex: 1 },
+    guruName: {
+        fontSize: 15,
+        fontWeight: 'bold',
+        color: '#000',
+        marginBottom: 2,
+    },
+    guruMapel: {
+        fontSize: 13,
+        color: '#666',
+    },
+    guruRating: {
+        fontSize: 12,
+        color: '#F5A623',
+        fontWeight: '600',
+        marginTop: 3,
+    },
+    guruNoRating: {
+        fontSize: 11,
+        color: '#CCC',
+        marginTop: 3,
+        fontStyle: 'italic',
+    },
+
+    // Main Card
+    // Bagian Main Card yang di-update
+    mainCard: {
+        backgroundColor: '#FFF',
+        borderRadius: 20,
+        padding: 20,
+        marginHorizontal: 20,
+        borderWidth: 1,
+        borderColor: '#EFEFEF',
+        elevation: 3,
+    },
+    inputLabel: { fontSize: 13, fontWeight: 'bold', color: '#000', marginBottom: 6, marginTop: 14 },
     disabledInput: { backgroundColor: '#F9F9F9', borderWidth: 1, borderColor: '#EBEBEB', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 10, fontSize: 14, color: '#A0A0A0' },
-    locationWrapper: { marginTop: 8, justifyContent: 'center' },
-    pinIcon: { position: 'absolute', left: 12, zIndex: 1, fontSize: 14 },
+
+    // Styles Baru untuk Bar Alamat Besar
+    largeLocationContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#F9F9F9',
+        borderWidth: 1,
+        borderColor: '#EBEBEB',
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        paddingVertical: 12,
+        alignItems: 'flex-start', // Menjaga icon pin tetap di atas saat alamat panjang
+        gap: 10,
+    },
+    largePinIcon: {
+        fontSize: 16,
+        marginTop: 2, // Menyelaraskan icon dengan baris pertama teks
+    },
+    addressTextWrapper: {
+        flex: 1,
+    },
+    locationTypeText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#3A7D6B',
+        marginBottom: 4,
+    },
+    fullAddressText: {
+        fontSize: 14,
+        color: '#A0A0A0',
+        lineHeight: 20, // Memberikan jarak antar baris alamat agar enak dibaca
+    },
+    // Payment Card
     paymentCard: {
         backgroundColor: '#FFF', borderRadius: 20, padding: 20, marginHorizontal: 20, marginTop: 15,
         borderWidth: 1, borderColor: '#EFEFEF', elevation: 3,
@@ -305,17 +483,21 @@ const styles = StyleSheet.create({
     priceValue: { fontSize: 14, color: '#333' },
     totalLabel: { fontSize: 14, fontWeight: 'bold', color: '#000' },
     totalValue: { fontSize: 14, fontWeight: 'bold', color: '#000' },
+
+    // Bottom Button
     bottomActionContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFF', paddingHorizontal: 20, paddingBottom: 25, paddingTop: 10 },
     payButton: { borderRadius: 25, paddingVertical: 14, alignItems: 'center', borderWidth: 1 },
     payButtonActive: { backgroundColor: '#3A7D6B', borderColor: '#3A7D6B' },
     payButtonDisabled: { backgroundColor: '#FFF', borderColor: '#E0E0E0' },
     payButtonText: { fontSize: 15, fontWeight: 'bold' },
+
+    // Modal
     bottomSheetContainer: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 24, paddingTop: 15, paddingBottom: 50, width: '100%' },
     notchIndicator: { width: 50, height: 5, backgroundColor: '#E0E0E0', borderRadius: 2.5, alignSelf: 'center', marginBottom: 25 },
     imageOptionBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#F0F0F0', borderRadius: 20, paddingVertical: 18, paddingHorizontal: 20, marginBottom: 12 },
     selectedOptionBox: { borderColor: '#3A7D6B', borderWidth: 1.5, backgroundColor: '#F4FAF8' },
     imageOptionIcon: { fontSize: 20, marginRight: 18, color: '#2C4373' },
-    imageOptionText: { fontSize: 16, fontWeight: 'bold', color: '#000' }
+    imageOptionText: { fontSize: 16, fontWeight: 'bold', color: '#000' },
 });
 
 export default DetailPembayaranPage;
