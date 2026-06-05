@@ -763,10 +763,12 @@ const App = () => {
     }
 
     if (currentPage === 'Notifikasi') {
+        const currentRole = (profileData.role || 'murid').toLowerCase();
         return (
             <NotifikasiPage
-                guruData={profileData}
-                onBack={() => setCurrentPage('RealActivityGuru')}
+                userId={profileData.id}
+                userRole={currentRole}
+                onBack={() => setCurrentPage(currentRole === 'guru' ? 'RealActivityGuru' : 'Activity')}
             />
         );
     }
