@@ -41,7 +41,7 @@ class PemesananSesi {
         const biayaTransport = jarakKm * tarifPerKm;
 
         const biayaPembelajaran = Math.round(biayaBelajar);
-        const biayaTransportGuru = Math.ceil(biayaTransport / 10) * 10;
+        const biayaTransportGuru = Math.ceil(biayaTransport / 500) * 500;
 
         return {
             biayaPembelajaran: biayaPembelajaran,

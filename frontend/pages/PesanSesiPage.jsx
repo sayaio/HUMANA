@@ -1523,8 +1523,9 @@ const styles = StyleSheet.create({
     gap: 6,                     // ← jarak antara icon dan teks
     marginHorizontal: 14,
     marginBottom: 12,
+    borderRadius: 19,
     paddingVertical: 10,
-    borderRadius: 10,
+    paddingHorizontal: 12,
     borderWidth: 1.5,
     borderColor: '#284B7A',
     backgroundColor: '#F0F5FF',
