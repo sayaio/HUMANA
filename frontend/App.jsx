@@ -772,7 +772,7 @@ const App = () => {
             <NotifikasiPage
                 userId={profileData.id}
                 userRole={currentRole}
-                onBack={() => setCurrentPage(currentRole === 'guru' ? 'RealActivityGuru' : 'Activity')}
+                onBack={() => setCurrentPage(currentRole === 'guru' ? 'PageGuru' : 'Home')}
             />
         );
     }

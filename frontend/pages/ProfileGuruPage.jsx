@@ -300,23 +300,23 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                             <Text style={styles.editSectionBtnText}>Tambah</Text>
                         </TouchableOpacity>
                     </View>
-                    <View style={styles.cardBox}>
-                        {portofolios.length === 0 ? (
+                    {portofolios.length === 0 ? (
+                        <View style={styles.cardBox}>
                             <Text style={styles.emptyText}>Belum ada portofolio.</Text>
-                        ) : (
-                            portofolios.map(item => (
-                                <View key={item.id_portfolio} style={styles.portoItem}>
-                                    <View style={styles.portoHeader}>
-                                        <Text style={styles.portoTitle}>{item.judul}</Text>
-                                        <TouchableOpacity onPress={() => handleDeletePorto(item.id_portfolio)}>
-                                            <Trash2 size={16} color="#FF8A8A" />
-                                        </TouchableOpacity>
-                                    </View>
-                                    <Text style={styles.portoDesc}>{item.deskripsi}</Text>
+                        </View>
+                    ) : (
+                        portofolios.map(item => (
+                            <View key={item.id_portfolio} style={[styles.cardBox, { marginBottom: 12, paddingBottom: 16 }]}>
+                                <View style={styles.portoHeader}>
+                                    <Text style={styles.portoTitle}>{item.judul}</Text>
+                                    <TouchableOpacity onPress={() => handleDeletePorto(item.id_portfolio)}>
+                                        <Trash2 size={16} color="#FF8A8A" />
+                                    </TouchableOpacity>
                                 </View>
-                            ))
-                        )}
-                    </View>
+                                <Text style={styles.portoDesc}>{item.deskripsi}</Text>
+                            </View>
+                        ))
+                    )}
                 </View>
 
                 {/* TOMBOL LOGOUT */}

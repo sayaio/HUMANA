@@ -34,7 +34,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
     const { id_guru, id_murid } = chatData;
     try {
       const response = await axios.get(
-        `${API_URL}/chats/messages/${id_guru}/${id_murid}`,
+        `${API_URL}/chats/messages/${id_guru}/${id_murid}?role=${userRole}`,
       );
       const data = response.data.data || response.data;
       setMessages(Array.isArray(data) ? data : []);
@@ -126,7 +126,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
       />
 
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <BackButton onPress={onBack} variant="dark" style={styles.backBtn} />
+        <BackButton onPress={onBack} label="" variant="dark" style={styles.backBtn} />
 
         <View style={[styles.avatar, { backgroundColor: color }]}>
           <Text style={styles.avatarText}>{initials}</Text>

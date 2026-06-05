@@ -10,7 +10,8 @@ import {
     FlatList
 } from 'react-native';
 import BackButton from '../components/BackButton';
-import { fetchNotifikasi, clearNotifikasi } from '../services/notifikasiService';
+import { fetchNotifikasi } from '../services/notifikasiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const NotifikasiPage = ({ userId, userRole, onBack }) => {
     const role = userRole ? userRole.toLowerCase() : 'murid';
@@ -44,6 +45,10 @@ const NotifikasiPage = ({ userId, userRole, onBack }) => {
                 setNotifikasi(prev => [...prev, ...res.data]);
             } else {
                 setNotifikasi(res.data);
+            }
+            if (res.data.length > 0) {
+                const maxId = Math.max(...res.data.map(n => n.id_notifikasi));
+                AsyncStorage.setItem(`last_read_notif_${userId}`, maxId.toString()).catch(console.error);
             }
             setOffset(currentOffset + limit);
         } else if (!isLoadMore) {

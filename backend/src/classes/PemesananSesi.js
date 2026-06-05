@@ -77,6 +77,21 @@ class PemesananSesi {
         const jarak = this.jarak_km || 0;
         const rincianBiaya = this.HitungTotalBiaya(jarak);
 
+        const lokasiAddressOnly = this.#lokasiSesi && this.#lokasiSesi.includes('|') 
+            ? this.#lokasiSesi.split('|')[1] 
+            : this.#lokasiSesi;
+            
+        let koordinatObj = null;
+        if (this.#lokasiSesi && this.#lokasiSesi.includes('|')) {
+            const coords = this.#lokasiSesi.split('|')[0].split(',');
+            if (coords.length === 2) {
+                koordinatObj = {
+                    latitude: Number(coords[0]),
+                    longitude: Number(coords[1])
+                };
+            }
+        }
+
         return {
             id_pemesanan: this.id_pemesanan,
             nama_murid: this.murid,
@@ -86,7 +101,8 @@ class PemesananSesi {
             // PERBAIKAN: Gunakan variabel 'jarak' yang sudah aman
             tanggal_mentah: this.#waktuMulai,
             jarak_km: parseFloat(jarak.toFixed(2)),
-            lokasi_sesi: this.#lokasiSesi,
+            lokasi_sesi: lokasiAddressOnly,
+            koordinat: koordinatObj,
             biaya_sesi: rincianBiaya.biayaPembelajaran,
             biaya_jarak: rincianBiaya.biayaTransportGuru,
             harga_total: rincianBiaya.totalPembayaran

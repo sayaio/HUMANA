@@ -4,6 +4,8 @@ import {
     StatusBar, ScrollView, Dimensions, Modal, ActivityIndicator, Animated, PanResponder, RefreshControl,
 } from 'react-native';
 
+import DimmedModal from '../components/DimmedModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomAlert from '../components/CustomAlert';
 import { useAppAlert } from '../components/AppAlertProvider';
 import BottomNavbar from '../components/BottomNavbar';
@@ -237,7 +239,13 @@ const HomePage = ({
         try {
             const resNotif = await fetchNotifikasi(role, userId);
             if (resNotif && resNotif.success && Array.isArray(resNotif.data) && resNotif.data.length > 0) {
-                setUnreadNotif(true);
+                const maxId = Math.max(...resNotif.data.map(n => n.id_notifikasi));
+                const lastRead = await AsyncStorage.getItem(`last_read_notif_${userId}`);
+                if (!lastRead || maxId > parseInt(lastRead)) {
+                    setUnreadNotif(true);
+                } else {
+                    setUnreadNotif(false);
+                }
             } else {
                 setUnreadNotif(false);
             }

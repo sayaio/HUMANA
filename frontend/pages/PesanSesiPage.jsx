@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -486,13 +486,15 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
       const waktuMulaiFormatted = `${tglDb} ${waktuMulai}:00`;
       const waktuSelesaiFormatted = `${tglDb} ${waktuSelesai}:00`;
 
+      const lokasiGabungan = userLocation ? `${userLocation.latitude},${userLocation.longitude}|${locationAddress}` : locationAddress;
+
       const dataPemesanan = {
         id_murid: userId,
         id_mapel: mapelSelected.id,
         id_materi: selectedMateriId,
         waktu_mulai: waktuMulaiFormatted,
         waktu_selesai: waktuSelesaiFormatted,
-        lokasi_sesi: locationAddress,
+        lokasi_sesi: lokasiGabungan,
       };
 
       const result = await pemesananService.createPemesanan(dataPemesanan);

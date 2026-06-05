@@ -35,6 +35,7 @@ import { fetchNotifikasi, clearNotifikasi } from '../services/notifikasiService'
 import BottomNavbar from '../components/BottomNavbar';
 import CustomAlert from '../components/CustomAlert';
 import { useAppAlert } from '../components/AppAlertProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
@@ -133,7 +134,13 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
 
     const resNotif = await fetchNotifikasi('guru', guruData.id);
     if (resNotif && resNotif.success && Array.isArray(resNotif.data) && resNotif.data.length > 0) {
-        setUnreadNotif(true);
+        const maxId = Math.max(...resNotif.data.map(n => n.id_notifikasi));
+        const lastRead = await AsyncStorage.getItem(`last_read_notif_${guruData.id}`);
+        if (!lastRead || maxId > parseInt(lastRead)) {
+            setUnreadNotif(true);
+        } else {
+            setUnreadNotif(false);
+        }
     } else {
         setUnreadNotif(false);
     }

@@ -78,7 +78,7 @@ const getPermintaanBaru = async (req, res) => {
             WHERE p.id_guru IS NULL 
               AND mg.id_guru = ?
               AND LOWER(p.status_pemesanan) = 'menunggu konfirmasi'
-            ORDER BY p.waktu_mulai ASC
+            ORDER BY p.id_pemesanan DESC
         `, [id_guru]); // Menggunakan placeholder binding agar query lebih aman dan presisi
         // Pemetaan data ke class objek dan kalkulasi jarak (Tetap dipertahankan seperti aslinya)
         const daftarSesiObjek = rows.map(row => {
@@ -92,13 +92,21 @@ const getPermintaanBaru = async (req, res) => {
             );
             sesiPemesanan.id_pemesanan = row.id_pemesanan;
             // SAFETY CHECK: Jalankan kalkulasi Haversine jika lokasi berupa koordinat
-            if (row.lokasi_sesi && row.lokasi_sesi.includes(',')) {
-                const [muridLat, muridLng] = row.lokasi_sesi.split(',').map(Number);
-                if (!isNaN(muridLat) && !isNaN(muridLng)) {
-                    sesiPemesanan.jarak_km = hitungJarak(guruLat, guruLng, muridLat, muridLng);
-                } else {
-                    sesiPemesanan.jarak_km = 0;
+            let muridLat = NaN;
+            let muridLng = NaN;
+            if (row.lokasi_sesi) {
+                if (row.lokasi_sesi.includes('|')) {
+                    const coords = row.lokasi_sesi.split('|')[0].split(',');
+                    muridLat = Number(coords[0]);
+                    muridLng = Number(coords[1]);
+                } else if (row.lokasi_sesi.includes(',')) {
+                    const coords = row.lokasi_sesi.split(',').map(Number);
+                    muridLat = coords[0];
+                    muridLng = coords[1];
                 }
+            }
+            if (!isNaN(muridLat) && !isNaN(muridLng)) {
+                sesiPemesanan.jarak_km = hitungJarak(guruLat, guruLng, muridLat, muridLng);
             } else {
                 sesiPemesanan.jarak_km = 0;
             }
