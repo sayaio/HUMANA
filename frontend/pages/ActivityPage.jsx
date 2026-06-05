@@ -52,8 +52,8 @@ const ActivityPage = ({
         const formattedData = Array.isArray(rawData)
           ? rawData
           : rawData
-          ? [rawData]
-          : [];
+            ? [rawData]
+            : [];
         setActiveData(formattedData);
       } else {
         setActiveData([]);
@@ -107,9 +107,9 @@ const ActivityPage = ({
     if (!userId || !userRole) return;
     const resNotif = await fetchNotifikasi(role, userId);
     if (resNotif && resNotif.success && Array.isArray(resNotif.data) && resNotif.data.length > 0) {
-        setUnreadNotif(true);
+      setUnreadNotif(true);
     } else {
-        setUnreadNotif(false);
+      setUnreadNotif(false);
     }
   };
 
@@ -151,21 +151,21 @@ const ActivityPage = ({
           {userRole === 'murid'
             ? item.nama_guru || item.guru?.nama_guru || 'Guru tidak terdaftar'
             : item.nama_murid ||
-              item.murid?.nama_murid ||
-              'Murid tidak terdaftar'}
+            item.murid?.nama_murid ||
+            'Murid tidak terdaftar'}
         </Text>
 
         <Text style={styles.cardTime}>
           {item.waktu_mulai
             ? new Date(
-                item.waktu_mulai.toString().replace(' ', 'T'),
-              ).toLocaleString('id-ID', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })
+              item.waktu_mulai.toString().replace(' ', 'T'),
+            ).toLocaleString('id-ID', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })
             : item.waktu_string || 'Waktu tidak tersedia'}
         </Text>
       </View>
@@ -205,10 +205,10 @@ const ActivityPage = ({
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Activity</Text>
+        <Text style={styles.headerTitle}>Aktivitas</Text>
         <TouchableOpacity onPress={() => onNavigate('Notifikasi')} style={styles.bellIconContainer}>
-            <Bell size={24} color="#000" />
-            {unreadNotif && <View style={styles.redDot} />}
+          <Bell size={24} color="#000" />
+          {unreadNotif && <View style={styles.redDot} />}
         </TouchableOpacity>
       </View>
 

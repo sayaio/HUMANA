@@ -423,8 +423,6 @@ const HomePage = ({
             <Animated.FlatList
                 nestedScrollEnabled
                 data={activeSessions}
-                // Kirimkan lebar card yang baru ke renderItem secara inline jika diperlukan, 
-                // atau pastikan di renderSessionItem menggunakan `width: width - 40`
                 renderItem={({ item }) => (
                     <View style={{ width: cardWidth, marginRight: gapSize }}>
 
@@ -437,18 +435,14 @@ const HomePage = ({
                 horizontal
 
                 pagingEnabled={false}
-                // UBAH: snapToInterval sekarang murni menghitung total lebar satu komponen penuh + gap-nya
                 snapToInterval={cardWidth + gapSize}
-                // UBAH: Set alignment ke 'center' agar ketika standby, card yang aktif berada tepat di tengah
                 snapToAlignment="start"
                 decelerationRate="fast"
                 disableIntervalMomentum={true}
                 showsHorizontalScrollIndicator={false}
 
                 contentContainerStyle={{
-                    // Padding kiri disesuaikan agar card pertama pas presisi di tengah layar saat pertama dimuat
                     paddingLeft: SIDE_PADDING,
-                    // Padding kanan disisakan sedikit space agar card terakhir bisa berhenti dengan manis
                     paddingRight: SIDE_PADDING,
                     paddingVertical: 4
                 }}
@@ -602,7 +596,11 @@ const HomePage = ({
                                     rekomendasiList.map(item => (
                                         <View key={item.id_materi} style={styles.rekomendasiCard}>
                                             <View style={styles.rekomendasiIcon}>
-                                                <BookOpen color="#284B7A" size={22} />
+                                                {/* ✅ DIUBAH: Menggunakan Image langsung dan ukurannya diperbesar sesuai mockup gambar image_a5d046.png */}
+                                                <Image 
+                                                    source={require('../assets/daftarmateri.png')} 
+                                                    style={{ width: 44, height: 44, resizeMode: 'contain' }} 
+                                                />
                                             </View>
                                             <View style={{ flex: 1 }}>
                                                 <Text style={styles.rekomendasiTitle} numberOfLines={1}>
@@ -897,9 +895,10 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 11,
     },
+    // ✅ DIUBAH: Latar belakang warna biru/abu-abu kotak pembungkus ditiadakan (transparan murni) sesuai mockup
     rekomendasiIcon: {
-        width: 44, height: 44, borderRadius: 12,
-        backgroundColor: '#EBF0F8', justifyContent: 'center', alignItems: 'center', marginRight: 14,
+        width: 44, height: 44,
+        justifyContent: 'center', alignItems: 'center', marginRight: 14,
     },
     rekomendasiTitle: { fontFamily: 'SF-Pro-Display-Bold', fontSize: 14, color: '#1A1A2E', marginBottom: 2 },
     rekomendasiSub: { fontFamily: 'SF-Pro-Display-Regular', fontSize: 12, color: '#999' },
