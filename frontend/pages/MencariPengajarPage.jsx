@@ -135,6 +135,14 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
         outputRange: [0.4, 0.1, 0],
     });
 
+    // Format Kelas: "angka kelas - jenjang", contoh "1 - SMA"
+    const kelasAngka = sessionData?.kelas
+        ? String(sessionData.kelas).replace(/[^0-9]/g, '')
+        : '';
+    const kelasText = kelasAngka
+        ? `${kelasAngka} - ${sessionData?.jenjang || ''}`.trim()
+        : (sessionData?.tingkatan || '-');
+
     const handleBatalkan = async () => {
         console.log('=== handleBatalkan dipanggil ===');
         const id_pemesanan = sessionData?.id_pemesanan;
@@ -227,13 +235,13 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                 <View style={styles.contentWrapper}>
                     <Text style={styles.sectionTitle}>DETAIL PERMINTAAN</Text>
 
-                    {/* MATA PELAJARAN DINAMIS */}
+                    {/* MATA PELAJARAN - MATERI DINAMIS */}
                     <View style={styles.subjectBox}>
                         <View style={styles.subjectRow}>
-                            <View>
-                                <Text style={styles.label}>Mata Pelajaran</Text>
+                            <View style={{ flex: 1, marginRight: 10 }}>
+                                <Text style={styles.label}>Mata Pelajaran - Materi</Text>
                                 <Text style={styles.valueText}>
-                                    {sessionData?.mata_pelajaran || sessionData?.nama_mapel || 'Mata Pelajaran'}
+                                    {`${sessionData?.mata_pelajaran || sessionData?.nama_mapel || 'Mata Pelajaran'} - ${sessionData?.nama_materi || sessionData?.materi || 'Materi'}`}
                                 </Text>
                             </View>
                             <Text style={styles.mathSymbol}>∑</Text>
@@ -241,17 +249,25 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                     </View>
 
                     <View style={styles.rowContainer}>
-                        {/* TINGKATAN DINAMIS */}
-                        <View style={[styles.smallBox, { marginRight: 15 }]}>
-                            <Text style={styles.label}>Tingkatan</Text>
+                        {/* KELAS DINAMIS */}
+                        <View style={[styles.smallBox, { marginRight: 10 }]}>
+                            <Text style={styles.label}>Kelas</Text>
                             <Text style={styles.smallValueText}>
-                                {sessionData?.jenjang ? `${sessionData.jenjang} - Kelas ${sessionData?.kelas || ''}` : (sessionData?.tingkatan || '-')}
+                                {kelasText}
+                            </Text>
+                        </View>
+
+                        {/* TANGGAL DINAMIS */}
+                        <View style={[styles.smallBox, { marginRight: 10 }]}>
+                            <Text style={styles.label}>Tanggal</Text>
+                            <Text style={styles.smallValueText}>
+                                {sessionData?.tanggal || '-'}
                             </Text>
                         </View>
 
                         {/* WAKTU SESI DINAMIS */}
                         <View style={styles.smallBox}>
-                            <Text style={styles.label}>Waktu Sesi</Text>
+                            <Text style={styles.label}>Waktu</Text>
                             <Text style={styles.smallValueText}>
                                 {sessionData?.waktu_mulai && sessionData?.waktu_selesai
                                     ? `${sessionData.waktu_mulai} - ${sessionData.waktu_selesai}`
@@ -353,14 +369,15 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FFF',
         borderRadius: 14,
-        padding: 16,
+        paddingVertical: 14,
+        paddingHorizontal: 12,
         borderWidth: 1,
         borderColor: '#F0F0F0'
     },
-    smallValueText: { fontSize: 14, fontWeight: 'bold', color: '#333' },
+    smallValueText: { fontSize: 13, fontWeight: 'bold', color: '#333' },
 
     cancelButton: {
-        backgroundColor: '#FF8A8A',
+        backgroundColor: '#EE2737',
         borderRadius: 25,
         paddingVertical: 16,
         alignItems: 'center',

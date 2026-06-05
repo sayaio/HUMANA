@@ -266,7 +266,6 @@ const PortfolioPage = ({ onBack, idGuru }) => {
             onPress={() => openCalendarFor('mulai')}
           >
             <Text style={styles.metaInputLabel}>Tanggal Mulai</Text>
-            <Text style={styles.metaLabelTitle}>Tanggal</Text>
             <Text style={[styles.metaValueText, !tanggalMulai && styles.metaPlaceholder]}>
               {tanggalMulai ? formatTanggal(tanggalMulai) : 'Pilih Tanggal'}
             </Text>
@@ -283,7 +282,6 @@ const PortfolioPage = ({ onBack, idGuru }) => {
             }}
           >
             <Text style={styles.metaInputLabel}>Tanggal Selesai</Text>
-            <Text style={styles.metaLabelTitle}>Tanggal</Text>
             <Text style={[styles.metaValueText, !tanggalSelesai && styles.metaPlaceholder]}>
               {tanggalSelesai ? formatTanggal(tanggalSelesai) : 'Pilih Tanggal'}
             </Text>
@@ -505,11 +503,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
   },
-  metaLabelTitle: {
-    fontSize: 11,
-    color: '#A0A0A0',
-    marginBottom: 2,
-  },
   metaValueText: {
     fontSize: 13,
     fontWeight: 'bold',
@@ -531,7 +524,7 @@ const styles = StyleSheet.create({
   },
   primarySubmitButton: {
     backgroundColor: '#387C65',
-    borderRadius: 14,
+    borderRadius: 25,
     height: 48,
     justifyContent: 'center',
     alignItems: 'center',

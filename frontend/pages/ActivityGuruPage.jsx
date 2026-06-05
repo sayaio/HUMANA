@@ -644,10 +644,10 @@ const styles = StyleSheet.create({
     modalBtnReject: {
         backgroundColor: '#FFF',
         borderWidth: 1,
-        borderColor: '#FF8A8A',
+        borderColor: '#EE2737',
     },
     modalBtnAccept: { backgroundColor: '#284B7A' },
-    modalBtnTextReject: { color: '#FF8A8A', fontWeight: 'bold' },
+    modalBtnTextReject: { color: '#EE2737', fontWeight: 'bold' },
     modalBtnTextAccept: { color: '#FFF', fontWeight: 'bold' },
     modalBtnSingleRoute: {
         backgroundColor: '#284B7A',
@@ -665,10 +665,10 @@ const styles = StyleSheet.create({
     ratingBadgeDibatalkan: {
         backgroundColor: '#FFEBEE',
         borderWidth: 1,
-        borderColor: '#FF8A8A',
+        borderColor: '#EE2737',
     },
     ratingTextSelesai: { color: '#387C65', fontWeight: 'bold' },
-    ratingTextDibatalkan: { color: '#FF8A8A', fontWeight: 'bold' },
+    ratingTextDibatalkan: { color: '#EE2737', fontWeight: 'bold' },
     ratingTextOnly: { fontSize: 12, fontWeight: 'bold' },
     ratingStarIcon: { fontSize: 14, color: '#FFB800', marginRight: 3 },
     ratingStarValue: { fontSize: 13, fontWeight: 'bold', color: '#333' },

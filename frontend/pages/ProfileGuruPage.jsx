@@ -310,7 +310,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                                 <View style={styles.portoHeader}>
                                     <Text style={styles.portoTitle}>{item.judul}</Text>
                                     <TouchableOpacity onPress={() => handleDeletePorto(item.id_portfolio)}>
-                                        <Trash2 size={16} color="#FF8A8A" />
+                                        <Trash2 size={16} color="#EE2737" />
                                     </TouchableOpacity>
                                 </View>
                                 <Text style={styles.portoDesc}>{item.deskripsi}</Text>
@@ -322,7 +322,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                 {/* TOMBOL LOGOUT */}
                 <View style={styles.sectionContainer}>
                     <TouchableOpacity style={styles.logoutButton} onPress={onLogout} activeOpacity={0.6}>
-                        <LogOut color="#FF8A8A" size={20} style={{ marginRight: 10 }} />
+                        <LogOut color="#EE2737" size={20} style={{ marginRight: 10 }} />
                         <Text style={styles.logoutText}>Keluar dari Akun</Text>
                     </TouchableOpacity>
                 </View>
@@ -476,13 +476,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: '#FFF1F1',
         borderWidth: 1,
-        borderColor: '#FFAAAA',
+        borderColor: '#EE2737',
         borderRadius: 19,
         paddingVertical: 10,
         paddingHorizontal: 12,
         marginTop: 5,
     },
-    logoutText: { fontSize: 15, color: '#FF8A8A', fontWeight: 'bold' },
+    logoutText: { fontSize: 15, color: '#EE2737', fontWeight: 'bold' },
 });
 
 export default ProfileGuruPage;

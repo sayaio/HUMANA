@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   InteractionManager,
+  BackHandler,
 } from 'react-native';
 import { useAppAlert } from './components/AppAlertProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -119,7 +120,49 @@ const App = () => {
   const [selectedRiwayatData, setSelectedRiwayatData] = useState(null);
   const [pesanSesiPrefill, setPesanSesiPrefill] = useState(null);
   const [activityGuruRefreshKey, setActivityGuruRefreshKey] = useState(0);
-  const [isFirstTimePesanSesi, setIsFirstTimePesanSesi] = useState(true);
+
+  const ROOT_PAGES = ['Home', 'PageGuru', 'Login', 'Register', 'Splash'];
+  const pageHistoryRef = useRef([]);
+  const prevPageRef = useRef(currentPage);
+  const isPoppingRef = useRef(false);
+
+  useEffect(() => {
+    if (isPoppingRef.current) {
+      isPoppingRef.current = false;
+      prevPageRef.current = currentPage;
+      return;
+    }
+
+    if (ROOT_PAGES.includes(currentPage)) {
+      pageHistoryRef.current = [];
+    } else if (
+      prevPageRef.current &&
+      prevPageRef.current !== currentPage
+    ) {
+      pageHistoryRef.current.push(prevPageRef.current);
+    }
+
+    prevPageRef.current = currentPage;
+  }, [currentPage]);
+
+  useEffect(() => {
+    const onHardwareBack = () => {
+      if (pageHistoryRef.current.length > 0) {
+        const previousPage = pageHistoryRef.current.pop();
+        isPoppingRef.current = true;
+        setCurrentPage(previousPage);
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onHardwareBack,
+    );
+    return () => subscription.remove();
+  }, []);
+
   const handleRefreshProfileData = useCallback(async newData => {
     console.log(
       '🔄 [App.jsx] Memperbarui profileData & AsyncStorage dari child:',
@@ -701,9 +744,9 @@ const App = () => {
             <ActivityPage
                 initialTab={activityTab}
                 onNavigate={page => setCurrentPage(page)}
-                onDetailClick={item => {
+                onDetailClick={(item, isHistory = false) => {
                     const currentRole = (profileData.role || 'murid').toLowerCase();
-                    if (currentRole === 'murid' && activityTab === 'aktif' && item.status_pembayaran === 'menunggu') {
+                    if (currentRole === 'murid' && !isHistory && item.status_pembayaran === 'menunggu') {
                         // Map the session item to bookingSessionData structure
                         const displayLokasi = item.lokasi_sesi && item.lokasi_sesi.includes('|') ? item.lokasi_sesi.split('|')[1] : item.lokasi_sesi;
                         let displayKoordinat = null;
@@ -759,7 +802,7 @@ const App = () => {
                         setCurrentPage('DetailPembayaran');
                     } else {
                         setSelectedSession(item);
-                        if (activityTab === 'aktif') {
+                        if (!isHistory) {
                             setDetailSesiAktifBackPage('Activity');
                             setCurrentPage('DetailSesiAktif');
                         } else {
@@ -1121,9 +1164,9 @@ const App = () => {
       <ActivityPage
         initialTab={activityTab}
         onNavigate={page => setCurrentPage(page)}
-        onDetailClick={item => {
+        onDetailClick={(item, isHistory = false) => {
           setSelectedSession(item);
-          if (activityTab === 'aktif') {
+          if (!isHistory) {
             setDetailSesiAktifBackPage('Activity');
             setCurrentPage('DetailSesiAktif');
           } else {
