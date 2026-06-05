@@ -116,12 +116,15 @@ const getActiveSchedule = async (req, res) => {
                 murid.id_murid, murid.nama_murid, murid.kelas AS kelas_murid,
                 guru.id_guru, guru.nama_guru, 
                 materi.id_materi, materi.nama_materi, 
-                mapel.id_mapel, mapel.nama_mapel
+                mapel.id_mapel, mapel.nama_mapel,
+                bayar.status_pembayaran, bayar.metode_pembayaran,
+                bayar.biaya_sesi, bayar.biaya_jarak, bayar.nominal
             FROM Pemesanan pemesanan
             JOIN Murid murid ON murid.id_murid = pemesanan.id_murid
             JOIN Guru guru ON guru.id_guru = pemesanan.id_guru
             LEFT JOIN Materi materi ON materi.id_materi = pemesanan.id_materi
             LEFT JOIN MataPelajaran mapel ON mapel.id_mapel = materi.id_mapel
+            LEFT JOIN Pembayaran bayar ON bayar.id_pemesanan = pemesanan.id_pemesanan
             WHERE pemesanan.status_pemesanan IN ('dikonfirmasi', 'menunggu konfirmasi', 'berlangsung')
             AND (${whereClause} = ?)
             ORDER BY pemesanan.waktu_mulai ASC;

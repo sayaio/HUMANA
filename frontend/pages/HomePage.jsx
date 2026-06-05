@@ -374,12 +374,21 @@ const HomePage = ({
                             </View>
                         </View>
                     ) : (
-                        <Text style={styles.sessionTitle} numberOfLines={2}>
-                            <Text style={{ fontFamily: FONTS.bold }}>
-                                {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'}
-                            </Text>
-                            {' – '}{s.materi?.nama_materi || s.nama_materi || 'Materi'}
-                        </Text>
+                        <View style={styles.rowCenter}>
+                            {s.status_pembayaran === 'menunggu' && (
+                                <View style={[styles.badgeYellow, { marginRight: 10 }]}>
+                                    <Text style={styles.badgeYellowText}>Bayar</Text>
+                                </View>
+                            )}
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.sessionTitle} numberOfLines={2}>
+                                    <Text style={{ fontFamily: FONTS.bold }}>
+                                        {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'}
+                                    </Text>
+                                    {' – '}{s.materi?.nama_materi || s.nama_materi || 'Materi'}
+                                </Text>
+                            </View>
+                        </View>
                     )}
 
                     <View style={styles.detailGrid}>
@@ -821,6 +830,8 @@ const styles = StyleSheet.create({
 
     badgeGreen: { backgroundColor: '#E8F5E9', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#4CAF50' },
     badgeGreenText: { fontFamily: 'SF-Pro-Display-Bold', color: '#4CAF50', fontSize: 11 },
+    badgeRed: { backgroundColor: '#FFEEEE', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#E53935' },
+    badgeRedText: { fontFamily: 'SF-Pro-Display-Bold', color: '#E53935', fontSize: 11 },
     badgeYellow: { backgroundColor: '#FFFDE7', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 10 },
     badgeYellowText: { fontFamily: 'SF-Pro-Display-Bold', color: '#F9A825', fontSize: 11 },
 
