@@ -166,7 +166,7 @@ const ActivityPage = ({
             style={[styles.actionBtn, { backgroundColor: '#387C65' }]}
             onPress={() => {
               if (onDetailClick) {
-                onDetailClick(item);
+                onDetailClick(item, true);
               }
             }}
           >
@@ -178,7 +178,7 @@ const ActivityPage = ({
             style={styles.actionBtn}
             onPress={() => {
               if (onDetailClick) {
-                onDetailClick(item);
+                onDetailClick(item, false);
               }
             }}
           >

@@ -669,9 +669,9 @@ const App = () => {
             <ActivityPage
                 initialTab={activityTab}
                 onNavigate={page => setCurrentPage(page)}
-                onDetailClick={item => {
+                onDetailClick={(item, isHistory = false) => {
                     const currentRole = (profileData.role || 'murid').toLowerCase();
-                    if (currentRole === 'murid' && activityTab === 'aktif' && item.status_pembayaran === 'menunggu') {
+                    if (currentRole === 'murid' && !isHistory && item.status_pembayaran === 'menunggu') {
                         // Map the session item to bookingSessionData structure
                         const displayLokasi = item.lokasi_sesi && item.lokasi_sesi.includes('|') ? item.lokasi_sesi.split('|')[1] : item.lokasi_sesi;
                         let displayKoordinat = null;
@@ -727,7 +727,7 @@ const App = () => {
                         setCurrentPage('DetailPembayaran');
                     } else {
                         setSelectedSession(item);
-                        if (activityTab === 'aktif') {
+                        if (!isHistory) {
                             setDetailSesiAktifBackPage('Activity');
                             setCurrentPage('DetailSesiAktif');
                         } else {
@@ -1135,9 +1135,9 @@ const App = () => {
       <ActivityPage
         initialTab={activityTab}
         onNavigate={page => setCurrentPage(page)}
-        onDetailClick={item => {
+        onDetailClick={(item, isHistory = false) => {
           setSelectedSession(item);
-          if (activityTab === 'aktif') {
+          if (!isHistory) {
             setDetailSesiAktifBackPage('Activity');
             setCurrentPage('DetailSesiAktif');
           } else {

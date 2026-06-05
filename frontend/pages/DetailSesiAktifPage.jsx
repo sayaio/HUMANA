@@ -16,6 +16,7 @@ import PageHeader from '../components/PageHeader';
 import { useAppAlert } from '../components/AppAlertProvider';
 import { batalkanSesi } from '../services/batalSesiService';
 import { pemesananService } from '../services/pemesananService';
+import { fetchGuruRating } from '../services/feedbackService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -25,6 +26,24 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
   const [isCanceling, setIsCanceling] = useState(false);
   const idPemesanan = sessionData?.id_pemesanan;
   const [alamatLengkap, setAlamatLengkap] = useState('Memuat alamat...');
+  const [guruRating, setGuruRating] = useState(null);
+
+  const idGuru = sessionData?.id_guru;
+  const namaGuru = sessionData?.nama_guru || 'Guru';
+
+  const getInitials = nama => {
+    if (!nama) return '?';
+    return nama.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  };
+
+  useEffect(() => {
+    const fetchRating = async () => {
+      if (!idGuru) return;
+      const res = await fetchGuruRating(idGuru);
+      if (res?.success) setGuruRating(res.data?.rating ?? null);
+    };
+    fetchRating();
+  }, [idGuru]);
 
   useEffect(() => {
     const fetchAlamat = async () => {
@@ -216,6 +235,23 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollBodyPadding}
       >
+        {/* KARTU PROFIL GURU */}
+        <View style={styles.guruCard}>
+          <View style={styles.guruAvatar}>
+            <Text style={styles.guruAvatarText}>{getInitials(namaGuru)}</Text>
+          </View>
+          <View style={styles.guruInfo}>
+            <Text style={styles.guruName}>{namaGuru}</Text>
+            {guruRating !== null && guruRating !== undefined && (
+              <Text style={Number(guruRating) > 0 ? styles.guruRating : styles.guruNoRating}>
+                {Number(guruRating) > 0
+                  ? `★ ${Number(guruRating).toFixed(1)}`
+                  : 'Belum ada rating'}
+              </Text>
+            )}
+          </View>
+        </View>
+
         {/* ROW GRID: TANGGAL & WAKTU SESI */}
         <View style={styles.metaGridRow}>
           <View style={styles.metaGridCard}>
@@ -321,6 +357,51 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 120,
+  },
+  guruCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 16,
+    gap: 12,
+  },
+  guruAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#284B7A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  guruAvatarText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  guruInfo: { flex: 1 },
+  guruName: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 2,
+  },
+  guruRating: {
+    fontSize: 12,
+    color: '#F5A623',
+    fontWeight: '600',
+    marginTop: 3,
+  },
+  guruNoRating: {
+    fontSize: 11,
+    color: '#CCC',
+    marginTop: 3,
+    fontStyle: 'italic',
   },
   metaGridRow: {
     flexDirection: 'row',
