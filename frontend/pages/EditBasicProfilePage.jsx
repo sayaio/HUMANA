@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import {
     StyleSheet, Text, View, TouchableOpacity,
-    StatusBar, ScrollView, TextInput, ActivityIndicator, Alert
+    StatusBar, ScrollView, TextInput, ActivityIndicator
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PageHeader from '../components/PageHeader';
+import { useAppAlert } from '../components/AppAlertProvider';
 // Import API dari file service kamu
 import { updateBasicProfile } from '../services/editProfileService';
 
@@ -21,6 +22,7 @@ const InputField = ({ label, value, onChangeText }) => (
 );
 
 const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
+    const { showInfo } = useAppAlert();
     const [username, setUsername] = useState(profileData.username || '');
     const [phone, setPhone] = useState(profileData.no_telepon || profileData.phone || '');
     const [gender, setGender] = useState(profileData.jenis_kelamin || profileData.gender || '');
@@ -36,9 +38,9 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
         // ==========================================
         const numericRegex = /^[0-9]+$/;
         if (!numericRegex.test(phone)) {
-            Alert.alert(
-                "Format Salah",
-                "Nomor telepon tidak valid! Mohon masukkan angka murni (tidak boleh mengandung huruf atau karakter khusus)."
+            showInfo(
+                'Format Salah',
+                'Nomor telepon tidak valid! Mohon masukkan angka murni (tidak boleh mengandung huruf atau karakter khusus).',
             );
             return; // Gagalkan proses pengiriman ke server
         }
@@ -94,11 +96,11 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
                 onSave(updatedFields);
 
             } else {
-                Alert.alert("Gagal Menyimpan", result.message || "Pastikan data sudah benar.");
+                showInfo('Gagal Menyimpan', result.message || 'Pastikan data sudah benar.');
             }
         } catch (error) {
             console.log("Error Update Basic Profile:", error);
-            Alert.alert("Error Jaringan", "Gagal terhubung ke server. Periksa koneksi internetmu.");
+            showInfo('Error Jaringan', 'Gagal terhubung ke server. Periksa koneksi internetmu.');
         } finally {
             setIsLoading(false);
         }

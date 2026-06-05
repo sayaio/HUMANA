@@ -6,7 +6,6 @@ import {
     ScrollView,
     TouchableOpacity,
     StatusBar,
-    Alert,
     ActivityIndicator,
     RefreshControl,
 } from 'react-native';

@@ -7,7 +7,6 @@ import {
     TouchableOpacity,
     StatusBar,
     Switch,
-    Alert,
     Image,
     RefreshControl,
     Dimensions,
@@ -23,6 +22,7 @@ import {
 import { updateAvailabilityProfile } from '../services/editProfileService';
 import { fetchGuruRating } from '../services/feedbackService';
 import { portfolioService } from '../services/portfolioService';
+import { useAppAlert } from '../components/AppAlertProvider';
 import { fetchSesiDikonfirmasi } from '../services/matchingService';
 import BottomNavbar from '../components/BottomNavbar';
 import { materiGuruService } from '../services/materiGuruService';
@@ -31,6 +31,7 @@ const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
 const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
+    const { showInfo, showConfirm } = useAppAlert();
     const [isAktif, setIsAktif] = useState(
         guruData?.is_active === 1 ||
         guruData?.is_active === true ||
@@ -124,36 +125,29 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
     const handleToggleAvailability = async newValue => {
         const idGuruTerpilih = guruData?.id || guruData?.id_guru;
         if (!idGuruTerpilih) {
-            Alert.alert('Data Tidak Valid', 'ID Guru tidak ditemukan.');
+            showInfo('Data Tidak Valid', 'ID Guru tidak ditemukan.');
             return;
         }
         setIsAktif(newValue);
         const result = await updateAvailabilityProfile(idGuruTerpilih, newValue);
         if (result && result.success) {
             if (onRefreshData) onRefreshData({ ...guruData, is_active: newValue });
-            Alert.alert('Sukses', `Status Anda kini ${newValue ? 'Aktif menerima murid' : 'Nonaktif'}.`);
+            showInfo('Sukses', `Status Anda kini ${newValue ? 'Aktif menerima murid' : 'Nonaktif'}.`);
         } else {
             setIsAktif(!newValue);
-            Alert.alert('Eror', 'Gagal mengubah status di server.');
+            showInfo('Eror', 'Gagal mengubah status di server.');
         }
     };
 
     const handleDeletePorto = idPortfolio => {
-        Alert.alert('Hapus Portofolio', 'Apakah Anda yakin?', [
-            { text: 'Batal', style: 'cancel' },
-            {
-                text: 'Hapus',
-                style: 'destructive',
-                onPress: async () => {
-                    try {
-                        await portfolioService.hapusPortfolio(idPortfolio);
-                        await loadPortofolios();
-                    } catch (error) {
-                        Alert.alert('Error', error.message);
-                    }
-                },
-            },
-        ]);
+        showConfirm('Hapus Portofolio', 'Apakah Anda yakin?', async () => {
+            try {
+                await portfolioService.hapusPortfolio(idPortfolio);
+                await loadPortofolios();
+            } catch (error) {
+                showInfo('Error', error.message);
+            }
+        });
     };
 
     const initialLetter = guruData?.name

@@ -8,7 +8,6 @@ import {
   ScrollView,
   StatusBar,
   Dimensions,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import DimmedModal from '../components/DimmedModal';
@@ -16,6 +15,7 @@ import { MODAL_WIDE_WIDTH, wideModalCardBase } from '../components/modalTheme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PageHeader from '../components/PageHeader';
 import { portfolioService } from '../services/portfolioService';
+import { useAppAlert } from '../components/AppAlertProvider';
 
 const { width } = Dimensions.get('window');
 
@@ -50,6 +50,7 @@ const startOfDay = date => {
 };
 
 const PortfolioPage = ({ onBack, idGuru }) => {
+  const { showInfo } = useAppAlert();
   const [namaKegiatan, setNamaKegiatan] = useState('');
   const [kategori, setKategori] = useState('');
   const [tanggalMulai, setTanggalMulai] = useState(null);
@@ -141,35 +142,35 @@ const PortfolioPage = ({ onBack, idGuru }) => {
 
   const handleSimpan = async () => {
     if (!idGuru) {
-      Alert.alert('Error', 'ID guru tidak ditemukan. Silakan login ulang.');
+      showInfo('Error', 'ID guru tidak ditemukan. Silakan login ulang.');
       return;
     }
     if (!namaKegiatan.trim()) {
-      Alert.alert('Peringatan', 'Mohon isi Nama Kegiatan atau Sertifikasi.');
+      showInfo('Peringatan', 'Mohon isi Nama Kegiatan atau Sertifikasi.');
       return;
     }
     if (!kategori) {
-      Alert.alert('Peringatan', 'Mohon pilih Kategori.');
+      showInfo('Peringatan', 'Mohon pilih Kategori.');
       return;
     }
     if (!tanggalMulai) {
-      Alert.alert('Peringatan', 'Mohon pilih Tanggal Mulai.');
+      showInfo('Peringatan', 'Mohon pilih Tanggal Mulai.');
       return;
     }
     if (!tanggalSelesai) {
-      Alert.alert('Peringatan', 'Mohon pilih Tanggal Selesai.');
+      showInfo('Peringatan', 'Mohon pilih Tanggal Selesai.');
       return;
     }
     if (startOfDay(tanggalSelesai) < startOfDay(tanggalMulai)) {
-      Alert.alert('Peringatan', 'Tanggal selesai harus sama atau setelah tanggal mulai.');
+      showInfo('Peringatan', 'Tanggal selesai harus sama atau setelah tanggal mulai.');
       return;
     }
     if (!deskripsi.trim()) {
-      Alert.alert('Peringatan', 'Mohon isi Deskripsi.');
+      showInfo('Peringatan', 'Mohon isi Deskripsi.');
       return;
     }
     if (!urlBukti.trim()) {
-      Alert.alert('Peringatan', 'Mohon isi URL Bukti.');
+      showInfo('Peringatan', 'Mohon isi URL Bukti.');
       return;
     }
 
@@ -184,11 +185,11 @@ const PortfolioPage = ({ onBack, idGuru }) => {
         tanggal_mulai: toDbDate(tanggalMulai),
         tanggal_selesai: toDbDate(tanggalSelesai),
       });
-      Alert.alert('Sukses', 'Portofolio berhasil disimpan.', [
-        { text: 'OK', onPress: () => onBack && onBack() },
-      ]);
+      showInfo('Sukses', 'Portofolio berhasil disimpan.', {
+        onClose: () => onBack && onBack(),
+      });
     } catch (error) {
-      Alert.alert('Error', error.message);
+      showInfo('Error', error.message);
     } finally {
       setIsSaving(false);
     }
@@ -275,7 +276,7 @@ const PortfolioPage = ({ onBack, idGuru }) => {
             activeOpacity={0.7}
             onPress={() => {
               if (!tanggalMulai) {
-                Alert.alert('Peringatan', 'Pilih Tanggal Mulai terlebih dahulu.');
+                showInfo('Peringatan', 'Pilih Tanggal Mulai terlebih dahulu.');
                 return;
               }
               openCalendarFor('selesai');

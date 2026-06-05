@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview'; // 1. Import WebView di sini
 import PageHeader from '../components/PageHeader';
-import CustomAlert from '../components/CustomAlert';
+import { useAppAlert } from '../components/AppAlertProvider';
 import { batalkanSesi } from '../services/batalSesiService';
 import { pemesananService } from '../services/pemesananService';
 
@@ -21,17 +21,9 @@ const { width, height } = Dimensions.get('window');
 
 const DetailSesiAktifPage = ({ onBack, sessionData }) => {
   console.log('DATA DARI BACKEND:', JSON.stringify(sessionData, null, 2));
+  const { showInfo, showConfirm } = useAppAlert();
   const [isCanceling, setIsCanceling] = useState(false);
   const idPemesanan = sessionData?.id_pemesanan;
-
-  const [alertVisible, setAlertVisible] = useState(false);
-  const [navigateOnClose, setNavigateOnClose] = useState(false);
-  const [alertConfig, setAlertConfig] = useState({
-    type: 'success',
-    title: '',
-    message: '',
-    isConfirmation: false,
-  });
   const [alamatLengkap, setAlamatLengkap] = useState('Memuat alamat...');
 
   useEffect(() => {
@@ -62,15 +54,11 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
         const res = await pemesananService.cekStatusPemesanan(idPemesanan);
         if (res?.success && res.status_pemesanan === 'dibatalkan_guru') {
           clearInterval(interval);
-          setAlertConfig({
-            type: 'gagal',
-            title: 'Sesi Dibatalkan Guru',
-            message:
-              'Guru membatalkan sesi ini. Dana kamu dikembalikan (refund).',
-            isConfirmation: false,
-          });
-          setNavigateOnClose(true);
-          setAlertVisible(true);
+          showInfo(
+            'Sesi Dibatalkan Guru',
+            'Guru membatalkan sesi ini. Dana kamu dikembalikan (refund).',
+            { type: 'gagal', onClose: () => onBack && onBack() },
+          );
         }
       } catch (e) {}
     }, 4000);
@@ -78,7 +66,6 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
   }, [idPemesanan]);
 
   const prosesPembatalan = async () => {
-    setAlertVisible(false);
     if (!idPemesanan) {
       onBack && onBack();
       return;
@@ -89,23 +76,12 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
 
     if (res.success) {
       const detail = res.data || {};
-      setAlertConfig({
-        type: 'success',
-        title: 'Sesi Dibatalkan',
-        message: detail.message || 'Sesi berhasil dibatalkan.',
-        isConfirmation: false,
+      showInfo('Sesi Dibatalkan', detail.message || 'Sesi berhasil dibatalkan.', {
+        onClose: () => onBack && onBack(),
       });
-      setNavigateOnClose(true);
     } else {
-      setAlertConfig({
-        type: 'gagal',
-        title: 'Gagal',
-        message: res.message || 'Gagal membatalkan sesi.',
-        isConfirmation: false,
-      });
-      setNavigateOnClose(false);
+      showInfo('Gagal', res.message || 'Gagal membatalkan sesi.');
     }
-    setAlertVisible(true);
   };
 
   // ==========================================
@@ -208,14 +184,11 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
     sessionData?.waktu_string || sessionData?.waktu_sesi || '10:30 - 12:30';
 
   const handleBatalkanPesanan = () => {
-    setAlertConfig({
-      type: 'gagal',
-      title: 'Batalkan sesi?',
-      message: 'Sesi yang sudah dibatalkan tidak dapat dikembalikan.',
-      isConfirmation: true,
-    });
-    setNavigateOnClose(false);
-    setAlertVisible(true);
+    showConfirm(
+      'Batalkan sesi?',
+      'Sesi yang sudah dibatalkan tidak dapat dikembalikan.',
+      prosesPembatalan,
+    );
   };
 
   const cekApakahSudahMulai = () => {
@@ -338,19 +311,6 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
         </TouchableOpacity>
       </View>
 
-      <CustomAlert
-        visible={alertVisible}
-        type={alertConfig.type}
-        title={alertConfig.title}
-        message={alertConfig.message}
-        isConfirmation={alertConfig.isConfirmation}
-        onConfirm={prosesPembatalan}
-        onClose={() => {
-          setAlertVisible(false);
-          if (!alertConfig.isConfirmation && navigateOnClose)
-            onBack && onBack();
-        }}
-      />
     </SafeAreaView>
   );
 };

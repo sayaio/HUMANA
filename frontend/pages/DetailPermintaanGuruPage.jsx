@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  Alert,
   Linking,
   ActivityIndicator,
   Image,
@@ -18,8 +17,8 @@ import {
 } from 'lucide-react-native';
 import { batalkanSesi } from '../services/batalSesiService';
 import { createChatRoom } from '../services/chatService';
-import CustomAlert from '../components/CustomAlert';
 import PageHeader from '../components/PageHeader';
+import { useAppAlert } from '../components/AppAlertProvider';
 import DimmedModal from '../components/DimmedModal';
 import { centerModalCardBase, MODAL_CARD_WIDTH } from '../components/modalTheme';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -87,6 +86,7 @@ const DetailPermintaanGuruPage = ({
   onSelesaikan,
 }) => {
   const data = permintaanData || {};
+  const { showInfo, showConfirm } = useAppAlert();
 
   const [loading, setLoading] = useState(false);
   const [sudahLunas, setSudahLunas] = useState(false);
@@ -95,14 +95,6 @@ const DetailPermintaanGuruPage = ({
   const [fotoUri, setFotoUri] = useState(null);
   const [fotoBase64, setFotoBase64] = useState(null);
   const [uploadingFoto, setUploadingFoto] = useState(false);
-  const [alertVisible, setAlertVisible] = useState(false);
-  const [navigateOnClose, setNavigateOnClose] = useState(false);
-  const [alertConfig, setAlertConfig] = useState({
-    type: 'success',
-    title: '',
-    message: '',
-    isConfirmation: false,
-  });
   const [mapCoords, setMapCoords] = useState(null);
   const [displayAddress, setDisplayAddress] = useState('');
   const [loadingMap, setLoadingMap] = useState(true);
@@ -213,98 +205,70 @@ const DetailPermintaanGuruPage = ({
     if (mapCoords) {
       Linking.openURL(
         `https://www.google.com/maps/search/?api=1&query=${mapCoords.latitude},${mapCoords.longitude}`,
-      ).catch(() => Alert.alert('Error', 'Tidak dapat membuka Google Maps.'));
+      ).catch(() => showInfo('Error', 'Tidak dapat membuka Google Maps.'));
       return;
     }
 
     const lokasi = displayAddress || data.lokasi_sesi || data.lokasi || '';
     if (!lokasi || lokasi === 'Alamat tidak tersedia') {
-      Alert.alert('Info', 'Lokasi tidak tersedia.');
+      showInfo('Info', 'Lokasi tidak tersedia.');
       return;
     }
 
     Linking.openURL(
       `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lokasi)}`,
-    ).catch(() => Alert.alert('Error', 'Tidak dapat membuka Google Maps.'));
+    ).catch(() => showInfo('Error', 'Tidak dapat membuka Google Maps.'));
   };
 
   // ─── Handler: Permintaan ──────────────────────────────────────
   const handleTolak = () => {
-    Alert.alert(
+    showConfirm(
       'Tolak Permintaan',
       `Yakin ingin menolak permintaan dari ${data.nama_murid}?`,
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Tolak',
-          style: 'destructive',
-          onPress: () => {
-            if (onTolak) onTolak(data.id_pemesanan || data.id);
-          },
-        },
-      ],
+      () => {
+        if (onTolak) onTolak(data.id_pemesanan || data.id);
+      },
     );
   };
 
   const handleTerima = () => {
-    Alert.alert(
+    showConfirm(
       'Konfirmasi Terima',
       `Apakah Anda yakin ingin menerima permintaan dari ${data.nama_murid}?`,
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Terima',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              const res = await terimaPermintaanSesiAPI(
-                data.id_pemesanan,
-                guruData?.id,
-                data.biaya_sesi,
-                data.biaya_jarak,
-                data.harga_total,
-              );
-              if (res && res.success) {
-                requestAnimationFrame(() => {
-                  Alert.alert('Sukses', 'Sesi berhasil dikonfirmasi!', [
-                    { text: 'OK', onPress: onBack },
-                  ]);
-                });
-              } else {
-                requestAnimationFrame(() => {
-                  Alert.alert(
-                    'Gagal',
-                    res.message || 'Terjadi kesalahan sistem.',
-                  );
-                });
-              }
-            } catch (e) {
-              requestAnimationFrame(() => {
-                Alert.alert('Error', 'Terjadi masalah jaringan.');
-              });
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ],
+      async () => {
+        setLoading(true);
+        try {
+          const res = await terimaPermintaanSesiAPI(
+            data.id_pemesanan,
+            guruData?.id,
+            data.biaya_sesi,
+            data.biaya_jarak,
+            data.harga_total,
+          );
+          if (res && res.success) {
+            showInfo('Sukses', 'Sesi berhasil dikonfirmasi!', { onClose: onBack });
+          } else {
+            showInfo('Gagal', res.message || 'Terjadi kesalahan sistem.');
+          }
+        } catch (e) {
+          showInfo('Error', 'Terjadi masalah jaringan.');
+        } finally {
+          setLoading(false);
+        }
+      },
     );
   };
 
   // ─── Handler: Aktif ──────────────────────────────────────────
   const handleAjukanBatal = () => {
-    setAlertConfig({
-      type: 'gagal',
-      title: 'Batalkan sesi?',
-      message: `Sesi dengan ${data.nama_murid || 'murid'} akan dibatalkan.`,
-      isConfirmation: true,
-    });
-    setNavigateOnClose(false);
-    setAlertVisible(true);
+    showConfirm(
+      'Batalkan sesi?',
+      `Sesi dengan ${data.nama_murid || 'murid'} akan dibatalkan.`,
+      prosesBatalGuru,
+    );
   };
 
   const prosesBatalGuru = async () => {
-    setAlertVisible(false);
     const id = data.id_pemesanan || data.id;
     if (!id) return;
     setLoading(true);
@@ -312,23 +276,12 @@ const DetailPermintaanGuruPage = ({
     setLoading(false);
 
     if (res.success) {
-      setAlertConfig({
-        type: 'success',
-        title: 'Sesi Dibatalkan',
-        message: res.data?.message || 'Sesi berhasil dibatalkan.',
-        isConfirmation: false,
+      showInfo('Sesi Dibatalkan', res.data?.message || 'Sesi berhasil dibatalkan.', {
+        onClose: () => onBack && onBack(),
       });
-      setNavigateOnClose(true);
     } else {
-      setAlertConfig({
-        type: 'gagal',
-        title: 'Gagal',
-        message: res.message || 'Gagal membatalkan sesi.',
-        isConfirmation: false,
-      });
-      setNavigateOnClose(false);
+      showInfo('Gagal', res.message || 'Gagal membatalkan sesi.');
     }
-    setAlertVisible(true);
   };
 
   // ─── Handler: Berlangsung ─────────────────────────────────────
@@ -351,7 +304,7 @@ const DetailPermintaanGuruPage = ({
 
   const handleKonfirmasiSelesai = async () => {
     if (!fotoUri) {
-      Alert.alert('Perhatian', 'Harap pilih foto dokumentasi terlebih dahulu.');
+      showInfo('Perhatian', 'Harap pilih foto dokumentasi terlebih dahulu.');
       return;
     }
     setUploadingFoto(true);
@@ -359,15 +312,12 @@ const DetailPermintaanGuruPage = ({
       const id = data.id_pemesanan || data.id;
       const uploadResult = await uploadDokumentasi(id, fotoUri, fotoBase64);
       if (!uploadResult.success) {
-        Alert.alert('Gagal', uploadResult.message || 'Gagal mengupload foto.');
+        showInfo('Gagal', uploadResult.message || 'Gagal mengupload foto.');
         return;
       }
       const selesaiResult = await selesaikanSesiAPI(id);
       if (!selesaiResult.success) {
-        Alert.alert(
-          'Gagal',
-          selesaiResult.message || 'Gagal menyelesaikan sesi.',
-        );
+        showInfo('Gagal', selesaiResult.message || 'Gagal menyelesaikan sesi.');
         return;
       }
       setShowDokModal(false);
@@ -375,7 +325,7 @@ const DetailPermintaanGuruPage = ({
       setFotoBase64(null);
       if (onSelesaikan) onSelesaikan(id);
     } catch (err) {
-      Alert.alert('Error', 'Terjadi kesalahan.');
+      showInfo('Error', 'Terjadi kesalahan.');
     } finally {
       setUploadingFoto(false);
     }
@@ -387,7 +337,7 @@ const DetailPermintaanGuruPage = ({
     const idGuru = guruData?.id;
     const idMurid = data.id_murid;
     if (!idGuru || !idMurid) {
-      Alert.alert('Error', 'Data guru atau murid tidak lengkap.');
+      showInfo('Error', 'Data guru atau murid tidak lengkap.');
       return;
     }
     const resp = await createChatRoom(idGuru, idMurid);
@@ -743,19 +693,6 @@ const DetailPermintaanGuruPage = ({
           </View>
       </DimmedModal>
 
-      <CustomAlert
-        visible={alertVisible}
-        type={alertConfig.type}
-        title={alertConfig.title}
-        message={alertConfig.message}
-        isConfirmation={alertConfig.isConfirmation}
-        onConfirm={prosesBatalGuru}
-        onClose={() => {
-          setAlertVisible(false);
-          if (!alertConfig.isConfirmation && navigateOnClose)
-            onBack && onBack();
-        }}
-      />
     </View>
   );
 };

@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E12525',
   },
   noButton: {
-    backgroundColor: '#3A7D6B',
+    backgroundColor: '#284B7A',
   },
   buttonText: {
     color: '#FFFFFF',
