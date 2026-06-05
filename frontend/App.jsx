@@ -120,6 +120,7 @@ const App = () => {
   const [selectedRiwayatData, setSelectedRiwayatData] = useState(null);
   const [pesanSesiPrefill, setPesanSesiPrefill] = useState(null);
   const [activityGuruRefreshKey, setActivityGuruRefreshKey] = useState(0);
+  const [isFirstTimePesanSesi, setIsFirstTimePesanSesi] = useState(true);
 
   const ROOT_PAGES = ['Home', 'PageGuru', 'Login', 'Register', 'Splash'];
   const pageHistoryRef = useRef([]);
