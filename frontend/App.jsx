@@ -35,6 +35,7 @@ import PembayaranPage from './pages/PembayaranPage';
 import PendapatanPage from './pages/PendapatanPage';
 import RiwayatPendapatanPage from './pages/RiwayatPendapatanPage';
 import PortfolioPage from './pages/PortfolioPage';
+import NotifikasiPage from './pages/NotifikasiPage';
 
 const App = () => {
   const DEV_SKIP_TO_PAYMENT = false;
@@ -757,6 +758,17 @@ const App = () => {
             <TambahMateriGuruPage
             onBack={() => setCurrentPage('RealProfileGuru')}
                 idGuru={profileData.id}
+            />
+        );
+    }
+
+    if (currentPage === 'Notifikasi') {
+        const currentRole = (profileData.role || 'murid').toLowerCase();
+        return (
+            <NotifikasiPage
+                userId={profileData.id}
+                userRole={currentRole}
+                onBack={() => setCurrentPage(currentRole === 'guru' ? 'RealActivityGuru' : 'Activity')}
             />
         );
     }

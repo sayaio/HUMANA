@@ -12,26 +12,46 @@ exports.getChatList = async (req, res) => {
         }
 
         const data = await chatService.getLatestChatList(userId, role);
+        console.log('sample data[0]:', data[0]);
         const formattedData = Array.isArray(data) ? data : (data ? [data] : []);
-        res.status(200).json({ success: true, data: formattedData });
+
+        // Fix BigInt serialization dari COUNT(*)
+        const sanitized = JSON.parse(JSON.stringify(formattedData, (key, value) =>
+            typeof value === 'bigint' ? Number(value) : value
+        ));
+
+        res.status(200).json({ success: true, data: sanitized });
     } catch (error) {
         console.error("Error di getChatList:", error);
         res.status(500).json({ success: false, message: "Terjadi kesalahan pada server" });
     }
 };
 
+// frontend/components/BottomNavbar.jsx atau file route terkait
+
 exports.getMessages = async (req, res) => {
     try {
         const { id_guru, id_murid } = req.params;
-        console.log("getMessages dipanggil - id_guru:", id_guru, "| id_murid:", id_murid); // tambah ini
+        // 1. Ambil role user yang sedang membuka chat dari query parameter
+        const { role } = req.query;
+
+        if (!role) {
+            return res.status(400).json({
+                success: false,
+                message: "Parameter role (pembaca) wajib dikirim via query string"
+            });
+        }
+
+        console.log(`getMessages dipanggil - Guru: ${id_guru} | Murid: ${id_murid} | Pembaca: ${role}`);
 
         const messages = await chatService.getAllMessagesByChatId(id_guru, id_murid);
-        console.log("Hasil query messages:", messages); // tambah ini
 
-        await chatService.markAsRead(id_guru, id_murid);
+        // 2. Oper parameter role ke service agar query UPDATE tahu siapa yang sedang membaca
+        await chatService.markAsRead(id_guru, id_murid, role);
+
         res.status(200).json({ success: true, data: messages });
     } catch (error) {
-        console.error("Error di getMessages:", error); // ubah ini agar tampil detail
+        console.error("Error di getMessages:", error);
         res.status(500).json({ success: false, message: "Gagal memuat pesan" });
     }
 };
@@ -51,14 +71,13 @@ exports.sendMessage = async (req, res) => {
         }
 
         await chatService.saveMessage(id_guru, id_murid, pengirim_role, isi_pesan);
-
-        // Langsung return success, tidak perlu cek hasil insert
         res.status(201).json({ success: true, message: "Pesan berhasil dikirim" });
     } catch (error) {
         console.error("Error di sendMessage:", error);
         res.status(500).json({ success: false, message: "Gagal mengirim pesan" });
     }
 };
+
 exports.createOrGetChatRoom = async (req, res) => {
     try {
         const { id_guru, id_murid } = req.body;

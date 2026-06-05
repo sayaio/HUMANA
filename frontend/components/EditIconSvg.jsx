@@ -1,12 +1,11 @@
-// components/EditIconSvg.jsx
 import * as React from "react";
-import Svg, { Path } from "react-native-svg"; // <-- Wajib diimport dari library ini
+import Svg, { Path } from "react-native-svg";
 
-const EditIconSvg = ({ size = 20, color = "#000000", ...props }) => (
+const EditIconSvg = ({ size = 11, color = "#007AFF", ...props }) => (
   <Svg
     width={size}
     height={size}
-    viewBox="0 0 11 11" // Ukuran asli viewBox dari Figma kamu
+    viewBox="0 0 11 11"
     fill="none"
     {...props}
   >

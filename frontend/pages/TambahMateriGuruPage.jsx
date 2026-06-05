@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  TextInput, Alert, ActivityIndicator, StatusBar,
+  TextInput, Alert, ActivityIndicator, StatusBar, Image,
 } from 'react-native';
 import { materiGuruService } from '../services/materiGuruService';
 import PageHeader from '../components/PageHeader';
@@ -136,7 +136,12 @@ const TambahMateriGuruPage = ({ onBack, idGuru }) => {
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Search Bar Sesuai Figma */}
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          {/* ✅ DIUBAH: Menggunakan Image assets/mencari_icon.png pengganti emoji 🔍 */}
+          <Image 
+            source={require('../assets/mencari_icon.png')} 
+            style={styles.searchIconImage} 
+            resizeMode="contain"
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Cari materi pelajaran..."
@@ -180,7 +185,12 @@ const TambahMateriGuruPage = ({ onBack, idGuru }) => {
         {grouped.map((group, idx) => (
           <View key={`${group.nama_mapel}-${idx}`} style={styles.groupSection}>
             <View style={styles.groupHeader}>
-              <Text style={styles.groupIcon}>📂</Text>
+              {/* ✅ DIUBAH: Menggunakan Image assets/folder.png pengganti emoji 📂 */}
+              <Image 
+                source={require('../assets/folder.png')} 
+                style={styles.groupIconImage} 
+                resizeMode="contain"
+              />
               <Text style={styles.groupTitleText}>{group.nama_mapel}</Text>
             </View>
             <View style={styles.groupCard}>
@@ -218,7 +228,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF', borderRadius: 12, paddingHorizontal: 15,
     height: 50, borderWidth: 1, borderColor: '#E0E0E0'
   },
-  searchIcon: { fontSize: 16, marginRight: 10 },
+  // ✅ TAMBAHAN: Style khusus image icon search
+  searchIconImage: { width: 18, height: 18, marginRight: 10, tintColor: '#ABABAB' },
   searchInput: { flex: 1, fontSize: 14, color: '#333' },
   filterContainer: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 15 },
   filterChip: {
@@ -240,7 +251,8 @@ const styles = StyleSheet.create({
   emptyChipText: { fontSize: 13, color: '#CCC', fontStyle: 'italic' },
   groupSection: { paddingHorizontal: 20, marginBottom: 25 },
   groupHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  groupIcon: { fontSize: 18, marginRight: 10 },
+  // ✅ TAMBAHAN: Style khusus image icon folder
+  groupIconImage: { width: 22, height: 22, marginRight: 10 },
   groupTitleText: { fontSize: 16, fontWeight: 'bold', color: '#1A3A5F' },
   groupCard: {
     backgroundColor: '#FFF', borderRadius: 15, borderWidth: 1, borderColor: '#F0F0F0',

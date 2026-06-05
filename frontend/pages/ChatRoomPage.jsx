@@ -35,9 +35,14 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
     try {
       const response = await axios.get(
         `${API_URL}/chats/messages/${id_guru}/${id_murid}`,
+        {
+          // SINKRONISASI: Kirim role pembaca lewat query param (?role=...)
+          params: { role: userRole.toLowerCase() }
+        }
       );
       const data = response.data.data || response.data;
       setMessages(Array.isArray(data) ? data : []);
+      console.log('pesan[0]:', JSON.stringify(messages[0]));
     } catch (error) {
       console.error('Gagal ambil chat:', error.response?.data || error.message);
     }
@@ -159,20 +164,13 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
             messages.map((item, index) => (
               <View
                 key={item.id_chat || index}
-                style={
-                  item.pengirim_role === userRole
-                    ? styles.bubbleRight
-                    : styles.bubbleLeft
-                }
+                style={item.pengirim_role === userRole ? styles.bubbleRight : styles.bubbleLeft}
               >
-                <Text
-                  style={
-                    item.pengirim_role === userRole
-                      ? styles.textRight
-                      : styles.textLeft
-                  }
-                >
+                <Text style={item.pengirim_role === userRole ? styles.textRight : styles.textLeft}>
                   {item.isi_pesan}
+                </Text>
+                <Text style={item.pengirim_role === userRole ? styles.timeRight : styles.timeLeft}>
+                  {item.waktu_pesan}
                 </Text>
               </View>
             ))
@@ -186,7 +184,12 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
         <View style={[styles.bottomWrapper, { paddingBottom: bottomPad }]}>
           <View style={styles.inputBar}>
             <TouchableOpacity style={styles.plusBtn}>
-              <Text style={styles.plusIcon}>⊕</Text>
+              {/* ✅ DIUBAH: Menggunakan Image assets/lingkaranplus.png pengganti emoji ⊕ */}
+              <Image
+                source={require('../assets/lingkaranplus.png')}
+                style={styles.plusIconImage}
+                resizeMode="contain"
+              />
             </TouchableOpacity>
 
             <View style={styles.inputContainer}>
@@ -283,8 +286,9 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     backgroundColor: '#FFF',
   },
-  plusBtn: { marginRight: 10 },
-  plusIcon: { fontSize: 24, color: '#333' },
+  plusBtn: { marginRight: 10, justifyContent: 'center', alignItems: 'center' },
+  // ✅ TAMBAHAN: Style khusus image icon lingkaran plus agar pas di input bar
+  plusIconImage: { width: 24, height: 24 },
   inputContainer: {
     flex: 1,
     flexDirection: 'row',
@@ -303,6 +307,8 @@ const styles = StyleSheet.create({
     height: 40,
     resizeMode: 'contain',
   },
+  timeRight: { fontSize: 10, color: 'rgba(255,255,255,0.7)', textAlign: 'right', marginTop: 4 },
+  timeLeft: { fontSize: 10, color: '#999', textAlign: 'left', marginTop: 4 },
 });
 
 export default ChatRoomPage;

@@ -18,6 +18,10 @@ import { WebView } from 'react-native-webview'; // Import WebView untuk peta int
 import Geolocation from '@react-native-community/geolocation';
 import { pemesananService } from '../services/pemesananService';
 import PageHeader from '../components/PageHeader';
+import LocationPickerModal from '../components/LocationPickerModal';
+import PoinSVG from '../components/mapsPoint';
+import MapsSVG from '../components/mapsSVG';
+import Back from '../components/BackIconSvg';
 
 // === KONSTANTA KALENDER ===
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
@@ -48,6 +52,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
   const [selectedMateriId, setSelectedMateriId] = useState(null);
   const [materiSelected, setMateriSelected] = useState(null);
 
+
   // === STATE DB ===
   const [daftarMapelDB, setDaftarMapelDB] = useState([]);
   const [daftarMateriDB, setDaftarMateriDB] = useState([]);
@@ -68,7 +73,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
   const [userLocation, setUserLocation] = useState(null);
   const [locationAddress, setLocationAddress] = useState('Mengambil lokasi...');
   const [loadingLocation, setLoadingLocation] = useState(false);
-
+  const [showLocationPicker, setShowLocationPicker] = useState(false); // ← TAMBAH INI
   // === STATE KALENDER ===
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
@@ -924,8 +929,8 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
             loadingMapel
               ? 'Memuat mapel...'
               : !jenjang
-              ? 'Pilih Jenjang dulu'
-              : 'Pilih Mata Pelajaran'
+                ? 'Pilih Jenjang dulu'
+                : 'Pilih Mata Pelajaran'
           }
           options={daftarMapelDB.map(m => m.namaMapel)}
           isOpen={openMapel}
@@ -958,8 +963,8 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
             loadingMateri
               ? 'Memuat materi...'
               : !mapelSelected || !kelas
-              ? 'Pilih Mapel & Kelas dulu'
-              : 'Pilih Materi'
+                ? 'Pilih Mapel & Kelas dulu'
+                : 'Pilih Materi'
           }
           options={daftarMateriDB.map(m => m.nama_materi)}
           isOpen={openMateri}
@@ -1046,16 +1051,30 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
             onPress={openInGoogleMaps}
             activeOpacity={0.8}
           >
-            <Text style={styles.lokasiIcon}>📍</Text>
+            <View style={{ width: 24, alignItems: 'center' }}>
+              <PoinSVG size={30} color="#284B7A" />
+            </View>
             <View style={styles.lokasiTextWrap}>
               <Text style={styles.lokasiTitle}>
-                Lokasi Anda (Ketuk untuk Buka Rute)
+                Lokasi Sesi (Ketuk untuk Buka Rute)
               </Text>
               <Text style={styles.lokasiAddress} numberOfLines={2}>
                 {locationAddress}
               </Text>
             </View>
-            <Text style={styles.locationChevronRightIcon}>❯</Text>
+            <View style={{ width: 24, alignItems: 'center', transform: [{ rotate: '180deg' }] }}>
+              <Back size={14} color="#999" />
+            </View>
+          </TouchableOpacity>
+
+          {/* Tombol ubah lokasi */}
+          <TouchableOpacity
+            style={styles.ubahLokasiBtn}
+            onPress={() => setShowLocationPicker(true)}
+            activeOpacity={0.8}
+          >
+            <MapsSVG size={14} color="#284B7A" />
+            <Text style={styles.ubahLokasiBtnText}>Ubah Lokasi</Text>
           </TouchableOpacity>
         </View>
         <View style={{ height: 120 }} />
@@ -1079,66 +1098,77 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null }
         placement="center"
         size="wide"
       >
-          <View style={styles.calendarContainer}>
-            <View style={styles.calendarHeader}>
-              <TouchableOpacity
-                onPress={prevMonth}
-                style={styles.calendarNavBtn}
-              >
-                <Text style={styles.calendarNavText}>{'<'}</Text>
-              </TouchableOpacity>
-              <Text style={styles.calendarMonthText}>
-                {MONTHS[calendarMonth]} {calendarYear}
-              </Text>
-              <TouchableOpacity
-                onPress={nextMonth}
-                style={styles.calendarNavBtn}
-              >
-                <Text style={styles.calendarNavText}>{'>'}</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.calendarDayHeaders}>
-              {DAYS.map(day => (
-                <Text key={day} style={styles.calendarDayHeaderText}>
-                  {day}
-                </Text>
-              ))}
-            </View>
-            <View style={styles.calendarGrid}>
-              {generateCalendarDays().map(item => (
-                <TouchableOpacity
-                  key={item.key}
-                  style={[
-                    styles.calendarDayCell,
-                    isDateSelected(item.day) && styles.calendarDaySelected,
-                    isDateDisabled(item.day) && styles.calendarDayDisabled,
-                  ]}
-                  onPress={() => item.day && selectDate(item.day)}
-                  disabled={isDateDisabled(item.day)}
-                  activeOpacity={0.6}
-                >
-                  <Text
-                    style={[
-                      styles.calendarDayText,
-                      isDateSelected(item.day) &&
-                        styles.calendarDayTextSelected,
-                      isDateDisabled(item.day) &&
-                        styles.calendarDayTextDisabled,
-                    ]}
-                  >
-                    {item.day || ''}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+        <View style={styles.calendarContainer}>
+          <View style={styles.calendarHeader}>
             <TouchableOpacity
-              style={styles.modalCloseBtn}
-              onPress={() => setShowCalendar(false)}
+              onPress={prevMonth}
+              style={styles.calendarNavBtn}
             >
-              <Text style={styles.modalCloseBtnText}>Tutup</Text>
+              <Text style={styles.calendarNavText}>{'<'}</Text>
+            </TouchableOpacity>
+            <Text style={styles.calendarMonthText}>
+              {MONTHS[calendarMonth]} {calendarYear}
+            </Text>
+            <TouchableOpacity
+              onPress={nextMonth}
+              style={styles.calendarNavBtn}
+            >
+              <Text style={styles.calendarNavText}>{'>'}</Text>
             </TouchableOpacity>
           </View>
+          <View style={styles.calendarDayHeaders}>
+            {DAYS.map(day => (
+              <Text key={day} style={styles.calendarDayHeaderText}>
+                {day}
+              </Text>
+            ))}
+          </View>
+          <View style={styles.calendarGrid}>
+            {generateCalendarDays().map(item => (
+              <TouchableOpacity
+                key={item.key}
+                style={[
+                  styles.calendarDayCell,
+                  isDateSelected(item.day) && styles.calendarDaySelected,
+                  isDateDisabled(item.day) && styles.calendarDayDisabled,
+                ]}
+                onPress={() => item.day && selectDate(item.day)}
+                disabled={isDateDisabled(item.day)}
+                activeOpacity={0.6}
+              >
+                <Text
+                  style={[
+                    styles.calendarDayText,
+                    isDateSelected(item.day) &&
+                    styles.calendarDayTextSelected,
+                    isDateDisabled(item.day) &&
+                    styles.calendarDayTextDisabled,
+                  ]}
+                >
+                  {item.day || ''}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity
+            style={styles.modalCloseBtn}
+            onPress={() => setShowCalendar(false)}
+          >
+            <Text style={styles.modalCloseBtnText}>Tutup</Text>
+          </TouchableOpacity>
+        </View>
       </DimmedModal>
+      {/* Location Picker Modal */}
+      <LocationPickerModal
+        visible={showLocationPicker}
+        initialLocation={userLocation}
+        onConfirm={({ location, address }) => {
+          setUserLocation(location);
+          setLocationAddress(address);
+          setShowLocationPicker(false);
+        }}
+        onCancel={() => setShowLocationPicker(false)}
+      />
     </View>
   );
 };
@@ -1372,7 +1402,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#F1F5F9',
   },
   lokasiIcon: { fontSize: 20, marginRight: 10 },
-  lokasiTextWrap: { flex: 1 },
+  lokasiTextWrap: { flex: 1, marginhorizontal: 10 },
   lokasiTitle: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
   lokasiAddress: {
     fontSize: 12,
@@ -1485,6 +1515,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 8,
     alignSelf: 'center',
+  },
+  ubahLokasiBtn: {
+    flexDirection: 'row',       // ← tambah ini
+    alignItems: 'center',
+    justifyContent: 'center',   // ← tambah ini
+    gap: 6,                     // ← jarak antara icon dan teks
+    marginHorizontal: 14,
+    marginBottom: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#284B7A',
+    backgroundColor: '#F0F5FF',
+  },
+  ubahLokasiBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#284B7A',
   },
 });
 

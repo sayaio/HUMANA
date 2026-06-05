@@ -1,9 +1,9 @@
 import { API_URL } from '../src/config';
 
 // Ambil daftar notifikasi milik user (guru/murid).
-export const fetchNotifikasi = async (role, id) => {
+export const fetchNotifikasi = async (role, id, limit = 20, offset = 0) => {
     try {
-        const response = await fetch(`${API_URL}/notifikasi/${role}/${id}`, {
+        const response = await fetch(`${API_URL}/notifikasi/${role}/${id}?limit=${limit}&offset=${offset}`, {
             method: 'GET',
             headers: { 'Accept': 'application/json' },
         });
@@ -16,18 +16,3 @@ export const fetchNotifikasi = async (role, id) => {
     }
 };
 
-// Hapus semua notifikasi user setelah ditampilkan.
-export const clearNotifikasi = async (role, id) => {
-    try {
-        const response = await fetch(`${API_URL}/notifikasi/${role}/${id}`, {
-            method: 'DELETE',
-            headers: { 'Accept': 'application/json' },
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.message || 'Gagal menghapus notifikasi');
-        return result;
-    } catch (error) {
-        console.error('[notifikasiService] clearNotifikasi error:', error);
-        return { success: false, message: error.message };
-    }
-};

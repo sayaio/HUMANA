@@ -10,7 +10,7 @@ import {
     ActivityIndicator,
     RefreshControl,
 } from 'react-native';
-import { Star, X, Clock, DollarSign } from 'lucide-react-native';
+import { Star, X, Clock, DollarSign, Bell } from 'lucide-react-native';
 import DimmedModal from '../components/DimmedModal';
 import { MODAL_WIDE_WIDTH, wideModalCardBase } from '../components/modalTheme';
 
@@ -20,13 +20,14 @@ import {
     fetchSesiDikonfirmasi,
 } from '../services/matchingService';
 import { getHistory } from '../services/historyService';
+import { fetchNotifikasi } from '../services/notifikasiService';
 import BottomNavbar from '../components/BottomNavbar';
 
 const ActivityGuruPage = ({
     guruData,
     onNavigate,
     onDetailPermintaan,
-    onDetailRiwayat, // ✅ prop baru untuk navigasi ke halaman detail riwayat
+    onDetailRiwayat,
 }) => {
     const idGuru = guruData?.id;
 
@@ -40,6 +41,7 @@ const ActivityGuruPage = ({
 
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [unreadNotif, setUnreadNotif] = useState(false);
     const [koordinat, setKoordinat] = useState({
         lat: -6.973416,
         lng: 107.630406,
@@ -63,11 +65,18 @@ const ActivityGuruPage = ({
     const muatUlangDataAktivitas = async (isPullRefresh = false) => {
         if (!isPullRefresh) setLoading(true);
         try {
-            const [resPermintaan, resKonfirmasi, resRiwayat] = await Promise.all([
+            const [resPermintaan, resKonfirmasi, resRiwayat, resNotif] = await Promise.all([
                 fetchPermintaanBaru(idGuru, koordinat.lat, koordinat.lng),
                 fetchSesiDikonfirmasi(idGuru),
                 getHistory('guru', idGuru),
+                fetchNotifikasi('guru', idGuru)
             ]);
+
+            if (resNotif && resNotif.success && Array.isArray(resNotif.data) && resNotif.data.length > 0) {
+                setUnreadNotif(true);
+            } else {
+                setUnreadNotif(false);
+            }
 
             // 1. PERMINTAAN
             if (resPermintaan.success && resPermintaan.data) {
@@ -130,32 +139,35 @@ const ActivityGuruPage = ({
                 setJadwalAktifData([]);
             }
 
-            // 3. RIWAYAT (dengan menyimpan rawData untuk dikirim ke halaman detail)
+            // 3. RIWAYAT
             if (resRiwayat.success && resRiwayat.data) {
-                const mappedRiwayat = resRiwayat.data.map(item => ({
-                    id: item.id_pemesanan,
-                    nama_murid: item.murid.nama_murid,
-                    materi: item.mata_pelajaran.nama_mapel + ' — ' + item.nama_materi,
-                    waktu: item.waktu_mulai
-                        ? new Date(item.waktu_mulai).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                        })
-                        : 'Tanggal tidak tersedia',
-                    harga:
-                        item.nominal ??
-                        item.pembayaran?.nominal ??
-                        item.pembayaran?.total_bayar ??
-                        item.harga_total ??
-                        item.harga ??
-                        0,
-                    tipe: 'Riwayat',
-                    status_pemesanan: item.status_pemesanan,
-                    rating: item.feedback?.rating || 0,
-                    ulasan: item.feedback?.komentar || 'Tidak ada ulasan.',
-                    rawData: item, // ✅ simpan data asli dari API
-                }));
+                const mappedRiwayat = resRiwayat.data.map(item => {
+                    console.log('raw feedback:', JSON.stringify(item.feedback));
+                    return {
+                        id: item.id_pemesanan,
+                        nama_murid: item.murid.nama_murid,
+                        materi: item.mata_pelajaran.nama_mapel + ' — ' + item.nama_materi,
+                        waktu: item.waktu_mulai
+                            ? new Date(item.waktu_mulai).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                            })
+                            : 'Tanggal tidak tersedia',
+                        harga:
+                            item.nominal ??
+                            item.pembayaran?.nominal ??
+                            item.pembayaran?.total_bayar ??
+                            item.harga_total ??
+                            item.harga ??
+                            0,
+                        tipe: 'Riwayat',
+                        status_pemesanan: item.status_pemesanan,
+                        rating: Number(item.feedback?.rating) || 0,
+                        ulasan: item.feedback?.komentar || 'Tidak ada ulasan.',
+                        rawData: item,
+                    };
+                });
                 setRiwayatData(mappedRiwayat);
             } else {
                 setRiwayatData([]);
@@ -194,6 +206,7 @@ const ActivityGuruPage = ({
     };
 
     const renderCardItem = item => {
+        console.log('item.rating:', item.rating, '| tipe:', item.tipe, '| nama:', item.nama_murid);
         return (
             <View key={item.id} style={styles.sesiCard}>
                 <View style={styles.cardHeader}>
@@ -227,6 +240,19 @@ const ActivityGuruPage = ({
                             Rp {item.harga.toLocaleString('id-ID')}
                         </Text>
                     </View>
+                    {item.tipe === 'Riwayat' && (
+                        <View style={styles.gridInfoBox}>
+                            <Text style={styles.infoLabel}>Rating</Text>
+                            {item.rating > 0 ? (
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                                    <Text style={styles.ratingStarIcon}>★</Text>
+                                    <Text style={styles.ratingStarValue}>{item.rating}</Text>
+                                </View>
+                            ) : (
+                                <Text style={styles.infoValue}>-</Text>
+                            )}
+                        </View>
+                    )}
                 </View>
 
                 <View style={styles.cardActionRow}>
@@ -255,7 +281,6 @@ const ActivityGuruPage = ({
                     <TouchableOpacity
                         style={styles.btnLihatDetailKecil}
                         onPress={() => {
-                            // ✅ Perubahan: untuk riwayat, panggil onDetailRiwayat (bawa rawData)
                             if (item.tipe === 'Riwayat' && onDetailRiwayat) {
                                 onDetailRiwayat(item.rawData);
                             } else if (item.tipe !== 'Riwayat' && onDetailPermintaan) {
@@ -279,6 +304,10 @@ const ActivityGuruPage = ({
 
             <View style={styles.topHeaderTitleArea}>
                 <Text style={styles.pageMainTitle}>Aktivitas</Text>
+                <TouchableOpacity onPress={() => onNavigate('Notifikasi')} style={styles.bellIconContainer}>
+                    <Bell size={24} color="#000" />
+                    {unreadNotif && <View style={styles.redDot} />}
+                </TouchableOpacity>
             </View>
 
             <View style={styles.tabSliderContainer}>
@@ -304,9 +333,7 @@ const ActivityGuruPage = ({
             </View>
 
             {loading ? (
-                <View
-                    style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
-                >
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     <ActivityIndicator size="large" color="#284B7A" />
                     <Text style={{ marginTop: 10, color: '#666' }}>
                         Sinkronisasi data...
@@ -357,104 +384,93 @@ const ActivityGuruPage = ({
                 </ScrollView>
             )}
 
-            {/* MODAL — hanya untuk tab Jadwal Aktif & Riwayat Sesi */}
             <DimmedModal
                 visible={modalVisible}
                 onRequestClose={() => setModalVisible(false)}
                 placement="center"
                 size="wide"
             >
-                    <View style={styles.modalContentSheet}>
-                        <View style={styles.modalHeaderTitleRow}>
-                            <Text style={styles.modalTitleLabel}>Detail Sesi Kelas</Text>
-                            <TouchableOpacity
-                                onPress={() => setModalVisible(false)}
-                                style={{ padding: 4 }}
-                            >
-                                <X size={22} color="#333" />
-                            </TouchableOpacity>
-                        </View>
-
-                        {selectedSesi && (
-                            <ScrollView showsVerticalScrollIndicator={false}>
-                                <View style={styles.modalIdentityBox}>
-                                    <View style={styles.modalAvatarBig}>
-                                        <Text style={styles.modalAvatarBigText}>
-                                            {selectedSesi.nama_murid.substring(0, 2).toUpperCase()}
-                                        </Text>
-                                    </View>
-                                    <Text style={styles.modalStudentName}>
-                                        {selectedSesi.nama_murid}
-                                    </Text>
-                                    <Text style={styles.modalMateriName}>
-                                        {selectedSesi.materi}
-                                    </Text>
-                                </View>
-
-                                <View style={styles.modalSpecWrapper}>
-                                    <View style={styles.specItemRow}>
-                                        <Clock
-                                            size={18}
-                                            color="#284B7A"
-                                            style={{ marginRight: 10 }}
-                                        />
-                                        <View>
-                                            <Text style={styles.specLabel}>Waktu Kelas</Text>
-                                            <Text style={styles.specValue}>{selectedSesi.waktu}</Text>
-                                        </View>
-                                    </View>
-                                    <View style={styles.specItemRow}>
-                                        <DollarSign
-                                            size={18}
-                                            color="#284B7A"
-                                            style={{ marginRight: 10 }}
-                                        />
-                                        <View>
-                                            <Text style={styles.specLabel}>Total Bayaran</Text>
-                                            <Text style={styles.specValue}>
-                                                Rp {selectedSesi.harga.toLocaleString('id-ID')}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                </View>
-
-                                {selectedSesi.tipe === 'Riwayat' && (
-                                    <View style={styles.reviewSectionCard}>
-                                        <Text style={styles.reviewCardTitle}>
-                                            Ulasan & Rating Siswa
-                                        </Text>
-                                        <View style={styles.modalStarsRow}>
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star
-                                                    key={i}
-                                                    size={18}
-                                                    color="#FFB800"
-                                                    fill={
-                                                        i < selectedSesi.rating ? '#FFB800' : 'transparent'
-                                                    }
-                                                    style={{ marginRight: 4 }}
-                                                />
-                                            ))}
-                                        </View>
-                                        <Text style={styles.reviewCommentBody}>
-                                            "{selectedSesi.ulasan}"
-                                        </Text>
-                                    </View>
-                                )}
-
-                                {selectedSesi.tipe === 'Aktif' && (
-                                    <TouchableOpacity
-                                        style={styles.modalBtnSingleRoute}
-                                        onPress={() => setModalVisible(false)}
-                                    >
-                                        <Text style={styles.modalBtnSingleRouteText}>
-                                            Tutup Detail Sesi
-                                        </Text>
-                                    </TouchableOpacity>
-                                )}
-                            </ScrollView>
-                        )}
+                <View style={styles.modalContentSheet}>
+                    <View style={styles.modalHeaderTitleRow}>
+                        <Text style={styles.modalTitleLabel}>Detail Sesi Kelas</Text>
+                        <TouchableOpacity
+                            onPress={() => setModalVisible(false)}
+                            style={{ padding: 4 }}
+                        >
+                            <X size={22} color="#333" />
+                        </TouchableOpacity>
                     </View>
+
+                    {selectedSesi && (
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <View style={styles.modalIdentityBox}>
+                                <View style={styles.modalAvatarBig}>
+                                    <Text style={styles.modalAvatarBigText}>
+                                        {selectedSesi.nama_murid.substring(0, 2).toUpperCase()}
+                                    </Text>
+                                </View>
+                                <Text style={styles.modalStudentName}>
+                                    {selectedSesi.nama_murid}
+                                </Text>
+                                <Text style={styles.modalMateriName}>
+                                    {selectedSesi.materi}
+                                </Text>
+                            </View>
+
+                            <View style={styles.modalSpecWrapper}>
+                                <View style={styles.specItemRow}>
+                                    <Clock size={18} color="#284B7A" style={{ marginRight: 10 }} />
+                                    <View>
+                                        <Text style={styles.specLabel}>Waktu Kelas</Text>
+                                        <Text style={styles.specValue}>{selectedSesi.waktu}</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.specItemRow}>
+                                    <DollarSign size={18} color="#284B7A" style={{ marginRight: 10 }} />
+                                    <View>
+                                        <Text style={styles.specLabel}>Total Bayaran</Text>
+                                        <Text style={styles.specValue}>
+                                            Rp {selectedSesi.harga.toLocaleString('id-ID')}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+
+                            {selectedSesi.tipe === 'Riwayat' && (
+                                <View style={styles.reviewSectionCard}>
+                                    <Text style={styles.reviewCardTitle}>
+                                        Ulasan & Rating Siswa
+                                    </Text>
+                                    <View style={styles.modalStarsRow}>
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star
+                                                key={i}
+                                                size={18}
+                                                color="#FFB800"
+                                                fill={i < selectedSesi.rating ? '#FFB800' : 'transparent'}
+                                                style={{ marginRight: 4 }}
+                                            />
+                                        ))}
+                                    </View>
+                                    <Text style={styles.reviewCommentBody}>
+                                        "{selectedSesi.ulasan}"
+                                    </Text>
+                                </View>
+                            )}
+
+                            {selectedSesi.tipe === 'Aktif' && (
+                                <TouchableOpacity
+                                    style={styles.modalBtnSingleRoute}
+                                    onPress={() => setModalVisible(false)}
+                                >
+                                    <Text style={styles.modalBtnSingleRouteText}>
+                                        Tutup Detail Sesi
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                        </ScrollView>
+                    )}
+                </View>
             </DimmedModal>
 
             <BottomNavbar
@@ -472,8 +488,26 @@ const styles = StyleSheet.create({
         paddingTop: 50,
         paddingHorizontal: 24,
         paddingBottom: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     pageMainTitle: { fontSize: 24, fontWeight: 'bold', color: '#000' },
+    bellIconContainer: {
+        position: 'relative',
+        padding: 4,
+    },
+    redDot: {
+        position: 'absolute',
+        top: 4,
+        right: 4,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: 'red',
+        borderWidth: 1,
+        borderColor: '#FFF',
+    },
 
     tabSliderContainer: {
         flexDirection: 'row',
@@ -498,7 +532,6 @@ const styles = StyleSheet.create({
     },
     tabButtonText: { fontSize: 13, color: '#666', fontWeight: '500' },
     tabButtonTextActive: { color: '#284B7A', fontWeight: 'bold' },
-
     listScrollBody: { flex: 1 },
     emptyTextState: {
         textAlign: 'center',
@@ -506,7 +539,6 @@ const styles = StyleSheet.create({
         marginTop: 40,
         fontSize: 13,
     },
-
     sesiCard: {
         backgroundColor: '#FFF',
         borderRadius: 20,
@@ -532,7 +564,6 @@ const styles = StyleSheet.create({
     cardMainMeta: { flex: 1, marginLeft: 14 },
     studentName: { fontSize: 16, fontWeight: 'bold', color: '#000' },
     materiText: { fontSize: 12, color: '#777', marginTop: 2 },
-
     cardGridInfo: {
         flexDirection: 'row',
         justifyContent: 'flex-start',
@@ -542,7 +573,6 @@ const styles = StyleSheet.create({
     gridInfoBox: { flex: 1, paddingRight: 8 },
     infoLabel: { fontSize: 11, color: '#999', marginBottom: 4 },
     infoValue: { fontSize: 13, fontWeight: 'bold', color: '#333' },
-
     cardActionRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
     btnLihatDetailKecil: {
         backgroundColor: '#284B7A',
@@ -565,7 +595,6 @@ const styles = StyleSheet.create({
         color: '#FFB800',
         marginLeft: 4,
     },
-
     modalContentSheet: {
         ...wideModalCardBase,
         width: MODAL_WIDE_WIDTH,
@@ -670,6 +699,8 @@ const styles = StyleSheet.create({
     ratingTextSelesai: { color: '#4CAF50', fontWeight: 'bold' },
     ratingTextDibatalkan: { color: '#F44336', fontWeight: 'bold' },
     ratingTextOnly: { fontSize: 12, fontWeight: 'bold' },
+    ratingStarIcon: { fontSize: 14, color: '#FFB800', marginRight: 3 },
+    ratingStarValue: { fontSize: 13, fontWeight: 'bold', color: '#333' },
 });
 
 export default ActivityGuruPage;

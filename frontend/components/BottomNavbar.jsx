@@ -15,7 +15,7 @@ import Chat from './chatSVG';
 
 const { width } = Dimensions.get('window');
 
-const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
+const BottomNavbar = ({ currentScreen, onNavigate, userRole, totalUnread = 0 }) => {
   const role = userRole ? userRole.toLowerCase() : 'murid';
 
   const isProfileActive =
@@ -96,6 +96,13 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole }) => {
             size={30}
             color={currentScreen === 'Chat' ? '#284B7A' : '#A9A9A9'}
           />
+          {totalUnread > 0 && (
+            <View style={styles.navBadge}>
+              <Text style={styles.navBadgeText}>
+                {totalUnread > 99 ? '99+' : totalUnread}
+              </Text>
+            </View>
+          )}
         </View>
         <Text
           style={[
@@ -194,6 +201,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
+  navBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -6,
+    backgroundColor: '#F43F5E',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#FFF',
+},
+navBadgeText: {
+    color: '#FFF',
+    fontSize: 9,
+    fontWeight: 'bold',
+},
 });
 
 export default BottomNavbar;

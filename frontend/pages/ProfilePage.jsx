@@ -14,16 +14,8 @@ import {
 } from 'react-native';
 import { fetchMuridProfile } from '../services/feedbackService';
 import BottomNavbar from '../components/BottomNavbar';
-// Import Ikon Lucide (Calendar, MessageSquare, User, Home, dan LogOut)
-import {
-  Calendar,
-  MessageSquare,
-  User,
-  Home,
-  LogOut,
-  Edit2,
-} from 'lucide-react-native';
-// Ambil lebar layar untuk kalkulasi responsive
+import { Calendar, MessageSquare, User, Home, LogOut, Edit2 } from 'lucide-react-native';
+
 const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
 
@@ -41,17 +33,14 @@ const mapMuridProfileToApp = (data, existing) => ({
   domisili: data.alamat || existing?.domisili || '-',
   alamat: data.alamat || existing?.alamat || '-',
   education: data.jenjang_pendidikan || existing?.education || '-',
-  jenjang_pendidikan:
-    data.jenjang_pendidikan || existing?.jenjang_pendidikan || '-',
+  jenjang_pendidikan: data.jenjang_pendidikan || existing?.jenjang_pendidikan || '-',
   major: data.kelas_jurusan || existing?.major || '-',
   kelas_jurusan: data.kelas_jurusan || existing?.kelas_jurusan || '-',
   is_active: existing?.is_active ?? false,
 });
 
 const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
-  const role =
-    profileData && profileData.role ? profileData.role.toLowerCase() : 'murid';
-
+  const role = profileData && profileData.role ? profileData.role.toLowerCase() : 'murid';
   const idMurid = profileData?.id;
   const [refreshing, setRefreshing] = useState(false);
 
@@ -83,31 +72,21 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Mengatur StatusBar agar tidak translucent dan memiliki background putih bersih */}
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#FFF"
-        translucent={false}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={false} />
 
-      {/* HEADER BERSIH & RESPONSIF (ANTI-TABRAKAN NOTCH/SAFEAREA) */}
+      {/* HEADER — tanpa tombol Settings */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerTitle}>Profil</Text>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            colors={['#284B7A']}
-            tintColor="#284B7A"
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#284B7A']} tintColor="#284B7A" />
         }
       >
-        {/* USER CARD RESPONSIVE */}
+        {/* USER CARD */}
         <View style={styles.userCard}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatarCircle}>
@@ -121,29 +100,17 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
             </TouchableOpacity>
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName} numberOfLines={1}>
-              {profileData.name}
-            </Text>
-            <Text style={styles.userEmail} numberOfLines={1}>
-              {profileData.email}
-            </Text>
+            <Text style={styles.userName} numberOfLines={1}>{profileData.name}</Text>
+            <Text style={styles.userEmail} numberOfLines={1}>{profileData.email}</Text>
           </View>
-          <Image
-            source={LOGO_SOURCE}
-            style={styles.cardWatermark}
-            resizeMode="contain"
-          />
+          <Image source={LOGO_SOURCE} style={styles.cardWatermark} resizeMode="contain" />
         </View>
 
         {/* SECTION BASIC */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Basic</Text>
-            <TouchableOpacity
-              style={styles.editSectionBtn}
-              onPress={() => onNavigate('EditBasicProfile')}
-              activeOpacity={0.7}
-            >
+            <Text style={styles.sectionTitle}>Data Pribadi</Text>
+            <TouchableOpacity style={styles.editSectionBtn} onPress={() => onNavigate('EditBasicProfile')} activeOpacity={0.7}>
               <Edit2 size={14} color="#284B7A" />
               <Text style={styles.editSectionBtnText}>Edit</Text>
             </TouchableOpacity>
@@ -151,15 +118,9 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
           <View style={styles.cardBox}>
             <DataRow label="Username" value={profileData.username || '-'} />
             <View style={styles.divider} />
-            <DataRow
-              label="No. Telepon"
-              value={profileData.no_telepon || '-'}
-            />
+            <DataRow label="No. Telepon" value={profileData.no_telepon || '-'} />
             <View style={styles.divider} />
-            <DataRow
-              label="Jenis Kelamin"
-              value={profileData.jenis_kelamin || '-'}
-            />
+            <DataRow label="Jenis Kelamin" value={profileData.jenis_kelamin || '-'} />
             <View style={styles.divider} />
             <DataRow label="Domisili" value={profileData.alamat || '-'} />
           </View>
@@ -168,57 +129,36 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
         {/* SECTION ACADEMIC */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Academic</Text>
-            <TouchableOpacity
-              style={styles.editSectionBtn}
-              onPress={() => onNavigate('EditAcademicProfile')}
-              activeOpacity={0.7}
-            >
+            <Text style={styles.sectionTitle}>Data Akademik</Text>
+            <TouchableOpacity style={styles.editSectionBtn} onPress={() => onNavigate('EditAcademicProfile')} activeOpacity={0.7}>
               <Edit2 size={14} color="#284B7A" />
               <Text style={styles.editSectionBtnText}>Edit</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.cardBox}>
-            <DataRow
-              label="Jenjang Pendidikan"
-              value={profileData.jenjang_pendidikan || '-'}
-            />
+            <DataRow label="Jenjang Pendidikan" value={profileData.jenjang_pendidikan || '-'} />
             <View style={styles.divider} />
-            <DataRow
-              label="Kelas - Jurusan"
-              value={profileData.kelas_jurusan || '-'}
-            />
+            <DataRow label="Kelas - Jurusan" value={profileData.kelas_jurusan || '-'} />
           </View>
         </View>
 
-        {/* TOMBOL LOGOUT UTAMA DI BAGIAN BAWAH */}
+        {/* TOMBOL LOGOUT */}
         <View style={styles.sectionContainer}>
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={onLogout}
-            activeOpacity={0.6}
-          >
+          <TouchableOpacity style={styles.logoutButton} onPress={onLogout} activeOpacity={0.6}>
             <LogOut color="#FF4D4D" size={20} style={styles.logoutIcon} />
             <Text style={styles.logoutText}>Keluar dari Akun</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* BOTTOM NAVBAR */}
-      <BottomNavbar
-        currentScreen="Profile"
-        onNavigate={onNavigate}
-        userRole={profileData?.role}
-      />
+      <BottomNavbar currentScreen="Profile" onNavigate={onNavigate} userRole={profileData?.role} />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-  },
+  container: { flex: 1, backgroundColor: '#FFF' },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
@@ -235,12 +175,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: '#000',
   },
 
-  // USER CARD RESPONSIVE
   userCard: {
     flexDirection: 'row',
     backgroundColor: '#F8F9FC',
@@ -275,13 +214,7 @@ const styles = StyleSheet.create({
     borderColor: '#F8F9FC',
   },
   userInfo: { flex: 1, zIndex: 1, paddingRight: 10 },
-  userName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 2,
-    textTransform: 'capitalize',
-  },
+  userName: { fontSize: 18, fontWeight: 'bold', color: '#000', marginBottom: 2, textTransform: 'capitalize' },
   userEmail: { fontSize: 12, color: '#666' },
   cardWatermark: {
     position: 'absolute',
@@ -294,16 +227,8 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
 
-  sectionContainer: {
-    paddingHorizontal: width * 0.05,
-    marginBottom: 25,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
+  sectionContainer: { paddingHorizontal: width * 0.05, marginBottom: 25 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 19, fontWeight: 'bold', color: '#000' },
   editSectionBtn: {
     flexDirection: 'row',
@@ -314,12 +239,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 8,
   },
-  editSectionBtnText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#284B7A',
-    marginLeft: 4,
-  },
+  editSectionBtnText: { fontSize: 12, fontWeight: 'bold', color: '#284B7A', marginLeft: 4 },
 
   cardBox: {
     backgroundColor: '#FFF',
@@ -334,16 +254,10 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   dataRow: { marginBottom: 4, marginTop: 4 },
-  dataLabel: {
-    fontSize: 11,
-    color: '#888',
-    marginBottom: 3,
-    fontWeight: '600',
-  },
+  dataLabel: { fontSize: 11, color: '#888', marginBottom: 3, fontWeight: '600' },
   dataValue: { fontSize: 15, color: '#000', fontWeight: 'bold' },
   divider: { height: 1, backgroundColor: '#F5F5F5', marginVertical: 8 },
 
-  // TOMBOL LOGOUT UTAMA JIKA DI-SCROLL KE BAWAH
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -357,8 +271,6 @@ const styles = StyleSheet.create({
   },
   logoutIcon: { marginRight: 10 },
   logoutText: { fontSize: 15, color: '#FF4D4D', fontWeight: 'bold' },
-
- 
 });
 
 export default ProfilePage;

@@ -137,30 +137,7 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
     setRefreshing(false);
   };
 
-  // Notifikasi (mis. murid membatalkan sesi) -> tampilkan popup lalu bersihkan.
-  const [notifAlertVisible, setNotifAlertVisible] = useState(false);
-  const [notifAlert, setNotifAlert] = useState({ title: '', message: '' });
 
-  useEffect(() => {
-    const cekNotifikasi = async () => {
-      if (!guruData?.id) return;
-      const res = await fetchNotifikasi('guru', guruData.id);
-      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-        const utama = res.data[0];
-        const sisa = res.data.length - 1;
-        setNotifAlert({
-          title: utama.judul || 'Pemberitahuan',
-          message:
-            sisa > 0
-              ? `${utama.pesan}\n\n(+${sisa} pemberitahuan lainnya)`
-              : utama.pesan,
-        });
-        setNotifAlertVisible(true);
-        await clearNotifikasi('guru', guruData.id);
-      }
-    };
-    cekNotifikasi();
-  }, [guruData?.id]);
 
   const formatRupiah = number => {
     if (!number) return 'Rp 0';
@@ -668,14 +645,6 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
         </View>
       </Modal>
 
-      <CustomAlert
-        visible={notifAlertVisible}
-        type="gagal"
-        title={notifAlert.title}
-        message={notifAlert.message}
-        isConfirmation={false}
-        onClose={() => setNotifAlertVisible(false)}
-      />
     </View>
   );
 };
