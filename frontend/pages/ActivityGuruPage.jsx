@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#284B7A',
         paddingHorizontal: 16,
         paddingVertical: 8,
-        borderRadius: 10,
+        borderRadius: 20,
     },
     btnTextLihatDetail: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
     ratingBadgeRow: {
