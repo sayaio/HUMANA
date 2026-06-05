@@ -23,6 +23,8 @@ import { useAppAlert } from '../components/AppAlertProvider';
 import { getDokumentasi } from '../services/dokumentasiService';
 import { API_URL } from '../src/config';
 
+const USER_ICON = require('../assets/user.png');
+
 const resolveFotoUri = fotoPath => {
   if (!fotoPath) return null;
   if (fotoPath.startsWith('http')) return fotoPath;
@@ -301,7 +303,8 @@ const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) 
 
             {/* Nama lawan bicara: guru → murid, murid → guru */}
             <Text style={[styles.personText, { fontSize: dynamicFontSizeTitle }]}>
-              👤 {namaTampil}
+              <Image source={USER_ICON} style={{ width: 14, height: 14, resizeMode: 'contain' }} />{'  '}
+              {namaTampil}
             </Text>
 
             {isGuru ? (

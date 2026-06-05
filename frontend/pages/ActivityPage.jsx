@@ -17,6 +17,7 @@ import { getHistory, getActiveSchedule } from '../services/historyService';
 import { Calendar, MessageSquare, User, Home } from 'lucide-react-native';
 
 const LOGO_SOURCE = require('../assets/logo_humana.png');
+const USER_ICON = require('../assets/user.png');
 
 const ActivityPage = ({
   initialTab = 'aktif',
@@ -131,7 +132,7 @@ const ActivityPage = ({
           </Text>
 
           <Text style={styles.cardGuru}>
-            👤{' '}
+            <Image source={USER_ICON} style={{ width: 8, height: 8, resizeMode: 'contain' }} />{'  '}
             {userRole === 'murid'
               ? item.nama_guru || item.guru?.nama_guru || 'Guru tidak terdaftar'
               : item.nama_murid ||

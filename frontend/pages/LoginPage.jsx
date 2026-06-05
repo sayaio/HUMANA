@@ -215,7 +215,7 @@ const LoginPage = ({
             <Text style={styles.formCardTitle}>Masuk</Text>
 
             <View style={styles.switchModeContainer}>
-              <Text style={styles.switchModeText}>Belum memiliki akun?</Text>
+              <Text style={styles.switchModeText}>Belum memiliki akun? </Text>
               <TouchableOpacity onPress={onNavigateToRegister}>
                 <Text style={styles.switchModeLink}>Daftar</Text>
               </TouchableOpacity>
