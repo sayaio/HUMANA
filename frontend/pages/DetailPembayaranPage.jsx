@@ -187,7 +187,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                     </Text>
                     <View style={styles.gradeBadge}>
                         <Text style={styles.gradeBadgeText}>
-                            {sessionData?.jenjang || 'Jenjang'} · Kelas {sessionData?.kelas || '-'}
+                            {sessionData?.jenjang || displayData?.mata_pelajaran?.jenjang || 'Jenjang'} · Kelas {sessionData?.kelas || displayData?.murid?.kelas || '-'}
                         </Text>
                     </View>
 
