@@ -264,15 +264,19 @@ const ActivityGuruPage = ({
 
                 <View style={styles.cardGridInfo}>
                     {item.tanggal ? (
-                        <View style={styles.gridInfoBox}>
-                            <Text style={styles.infoLabel}>Tanggal</Text>
-                            <Text style={styles.infoValue}>{item.tanggal}</Text>
-                        </View>
+                        <>
+                            <View style={[styles.gridInfoBox, { paddingLeft: 0 }]}>
+                                <Text style={styles.infoLabel}>Tanggal</Text>
+                                <Text style={styles.infoValue}>{item.tanggal}</Text>
+                            </View>
+                            <View style={styles.statusDivider} />
+                        </>
                     ) : null}
-                    <View style={styles.gridInfoBox}>
+                    <View style={[styles.gridInfoBox, !item.tanggal && { paddingLeft: 0 }]}>
                         <Text style={styles.infoLabel}>Waktu</Text>
                         <Text style={styles.infoValue}>{item.waktu}</Text>
                     </View>
+                    <View style={styles.statusDivider} />
                     <View style={styles.gridInfoBox}>
                         <Text style={styles.infoLabel}>Bayaran</Text>
                         <Text style={styles.infoValue}>
@@ -280,17 +284,20 @@ const ActivityGuruPage = ({
                         </Text>
                     </View>
                     {item.tipe === 'Riwayat' && (
-                        <View style={styles.gridInfoBox}>
-                            <Text style={styles.infoLabel}>Rating</Text>
-                            {item.rating > 0 ? (
-                                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                                    <Text style={styles.ratingStarIcon}>★</Text>
-                                    <Text style={styles.ratingStarValue}>{item.rating}</Text>
-                                </View>
-                            ) : (
-                                <Text style={styles.infoValue}>-</Text>
-                            )}
-                        </View>
+                        <>
+                            <View style={styles.statusDivider} />
+                            <View style={styles.gridInfoBox}>
+                                <Text style={styles.infoLabel}>Rating</Text>
+                                {item.rating > 0 ? (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                                        <Text style={styles.ratingStarIcon}>★</Text>
+                                        <Text style={styles.ratingStarValue}>{item.rating}</Text>
+                                    </View>
+                                ) : (
+                                    <Text style={styles.infoValue}>-</Text>
+                                )}
+                            </View>
+                        </>
                     )}
                 </View>
 
@@ -340,11 +347,20 @@ const ActivityGuruPage = ({
     const scrollViewRef = useRef(null);
     const { width } = useWindowDimensions();
 
+    const tabMapping = {
+        'Permintaan': 0,
+        'Jadwal Aktif': 1,
+        'Riwayat Sesi': 2,
+    };
+
+    // Memastikan ScrollView bergeser saat tab berubah
     useEffect(() => {
-        let index = 0;
-        if (activeTab === 'Jadwal Aktif') index = 1;
-        if (activeTab === 'Riwayat Sesi') index = 2;
-        scrollViewRef.current?.scrollTo({ x: index * width, animated: true });
+        if (width > 0) {
+            const index = tabMapping[activeTab] || 0;
+            setTimeout(() => {
+                scrollViewRef.current?.scrollTo({ x: index * width, animated: false });
+            }, 50);
+        }
     }, [activeTab, width]);
 
     const handleScroll = (event) => {
@@ -433,8 +449,9 @@ const ActivityGuruPage = ({
                     showsHorizontalScrollIndicator={false}
                     onMomentumScrollEnd={handleScroll}
                     scrollEventThrottle={16}
+                    contentOffset={{ x: (tabMapping[initialTab] || 0) * width, y: 0 }}
                 >
-                    {renderList(permintaanData, '📬', 'Tidak ada permintaan masuk saat ini.')}
+                    {renderList(permintaanData, '📬', (guruData?.is_active === 1 || guruData?.is_active === true) ? 'Belum ada permintaan mengajar saat ini.' : 'Aktifkan ketersediaan di halaman profil')}
                     {renderList(jadwalAktifData, '📅', 'Tidak ada jadwal aktif.')}
                     {renderList(riwayatData, '📜', 'Belum ada riwayat sesi.')}
                 </ScrollView>
@@ -608,10 +625,12 @@ const styles = StyleSheet.create({
     cardGridInfo: {
         flexDirection: 'row',
         justifyContent: 'flex-start',
+        alignItems: 'center',
         marginBottom: 16,
         paddingLeft: 2,
     },
-    gridInfoBox: { flex: 1, paddingRight: 8 },
+    gridInfoBox: { flex: 1, paddingHorizontal: 8 },
+    statusDivider: { width: 1, height: 35, backgroundColor: '#E0E0E0' },
     infoLabel: { fontSize: 11, color: '#999', marginBottom: 4 },
     infoValue: { fontSize: 13, fontWeight: 'bold', color: '#333' },
     cardActionRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },

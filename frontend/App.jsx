@@ -541,8 +541,9 @@ const App = () => {
                     setPesanSesiPrefill(prefill);
                     setCurrentPage('PesanSesi');
                 }}
-                onLihatDetailMateri={chapterData => {
+                onLihatDetailMateri={(chapterData, mapelData) => {
                     setSelectedChapter(chapterData);
+                    if (mapelData) setSelectedSubject(mapelData);
                     setDetailBackPage('Home');
                     setCurrentPage('Detail');
                 }}
@@ -924,6 +925,18 @@ const App = () => {
             <DetailMateriPage
                 chapterData={selectedChapter}
                 onBack={() => setCurrentPage(detailBackPage)}
+                userRole={(profileData.role || 'murid').toLowerCase()}
+                onPesanSesi={() => {
+                    setPesanSesiPrefill({
+                        jenjang: selectedChapter?.jenjang || profileData.jenjang_pendidikan || profileData.education || selectedSubject?.jenjang,
+                        kelas: selectedChapter?.kelas_formatted ? selectedChapter.kelas_formatted : selectedChapter?.kelas ? `Kelas ${selectedChapter.kelas}` : profileData.kelas ? `Kelas ${profileData.kelas}` : '',
+                        mataPelajaran: selectedSubject?.subjectName || selectedSubject?.nama_mapel,
+                        mapelSelected: { id: selectedSubject?.id_mapel, namaMapel: selectedSubject?.subjectName || selectedSubject?.nama_mapel },
+                        materi: selectedChapter?.namaMateri || selectedChapter?.nama_materi,
+                        selectedMateriId: selectedChapter?.id || selectedChapter?.id_materi
+                    });
+                    setCurrentPage('PesanSesi');
+                }}
             />
         );
     }
@@ -1287,6 +1300,18 @@ const App = () => {
       <DetailMateriPage
         chapterData={selectedChapter}
         onBack={() => setCurrentPage(detailBackPage)}
+        userRole={(profileData.role || 'murid').toLowerCase()}
+        onPesanSesi={() => {
+            setPesanSesiPrefill({
+                jenjang: selectedChapter?.jenjang || profileData.jenjang_pendidikan || profileData.education || selectedSubject?.jenjang,
+                kelas: selectedChapter?.kelas_formatted ? selectedChapter.kelas_formatted : selectedChapter?.kelas ? `Kelas ${selectedChapter.kelas}` : profileData.kelas ? `Kelas ${profileData.kelas}` : '',
+                mataPelajaran: selectedSubject?.subjectName || selectedSubject?.nama_mapel,
+                mapelSelected: { id: selectedSubject?.id_mapel, namaMapel: selectedSubject?.subjectName || selectedSubject?.nama_mapel },
+                materi: selectedChapter?.namaMateri || selectedChapter?.nama_materi,
+                selectedMateriId: selectedChapter?.id || selectedChapter?.id_materi
+            });
+            setCurrentPage('PesanSesi');
+        }}
       />
     );
   }

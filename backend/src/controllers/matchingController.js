@@ -173,7 +173,7 @@ const getSesiDikonfirmasi = async (req, res) => {
         // PERBAIKAN: Jika menggunakan mysql2/promise, pastikan mengambil [rows]
         const rows = await pool.query(`
             SELECT 
-                p.id_pemesanan, p.id_murid, p.waktu_mulai, p.waktu_selesai, p.lokasi_sesi, 
+                p.id_pemesanan, p.status_pemesanan, p.id_murid, p.waktu_mulai, p.waktu_selesai, p.lokasi_sesi, 
                 m.nama_murid, mat.nama_materi,
                 mp.nama_mapel, mp.jenjang,
                 pem.id_pembayaran, pem.biaya_sesi, pem.biaya_jarak, pem.metode_pembayaran, 
@@ -199,6 +199,7 @@ const getSesiDikonfirmasi = async (req, res) => {
             );
 
             sesi.id_pemesanan = row.id_pemesanan;
+            sesi.statusPemesanan = row.status_pemesanan; // Assign status_pemesanan agar tidak null
             sesi.jarak_km = 0;
 
             // toJSON() menghitung ulang biaya dari tarif & jarak (jarak=0 di sini),

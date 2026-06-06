@@ -543,39 +543,39 @@ const DetailPermintaanGuruPage = ({
           )}
         </View>
 
-        <View style={styles.dateTimeRow}>
-          <View style={styles.dateTimeBox}>
-            <Text style={styles.dtLabel}>Tanggal</Text>
-            <Text style={styles.dtValue}>{tanggal}</Text>
+        <View style={styles.metaGridRow}>
+          <View style={styles.metaGridCard}>
+            <Text style={styles.metaInputLabel}>Tanggal</Text>
+            <Text style={styles.metaValueText}>{tanggal}</Text>
           </View>
-          <View style={[styles.dateTimeBox, { marginLeft: 12 }]}>
-            <Text style={styles.dtLabel}>Waktu Sesi</Text>
-            <Text style={styles.dtValue}>{waktuSesi}</Text>
+          <View style={styles.metaGridCard}>
+            <Text style={styles.metaInputLabel}>Waktu Sesi</Text>
+            <Text style={styles.metaValueText}>{waktuSesi}</Text>
           </View>
         </View>
 
-        <View style={styles.fieldSection}>
-          <Text style={styles.fieldLabel}>Jenjang</Text>
-          <View style={styles.fieldBox}>
-            <Text style={styles.fieldValue}>
+        <View style={styles.fieldBlockWrapper}>
+          <Text style={styles.fieldSectionLabel}>Jenjang</Text>
+          <View style={styles.disabledOutlineBox}>
+            <Text style={styles.disabledBoxValueText}>
               {data.jenjang_pendidikan || data.jenjang || '-'}
             </Text>
           </View>
         </View>
 
-        <View style={styles.fieldSection}>
-          <Text style={styles.fieldLabel}>Mata Pelajaran</Text>
-          <View style={styles.fieldBox}>
-            <Text style={styles.fieldValue}>
+        <View style={styles.fieldBlockWrapper}>
+          <Text style={styles.fieldSectionLabel}>Mata Pelajaran</Text>
+          <View style={styles.disabledOutlineBox}>
+            <Text style={styles.disabledBoxValueText}>
               {data.nama_mapel || data.mata_pelajaran || '-'}
             </Text>
           </View>
         </View>
 
-        <View style={styles.fieldSection}>
-          <Text style={styles.fieldLabel}>Materi</Text>
-          <View style={styles.fieldBox}>
-            <Text style={styles.fieldValue}>
+        <View style={styles.fieldBlockWrapper}>
+          <Text style={styles.fieldSectionLabel}>Materi</Text>
+          <View style={styles.disabledOutlineBox}>
+            <Text style={styles.disabledBoxValueText}>
               {data.nama_materi || data.materi || '-'}
             </Text>
           </View>
@@ -766,39 +766,45 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   btnChatHeaderText: { color: '#FFF', fontWeight: 'bold', fontSize: 13 },
-  dateTimeRow: { flexDirection: 'row', marginHorizontal: 24, marginBottom: 20 },
-  dateTimeBox: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#E8EEF6',
-    borderRadius: 12,
-    padding: 14,
+  metaGridRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    paddingHorizontal: 24,
+  },
+  metaGridCard: {
+    width: '47%',
     backgroundColor: '#F8FAFC',
-  },
-  dtLabel: {
-    fontSize: 11,
-    color: '#ABABAB',
-    marginBottom: 6,
-    fontWeight: '500',
-  },
-  dtValue: { fontSize: 14, fontWeight: 'bold', color: '#284B7A' },
-  fieldSection: { marginHorizontal: 24, marginBottom: 14 },
-  fieldLabel: {
-    fontSize: 13,
-    color: '#333',
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  fieldBox: {
-    borderWidth: 1,
-    borderColor: '#E8EEF6',
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: 14,
     paddingHorizontal: 16,
-    backgroundColor: '#FAFBFD',
-    alignItems: 'center',
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  fieldValue: { fontSize: 14, color: '#444', fontWeight: '500' },
+  metaInputLabel: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  metaValueText: { fontSize: 14, fontWeight: 'bold' },
+  fieldBlockWrapper: { marginBottom: 16, paddingHorizontal: 24 },
+  fieldSectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 6,
+  },
+  disabledOutlineBox: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    height: 48,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  disabledBoxValueText: { fontSize: 14, color: '#64748B', fontWeight: '500' },
   mapSection: {
     marginHorizontal: 24,
     marginBottom: 20,

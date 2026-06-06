@@ -7,7 +7,8 @@ import {
     ActivityIndicator,
     StatusBar,
     SafeAreaView,
-    FlatList
+    FlatList,
+    RefreshControl
 } from 'react-native';
 import BackButton from '../components/BackButton';
 import { fetchNotifikasi } from '../services/notifikasiService';
@@ -20,6 +21,7 @@ const NotifikasiPage = ({ userId, userRole, onBack }) => {
     const [loadingMore, setLoadingMore] = useState(false);
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const limit = 20;
 
     const loadNotif = async (isLoadMore = false) => {
@@ -76,6 +78,14 @@ const NotifikasiPage = ({ userId, userRole, onBack }) => {
         }
     };
 
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        setOffset(0);
+        setHasMore(true);
+        await loadNotif(false);
+        setRefreshing(false);
+    };
+
     const renderItem = ({ item }) => (
         <View style={styles.notifCard}>
             <Text style={styles.notifTitle}>{item.judul}</Text>
@@ -118,6 +128,14 @@ const NotifikasiPage = ({ userId, userRole, onBack }) => {
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={0.5}
                     ListFooterComponent={renderFooter}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={handleRefresh}
+                            colors={['#284B7A']}
+                            tintColor="#284B7A"
+                        />
+                    }
                 />
             )}
         </SafeAreaView>

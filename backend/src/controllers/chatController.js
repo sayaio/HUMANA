@@ -1,4 +1,4 @@
-const chatService = require('../services/chatService');
+const db = require('../database');
 
 exports.getChatList = async (req, res) => {
     try {
@@ -14,7 +14,46 @@ exports.getChatList = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const offset = parseInt(req.query.offset) || 0;
 
-        const data = await chatService.getLatestChatList(userId, role, limit, offset);
+        const field = role === 'murid' ? 'id_murid' : 'id_guru';
+        const senderField = role === 'murid' ? 'guru' : 'murid';
+
+        const query = `
+          SELECT c.*, G.nama_guru, M.nama_murid,
+            DATE_FORMAT(CONVERT_TZ(c.timestamp, '+00:00', '+07:00'), '%H:%i') AS waktu_chat,
+            CAST((
+              SELECT COUNT(*) FROM Chat unread
+              WHERE unread.id_guru = c.id_guru
+              AND unread.id_murid = c.id_murid
+              AND unread.is_read = 0
+              AND unread.pengirim_role = ?
+            ) AS UNSIGNED) AS unread_count
+          FROM Chat c
+          JOIN Guru G ON c.id_guru = G.id_guru
+          JOIN Murid M ON c.id_murid = M.id_murid
+          WHERE c.id_chat IN (
+            SELECT MAX(id_chat) 
+            FROM Chat 
+            WHERE ${field} = ?
+            GROUP BY id_guru, id_murid
+          )
+          AND EXISTS (
+            SELECT 1 FROM Pemesanan p
+            WHERE p.id_guru = c.id_guru 
+            AND p.id_murid = c.id_murid
+            AND (
+              p.status_pemesanan IN ('dikonfirmasi', 'menunggu konfirmasi')
+              OR (
+                p.status_pemesanan = 'selesai' 
+                AND TIMESTAMPDIFF(HOUR, p.waktu_selesai, NOW()) <= 48
+              )
+            )
+          )
+          ORDER BY c.timestamp DESC
+          LIMIT ? OFFSET ?
+        `;
+
+        const data = await db.query(query, [senderField, userId, limit, offset]);
+
         console.log('sample data[0]:', data[0]);
         const formattedData = Array.isArray(data) ? data : (data ? [data] : []);
 
@@ -30,12 +69,9 @@ exports.getChatList = async (req, res) => {
     }
 };
 
-// frontend/components/BottomNavbar.jsx atau file route terkait
-
 exports.getMessages = async (req, res) => {
     try {
         const { id_guru, id_murid } = req.params;
-        // 1. Ambil role user yang sedang membuka chat dari query parameter
         const { role } = req.query;
 
         if (!role) {
@@ -47,10 +83,23 @@ exports.getMessages = async (req, res) => {
 
         console.log(`getMessages dipanggil - Guru: ${id_guru} | Murid: ${id_murid} | Pembaca: ${role}`);
 
-        const messages = await chatService.getAllMessagesByChatId(id_guru, id_murid);
+        const queryMessages = `
+            SELECT *,
+              DATE_FORMAT(CONVERT_TZ(timestamp, '+00:00', '+07:00'), '%H:%i') AS waktu_pesan
+            FROM Chat 
+            WHERE id_guru = ? AND id_murid = ? 
+            ORDER BY timestamp ASC
+        `;
+        const messages = await db.query(queryMessages, [id_guru, id_murid]);
 
-        // 2. Oper parameter role ke service agar query UPDATE tahu siapa yang sedang membaca
-        await chatService.markAsRead(id_guru, id_murid, role);
+        const queryUpdate = `
+            UPDATE Chat 
+            SET is_read = 1 
+            WHERE id_guru = ? 
+              AND id_murid = ? 
+              AND pengirim_role != ?
+        `;
+        await db.query(queryUpdate, [id_guru, id_murid, role]);
 
         res.status(200).json({ success: true, data: messages });
     } catch (error) {
@@ -73,7 +122,12 @@ exports.sendMessage = async (req, res) => {
             return res.status(400).json({ success: false, message: "Role tidak valid" });
         }
 
-        await chatService.saveMessage(id_guru, id_murid, pengirim_role, isi_pesan);
+        const query = `
+            INSERT INTO Chat (id_guru, id_murid, pengirim_role, isi_pesan, is_read, timestamp) 
+            VALUES (?, ?, ?, ?, 0, NOW())
+        `;
+        await db.query(query, [id_guru, id_murid, pengirim_role, isi_pesan]);
+
         res.status(201).json({ success: true, message: "Pesan berhasil dikirim" });
     } catch (error) {
         console.error("Error di sendMessage:", error);
@@ -87,7 +141,27 @@ exports.createOrGetChatRoom = async (req, res) => {
         if (!id_guru || !id_murid) {
             return res.status(400).json({ success: false, message: "id_guru dan id_murid wajib diisi" });
         }
-        const room = await chatService.findOrCreateChatRoom(id_guru, id_murid);
+        
+        const existing = await db.query(
+            'SELECT * FROM Chat WHERE id_guru = ? AND id_murid = ? LIMIT 1',
+            [id_guru, id_murid]
+        );
+        let room;
+        if (existing.length > 0) {
+            room = existing[0];
+        } else {
+            await db.query(
+                `INSERT INTO Chat (id_guru, id_murid, pengirim_role, isi_pesan, timestamp) 
+                 VALUES (?, ?, 'guru', 'Sesi telah dikonfirmasi. Silakan mulai percakapan!', NOW())`,
+                [id_guru, id_murid]
+            );
+            const newRoom = await db.query(
+                'SELECT * FROM Chat WHERE id_guru = ? AND id_murid = ? LIMIT 1',
+                [id_guru, id_murid]
+            );
+            room = newRoom[0];
+        }
+
         res.status(200).json({ success: true, data: room });
     } catch (error) {
         console.error("❌ ERROR createOrGetChatRoom:", error.message, error.sqlMessage);

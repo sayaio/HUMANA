@@ -37,7 +37,7 @@ const ActivityPage = ({
   const [historyData, setHistoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   const [loadingMore, setLoadingMore] = useState(false);
   const [activeOffset, setActiveOffset] = useState(0);
   const [historyOffset, setHistoryOffset] = useState(0);
@@ -49,19 +49,19 @@ const ActivityPage = ({
     setActiveTab(initialTab === 'aktif' ? 'Jadwal Aktif' : 'Riwayat Sesi');
   }, [initialTab]);
 
-  const fetchActiveData = async (isPullRefresh = false, isLoadMore = false) => {
+  const fetchActiveData = async (isPullRefresh = false, isLoadMore = false, isInitial = false) => {
     if (!userId || !userRole) return;
     if (isLoadMore && !hasMoreActive) return;
 
     if (isLoadMore) setLoadingMore(true);
-    else if (!isPullRefresh) setIsLoading(true);
+    else if (!isPullRefresh && !isInitial) setIsLoading(true);
 
     const currentOffset = isLoadMore ? activeOffset : 0;
     try {
       const result = await getActiveSchedule(userRole, userId, LIMIT, currentOffset);
       const rawData = result?.data || [];
       const formattedData = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
-      
+
       if (formattedData.length < LIMIT) setHasMoreActive(false);
       else setHasMoreActive(true);
 
@@ -74,27 +74,27 @@ const ActivityPage = ({
       } else {
         setActiveData(formattedData);
       }
-      
+
       setActiveOffset(currentOffset + LIMIT);
     } catch (error) {
       console.log('Error fetch active:', error);
       if (!isLoadMore) setActiveData([]);
     } finally {
-      setIsLoading(false);
+      if (!isInitial && !isPullRefresh) setIsLoading(false);
       setLoadingMore(false);
     }
   };
 
-  const fetchHistoryData = async (isPullRefresh = false, isLoadMore = false) => {
+  const fetchHistoryData = async (isPullRefresh = false, isLoadMore = false, isInitial = false) => {
     if (!userId || !userRole) return;
     if (isLoadMore && !hasMoreHistory) return;
 
     if (isLoadMore) setLoadingMore(true);
-    else if (!isPullRefresh) setIsLoading(true);
+    else if (!isPullRefresh && !isInitial) setIsLoading(true);
 
     const currentOffset = isLoadMore ? historyOffset : 0;
     try {
-      const result = await getHistory(userRole, userId, LIMIT, currentOffset); 
+      const result = await getHistory(userRole, userId, LIMIT, currentOffset);
       let formattedData = [];
       if (Array.isArray(result)) formattedData = result;
       else if (result && (result.success === true || result.status === 200)) {
@@ -118,33 +118,36 @@ const ActivityPage = ({
     } catch (error) {
       console.log('Error fetch history:', error);
     } finally {
-      setIsLoading(false);
+      if (!isInitial && !isPullRefresh) setIsLoading(false);
       setLoadingMore(false);
     }
   };
 
-  useEffect(() => {
+  const fetchAllData = async (isPullRefresh = false) => {
     if (!userId || !userRole) return;
-
-    if (activeTab === 'Jadwal Aktif') {
-      fetchActiveData();
-    } else if (activeTab === 'Riwayat Sesi') {
-      fetchHistoryData();
+    if (!isPullRefresh) setIsLoading(true);
+    try {
+      await Promise.all([
+        fetchActiveData(isPullRefresh, false, true),
+        fetchHistoryData(isPullRefresh, false, true)
+      ]);
+    } finally {
+      if (!isPullRefresh) setIsLoading(false);
     }
-  }, [activeTab, userId, userRole]);
+  };
+
+  useEffect(() => {
+    fetchAllData();
+  }, [userId, userRole]);
 
   const handleRefresh = async () => {
     if (!userId || !userRole) return;
     setRefreshing(true);
-    if (activeTab === 'Jadwal Aktif') {
-      setActiveOffset(0);
-      setHasMoreActive(true);
-      await fetchActiveData(true, false);
-    } else {
-      setHistoryOffset(0);
-      setHasMoreHistory(true);
-      await fetchHistoryData(true, false);
-    }
+    setActiveOffset(0);
+    setHasMoreActive(true);
+    setHistoryOffset(0);
+    setHasMoreHistory(true);
+    await fetchAllData(true);
     setRefreshing(false);
   };
 
@@ -166,8 +169,7 @@ const ActivityPage = ({
     );
   };
 
-  const renderCardItem = ({ item, index }) => {
-    const isHistory = activeTab === 'Riwayat Sesi';
+  const renderCardItem = ({ item, index, isHistory }) => {
     const isUnpaid = !isHistory && userRole === 'murid' && item.status_pembayaran === 'menunggu';
     return (
       <View style={styles.card} key={item.id_pemesanan || index}>
@@ -218,17 +220,29 @@ const ActivityPage = ({
         )}
 
         {isHistory ? (
-          /* PERUBAHAN: Saat beri ulasan beralih ke SessionDetail */
-          <TouchableOpacity
-            style={[styles.actionBtn, { backgroundColor: '#387C65' }]}
-            onPress={() => {
-              if (onDetailClick) {
-                onDetailClick(item, true);
-              }
-            }}
-          >
-            <Text style={styles.actionBtnText}>Beri Ulasan</Text>
-          </TouchableOpacity>
+          <>
+            <View style={[
+              styles.statusBadge, 
+              item.status_pemesanan === 'selesai' ? styles.statusSelesai : styles.statusDibatalkan
+            ]}>
+              <Text style={[
+                styles.statusBadgeText, 
+                item.status_pemesanan === 'selesai' ? styles.statusTextSelesai : styles.statusTextDibatalkan
+              ]}>
+                {item.status_pemesanan === 'selesai' ? 'Selesai' : 'Dibatalkan'}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: '#387C65' }]}
+              onPress={() => {
+                if (onDetailClick) {
+                  onDetailClick(item, true);
+                }
+              }}
+            >
+              <Text style={styles.actionBtnText}>Lihat Detail</Text>
+            </TouchableOpacity>
+          </>
         ) : (
           /* PERUBAHAN: Saat lihat detail beralih ke DetailSesiAktif */
           <TouchableOpacity
@@ -251,8 +265,13 @@ const ActivityPage = ({
 
   // Memastikan ScrollView bergeser saat tab berubah
   useEffect(() => {
-    const index = activeTab === 'Jadwal Aktif' ? 0 : 1;
-    scrollViewRef.current?.scrollTo({ x: index * width, animated: true });
+    if (width > 0) {
+      const index = activeTab === 'Jadwal Aktif' ? 0 : 1;
+      // Gunakan setTimeout kecil untuk pastikan UI sudah ter-render sebelum di-scroll
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ x: index * width, animated: false });
+      }, 50);
+    }
   }, [activeTab, width]);
 
   const handleScroll = (event) => {
@@ -267,27 +286,27 @@ const ActivityPage = ({
 
   const renderList = (data, isHistory) => (
     <View style={{ width, flex: 1 }}>
-        <FlatList
+      <FlatList
         data={data}
         keyExtractor={(item, index) => item.id_pemesanan?.toString() || index.toString()}
-        renderItem={renderCardItem}
+        renderItem={(props) => renderCardItem({ ...props, isHistory })}
         contentContainerStyle={{ padding: 20, paddingBottom: 110, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#284B7A']} tintColor="#284B7A" />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#284B7A']} tintColor="#284B7A" />
         }
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
         ListEmptyComponent={
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text style={{ fontSize: 40 }}>{isHistory ? '📜' : '📅'}</Text>
             <Text style={styles.emptyText}>
-                {isHistory ? 'Belum ada riwayat sesi.' : 'Tidak ada jadwal aktif saat ini.'}
+              {isHistory ? 'Belum ada riwayat sesi.' : 'Tidak ada jadwal aktif saat ini.'}
             </Text>
-            </View>
+          </View>
         }
-        />
+      />
     </View>
   );
 
@@ -339,6 +358,7 @@ const ActivityPage = ({
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={handleScroll}
             scrollEventThrottle={16}
+            contentOffset={{ x: (initialTab === 'aktif' ? 0 : 1) * width, y: 0 }}
           >
             {renderList(activeData, false)}
             {renderList(historyData, true)}
@@ -442,7 +462,34 @@ const styles = StyleSheet.create({
     bottom: 15,
     right: 15,
   },
-  actionBtnText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
+  actionBtnText: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
+  statusBadge: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  statusSelesai: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#387C65',
+  },
+  statusDibatalkan: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#EE2737',
+  },
+  statusBadgeText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  statusTextSelesai: {
+    color: '#387C65',
+  },
+  statusTextDibatalkan: {
+    color: '#EE2737',
+  },
   emptyText: {
     textAlign: 'center',
     color: '#888',

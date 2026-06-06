@@ -24,6 +24,7 @@ import PoinSVG from '../components/mapsPoint';
 import MapsSVG from '../components/mapsSVG';
 import Back from '../components/BackIconSvg';
 import { useAppAlert } from '../components/AppAlertProvider';
+import CustomAlert from '../components/CustomAlert';
 
 // === KONSTANTA KALENDER ===
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
@@ -44,6 +45,17 @@ const MONTHS = [
 
 const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, resetDraft = false }) => {
   const { showInfo } = useAppAlert();
+  // === STATE CUSTOM ALERT ===
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+
+  const showCustomAlert = (title, message) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
+
   // === STATE FORM ===
   const [tanggal, setTanggal] = useState(null);
   const [waktuMulai, setWaktuMulai] = useState('');
@@ -303,16 +315,15 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
   const getKelasOptions = () => {
     if (jenjang === 'SD')
       return ['Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6'];
-    if (jenjang === 'SMP' || jenjang === 'SMA')
-      return ['Kelas 1', 'Kelas 2', 'Kelas 3'];
+    if (jenjang === 'SMP')
+      return ['Kelas 7', 'Kelas 8', 'Kelas 9'];
+    if (jenjang === 'SMA')
+      return ['Kelas 10', 'Kelas 11', 'Kelas 12'];
     return [];
   };
 
   const getKelasNumber = (jenjang, kelas) => {
     const num = parseInt(kelas.replace('Kelas ', ''));
-    if (jenjang === 'SD') return num;
-    if (jenjang === 'SMP') return num + 6;
-    if (jenjang === 'SMA') return num + 9;
     return num;
   };
 
@@ -885,7 +896,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
                 isOpen={openWaktuSelesai}
                 onToggle={val => {
                   if (!waktuMulai) {
-                    Alert.alert(
+                    showCustomAlert(
                       'Pilih Waktu Mulai',
                       'Pilih waktu mulai terlebih dahulu.',
                     );
@@ -964,7 +975,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
           isOpen={openMapel}
           onToggle={val => {
             if (!jenjang) {
-              Alert.alert('Pilih Jenjang', 'Pilih jenjang terlebih dahulu.');
+              showCustomAlert('Pilih Jenjang', 'Pilih jenjang terlebih dahulu.');
               return;
             }
             closeAllDropdowns('Mata Pelajaran');
@@ -998,7 +1009,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
           isOpen={openMateri}
           onToggle={val => {
             if (!mapelSelected || !kelas) {
-              Alert.alert(
+              showCustomAlert(
                 'Belum Lengkap',
                 'Pilih mata pelajaran dan kelas terlebih dahulu.',
               );
@@ -1196,6 +1207,15 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
           setShowLocationPicker(false);
         }}
         onCancel={() => setShowLocationPicker(false)}
+      />
+
+      {/* Custom Alert */}
+      <CustomAlert
+        visible={alertVisible}
+        type="gagal"
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
       />
     </View>
   );
