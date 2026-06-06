@@ -126,8 +126,22 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
 
     const resultSesi = await fetchSesiDikonfirmasi(guruData.id);
     if (resultSesi && resultSesi.success && resultSesi.data) {
-      const raw = resultSesi.data;
-      setSesiDikonfirmasi(Array.isArray(raw) ? raw : raw ? [raw] : []);
+      let raw = resultSesi.data;
+      if (!Array.isArray(raw)) raw = [raw];
+
+      const today = new Date();
+      raw = raw.filter(sesi => {
+        const tglRaw = sesi.waktu_mulai || sesi.jam_mulai;
+        if (!tglRaw) return false;
+        const tgl = new Date(tglRaw);
+        return (
+          tgl.getDate() === today.getDate() &&
+          tgl.getMonth() === today.getMonth() &&
+          tgl.getFullYear() === today.getFullYear()
+        );
+      });
+
+      setSesiDikonfirmasi(raw);
     } else {
       setSesiDikonfirmasi([]);
     }
@@ -208,6 +222,7 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
   const openMateriSheet = () => {
     resetMateriSheetState();
     setIsMateriVisible(true);
+    handleSelectJenjang('SD');
   };
 
   const closeMateriSheet = () => {
@@ -436,6 +451,7 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
             onRefresh={handleRefresh}
             colors={['#284B7A']}
             tintColor="#284B7A"
+            progressViewOffset={60}
           />
         }
       >
@@ -529,7 +545,9 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
         ) : permintaan.length === 0 ? (
           <View style={{ padding: 30, alignItems: 'center' }}>
             <Text style={{ color: '#888', fontFamily: FONTS.regular }}>
-              Belum ada permintaan mengajar saat ini.
+              {(guruData?.is_active === 1 || guruData?.is_active === true) 
+                ? 'Belum ada permintaan mengajar saat ini.' 
+                : 'Aktifkan ketersediaan di halaman profil'}
             </Text>
           </View>
         ) : (
@@ -554,18 +572,20 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
               </View>
 
               <View style={styles.cardGridInfoRequest}>
-                <View style={styles.gridInfoBoxRequest}>
+                <View style={[styles.gridInfoBoxRequest, { paddingLeft: 0 }]}>
                   <Text style={styles.infoLabelRequest}>Tanggal</Text>
                   <Text style={styles.infoValueRequest}>
                     {formatTanggalCard(item.waktu_mulai)}
                   </Text>
                 </View>
+                <View style={styles.statusDivider} />
                 <View style={styles.gridInfoBoxRequest}>
                   <Text style={styles.infoLabelRequest}>Waktu</Text>
                   <Text style={styles.infoValueRequest}>
                     {item.waktu_string}
                   </Text>
                 </View>
+                <View style={styles.statusDivider} />
                 <View style={styles.gridInfoBoxRequest}>
                   <Text style={styles.infoLabelRequest}>Bayaran</Text>
                   <Text style={styles.infoValueRequest}>
@@ -807,13 +827,13 @@ const styles = StyleSheet.create({
   },
   gridCol2: { width: '45%' },
   detailLabel: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: FONTS.regular,
     color: '#ABABAB',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   detailValue: {
-    fontSize: 13,
+    fontSize: 15,
     fontFamily: FONTS.bold,
     color: '#1A1A2E',
   },
@@ -931,10 +951,12 @@ const styles = StyleSheet.create({
   cardGridInfoRequest: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
+    alignItems: 'center',
     marginBottom: 16,
     paddingLeft: 2,
   },
-  gridInfoBoxRequest: { flex: 1, paddingRight: 8 },
+  gridInfoBoxRequest: { flex: 1, paddingHorizontal: 8 },
+  statusDivider: { width: 1, height: 35, backgroundColor: '#E0E0E0' },
   infoLabelRequest: { fontSize: 11, color: '#999', marginBottom: 4 },
   infoValueRequest: {
     fontSize: 13,

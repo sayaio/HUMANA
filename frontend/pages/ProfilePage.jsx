@@ -155,7 +155,7 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
             }}
             activeOpacity={0.6}
           >
-            <LogOut color="#FF4D4D" size={20} style={styles.logoutIcon} />
+            <LogOut color="#EE2737" size={20} style={styles.logoutIcon} />
             <Text style={styles.logoutText}>Keluar dari Akun</Text>
           </TouchableOpacity>
         </View>
@@ -274,14 +274,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#FFF1F1',
     borderWidth: 1,
-    borderColor: '#FFAAAA',
+    borderColor: '#EE2737',
     borderRadius: 19,
     paddingVertical: 10,
     paddingHorizontal: 12,
     marginTop: 5,
   },
   logoutIcon: { marginRight: 10 },
-  logoutText: { fontSize: 15, color: '#FF8A8A', fontWeight: 'bold' },
+  logoutText: { fontSize: 15, color: '#EE2737', fontWeight: 'bold' },
 });
 
 export default ProfilePage;

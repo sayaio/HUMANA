@@ -125,17 +125,27 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
     const handleToggleAvailability = async newValue => {
         const idGuruTerpilih = guruData?.id || guruData?.id_guru;
         if (!idGuruTerpilih) {
-            showInfo('Data Tidak Valid', 'ID Guru tidak ditemukan.');
+            showInfo('Data Tidak Valid', 'ID Guru tidak ditemukan.', { type: 'gagal' });
             return;
         }
+
+        if (newValue === true && (portofolios.length === 0 || materiDiajar.length === 0)) {
+            showInfo(
+                'Gagal Mengaktifkan Status',
+                'Anda belum bisa mengaktifkan status. Pastikan Anda telah menambahkan minimal 1 Portofolio dan 1 Materi yang diajar.',
+                { type: 'gagal' }
+            );
+            return;
+        }
+
         setIsAktif(newValue);
         const result = await updateAvailabilityProfile(idGuruTerpilih, newValue);
         if (result && result.success) {
             if (onRefreshData) onRefreshData({ ...guruData, is_active: newValue });
-            showInfo('Sukses', `Status Anda kini ${newValue ? 'Aktif menerima murid' : 'Nonaktif'}.`);
+            showInfo('Sukses', `Status Anda kini ${newValue ? 'Aktif menerima murid' : 'Nonaktif'}.`, { type: 'success' });
         } else {
             setIsAktif(!newValue);
-            showInfo('Eror', 'Gagal mengubah status di server.');
+            showInfo('Eror', 'Gagal mengubah status di server.', { type: 'gagal' });
         }
     };
 

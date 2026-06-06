@@ -126,7 +126,7 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole, totalUnread = 0 }) 
         <Text
           style={[
             styles.navBarLabel,
-            { color: '#284B7A', fontWeight: '600', fontSize: 9 },
+            { color: '#284B7A', fontFamily: 'SF-Pro-Display-Bold' },
           ]}
         >
           {role === 'guru' ? 'Permintaan' : 'Pesan Sesi'}
@@ -220,8 +220,16 @@ const styles = StyleSheet.create({
     width: 25,
     height: 25,
   },
-  navBarLabel: { fontSize: 10, color: '#A9A9A9', marginTop: 4 },
-  activeLabel: { color: '#284B7A', fontWeight: 'bold' },
+  navBarLabel: { 
+    fontSize: 10, 
+    color: '#A9A9A9', 
+    marginTop: 4,
+    fontFamily: 'SF-Pro-Display-Regular'
+  },
+  activeLabel: { 
+    color: '#284B7A', 
+    fontFamily: 'SF-Pro-Display-Bold'
+  },
 
   centerFabWrapper: {
     position: 'absolute',

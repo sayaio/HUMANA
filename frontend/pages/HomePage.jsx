@@ -133,10 +133,10 @@ const HomePage = ({
         setIsMateriVisible(true);
 
         if (role === 'murid') {
-            const jenjang = jenjangDariKelasMurid(kelasMurid);
+            const jenjang = jenjangMurid || jenjangDariKelasMurid(kelasMurid) || 'SD';
             setPendingAutoJenjang(jenjang);
         } else {
-            setPendingAutoJenjang(null);
+            setPendingAutoJenjang('SD');
         }
     };
 
@@ -199,8 +199,22 @@ const HomePage = ({
         try {
             const result = await getActiveSchedule(userRole, userId);
             if (result?.success) {
-                const raw = result.data;
-                setActiveSessions(Array.isArray(raw) ? raw : (raw ? [raw] : []));
+                let raw = result.data;
+                if (!Array.isArray(raw)) raw = [raw];
+                
+                const today = new Date();
+                raw = raw.filter(sesi => {
+                    const tglRaw = sesi.waktu_mulai || sesi.jam_mulai;
+                    if (!tglRaw) return false;
+                    const tgl = new Date(tglRaw);
+                    return (
+                        tgl.getDate() === today.getDate() &&
+                        tgl.getMonth() === today.getMonth() &&
+                        tgl.getFullYear() === today.getFullYear()
+                    );
+                });
+
+                setActiveSessions(raw);
             } else {
                 setActiveSessions([]);
             }
@@ -507,6 +521,7 @@ const HomePage = ({
                         onRefresh={handleRefresh}
                         colors={['#284B7A']}
                         tintColor="#284B7A"
+                        progressViewOffset={60}
                     />
                 }
             >
@@ -663,7 +678,10 @@ const HomePage = ({
                                                 style={styles.btnLihatDetail}
                                                 onPress={() => {
                                                     if (item.chapterData && onLihatDetailMateri) {
-                                                        onLihatDetailMateri(item.chapterData);
+                                                        onLihatDetailMateri(
+                                                            { ...item.chapterData, kelas_formatted: item.kelas, jenjang: item.jenjang },
+                                                            { id_mapel: item.id_mapel, subjectName: item.nama_mapel, nama_mapel: item.nama_mapel }
+                                                        );
                                                     }
                                                 }}
                                                 activeOpacity={0.7}
@@ -844,11 +862,11 @@ const styles = StyleSheet.create({
     gridCol2: { width: '45%' },
     detailLabel: {
         fontFamily: 'SF-Pro-Display-Regular',
-        fontSize: 10, color: '#ABABAB', marginBottom: 4,
+        fontSize: 12, color: '#ABABAB', marginBottom: 4,
     },
     detailValue: {
         fontFamily: 'SF-Pro-Display-Bold',
-        fontSize: 13, color: '#1A1A2E', lineHeight: 17,
+        fontSize: 15, color: '#1A1A2E', lineHeight: 19,
     },
 
     cardActions: { flexDirection: 'row', gap: 10, marginTop: 18 },
@@ -906,11 +924,11 @@ const styles = StyleSheet.create({
     },
     pesanLagiSub: {
         fontFamily: 'SF-Pro-Display-Regular',
-        color: 'rgba(255,255,255,0.65)', fontSize: 12, marginBottom: 6,
+        color: 'rgba(255,255,255,0.65)', fontSize: 13, marginBottom: 6,
     },
     pesanLagiTitle: {
         fontFamily: 'SF-Pro-Display-Regular',
-        color: '#FFF', fontSize: 15, marginBottom: 16, lineHeight: 21,
+        color: '#FFF', fontSize: 17, marginBottom: 16, lineHeight: 23,
     },
     pesanBtn: {
         backgroundColor: '#FFF', paddingVertical: 8, paddingHorizontal: 16,

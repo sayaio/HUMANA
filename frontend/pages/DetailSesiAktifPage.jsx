@@ -290,6 +290,15 @@ const DetailSesiAktifPage = ({ onBack, sessionData, onChat }) => {
     }
   };
 
+  const formatRupiah = angka => {
+    if (!angka && angka !== 0) return 'Rp 0';
+    return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
+  };
+
+  const biayaSesi = sessionData?.biaya_sesi || 0;
+  const biayaTransportasi = sessionData?.biaya_jarak || 0;
+  const totalBayar = sessionData?.nominal || sessionData?.harga_total || (biayaSesi + biayaTransportasi);
+
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -390,6 +399,27 @@ const DetailSesiAktifPage = ({ onBack, sessionData, onChat }) => {
           </View>
           <Text style={styles.locationChevronRightIcon}>❯</Text>
         </TouchableOpacity>
+
+        {/* RINCIAN BAYARAN */}
+        <View style={styles.rincianCard}>
+          <Text style={styles.rincianTitle}>Rincian Bayaran</Text>
+          <View style={styles.rincianRow}>
+            <Text style={styles.rincianLabel}>Biaya Sesi</Text>
+            <Text style={styles.rincianValue}>: {formatRupiah(biayaSesi)}</Text>
+          </View>
+          <View style={styles.rincianRow}>
+            <Text style={styles.rincianLabel}>Biaya Transportasi</Text>
+            <Text style={styles.rincianValue}>
+              : {formatRupiah(biayaTransportasi)}
+            </Text>
+          </View>
+          <View style={styles.rincianDivider} />
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Total Bayaran</Text>
+            <Text style={styles.totalValue}>: {formatRupiah(totalBayar)}</Text>
+          </View>
+        </View>
+
       </ScrollView>
 
       {/* PERSISTENT FOOTER */}
@@ -566,6 +596,35 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontWeight: 'bold',
   },
+  rincianCard: {
+    marginTop: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 18,
+    backgroundColor: '#FFF',
+  },
+  rincianTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 14,
+  },
+  rincianRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  rincianLabel: { fontSize: 13, color: '#555' },
+  rincianValue: { fontSize: 13, color: '#333', fontWeight: '500' },
+  rincianDivider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: 10 },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  totalLabel: { fontSize: 16, fontWeight: 'bold', color: '#000' },
+  totalValue: { fontSize: 17, fontWeight: 'bold', color: '#000' },
   persistentFooterContainer: {
     position: 'absolute',
     bottom: 0,
