@@ -125,23 +125,23 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
       setIsLoadingDraft(false);
       return;
     }
-  
+
     // Jika resetDraft = true, skip load draft dan langsung selesai loading
     if (resetDraft) {
       console.log('🚫 Skip load draft karena resetDraft = true');
       setIsLoadingDraft(false);
       return;
     }
-  
+
     let cancelled = false;
-  
+
     const initForm = async () => {
       await loadDraft();
       if (!cancelled && prefillBooking) {
         applyPrefillBooking(prefillBooking);
       }
     };
-  
+
     initForm();
     return () => {
       cancelled = true;

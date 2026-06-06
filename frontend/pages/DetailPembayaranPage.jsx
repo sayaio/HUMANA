@@ -10,7 +10,7 @@ import PageHeader from '../components/PageHeader';
 import { fetchGuruRating } from '../services/feedbackService';
 import PoinSVG from '../components/mapsPoint';
 
-const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDilepas }) => {
+const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDilepas, onCodSuccess }) => {
     const { showInfo, showConfirm } = useAppAlert();
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [showMethodModal, setShowMethodModal] = useState(false);
@@ -124,7 +124,11 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                 setIsProcessing(false);
 
                 if (result.success) {
-                    if (onBack) onBack();
+                    if (onCodSuccess) {
+                        onCodSuccess();
+                    } else if (onBack) {
+                        onBack();
+                    }
                 } else {
                     throw new Error(result.message || 'Gagal memproses COD.');
                 }

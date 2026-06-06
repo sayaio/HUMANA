@@ -88,17 +88,21 @@ const getStatusPembayaran = async (req, res) => {
 
     try {
         const rows = await pool.query(
-            `SELECT status_pembayaran FROM Pembayaran WHERE id_pemesanan = ? LIMIT 1`,
+            `SELECT status_pembayaran, metode_pembayaran FROM Pembayaran WHERE id_pemesanan = ? LIMIT 1`,
             [id_pemesanan]
         );
 
         const data = Array.isArray(rows[0]) ? rows[0] : Array.isArray(rows) ? rows : [rows];
 
         if (data.length === 0 || !data[0].status_pembayaran) {
-            return res.status(200).json({ success: true, status_pembayaran: 'menunggu' });
+            return res.status(200).json({ success: true, status_pembayaran: 'menunggu', metode_pembayaran: null });
         }
 
-        return res.status(200).json({ success: true, status_pembayaran: data[0].status_pembayaran });
+        return res.status(200).json({ 
+            success: true, 
+            status_pembayaran: data[0].status_pembayaran,
+            metode_pembayaran: data[0].metode_pembayaran 
+        });
 
     } catch (error) {
         console.error('[BankerController] Error getStatusPembayaran:', error);

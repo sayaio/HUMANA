@@ -2,7 +2,9 @@
 const pool = require('../database');
 
 const updateBasic = async (req, res) => {
-    const { email, username, phone, gender, domicile, role } = req.body;
+    const { id, id_user, email, name, nama, username, phone, gender, domicile, role } = req.body;
+    const finalName = name || nama;
+    const userId = id || id_user;
 
     // ==========================================
     // === REVISI VALIDASI IMK: BACKEND GUARD ===
@@ -29,14 +31,14 @@ const updateBasic = async (req, res) => {
         const userRole = role ? role.toLowerCase() : 'murid';
 
         if (userRole === 'guru') {
-            await pool.query(
-                `UPDATE Guru SET username = ?, no_telepon = ?, jenis_kelamin = ?, alamat = ? WHERE email_guru = ?`,
-                [username, phone, genderDb, domicile, email]
+            const result = await pool.query(
+                `UPDATE Guru SET nama_guru = ?, username = ?, no_telepon = ?, jenis_kelamin = ?, alamat = ? WHERE id_guru = ? OR email_guru = ?`,
+                [finalName, username, phone, genderDb, domicile, userId || null, email || null]
             );
         } else {
-            await pool.query(
-                `UPDATE Murid SET username = ?, no_telepon = ?, jenis_kelamin = ?, alamat = ? WHERE email = ?`,
-                [username, phone, genderDb, domicile, email]
+            const result = await pool.query(
+                `UPDATE Murid SET nama_murid = ?, username = ?, no_telepon = ?, jenis_kelamin = ?, alamat = ? WHERE id_murid = ? OR email = ?`,
+                [finalName, username, phone, genderDb, domicile, userId || null, email || null]
             );
         }
 

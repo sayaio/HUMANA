@@ -21,8 +21,30 @@ const InputField = ({ label, value, onChangeText }) => (
     </View>
 );
 
+const RadioField = ({ label, options, selectedValue, onSelect }) => (
+    <View style={styles.inputContainer}>
+        <Text style={styles.label}>{label}</Text>
+        <View style={styles.radioGroup}>
+            {options.map((option) => (
+                <TouchableOpacity 
+                    key={option} 
+                    style={styles.radioOption} 
+                    onPress={() => onSelect(option)}
+                    activeOpacity={0.7}
+                >
+                    <View style={styles.radioOuterCircle}>
+                        {selectedValue === option && <View style={styles.radioInnerCircle} />}
+                    </View>
+                    <Text style={styles.radioText}>{option}</Text>
+                </TouchableOpacity>
+            ))}
+        </View>
+    </View>
+);
+
 const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
     const { showInfo } = useAppAlert();
+    const [name, setName] = useState(profileData.name || profileData.nama || '');
     const [username, setUsername] = useState(profileData.username || '');
     const [phone, setPhone] = useState(profileData.no_telepon || profileData.phone || '');
     const [gender, setGender] = useState(profileData.jenis_kelamin || profileData.gender || '');
@@ -55,6 +77,8 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
                 id_user: profileData.id,
                 email: profileData.email,
                 role: profileData.role,
+                name: name,
+                nama: name,
                 username: username,
                 phone: phone,
                 no_telepon: phone,
@@ -71,6 +95,8 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
                 // Jika berhasil, perbarui data di App.jsx dan kembali ke Profile
                 const updatedFields = {
                     ...profileData,
+                    name,
+                    nama: name,
                     username,
                     phone,
                     no_telepon: phone,
@@ -113,9 +139,15 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
             <PageHeader title="Edit Data Pribadi" onBack={onCancel} />
 
             <ScrollView contentContainerStyle={styles.content}>
+                <InputField label="Nama" value={name} onChangeText={setName} />
                 <InputField label="Username" value={username} onChangeText={setUsername} />
                 <InputField label="No. Telepon" value={phone} onChangeText={setPhone} />
-                <InputField label="Jenis Kelamin" value={gender} onChangeText={setGender} />
+                <RadioField 
+                    label="Jenis Kelamin" 
+                    options={['Laki-laki', 'Perempuan']} 
+                    selectedValue={gender} 
+                    onSelect={setGender} 
+                />
                 <InputField label="Domisili" value={domicile} onChangeText={setDomicile} />
             </ScrollView>
 
@@ -141,6 +173,12 @@ const styles = StyleSheet.create({
     inputContainer: { marginBottom: 20 },
     label: { fontSize: 12, color: '#888', fontWeight: 'bold', marginBottom: 8 },
     input: { borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 10, height: 50, paddingHorizontal: 15, fontSize: 14, color: '#000', fontWeight: '600' },
+    
+    radioGroup: { flexDirection: 'row', alignItems: 'center', marginTop: 5 },
+    radioOption: { flexDirection: 'row', alignItems: 'center', marginRight: 25 },
+    radioOuterCircle: { height: 20, width: 20, borderRadius: 10, borderWidth: 2, borderColor: '#284B7A', alignItems: 'center', justifyContent: 'center', marginRight: 8 },
+    radioInnerCircle: { height: 10, width: 10, borderRadius: 5, backgroundColor: '#284B7A' },
+    radioText: { fontSize: 14, color: '#000', fontWeight: '500' },
 
     footer: { flexDirection: 'row', padding: 20, borderTopWidth: 1, borderTopColor: '#F0F0F0', backgroundColor: '#FFF' },
     cancelBtn: { flex: 1, height: 50, borderRadius: 25, borderWidth: 1, borderColor: '#CCC', justifyContent: 'center', alignItems: 'center', marginRight: 10 },

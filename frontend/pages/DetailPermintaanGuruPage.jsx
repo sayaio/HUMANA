@@ -91,6 +91,7 @@ const DetailPermintaanGuruPage = ({
   const [loading, setLoading] = useState(false);
   const [sudahLunas, setSudahLunas] = useState(false);
   const [loadingStatusBayar, setLoadingStatusBayar] = useState(true);
+  const [metodeBayar, setMetodeBayar] = useState('');
   const [showDokModal, setShowDokModal] = useState(false);
   const [fotoUri, setFotoUri] = useState(null);
   const [fotoBase64, setFotoBase64] = useState(null);
@@ -115,7 +116,7 @@ const DetailPermintaanGuruPage = ({
           });
           setDisplayAddress(
             alamatMentah ||
-              `${data.koordinat.latitude}, ${data.koordinat.longitude}`,
+            `${data.koordinat.latitude}, ${data.koordinat.longitude}`,
           );
           setLoadingMap(false);
         }
@@ -186,6 +187,7 @@ const DetailPermintaanGuruPage = ({
       }
       const res = await getStatusPembayaran(id);
       setSudahLunas(res?.status_pembayaran?.toLowerCase() === 'lunas');
+      setMetodeBayar(res?.metode_pembayaran?.toLowerCase() || data.metode_pembayaran?.toLowerCase() || '');
       setLoadingStatusBayar(false);
     };
     cekPembayaran();
@@ -450,8 +452,8 @@ const DetailPermintaanGuruPage = ({
       );
     }
 
-    // Logika tombol mati: jika sedang loading, sedang cek bayar, ATAU belum lunas
-    const tombolDisabled = loading || loadingStatusBayar || !sudahLunas;
+    // Logika tombol mati: jika sedang loading, sedang cek bayar, ATAU belum lunas (kecuali metode pembayaran COD)
+    const tombolDisabled = loading || loadingStatusBayar || (!sudahLunas && metodeBayar !== 'cod');
 
     return (
       <View style={styles.actionBar}>
@@ -638,60 +640,60 @@ const DetailPermintaanGuruPage = ({
         placement="center"
         dismissOnBackdropPress={!uploadingFoto}
       >
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Dokumentasi Sesi</Text>
-            <Text style={styles.modalSubtitle}>
-              Upload foto sebagai bukti sesi telah selesai
-            </Text>
+        <View style={styles.modalCard}>
+          <Text style={styles.modalTitle}>Dokumentasi Sesi</Text>
+          <Text style={styles.modalSubtitle}>
+            Upload foto sebagai bukti sesi telah selesai
+          </Text>
 
-            <TouchableOpacity style={styles.fotoBox} onPress={handlePilihFoto}>
-              {fotoUri ? (
-                <Image
-                  source={{ uri: fotoUri }}
-                  style={styles.fotoPreview}
-                  resizeMode="cover"
-                />
+          <TouchableOpacity style={styles.fotoBox} onPress={handlePilihFoto}>
+            {fotoUri ? (
+              <Image
+                source={{ uri: fotoUri }}
+                style={styles.fotoPreview}
+                resizeMode="cover"
+              />
+            ) : (
+              <>
+                <Text style={styles.fotoIcon}>📷</Text>
+                <Text style={styles.fotoHint}>Tap untuk pilih foto</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {fotoUri && (
+            <TouchableOpacity onPress={handlePilihFoto}>
+              <Text style={styles.gantiText}>Ganti Foto</Text>
+            </TouchableOpacity>
+          )}
+
+          <View style={styles.modalActionRow}>
+            <TouchableOpacity
+              style={styles.modalBtnBatal}
+              onPress={() => {
+                setShowDokModal(false);
+                setFotoUri(null);
+              }}
+              disabled={uploadingFoto}
+            >
+              <Text style={styles.modalBtnBatalText}>Batal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.modalBtnSelesai,
+                uploadingFoto && { opacity: 0.6 },
+              ]}
+              onPress={handleKonfirmasiSelesai}
+              disabled={uploadingFoto}
+            >
+              {uploadingFoto ? (
+                <ActivityIndicator color="#FFF" size="small" />
               ) : (
-                <>
-                  <Text style={styles.fotoIcon}>📷</Text>
-                  <Text style={styles.fotoHint}>Tap untuk pilih foto</Text>
-                </>
+                <Text style={styles.modalBtnSelesaiText}>Selesaikan</Text>
               )}
             </TouchableOpacity>
-
-            {fotoUri && (
-              <TouchableOpacity onPress={handlePilihFoto}>
-                <Text style={styles.gantiText}>Ganti Foto</Text>
-              </TouchableOpacity>
-            )}
-
-            <View style={styles.modalActionRow}>
-              <TouchableOpacity
-                style={styles.modalBtnBatal}
-                onPress={() => {
-                  setShowDokModal(false);
-                  setFotoUri(null);
-                }}
-                disabled={uploadingFoto}
-              >
-                <Text style={styles.modalBtnBatalText}>Batal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalBtnSelesai,
-                  uploadingFoto && { opacity: 0.6 },
-                ]}
-                onPress={handleKonfirmasiSelesai}
-                disabled={uploadingFoto}
-              >
-                {uploadingFoto ? (
-                  <ActivityIndicator color="#FFF" size="small" />
-                ) : (
-                  <Text style={styles.modalBtnSelesaiText}>Selesaikan</Text>
-                )}
-              </TouchableOpacity>
-            </View>
           </View>
+        </View>
       </DimmedModal>
 
     </View>

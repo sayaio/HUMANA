@@ -689,6 +689,22 @@ const App = () => {
                     setPaymentSnapUrl(snapUrl);
                     setCurrentPage('Pembayaran');
                 }}
+                onCodSuccess={async () => {
+                    // Hapus draft setelah COD sukses
+                    if (profileData.id) {
+                        try {
+                            await pemesananService.clearDraft(profileData.id);
+                            console.log('🗑️ Draft dihapus setelah COD sukses');
+                        } catch (error) {
+                            console.warn('Gagal hapus draft:', error);
+                        }
+                    }
+                    setIsFirstTimePesanSesi(true);
+                    setCurrentPage('Home');
+                    InteractionManager.runAfterInteractions(() => {
+                        showInfo('Sukses', 'Pesan Sesi Berhasil');
+                    });
+                }}
                 onSesiDilepas={() => setCurrentPage('MencariPengajar')}
             />
         );
@@ -1115,6 +1131,22 @@ const App = () => {
         onPaymentSuccess={snapUrl => {
           setPaymentSnapUrl(snapUrl);
           setCurrentPage('Pembayaran');
+        }}
+        onCodSuccess={async () => {
+          // Hapus draft setelah COD sukses
+          if (profileData.id) {
+            try {
+              await pemesananService.clearDraft(profileData.id);
+              console.log('🗑️ Draft dihapus setelah COD sukses');
+            } catch (error) {
+              console.warn('Gagal hapus draft:', error);
+            }
+          }
+          setIsFirstTimePesanSesi(true);
+          setCurrentPage('Home');
+          InteractionManager.runAfterInteractions(() => {
+            showInfo('Sukses', 'Pesan Sesi Berhasil');
+          });
         }}
         onSesiDilepas={() => setCurrentPage('MencariPengajar')}
       />

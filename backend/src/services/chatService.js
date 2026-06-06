@@ -4,7 +4,7 @@ const getLatestChatList = async (userId, role) => {
   const field = role === 'murid' ? 'id_murid' : 'id_guru';
   const senderField = role === 'murid' ? 'guru' : 'murid';
 
-const query = `
+  const query = `
   SELECT c.*, G.nama_guru, M.nama_murid,
     DATE_FORMAT(CONVERT_TZ(c.timestamp, '+00:00', '+07:00'), '%H:%i') AS waktu_chat,
     CAST((
@@ -28,7 +28,7 @@ const query = `
     WHERE p.id_guru = c.id_guru 
     AND p.id_murid = c.id_murid
     AND (
-      p.status_pemesanan IN ('dikonfirmasi', 'menunggu konfirmasi')
+      p.status_pemesanan IN ('dikonfirmasi', 'menunggu konfirmasi', 'berlangsung', 'menunggu pembayaran')
       OR (
         p.status_pemesanan = 'selesai' 
         AND TIMESTAMPDIFF(HOUR, p.waktu_selesai, NOW()) <= 48
@@ -60,7 +60,7 @@ const saveMessage = async (id_guru, id_murid, pengirim_role, isi_pesan) => {
     INSERT INTO Chat (id_guru, id_murid, pengirim_role, isi_pesan, is_read, timestamp) 
     VALUES (?, ?, ?, ?, 0, NOW())
   `; // 👈 Kuncinya di sini: Tambahkan kolom is_read dan isi dengan angka 0
-  
+
   const result = await db.query(query, [id_guru, id_murid, pengirim_role, isi_pesan]);
   return result;
 };

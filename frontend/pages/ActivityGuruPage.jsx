@@ -123,6 +123,8 @@ const ActivityGuruPage = ({
                     biaya_jarak: item.biaya_jarak,
                     lokasi_sesi: item.lokasi_sesi,
                     status_pemesanan: item.status_pemesanan,
+                    status_pembayaran: item.status_pembayaran,
+                    metode_pembayaran: item.metode_pembayaran,
                 }));
                 setJadwalAktifData(mappedAktif);
             } else {

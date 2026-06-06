@@ -22,7 +22,7 @@ const LOGO_SOURCE = require('../assets/logo_humana.png');
 const mapMuridProfileToApp = (data, existing) => ({
   id: data.id ?? data.id_murid ?? existing?.id,
   role: (data.role || existing?.role || 'murid').toLowerCase(),
-  name: data.name || data.nama || existing?.name || '-',
+  name: data.nama_murid || data.nama_guru || data.name || data.nama || existing?.name || '-',
   email: data.email || existing?.email || '-',
   username: data.username || existing?.username || '-',
   phone: data.no_telepon || existing?.phone || '-',
@@ -116,6 +116,8 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
             </TouchableOpacity>
           </View>
           <View style={styles.cardBox}>
+            <DataRow label="Nama Lengkap" value={profileData.name || '-'} />
+            <View style={styles.divider} />
             <DataRow label="Username" value={profileData.username || '-'} />
             <View style={styles.divider} />
             <DataRow label="No. Telepon" value={profileData.no_telepon || '-'} />
