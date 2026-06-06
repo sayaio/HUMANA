@@ -115,7 +115,7 @@ const DetailPermintaanGuruPage = ({
           });
           setDisplayAddress(
             alamatMentah ||
-              `${data.koordinat.latitude}, ${data.koordinat.longitude}`,
+            `${data.koordinat.latitude}, ${data.koordinat.longitude}`,
           );
           setLoadingMap(false);
         }
@@ -397,7 +397,25 @@ const DetailPermintaanGuruPage = ({
   const waktuSesi = formatWaktu();
 
   const sekarang = new Date();
-  const waktuMulaiObj = data.waktu_mulai ? new Date(data.waktu_mulai) : null;
+  let waktuMulaiObj = null;
+  if (data.waktu_mulai) {
+    const wStr = data.waktu_mulai.toString();
+    // Ekstrak angka murni agar tidak terpengaruh zona waktu (Z) dari backend atau masalah parsing Hermes
+    const match = wStr.match(/(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/);
+    if (match) {
+      waktuMulaiObj = new Date(
+        parseInt(match[1], 10),
+        parseInt(match[2], 10) - 1,
+        parseInt(match[3], 10),
+        parseInt(match[4], 10),
+        parseInt(match[5], 10),
+        parseInt(match[6], 10)
+      );
+    } else {
+      waktuMulaiObj = new Date(wStr.replace(' ', 'T'));
+    }
+  }
+
   const belumMulai =
     waktuMulaiObj && !isNaN(waktuMulaiObj.getTime())
       ? sekarang < waktuMulaiObj
@@ -638,60 +656,60 @@ const DetailPermintaanGuruPage = ({
         placement="center"
         dismissOnBackdropPress={!uploadingFoto}
       >
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Dokumentasi Sesi</Text>
-            <Text style={styles.modalSubtitle}>
-              Upload foto sebagai bukti sesi telah selesai
-            </Text>
+        <View style={styles.modalCard}>
+          <Text style={styles.modalTitle}>Dokumentasi Sesi</Text>
+          <Text style={styles.modalSubtitle}>
+            Upload foto sebagai bukti sesi telah selesai
+          </Text>
 
-            <TouchableOpacity style={styles.fotoBox} onPress={handlePilihFoto}>
-              {fotoUri ? (
-                <Image
-                  source={{ uri: fotoUri }}
-                  style={styles.fotoPreview}
-                  resizeMode="cover"
-                />
+          <TouchableOpacity style={styles.fotoBox} onPress={handlePilihFoto}>
+            {fotoUri ? (
+              <Image
+                source={{ uri: fotoUri }}
+                style={styles.fotoPreview}
+                resizeMode="cover"
+              />
+            ) : (
+              <>
+                <Text style={styles.fotoIcon}>📷</Text>
+                <Text style={styles.fotoHint}>Tap untuk pilih foto</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {fotoUri && (
+            <TouchableOpacity onPress={handlePilihFoto}>
+              <Text style={styles.gantiText}>Ganti Foto</Text>
+            </TouchableOpacity>
+          )}
+
+          <View style={styles.modalActionRow}>
+            <TouchableOpacity
+              style={styles.modalBtnBatal}
+              onPress={() => {
+                setShowDokModal(false);
+                setFotoUri(null);
+              }}
+              disabled={uploadingFoto}
+            >
+              <Text style={styles.modalBtnBatalText}>Batal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.modalBtnSelesai,
+                uploadingFoto && { opacity: 0.6 },
+              ]}
+              onPress={handleKonfirmasiSelesai}
+              disabled={uploadingFoto}
+            >
+              {uploadingFoto ? (
+                <ActivityIndicator color="#FFF" size="small" />
               ) : (
-                <>
-                  <Text style={styles.fotoIcon}>📷</Text>
-                  <Text style={styles.fotoHint}>Tap untuk pilih foto</Text>
-                </>
+                <Text style={styles.modalBtnSelesaiText}>Selesaikan</Text>
               )}
             </TouchableOpacity>
-
-            {fotoUri && (
-              <TouchableOpacity onPress={handlePilihFoto}>
-                <Text style={styles.gantiText}>Ganti Foto</Text>
-              </TouchableOpacity>
-            )}
-
-            <View style={styles.modalActionRow}>
-              <TouchableOpacity
-                style={styles.modalBtnBatal}
-                onPress={() => {
-                  setShowDokModal(false);
-                  setFotoUri(null);
-                }}
-                disabled={uploadingFoto}
-              >
-                <Text style={styles.modalBtnBatalText}>Batal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalBtnSelesai,
-                  uploadingFoto && { opacity: 0.6 },
-                ]}
-                onPress={handleKonfirmasiSelesai}
-                disabled={uploadingFoto}
-              >
-                {uploadingFoto ? (
-                  <ActivityIndicator color="#FFF" size="small" />
-                ) : (
-                  <Text style={styles.modalBtnSelesaiText}>Selesaikan</Text>
-                )}
-              </TouchableOpacity>
-            </View>
           </View>
+        </View>
       </DimmedModal>
 
     </View>

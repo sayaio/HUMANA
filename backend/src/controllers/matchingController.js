@@ -141,6 +141,24 @@ const terimaPermintaanSesi = async (req, res) => {
     }
     
     try {
+        // CEK STATUS TERLEBIH DAHULU
+        const checkRows = await pool.query(
+            `SELECT status_pemesanan FROM Pemesanan WHERE id_pemesanan = ?`,
+            [id_pemesanan]
+        );
+
+        if (!checkRows || checkRows.length === 0) {
+            return res.status(404).json({ success: false, message: "Permintaan sesi ini sudah tidak tersedia atau telah dihapus." });
+        }
+
+        const currentStatus = checkRows[0].status_pemesanan.toLowerCase();
+        if (currentStatus === 'dibatalkan') {
+            return res.status(400).json({ success: false, message: "Permintaan sesi ini telah dibatalkan oleh murid." });
+        }
+        if (currentStatus !== 'menunggu konfirmasi') {
+            return res.status(400).json({ success: false, message: "Permintaan sesi ini sudah diproses atau tidak tersedia lagi." });
+        }
+
         await pool.query(`
             UPDATE Pemesanan 
             SET id_guru = ?, status_pemesanan = 'dikonfirmasi' 
@@ -158,7 +176,16 @@ const terimaPermintaanSesi = async (req, res) => {
             message: "Sesi berhasil diterima, tagihan pembayaran telah dibuat untuk murid."
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error("Error terimaPermintaanSesi:", error);
+        let msg = "Terjadi kesalahan pada sistem saat memproses penerimaan sesi.";
+        if (error.code === 'ER_DUP_ENTRY') {
+            msg = "Sesi ini sudah memiliki tagihan aktif atau sudah diterima sebelumnya.";
+        } else if (error.message && error.message.toLowerCase().includes('sql')) {
+            msg = "Data pemesanan tidak sinkron atau telah dibatalkan.";
+        } else if (error.message) {
+            msg = error.message;
+        }
+        res.status(500).json({ success: false, message: msg });
     }
 };
 

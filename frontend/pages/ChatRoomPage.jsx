@@ -98,6 +98,39 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
     }
   }, [messages.length]);
 
+  const formatTime = (timeString) => {
+    if (!timeString) return '';
+    try {
+      let dateObj;
+      if (timeString instanceof Date) {
+        dateObj = timeString;
+      } else {
+        const wStr = timeString.toString();
+        const match = wStr.match(/(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/);
+        if (match) {
+          dateObj = new Date(
+            parseInt(match[1], 10),
+            parseInt(match[2], 10) - 1,
+            parseInt(match[3], 10),
+            parseInt(match[4], 10),
+            parseInt(match[5], 10),
+            parseInt(match[6], 10)
+          );
+        } else {
+          dateObj = new Date(wStr);
+        }
+      }
+      
+      if (isNaN(dateObj.getTime())) return ''; // Fallback if still invalid
+      
+      const h = dateObj.getHours().toString().padStart(2, '0');
+      const m = dateObj.getMinutes().toString().padStart(2, '0');
+      return `${h}:${m}`;
+    } catch {
+      return '';
+    }
+  };
+
   const name =
     userRole === 'murid'
       ? chatData?.nama_guru
@@ -173,6 +206,15 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
                   }
                 >
                   {item.isi_pesan}
+                </Text>
+                <Text
+                  style={
+                    item.pengirim_role === userRole
+                      ? styles.timeRight
+                      : styles.timeLeft
+                  }
+                >
+                  {item.waktu_pesan || formatTime(item.timestamp || new Date())}
                 </Text>
               </View>
             ))
@@ -260,6 +302,7 @@ const styles = StyleSheet.create({
     maxWidth: '80%',
   },
   textRight: { color: '#FFF', fontSize: 14 },
+  timeRight: { color: 'rgba(255,255,255,0.7)', fontSize: 10, alignSelf: 'flex-end', marginTop: 4 },
   bubbleLeft: {
     backgroundColor: '#E5E5EA',
     paddingVertical: 10,
@@ -271,6 +314,7 @@ const styles = StyleSheet.create({
     maxWidth: '80%',
   },
   textLeft: { color: '#000', fontSize: 14 },
+  timeLeft: { color: '#888', fontSize: 10, alignSelf: 'flex-end', marginTop: 4 },
   bottomWrapper: {
     backgroundColor: '#FFF',
     borderTopWidth: 1,
