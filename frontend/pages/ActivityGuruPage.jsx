@@ -8,6 +8,7 @@ import {
     StatusBar,
     ActivityIndicator,
     RefreshControl,
+    FlatList,
 } from 'react-native';
 import { Star, X, Clock, DollarSign } from 'lucide-react-native';
 import DimmedModal from '../components/DimmedModal';
@@ -39,6 +40,13 @@ const ActivityGuruPage = ({
 
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    
+    // Limits and Offset for History
+    const LIMIT = 10;
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [riwayatOffset, setRiwayatOffset] = useState(0);
+    const [hasMoreRiwayat, setHasMoreRiwayat] = useState(true);
+
     const [koordinat, setKoordinat] = useState({
         lat: -6.973416,
         lng: 107.630406,
@@ -62,11 +70,12 @@ const ActivityGuruPage = ({
     const muatUlangDataAktivitas = async (isPullRefresh = false) => {
         if (!isPullRefresh) setLoading(true);
         try {
-            const [resPermintaan, resKonfirmasi, resRiwayat] = await Promise.all([
+            const [resPermintaan, resKonfirmasi] = await Promise.all([
                 fetchPermintaanBaru(idGuru, koordinat.lat, koordinat.lng),
-                fetchSesiDikonfirmasi(idGuru),
-                getHistory('guru', idGuru)
+                fetchSesiDikonfirmasi(idGuru)
             ]);
+            
+            await fetchRiwayatData(isPullRefresh, false);
 
             // 1. PERMINTAAN
             if (resPermintaan.success && resPermintaan.data) {
@@ -129,11 +138,24 @@ const ActivityGuruPage = ({
             } else {
                 setJadwalAktifData([]);
             }
+        } catch (err) {
+            console.error('Gagal menarik data aktivitas guru:', err);
+        } finally {
+            if (!isPullRefresh) setLoading(false);
+        }
+    };
 
-            // 3. RIWAYAT
+    const fetchRiwayatData = async (isPullRefresh = false, isLoadMore = false) => {
+        if (!idGuru) return;
+        if (isLoadMore && !hasMoreRiwayat) return;
+
+        if (isLoadMore) setLoadingMore(true);
+        
+        const currentOffset = isLoadMore ? riwayatOffset : 0;
+        try {
+            const resRiwayat = await getHistory('guru', idGuru, LIMIT, currentOffset);
             if (resRiwayat.success && resRiwayat.data) {
                 const mappedRiwayat = resRiwayat.data.map(item => {
-                    console.log('raw feedback:', JSON.stringify(item.feedback));
                     return {
                         id: item.id_pemesanan,
                         nama_murid: item.murid.nama_murid,
@@ -146,13 +168,7 @@ const ActivityGuruPage = ({
                                 return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
                             })()
                             : 'Tanggal tidak tersedia',
-                        harga:
-                            item.nominal ??
-                            item.pembayaran?.nominal ??
-                            item.pembayaran?.total_bayar ??
-                            item.harga_total ??
-                            item.harga ??
-                            0,
+                        harga: item.nominal ?? item.pembayaran?.nominal ?? item.pembayaran?.total_bayar ?? item.harga_total ?? item.harga ?? 0,
                         tipe: 'Riwayat',
                         status_pemesanan: item.status_pemesanan,
                         rating: Number(item.feedback?.rating) || 0,
@@ -160,14 +176,30 @@ const ActivityGuruPage = ({
                         rawData: item,
                     };
                 });
-                setRiwayatData(mappedRiwayat);
+
+                if (mappedRiwayat.length < LIMIT) setHasMoreRiwayat(false);
+                else setHasMoreRiwayat(true);
+
+                if (isLoadMore) {
+                    setRiwayatData(prev => {
+                        const existingIds = new Set(prev.map(item => item.id).filter(Boolean));
+                        const uniqueNew = mappedRiwayat.filter(item => !item.id || !existingIds.has(item.id));
+                        return [...prev, ...uniqueNew];
+                    });
+                } else {
+                    setRiwayatData(mappedRiwayat);
+                }
+
+                setRiwayatOffset(currentOffset + LIMIT);
             } else {
-                setRiwayatData([]);
+                if (!isLoadMore) setRiwayatData([]);
+                setHasMoreRiwayat(false);
             }
-        } catch (err) {
-            console.error('Gagal menarik data aktivitas guru:', err);
+        } catch (error) {
+            console.error('Error fetch history:', error);
+            if (!isLoadMore) setRiwayatData([]);
         } finally {
-            if (!isPullRefresh) setLoading(false);
+            if (isLoadMore) setLoadingMore(false);
         }
     };
 
@@ -177,8 +209,24 @@ const ActivityGuruPage = ({
 
     const handleRefresh = async () => {
         setRefreshing(true);
+        setRiwayatOffset(0);
+        setHasMoreRiwayat(true);
         await muatUlangDataAktivitas(true);
         setRefreshing(false);
+    };
+
+    const handleLoadMore = () => {
+        if (loading || loadingMore || activeTab !== 'Riwayat Sesi') return;
+        fetchRiwayatData(false, true);
+    };
+
+    const renderFooter = () => {
+        if (!loadingMore) return null;
+        return (
+            <View style={{ paddingVertical: 20 }}>
+                <ActivityIndicator size="small" color="#284B7A" />
+            </View>
+        );
     };
 
     const openDetailModal = sesi => {
@@ -194,8 +242,7 @@ const ActivityGuruPage = ({
         return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
     };
 
-    const renderCardItem = item => {
-        console.log('item.rating:', item.rating, '| tipe:', item.tipe, '| nama:', item.nama_murid);
+    const renderCardList = (item) => {
         return (
             <View key={item.id} style={styles.sesiCard}>
                 <View style={styles.cardHeader}>
@@ -287,6 +334,47 @@ const ActivityGuruPage = ({
         );
     };
 
+    const renderList = () => {
+        let listData = [];
+        let emptyIcon = '';
+        let emptyText = '';
+        if (activeTab === 'Permintaan') {
+            listData = permintaanData;
+            emptyIcon = '📬';
+            emptyText = 'Tidak ada permintaan masuk saat ini.';
+        } else if (activeTab === 'Jadwal Aktif') {
+            listData = jadwalAktifData;
+            emptyIcon = '📅';
+            emptyText = 'Tidak ada jadwal aktif.';
+        } else {
+            listData = riwayatData;
+            emptyIcon = '📜';
+            emptyText = 'Belum ada riwayat sesi.';
+        }
+
+        return (
+            <FlatList
+                data={listData}
+                keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+                renderItem={({ item }) => renderCardList(item)}
+                contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#284B7A']} tintColor="#284B7A" />
+                }
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={renderFooter}
+                ListEmptyComponent={
+                    <View style={styles.emptyState}>
+                        <Text style={{ fontSize: 40, marginBottom: 10 }}>{emptyIcon}</Text>
+                        <Text style={styles.emptyText}>{emptyText}</Text>
+                    </View>
+                }
+            />
+        );
+    };
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
@@ -317,7 +405,7 @@ const ActivityGuruPage = ({
                 ))}
             </View>
 
-            {loading ? (
+            {loading && !refreshing ? (
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     <ActivityIndicator size="large" color="#284B7A" />
                     <Text style={{ marginTop: 10, color: '#666' }}>
@@ -325,48 +413,7 @@ const ActivityGuruPage = ({
                     </Text>
                 </View>
             ) : (
-                <ScrollView
-                    style={styles.listScrollBody}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={handleRefresh}
-                            colors={['#284B7A']}
-                            tintColor="#284B7A"
-                        />
-                    }
-                >
-                    <View style={{ paddingHorizontal: 24, paddingTop: 4 }}>
-                        {activeTab === 'Permintaan' &&
-                            (permintaanData.length > 0 ? (
-                                permintaanData.map(renderCardItem)
-                            ) : (
-                                <Text style={styles.emptyTextState}>
-                                    Belum ada permintaan masuk.
-                                </Text>
-                            ))}
-
-                        {activeTab === 'Jadwal Aktif' &&
-                            (jadwalAktifData.length > 0 ? (
-                                jadwalAktifData.map(renderCardItem)
-                            ) : (
-                                <Text style={styles.emptyTextState}>
-                                    Tidak ada jadwal kelas aktif terdekat.
-                                </Text>
-                            ))}
-
-                        {activeTab === 'Riwayat Sesi' &&
-                            (riwayatData.length > 0 ? (
-                                riwayatData.map(renderCardItem)
-                            ) : (
-                                <Text style={styles.emptyTextState}>
-                                    Belum ada riwayat sesi yang diselesaikan.
-                                </Text>
-                            ))}
-                    </View>
-                    <View style={{ height: 120 }} />
-                </ScrollView>
+                renderList()
             )}
 
             <DimmedModal

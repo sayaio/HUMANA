@@ -13,9 +13,9 @@ export const createChatRoom = async (id_guru, id_murid) => {
   return await axios.post(`${API_URL}/chats/create`, { id_guru, id_murid });
 };
 
-export const getChatList = async (userId, role) => {
+export const getChatList = async (userId, role, limit = 10, offset = 0) => {
   const response = await axios.get(`${API_URL}/chats`, {
-    params: { userId, role }
+    params: { userId, role, limit, offset }
   });
   return response.data?.data || [];
 };

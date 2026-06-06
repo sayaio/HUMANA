@@ -42,7 +42,11 @@ const NotifikasiPage = ({ userId, userRole, onBack }) => {
             }
 
             if (isLoadMore) {
-                setNotifikasi(prev => [...prev, ...res.data]);
+                setNotifikasi(prev => {
+                    const existingIds = new Set(prev.map(item => item.id_notifikasi).filter(Boolean));
+                    const uniqueNew = res.data.filter(item => !item.id_notifikasi || !existingIds.has(item.id_notifikasi));
+                    return [...prev, ...uniqueNew];
+                });
             } else {
                 setNotifikasi(res.data);
             }

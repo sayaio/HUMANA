@@ -13,9 +13,10 @@ import {
   StatusBar,
   ScrollView,
   TextInput,
-  Image,
   RefreshControl,
   ActivityIndicator,
+  FlatList,
+  Image,
 } from 'react-native';
 import BottomNavbar from '../components/BottomNavbar';
 // Import Ikon Lucide agar seragam dengan HomePage & PageGuru
@@ -35,15 +36,22 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  
+  const LIMIT = 10;
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
   const role = userRole ? userRole.toLowerCase() : 'murid';
 
-  const loadChatData = async (isPullRefresh = false) => {
-    if (!userId || !userRole) {
-      if (!isPullRefresh) setLoading(false);
-      return;
-    }
+  const loadChatData = async (isPullRefresh = false, isLoadMore = false) => {
+    if (!userId || !userRole) return;
+    if (isLoadMore && !hasMore) return;
 
-    if (!isPullRefresh) setLoading(true);
+    if (isLoadMore) setLoadingMore(true);
+    else if (!isPullRefresh) setLoading(true);
+
+    const currentOffset = isLoadMore ? offset : 0;
 
     try {
       const jadwalAktif = await getActiveSchedules(role, userId);
@@ -64,14 +72,29 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
         }),
       );
 
-      const data = await getChatList(userId, role);
-      console.log('chat data:', JSON.stringify(data[0]));
-      setChats(Array.isArray(data) ? data : []);
+      const data = await getChatList(userId, role, LIMIT, currentOffset);
+      const formattedData = Array.isArray(data) ? data : [];
+      
+      if (formattedData.length < LIMIT) setHasMore(false);
+      else setHasMore(true);
+
+      if (isLoadMore) {
+        setChats(prev => {
+          const existingKeys = new Set(prev.map(chat => `${chat?.id_guru}-${chat?.id_murid}`));
+          const uniqueNew = formattedData.filter(chat => !existingKeys.has(`${chat?.id_guru}-${chat?.id_murid}`));
+          return [...prev, ...uniqueNew];
+        });
+      } else {
+        setChats(formattedData);
+      }
+      
+      setOffset(currentOffset + LIMIT);
     } catch (error) {
       console.error('Gagal inisialisasi chat:', error);
-      setChats([]);
+      if (!isLoadMore) setChats([]);
     } finally {
-      if (!isPullRefresh) setLoading(false);
+      setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -81,8 +104,24 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadChatData(true);
+    setOffset(0);
+    setHasMore(true);
+    await loadChatData(true, false);
     setRefreshing(false);
+  };
+
+  const handleLoadMore = () => {
+    if (loading || loadingMore || searchText.trim() !== '') return;
+    loadChatData(false, true);
+  };
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={{ paddingVertical: 20 }}>
+        <ActivityIndicator size="small" color="#284B7A" />
+      </View>
+    );
   };
 
   const filteredChats = useMemo(() => {
@@ -142,25 +181,16 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
 
       <View style={styles.contentContainer}>
         <Text style={styles.sectionTitle}>TERBARU</Text>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 110 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              colors={['#284B7A']}
-              tintColor="#284B7A"
-            />
-          }
-        >
-          {loading && !refreshing ? (
-            <View style={{ marginTop: 40, alignItems: 'center' }}>
-              <ActivityIndicator size="large" color="#284B7A" />
-              <Text style={{ marginTop: 10, color: '#999' }}>Memuat chat...</Text>
-            </View>
-          ) : Array.isArray(filteredChats) && filteredChats.length > 0 ? (
-            filteredChats.map((chat, index) => {
+        {loading && !refreshing ? (
+          <View style={{ marginTop: 40, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#284B7A" />
+            <Text style={{ marginTop: 10, color: '#999' }}>Memuat chat...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredChats}
+            keyExtractor={(chat) => `${chat?.id_guru}-${chat?.id_murid}`}
+            renderItem={({ item: chat }) => {
               const displayName =
                 role === 'guru'
                   ? chat?.nama_murid || 'Murid'
@@ -169,19 +199,14 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
 
               return (
                 <TouchableOpacity
-                  key={`${chat?.id_guru}-${chat?.id_murid}`}
                   style={styles.chatItem}
                   onPress={() => onChatPress(chat)}
                 >
-                  {/* KIRI: Avatar */}
                   <View style={[styles.avatar, { backgroundColor: '#FF9B9B' }]}>
                     <Text style={styles.avatarText}>{firstLetter}</Text>
                   </View>
 
-                  {/* KANAN: Gabungan Info & Meta dengan satu Border Bottom */}
                   <View style={styles.rightContainer}>
-
-                    {/* Detail isi chat */}
                     <View style={styles.chatInfo}>
                       <Text style={styles.chatName}>{displayName}</Text>
                       <Text style={styles.chatMessage} numberOfLines={1}>
@@ -189,7 +214,6 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
                       </Text>
                     </View>
 
-                    {/* Meta: Waktu & Badge */}
                     <View style={styles.chatMeta}>
                       <Text style={styles.chatTime}>
                         {chat?.waktu_chat}
@@ -203,17 +227,25 @@ const ChatPage = ({ onNavigate, onChatPress, userRole, userId }) => {
                         </View>
                       )}
                     </View>
-
                   </View>
                 </TouchableOpacity>
               );
-            })
-          ) : (
-            <Text style={{ textAlign: 'center', marginTop: 20, color: '#999' }}>
-              Belum ada chat yang tersedia.
-            </Text>
-          )}
-        </ScrollView>
+            }}
+            contentContainerStyle={{ paddingBottom: 110 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#284B7A']} tintColor="#284B7A" />
+            }
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={renderFooter}
+            ListEmptyComponent={
+              <Text style={{ textAlign: 'center', marginTop: 20, color: '#999' }}>
+                Belum ada chat yang tersedia.
+              </Text>
+            }
+          />
+        )}
       </View>
 
       {/* BOTTOM NAVBAR KONDISIONAL BERDASARKAN ROLE GURU / MURID */}

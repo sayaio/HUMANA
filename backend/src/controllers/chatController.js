@@ -11,7 +11,10 @@ exports.getChatList = async (req, res) => {
             });
         }
 
-        const data = await chatService.getLatestChatList(userId, role);
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = parseInt(req.query.offset) || 0;
+
+        const data = await chatService.getLatestChatList(userId, role, limit, offset);
         console.log('sample data[0]:', data[0]);
         const formattedData = Array.isArray(data) ? data : (data ? [data] : []);
 

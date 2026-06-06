@@ -10,6 +10,7 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
+  FlatList,
 } from 'react-native';
 import BottomNavbar from '../components/BottomNavbar';
 import { getHistory, getActiveSchedule } from '../services/historyService';
@@ -34,60 +35,89 @@ const ActivityPage = ({
   const [historyData, setHistoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [activeOffset, setActiveOffset] = useState(0);
+  const [historyOffset, setHistoryOffset] = useState(0);
+  const [hasMoreActive, setHasMoreActive] = useState(true);
+  const [hasMoreHistory, setHasMoreHistory] = useState(true);
+  const LIMIT = 10;
 
   useEffect(() => {
     setActiveTab(initialTab === 'aktif' ? 'Jadwal Aktif' : 'Riwayat Sesi');
   }, [initialTab]);
 
-  const fetchActiveData = async (isPullRefresh = false) => {
-    if (!isPullRefresh) setIsLoading(true);
-    try {
-      const result = await getActiveSchedule(userRole, userId);
-      console.log('Hasil dari Backend:', result);
+  const fetchActiveData = async (isPullRefresh = false, isLoadMore = false) => {
+    if (!userId || !userRole) return;
+    if (isLoadMore && !hasMoreActive) return;
 
-      if (result && result.success) {
-        const rawData = result.data;
-        const formattedData = Array.isArray(rawData)
-          ? rawData
-          : rawData
-            ? [rawData]
-            : [];
-        setActiveData(formattedData);
+    if (isLoadMore) setLoadingMore(true);
+    else if (!isPullRefresh) setIsLoading(true);
+
+    const currentOffset = isLoadMore ? activeOffset : 0;
+    try {
+      const result = await getActiveSchedule(userRole, userId, LIMIT, currentOffset);
+      const rawData = result?.data || [];
+      const formattedData = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
+      
+      if (formattedData.length < LIMIT) setHasMoreActive(false);
+      else setHasMoreActive(true);
+
+      if (isLoadMore) {
+        setActiveData(prev => {
+          const existingIds = new Set(prev.map(item => item.id_pemesanan).filter(Boolean));
+          const uniqueNewData = formattedData.filter(item => !item.id_pemesanan || !existingIds.has(item.id_pemesanan));
+          return [...prev, ...uniqueNewData];
+        });
       } else {
-        setActiveData([]);
+        setActiveData(formattedData);
       }
+      
+      setActiveOffset(currentOffset + LIMIT);
     } catch (error) {
       console.log('Error fetch active:', error);
-      setActiveData([]);
+      if (!isLoadMore) setActiveData([]);
     } finally {
-      if (!isPullRefresh) setIsLoading(false);
+      setIsLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  const fetchHistoryData = async (isPullRefresh = false) => {
-    if (!userId || !userRole) {
-      console.log('❌ FETCH DIBATALKAN KARENA ID ATAU ROLE KOSONG!');
-      return;
-    }
+  const fetchHistoryData = async (isPullRefresh = false, isLoadMore = false) => {
+    if (!userId || !userRole) return;
+    if (isLoadMore && !hasMoreHistory) return;
 
-    if (!isPullRefresh) setIsLoading(true);
+    if (isLoadMore) setLoadingMore(true);
+    else if (!isPullRefresh) setIsLoading(true);
+
+    const currentOffset = isLoadMore ? historyOffset : 0;
     try {
-      const result = await getHistory(userRole, userId); // ← result baru ada di sini
-      console.log('[DEBUG] userId:', userId);
-      console.log('[DEBUG] userRole:', userRole);
-      console.log('[DEBUG] Balasan API History:', result); // ← pindah ke sini
-
-      if (Array.isArray(result)) {
-        setHistoryData(result);
-      } else if (result && (result.success === true || result.status === 200)) {
-        setHistoryData(result.data || result.history || []);
-      } else {
-        setHistoryData([]);
+      const result = await getHistory(userRole, userId, LIMIT, currentOffset); 
+      let formattedData = [];
+      if (Array.isArray(result)) formattedData = result;
+      else if (result && (result.success === true || result.status === 200)) {
+        formattedData = result.data || result.history || [];
       }
+
+      if (formattedData.length < LIMIT) setHasMoreHistory(false);
+      else setHasMoreHistory(true);
+
+      if (isLoadMore) {
+        setHistoryData(prev => {
+          const existingIds = new Set(prev.map(item => item.id_pemesanan).filter(Boolean));
+          const uniqueNewData = formattedData.filter(item => !item.id_pemesanan || !existingIds.has(item.id_pemesanan));
+          return [...prev, ...uniqueNewData];
+        });
+      } else {
+        setHistoryData(formattedData);
+      }
+
+      setHistoryOffset(currentOffset + LIMIT);
     } catch (error) {
-      console.log('[DEBUG] Error fetch history:', error);
+      console.log('Error fetch history:', error);
     } finally {
-      if (!isPullRefresh) setIsLoading(false);
+      setIsLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -105,14 +135,37 @@ const ActivityPage = ({
     if (!userId || !userRole) return;
     setRefreshing(true);
     if (activeTab === 'Jadwal Aktif') {
-      await fetchActiveData(true);
+      setActiveOffset(0);
+      setHasMoreActive(true);
+      await fetchActiveData(true, false);
     } else {
-      await fetchHistoryData(true);
+      setHistoryOffset(0);
+      setHasMoreHistory(true);
+      await fetchHistoryData(true, false);
     }
     setRefreshing(false);
   };
 
-  const renderCard = (item, isHistory, index) => {
+  const handleLoadMore = () => {
+    if (isLoading || loadingMore) return;
+    if (activeTab === 'Jadwal Aktif') {
+      fetchActiveData(false, true);
+    } else {
+      fetchHistoryData(false, true);
+    }
+  };
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={{ paddingVertical: 20 }}>
+        <ActivityIndicator size="small" color="#284B7A" />
+      </View>
+    );
+  };
+
+  const renderCardItem = ({ item, index }) => {
+    const isHistory = activeTab === 'Riwayat Sesi';
     const isUnpaid = !isHistory && userRole === 'murid' && item.status_pembayaran === 'menunggu';
     return (
       <View style={styles.card} key={item.id_pemesanan || index}>
@@ -220,52 +273,38 @@ const ActivityPage = ({
           </TouchableOpacity>
         ))}
       </View>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            colors={['#284B7A']}
-            tintColor="#284B7A"
-          />
-        }
-      >
-        {activeTab === 'Jadwal Aktif' ? (
-          isLoading ? (
-            <View style={{ marginTop: 50, alignItems: 'center' }}>
-              <ActivityIndicator size="large" color="#284B7A" />
-              <Text style={{ marginTop: 10, color: '#888' }}>
-                Memuat jadwal...
-              </Text>
-            </View>
-          ) : activeData && activeData.length > 0 ? (
-            activeData.map((item, index) => renderCard(item, false, index))
-          ) : (
-            <View style={{ marginTop: 50, alignItems: 'center' }}>
-              <Text style={{ fontSize: 40 }}>📅</Text>
-              <Text style={styles.emptyText}>
-                Tidak ada jadwal aktif saat ini.
-              </Text>
-            </View>
-          )
-        ) : isLoading ? (
+      <View style={{ flex: 1 }}>
+        {isLoading && !refreshing ? (
           <View style={{ marginTop: 50, alignItems: 'center' }}>
             <ActivityIndicator size="large" color="#284B7A" />
             <Text style={{ marginTop: 10, color: '#888' }}>
-              Mencari riwayat...
+              Memuat data...
             </Text>
           </View>
-        ) : historyData && historyData.length > 0 ? (
-          historyData.map((item, index) => renderCard(item, true, index))
         ) : (
-          <View style={{ marginTop: 50, alignItems: 'center' }}>
-            <Text style={{ fontSize: 40 }}>📭</Text>
-            <Text style={styles.emptyText}>Belum ada riwayat sesi.</Text>
-          </View>
+          <FlatList
+            data={activeTab === 'Jadwal Aktif' ? activeData : historyData}
+            keyExtractor={(item, index) => item.id_pemesanan?.toString() || index.toString()}
+            renderItem={renderCardItem}
+            contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#284B7A']} tintColor="#284B7A" />
+            }
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={renderFooter}
+            ListEmptyComponent={
+              <View style={{ marginTop: 50, alignItems: 'center' }}>
+                <Text style={{ fontSize: 40 }}>{activeTab === 'Jadwal Aktif' ? '📅' : '📜'}</Text>
+                <Text style={styles.emptyText}>
+                  {activeTab === 'Jadwal Aktif' ? 'Tidak ada jadwal aktif saat ini.' : 'Belum ada riwayat sesi.'}
+                </Text>
+              </View>
+            }
+          />
         )}
-      </ScrollView>
+      </View>
 
       <BottomNavbar
         currentScreen="Activity"

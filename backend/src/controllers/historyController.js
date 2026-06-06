@@ -14,6 +14,9 @@ const getHistory = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Role harus bernilai Murid atau Guru.' });
     }
 
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = parseInt(req.query.offset) || 0;
+
     try {
         const whereClause = userRole === 'murid' ? 'murid.id_murid' : 'guru.id_guru';
 
@@ -40,10 +43,11 @@ const getHistory = async (req, res) => {
     LEFT JOIN Feedback feedback ON feedback.id_pemesanan = pemesanan.id_pemesanan
     WHERE pemesanan.status_pemesanan IN ('selesai', 'dibatalkan', 'dibatalkan_murid', 'dibatalkan_guru')
     AND (${whereClause} = ?)
-    ORDER BY pemesanan.waktu_mulai DESC;
+    ORDER BY pemesanan.waktu_mulai DESC
+    LIMIT ? OFFSET ?;
 `;
 
-        const rows = await pool.query(query, [id]);
+        const rows = await pool.query(query, [id, limit, offset]);
 
         if (rows.length === 0) {
             return res.status(200).json({ success: true, data: [], message: 'Belum ada riwayat pemesanan.' });
@@ -107,6 +111,8 @@ const getActiveSchedule = async (req, res) => {
     }
 
     const whereClause = userRole === 'murid' ? 'murid.id_murid' : 'guru.id_guru';
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = parseInt(req.query.offset) || 0;
 
     try {
         const query = `
@@ -127,10 +133,11 @@ const getActiveSchedule = async (req, res) => {
             LEFT JOIN Pembayaran bayar ON bayar.id_pemesanan = pemesanan.id_pemesanan
             WHERE pemesanan.status_pemesanan IN ('dikonfirmasi', 'menunggu konfirmasi', 'berlangsung')
             AND (${whereClause} = ?)
-            ORDER BY pemesanan.waktu_mulai ASC;
+            ORDER BY pemesanan.waktu_mulai ASC
+            LIMIT ? OFFSET ?;
         `;
 
-        const rows = await pool.query(query, [id]);
+        const rows = await pool.query(query, [id, limit, offset]);
         return res.status(200).json({ success: true, data: rows });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });

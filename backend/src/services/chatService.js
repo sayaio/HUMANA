@@ -1,6 +1,6 @@
 // Ambil daftar chat terbaru per pasangan guru-murid
 const db = require('../database');
-const getLatestChatList = async (userId, role) => {
+const getLatestChatList = async (userId, role, limit = 10, offset = 0) => {
   const field = role === 'murid' ? 'id_murid' : 'id_guru';
   const senderField = role === 'murid' ? 'guru' : 'murid';
 
@@ -36,9 +36,10 @@ const query = `
     )
   )
   ORDER BY c.timestamp DESC
+  LIMIT ? OFFSET ?
   `;
 
-  return await db.query(query, [senderField, userId]);
+  return await db.query(query, [senderField, userId, limit, offset]);
 };
 
 // Ambil semua pesan dalam satu percakapan

@@ -155,7 +155,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
       <StatusBar
         barStyle="light-content"
         backgroundColor="#284B7A"
-        translucent={true}
+        translucent={false}
       />
 
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>

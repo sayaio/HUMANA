@@ -910,7 +910,7 @@ const styles = StyleSheet.create({
   btnTolak: {
     flex: 1,
     height: 50,
-    borderRadius: 14,
+    borderRadius: 25,
     backgroundColor: '#E53935',
     justifyContent: 'center',
     alignItems: 'center',
@@ -928,7 +928,7 @@ const styles = StyleSheet.create({
   btnBatal: {
     flex: 1,
     height: 50,
-    borderRadius: 14,
+    borderRadius: 25,
     backgroundColor: '#E53935',
     justifyContent: 'center',
     alignItems: 'center',

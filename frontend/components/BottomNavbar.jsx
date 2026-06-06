@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,11 +12,52 @@ import Actv from './activitySVG';
 import LogoH from './pesanSVG'; // 1. UBAH DI SINI: Ganti jadi LogoH (L Kapital)
 import Profil from './profilSVG';
 import Chat from './chatSVG';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getChatList } from '../services/chatService';
 
 const { width } = Dimensions.get('window');
 
 const BottomNavbar = ({ currentScreen, onNavigate, userRole, totalUnread = 0 }) => {
   const role = userRole ? userRole.toLowerCase() : 'murid';
+  const [unreadCount, setUnreadCount] = useState(totalUnread);
+
+  useEffect(() => {
+    if (totalUnread > 0) {
+      setUnreadCount(totalUnread);
+    }
+  }, [totalUnread]);
+
+  useEffect(() => {
+    if (currentScreen === 'Chat') return; 
+    let isMounted = true;
+
+    const fetchUnread = async () => {
+      try {
+        const sessionString = await AsyncStorage.getItem('user_session');
+        if (!sessionString) return;
+        const session = JSON.parse(sessionString);
+        const userObj = session.userData || session.user || session;
+        const userId = userObj.id || userObj.id_murid || userObj.id_guru;
+        if (!userId) return;
+
+        const chats = await getChatList(userId, role, 50, 0); 
+        if (isMounted && chats && Array.isArray(chats)) {
+          const unread = chats.reduce((sum, chat) => sum + (chat.unread_count || 0), 0);
+          setUnreadCount(unread);
+        }
+      } catch (e) {
+        console.log('Error fetch unread navbar:', e);
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 15000); // Poll every 15s
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [currentScreen, role]);
 
   const isProfileActive =
     currentScreen === 'Profile' || currentScreen === 'ProfileGuru';
@@ -96,10 +137,10 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole, totalUnread = 0 }) 
             size={30}
             color={currentScreen === 'Chat' ? '#284B7A' : '#A9A9A9'}
           />
-          {totalUnread > 0 && (
+          {unreadCount > 0 && (
             <View style={styles.navBadge}>
               <Text style={styles.navBadgeText}>
-                {totalUnread > 99 ? '99+' : totalUnread}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </Text>
             </View>
           )}
