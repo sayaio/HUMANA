@@ -834,6 +834,10 @@ const App = () => {
             <DetailSesiAktifPage
                 onBack={() => setCurrentPage(detailSesiAktifBackPage)}
                 sessionData={selectedSession}
+                onChat={(chatData) => {
+                    setSelectedChatUser(chatData);
+                    setCurrentPage('ChatRoom');
+                }}
             />
         );
     }

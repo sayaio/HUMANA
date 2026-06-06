@@ -12,21 +12,25 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview'; // 1. Import WebView di sini
+import { RefreshControl } from 'react-native';
 import PageHeader from '../components/PageHeader';
 import { useAppAlert } from '../components/AppAlertProvider';
 import { batalkanSesi } from '../services/batalSesiService';
 import { pemesananService } from '../services/pemesananService';
 import { fetchGuruRating } from '../services/feedbackService';
+import { createChatRoom } from '../services/chatService';
+import { MessageCircle } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
 
-const DetailSesiAktifPage = ({ onBack, sessionData }) => {
+const DetailSesiAktifPage = ({ onBack, sessionData, onChat }) => {
   console.log('DATA DARI BACKEND:', JSON.stringify(sessionData, null, 2));
   const { showInfo, showConfirm } = useAppAlert();
   const [isCanceling, setIsCanceling] = useState(false);
   const idPemesanan = sessionData?.id_pemesanan;
   const [alamatLengkap, setAlamatLengkap] = useState('Memuat alamat...');
   const [guruRating, setGuruRating] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const idGuru = sessionData?.id_guru;
   const namaGuru = sessionData?.nama_guru || 'Guru';
@@ -45,25 +49,57 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
     fetchRating();
   }, [idGuru]);
 
+  let initialLat = '-6.9744';
+  let initialLng = '107.6303';
+  let initialAddress = '';
+
+  if (sessionData?.lokasi_sesi) {
+    const parts = sessionData.lokasi_sesi.split('|');
+    const coordsStr = parts[0];
+    if (parts.length > 1) {
+      initialAddress = parts[1];
+    }
+    const koordinatArray = coordsStr.split(',');
+    if (koordinatArray.length >= 2) {
+      initialLat = parseFloat(koordinatArray[0].trim()).toString();
+      initialLng = parseFloat(koordinatArray[1].trim()).toString();
+    }
+  }
+
+  const latitudeSesi = initialLat;
+  const longitudeSesi = initialLng;
+
   useEffect(() => {
+    if (initialAddress) {
+      setAlamatLengkap(initialAddress);
+      return;
+    }
     const fetchAlamat = async () => {
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${latitudeSesi}&lon=${longitudeSesi}&format=json`,
+          `https://nominatim.openstreetmap.org/reverse?lat=${initialLat}&lon=${initialLng}&format=json`,
           { headers: { 'User-Agent': 'HumanaApp/1.0' } },
         );
         const data = await response.json();
         if (data && data.display_name) {
           setAlamatLengkap(data.display_name);
         } else {
-          setAlamatLengkap(`${latitudeSesi}, ${longitudeSesi}`);
+          setAlamatLengkap(`${initialLat}, ${initialLng}`);
         }
       } catch (err) {
-        setAlamatLengkap(`${latitudeSesi}, ${longitudeSesi}`);
+        setAlamatLengkap(`${initialLat}, ${initialLng}`);
       }
     };
     fetchAlamat();
-  }, [latitudeSesi, longitudeSesi]);
+  }, [initialLat, initialLng, initialAddress]);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    // Simulate refresh for UI, actual refresh is handled by the parent
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   // Deteksi jika GURU membatalkan sesi
   useEffect(() => {
@@ -82,7 +118,7 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
       } catch (e) {}
     }, 4000);
     return () => clearInterval(interval);
-  }, [idPemesanan]);
+  }, [idPemesanan, onBack, showInfo]);
 
   const prosesPembatalan = async () => {
     if (!idPemesanan) {
@@ -121,16 +157,7 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
     : 'Jl. Telekomunikasi No.1, Sukapura.';
 
   // ─── LOGIKA BARU: MEMECAH STRING KOORDINAT DARI BACKEND ───
-  let latitudeSesi = '-6.9744'; // default cadangan
-  let longitudeSesi = '107.6303'; // default cadangan
-
-  if (sessionData?.lokasi_sesi) {
-    const koordinatArray = sessionData.lokasi_sesi.split(','); // Memisahkan lat dan lng berdasarkan tanda koma
-    if (koordinatArray.length === 2) {
-      latitudeSesi = koordinatArray[0].trim(); // Mengambil angka depan (-6.97105)
-      longitudeSesi = koordinatArray[1].trim(); // Mengambil angka belakang (107.64674)
-    }
-  }
+  // Sudah dipindahkan ke atas dengan use state
   // ─────────────────────────────────────────────────────────
   const bukaGoogleMapsEksternal = () => {
     const url = `https://www.google.com/maps/search/?api=1&query=${latitudeSesi},${longitudeSesi}`;
@@ -240,6 +267,29 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
   const sudahMulai = cekApakahSudahMulai();
   const tombolDisabled = isCanceling || sudahMulai;
 
+  const handleChat = async () => {
+    if (!onChat) return;
+    const idMurid = sessionData?.id_murid || sessionData?.id_user;
+    if (!idGuru || !idMurid) {
+      showInfo('Error', 'Data guru atau murid tidak lengkap.', { type: 'gagal' });
+      return;
+    }
+    try {
+      const resp = await createChatRoom(idGuru, idMurid);
+      const room = resp?.data?.data || {};
+      onChat({
+        id_guru: idGuru,
+        id_murid: idMurid,
+        id_chat: room.id_chat,
+        nama_guru: namaGuru,
+        mapel: sessionData?.nama_mapel || sessionData?.mata_pelajaran,
+      });
+    } catch (err) {
+      console.log('Error chat:', err);
+      showInfo('Error', 'Gagal memuat chat.', { type: 'gagal' });
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -249,6 +299,9 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollBodyPadding}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#284B7A']} />
+        }
       >
         {/* KARTU PROFIL GURU */}
         <View style={styles.guruCard}>
@@ -265,6 +318,12 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
               </Text>
             )}
           </View>
+          {onChat && (
+            <TouchableOpacity style={styles.btnChatHeader} onPress={handleChat}>
+              <MessageCircle size={16} color="#FFF" style={{ marginRight: 6 }} />
+              <Text style={styles.btnChatHeaderText}>Chat Guru</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ROW GRID: TANGGAL & WAKTU SESI */}
@@ -399,7 +458,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },
-  guruInfo: { flex: 1 },
+  guruInfo: { flex: 1, paddingRight: 8 },
   guruName: {
     fontSize: 15,
     fontWeight: 'bold',
@@ -413,10 +472,23 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   guruNoRating: {
-    fontSize: 11,
-    color: '#CCC',
-    marginTop: 3,
+    fontSize: 12,
+    color: '#888',
     fontStyle: 'italic',
+  },
+  btnChatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#284B7A',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginLeft: 'auto',
+  },
+  btnChatHeaderText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   metaGridRow: {
     flexDirection: 'row',
