@@ -76,7 +76,7 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
 
       {/* HEADER — tanpa tombol Settings */}
       <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profil</Text>
+        <Text style={styles.headerTitle}>Profil</Text>
       </View>
 
       <ScrollView
@@ -140,7 +140,7 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
           <View style={styles.cardBox}>
             <DataRow label="Jenjang Pendidikan" value={profileData.jenjang_pendidikan || '-'} />
             <View style={styles.divider} />
-            <DataRow label="Kelas - Jurusan" value={profileData.kelas_jurusan || '-'} />
+            <DataRow label="Kelas" value={profileData.kelas_jurusan || '-'} />
           </View>
         </View>
 
@@ -177,9 +177,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
   },
   headerTitle: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: '#000',
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
   },
 
   userCard: {

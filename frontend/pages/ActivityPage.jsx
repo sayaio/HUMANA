@@ -141,17 +141,18 @@ const ActivityPage = ({
           </Text>
 
           <Text style={styles.cardTime}>
-            {item.waktu_mulai
-              ? new Date(
-                item.waktu_mulai.toString().replace(' ', 'T'),
-              ).toLocaleString('id-ID', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })
-              : item.waktu_string || 'Waktu tidak tersedia'}
+            {(() => {
+              if (!item.waktu_mulai) return item.waktu_string || 'Waktu tidak tersedia';
+              const d = new Date(item.waktu_mulai instanceof Date ? item.waktu_mulai : item.waktu_mulai.toString().replace(' ', 'T'));
+              if (isNaN(d.getTime())) return item.waktu_string || 'Waktu tidak tersedia';
+              const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+              const day = d.getDate().toString().padStart(2, '0');
+              const mon = months[d.getMonth()];
+              const year = d.getFullYear();
+              const h = d.getHours().toString().padStart(2, '0');
+              const m = d.getMinutes().toString().padStart(2, '0');
+              return `${day} ${mon} ${year}, ${h}.${m}`;
+            })()}
           </Text>
         </View>
 

@@ -183,7 +183,7 @@ const getSesiDikonfirmasi = async (req, res) => {
             JOIN Materi mat ON p.id_materi = mat.id_materi
             JOIN MataPelajaran mp ON mat.id_mapel = mp.id_mapel
             LEFT JOIN Pembayaran pem ON p.id_pemesanan = pem.id_pemesanan
-            WHERE p.id_guru = ? AND LOWER(p.status_pemesanan) = 'dikonfirmasi'
+            WHERE p.id_guru = ? AND LOWER(p.status_pemesanan) IN ('dikonfirmasi', 'berlangsung')
             ORDER BY p.waktu_mulai ASC
         `, [id_guru]);
 

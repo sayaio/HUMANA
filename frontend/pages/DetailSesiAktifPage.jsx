@@ -199,8 +199,25 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
     return rawTanggal;
   };
 
-  const formatWaktuFigma = () =>
-    sessionData?.waktu_string || sessionData?.waktu_sesi || '10:30 - 12:30';
+  const safeParseDate = (raw) => {
+    if (!raw) return null;
+    const d = new Date(raw instanceof Date ? raw : raw.toString().replace(' ', 'T'));
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const formatJam = (raw) => {
+    const d = safeParseDate(raw);
+    if (!d) return '--:--';
+    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  const formatWaktuFigma = () => {
+    if (sessionData?.waktu_string) return sessionData.waktu_string;
+    if (sessionData?.waktu_sesi) return sessionData.waktu_sesi;
+    const mulai = formatJam(sessionData?.waktu_mulai);
+    const selesai = formatJam(sessionData?.waktu_selesai);
+    return `${mulai} - ${selesai}`;
+  };
 
   const handleBatalkanPesanan = () => {
     showConfirm(
@@ -213,10 +230,8 @@ const DetailSesiAktifPage = ({ onBack, sessionData }) => {
   const cekApakahSudahMulai = () => {
     if (!sessionData?.waktu_mulai) return false;
     try {
-      const formatWaktuSesi = sessionData.waktu_mulai
-        .toString()
-        .replace(' ', 'T');
-      return new Date() >= new Date(formatWaktuSesi);
+      const d = safeParseDate(sessionData.waktu_mulai);
+      return d ? new Date() >= d : false;
     } catch (error) {
       return false;
     }

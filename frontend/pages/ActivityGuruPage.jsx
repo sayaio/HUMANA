@@ -77,10 +77,11 @@ const ActivityGuruPage = ({
                     materi: item.nama_materi,
                     tanggal: formatTanggalCard(item.waktu_mulai),
                     waktu: item.waktu_string ||
-                        `${new Date(item.waktu_mulai).toLocaleTimeString('id-ID', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                        })} - Selesai`,
+                        (() => {
+                            const d = new Date(item.waktu_mulai instanceof Date ? item.waktu_mulai : (item.waktu_mulai?.toString() || '').replace(' ', 'T'));
+                            if (isNaN(d.getTime())) return 'Jam Terjadwal';
+                            return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')} - Selesai`;
+                        })(),
                     harga: item.harga_total,
                     tipe: 'Permintaan',
                     id_pemesanan: item.id_pemesanan,
@@ -138,11 +139,12 @@ const ActivityGuruPage = ({
                         nama_murid: item.murid.nama_murid,
                         materi: item.mata_pelajaran.nama_mapel + ' — ' + item.nama_materi,
                         waktu: item.waktu_mulai
-                            ? new Date(item.waktu_mulai).toLocaleDateString('id-ID', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric',
-                            })
+                            ? (() => {
+                                const d = new Date(item.waktu_mulai instanceof Date ? item.waktu_mulai : item.waktu_mulai.toString().replace(' ', 'T'));
+                                if (isNaN(d.getTime())) return 'Tanggal tidak tersedia';
+                                const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                                return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+                            })()
                             : 'Tanggal tidak tersedia',
                         harga:
                             item.nominal ??
@@ -186,13 +188,10 @@ const ActivityGuruPage = ({
 
     const formatTanggalCard = raw => {
         if (!raw) return '';
-        const tanggalObj = new Date(raw);
-        if (isNaN(tanggalObj.getTime())) return '';
-        return tanggalObj.toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-        });
+        const d = new Date(raw instanceof Date ? raw : raw.toString().replace(' ', 'T'));
+        if (isNaN(d.getTime())) return '';
+        const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
     };
 
     const renderCardItem = item => {

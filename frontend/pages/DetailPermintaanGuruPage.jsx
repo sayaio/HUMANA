@@ -376,38 +376,32 @@ const DetailPermintaanGuruPage = ({
   const biayaTransportasi = data.biaya_jarak || 0;
   const totalBayar = data.harga_total || biayaSesi + biayaTransportasi;
 
+  const safeParseDate = (raw) => {
+    if (!raw) return null;
+    const d = new Date(raw instanceof Date ? raw : raw.toString().replace(' ', 'T'));
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const formatJamMenit = (raw) => {
+    const d = safeParseDate(raw);
+    if (!d) return '--:--';
+    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  };
+
   const formatTanggal = raw => {
     if (!raw) return data.tanggal || '-';
-    try {
-      return new Date(raw).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
-    } catch {
-      return '-';
-    }
+    const d = safeParseDate(raw);
+    if (!d) return '-';
+    const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
   const formatWaktu = () => {
     if (data.waktu_string) return data.waktu_string;
     if (data.waktu_mulai && data.waktu_selesai) {
-      try {
-        const mulai = new Date(data.waktu_mulai).toLocaleTimeString('id-ID', {
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-        const selesai = new Date(data.waktu_selesai).toLocaleTimeString(
-          'id-ID',
-          {
-            hour: '2-digit',
-            minute: '2-digit',
-          },
-        );
-        return `${mulai} - ${selesai}`;
-      } catch {
-        return '-';
-      }
+      const mulai = formatJamMenit(data.waktu_mulai);
+      const selesai = formatJamMenit(data.waktu_selesai);
+      return `${mulai} - ${selesai}`;
     }
     return data.waktu || '-';
   };
@@ -416,9 +410,9 @@ const DetailPermintaanGuruPage = ({
   const waktuSesi = formatWaktu();
 
   const sekarang = new Date();
-  const waktuMulaiObj = data.waktu_mulai ? new Date(data.waktu_mulai) : null;
+  const waktuMulaiObj = safeParseDate(data.waktu_mulai);
   const belumMulai =
-    waktuMulaiObj && !isNaN(waktuMulaiObj.getTime())
+    waktuMulaiObj
       ? sekarang < waktuMulaiObj
       : true;
 
