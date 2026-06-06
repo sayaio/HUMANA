@@ -19,7 +19,7 @@ import { batalkanSesi } from '../services/batalSesiService';
 import { pemesananService } from '../services/pemesananService';
 import { fetchGuruRating } from '../services/feedbackService';
 import { createChatRoom } from '../services/chatService';
-import { MessageCircle } from 'lucide-react-native';
+import { MessageCircle, MapPin } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -380,7 +380,7 @@ const DetailSesiAktifPage = ({ onBack, sessionData, onChat }) => {
           onPress={bukaGoogleMapsEksternal}
         >
           <View style={styles.locationIconMarkerCircle}>
-            <Text style={{ fontSize: 16, color: '#284B7A' }}>📍</Text>
+            <MapPin size={18} color="#284B7A" />
           </View>
           <View style={styles.locationTextMetaColumn}>
             <Text style={styles.locationTipeLabelText}>{tipeLokasi}</Text>

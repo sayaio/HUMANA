@@ -28,11 +28,11 @@ const CustomAlert = ({
   const swapButtons = options.swapButtons || false;
 
   const btnKiriProps = swapButtons
-    ? { text: 'Tidak', style: styles.noButtonSwap, onPress: onClose }
-    : { text: 'Ya', style: styles.yesButton, onPress: onConfirm };
+    ? { text: options.cancelText || 'Tidak', style: styles.noButtonSwap, onPress: onClose }
+    : { text: options.confirmText || 'Ya', style: styles.yesButton, onPress: onConfirm };
   const btnKananProps = swapButtons
-    ? { text: 'Ya', style: styles.yesButtonSwap, onPress: onConfirm }
-    : { text: 'Tidak', style: styles.noButton, onPress: onClose };
+    ? { text: options.confirmText || 'Ya', style: styles.yesButtonSwap, onPress: onConfirm }
+    : { text: options.cancelText || 'Tidak', style: styles.noButton, onPress: onClose };
 
   return (
     <DimmedModal

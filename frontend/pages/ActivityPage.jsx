@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   FlatList,
+  useWindowDimensions,
 } from 'react-native';
 import BottomNavbar from '../components/BottomNavbar';
 import { getHistory, getActiveSchedule } from '../services/historyService';
@@ -22,6 +23,7 @@ const USER_ICON = require('../assets/user.png');
 
 const ActivityPage = ({
   initialTab = 'aktif',
+  onTabChange,
   onNavigate,
   onDetailClick,
   userId,
@@ -244,6 +246,51 @@ const ActivityPage = ({
     );
   };
 
+  const scrollViewRef = useRef(null);
+  const { width } = useWindowDimensions();
+
+  // Memastikan ScrollView bergeser saat tab berubah
+  useEffect(() => {
+    const index = activeTab === 'Jadwal Aktif' ? 0 : 1;
+    scrollViewRef.current?.scrollTo({ x: index * width, animated: true });
+  }, [activeTab, width]);
+
+  const handleScroll = (event) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const page = Math.round(offsetX / width);
+    const newTab = page === 0 ? 'Jadwal Aktif' : 'Riwayat Sesi';
+    if (activeTab !== newTab) {
+      setActiveTab(newTab);
+      if (onTabChange) onTabChange(newTab);
+    }
+  };
+
+  const renderList = (data, isHistory) => (
+    <View style={{ width, flex: 1 }}>
+        <FlatList
+        data={data}
+        keyExtractor={(item, index) => item.id_pemesanan?.toString() || index.toString()}
+        renderItem={renderCardItem}
+        contentContainerStyle={{ padding: 20, paddingBottom: 110, flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#284B7A']} tintColor="#284B7A" />
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
+        ListEmptyComponent={
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 40 }}>{isHistory ? '📜' : '📅'}</Text>
+            <Text style={styles.emptyText}>
+                {isHistory ? 'Belum ada riwayat sesi.' : 'Tidak ada jadwal aktif saat ini.'}
+            </Text>
+            </View>
+        }
+        />
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
@@ -260,7 +307,10 @@ const ActivityPage = ({
               styles.tabButtonElement,
               activeTab === tab && styles.tabButtonElementActive,
             ]}
-            onPress={() => setActiveTab(tab)}
+            onPress={() => {
+              setActiveTab(tab);
+              if (onTabChange) onTabChange(tab);
+            }}
           >
             <Text
               style={[
@@ -282,27 +332,17 @@ const ActivityPage = ({
             </Text>
           </View>
         ) : (
-          <FlatList
-            data={activeTab === 'Jadwal Aktif' ? activeData : historyData}
-            keyExtractor={(item, index) => item.id_pemesanan?.toString() || index.toString()}
-            renderItem={renderCardItem}
-            contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#284B7A']} tintColor="#284B7A" />
-            }
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.5}
-            ListFooterComponent={renderFooter}
-            ListEmptyComponent={
-              <View style={{ marginTop: 50, alignItems: 'center' }}>
-                <Text style={{ fontSize: 40 }}>{activeTab === 'Jadwal Aktif' ? '📅' : '📜'}</Text>
-                <Text style={styles.emptyText}>
-                  {activeTab === 'Jadwal Aktif' ? 'Tidak ada jadwal aktif saat ini.' : 'Belum ada riwayat sesi.'}
-                </Text>
-              </View>
-            }
-          />
+          <ScrollView
+            ref={scrollViewRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={handleScroll}
+            scrollEventThrottle={16}
+          >
+            {renderList(activeData, false)}
+            {renderList(historyData, true)}
+          </ScrollView>
         )}
       </View>
 

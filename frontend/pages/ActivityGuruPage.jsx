@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     StyleSheet,
     Text,
@@ -9,6 +9,7 @@ import {
     ActivityIndicator,
     RefreshControl,
     FlatList,
+    useWindowDimensions,
 } from 'react-native';
 import { Star, X, Clock, DollarSign } from 'lucide-react-native';
 import DimmedModal from '../components/DimmedModal';
@@ -24,13 +25,15 @@ import BottomNavbar from '../components/BottomNavbar';
 
 const ActivityGuruPage = ({
     guruData,
+    initialTab = 'Permintaan',
+    onTabChange,
     onNavigate,
     onDetailPermintaan,
     onDetailRiwayat,
 }) => {
     const idGuru = guruData?.id;
 
-    const [activeTab, setActiveTab] = useState('Permintaan');
+    const [activeTab, setActiveTab] = useState(initialTab || 'Permintaan');
     const [selectedSesi, setSelectedSesi] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -334,44 +337,51 @@ const ActivityGuruPage = ({
         );
     };
 
-    const renderList = () => {
-        let listData = [];
-        let emptyIcon = '';
-        let emptyText = '';
-        if (activeTab === 'Permintaan') {
-            listData = permintaanData;
-            emptyIcon = '📬';
-            emptyText = 'Tidak ada permintaan masuk saat ini.';
-        } else if (activeTab === 'Jadwal Aktif') {
-            listData = jadwalAktifData;
-            emptyIcon = '📅';
-            emptyText = 'Tidak ada jadwal aktif.';
-        } else {
-            listData = riwayatData;
-            emptyIcon = '📜';
-            emptyText = 'Belum ada riwayat sesi.';
-        }
+    const scrollViewRef = useRef(null);
+    const { width } = useWindowDimensions();
 
+    useEffect(() => {
+        let index = 0;
+        if (activeTab === 'Jadwal Aktif') index = 1;
+        if (activeTab === 'Riwayat Sesi') index = 2;
+        scrollViewRef.current?.scrollTo({ x: index * width, animated: true });
+    }, [activeTab, width]);
+
+    const handleScroll = (event) => {
+        const offsetX = event.nativeEvent.contentOffset.x;
+        const page = Math.round(offsetX / width);
+        let newTab = 'Permintaan';
+        if (page === 1) newTab = 'Jadwal Aktif';
+        if (page === 2) newTab = 'Riwayat Sesi';
+        if (activeTab !== newTab) {
+            setActiveTab(newTab);
+            if (onTabChange) onTabChange(newTab);
+        }
+    };
+
+    const renderList = (listData, emptyIcon, emptyText) => {
         return (
-            <FlatList
-                data={listData}
-                keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-                renderItem={({ item }) => renderCardList(item)}
-                contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#284B7A']} tintColor="#284B7A" />
-                }
-                onEndReached={handleLoadMore}
-                onEndReachedThreshold={0.5}
-                ListFooterComponent={renderFooter}
-                ListEmptyComponent={
-                    <View style={styles.emptyState}>
-                        <Text style={{ fontSize: 40, marginBottom: 10 }}>{emptyIcon}</Text>
-                        <Text style={styles.emptyText}>{emptyText}</Text>
-                    </View>
-                }
-            />
+            <View style={{ width, flex: 1 }}>
+                <FlatList
+                    data={listData}
+                    keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+                    renderItem={({ item }) => renderCardList(item)}
+                    contentContainerStyle={{ padding: 20, paddingBottom: 110, flexGrow: 1 }}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#284B7A']} tintColor="#284B7A" />
+                    }
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={renderFooter}
+                    ListEmptyComponent={
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                            <Text style={{ fontSize: 40, marginBottom: 10 }}>{emptyIcon}</Text>
+                            <Text style={styles.emptyTextState}>{emptyText}</Text>
+                        </View>
+                    }
+                />
+            </View>
         );
     };
 
@@ -391,7 +401,10 @@ const ActivityGuruPage = ({
                             styles.tabButtonElement,
                             activeTab === tab && styles.tabButtonElementActive,
                         ]}
-                        onPress={() => setActiveTab(tab)}
+                        onPress={() => {
+                            setActiveTab(tab);
+                            if (onTabChange) onTabChange(tab);
+                        }}
                     >
                         <Text
                             style={[
@@ -413,7 +426,18 @@ const ActivityGuruPage = ({
                     </Text>
                 </View>
             ) : (
-                renderList()
+                <ScrollView
+                    ref={scrollViewRef}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    onMomentumScrollEnd={handleScroll}
+                    scrollEventThrottle={16}
+                >
+                    {renderList(permintaanData, '📬', 'Tidak ada permintaan masuk saat ini.')}
+                    {renderList(jadwalAktifData, '📅', 'Tidak ada jadwal aktif.')}
+                    {renderList(riwayatData, '📜', 'Belum ada riwayat sesi.')}
+                </ScrollView>
             )}
 
             <DimmedModal

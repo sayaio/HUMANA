@@ -10,7 +10,7 @@ const submitFeedback = async (req, res) => {
     // === REVISI VALIDASI IMK: DETEKSI SIMULASI SQL INJECTION RINGAN =======
     // =========================================================================
     // Memblokir karakter pemutus string SQL (') atau komentar SQL (--) demi keamanan tambahan
-    const sqlInjectionPattern = /['"-\/]/g;
+    const sqlInjectionPattern = /['"\/]|--/g;
 
     if (komentar && sqlInjectionPattern.test(komentar)) {
         return res.status(400).json({

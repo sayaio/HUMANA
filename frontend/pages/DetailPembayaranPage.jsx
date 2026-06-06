@@ -219,7 +219,12 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                     </Text>
                     <View style={styles.gradeBadge}>
                         <Text style={styles.gradeBadgeText}>
-                            {sessionData?.jenjang || displayData?.mata_pelajaran?.jenjang || 'Jenjang'} · Kelas {sessionData?.kelas || displayData?.murid?.kelas || '-'}
+                            {(() => {
+                                const jenjangRaw = sessionData?.jenjang || displayData?.mata_pelajaran?.jenjang || 'Jenjang';
+                                const kelasRaw = sessionData?.kelas || displayData?.murid?.kelas || '-';
+                                const kelasClean = String(kelasRaw).replace(/^Kelas\s*/i, '');
+                                return `${jenjangRaw} · Kelas ${kelasClean}`;
+                            })()}
                         </Text>
                     </View>
 
@@ -237,12 +242,6 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                                 {/* Info */}
                                 <View style={styles.guruInfo}>
                                     <Text style={styles.guruName}>{displayData.guru.nama_guru}</Text>
-                                    <Text style={styles.guruMapel}>
-                                        {sessionData?.nama_mapel || displayData?.mata_pelajaran?.nama_mapel || ''}
-                                        {(sessionData?.nama_materi || displayData?.materi?.nama_materi)
-                                            ? ` — ${sessionData?.nama_materi || displayData?.materi?.nama_materi}`
-                                            : ''}
-                                    </Text>
                                     {guruRating !== null && guruRating !== undefined && (
                                         <Text style={Number(guruRating) > 0 ? styles.guruRating : styles.guruNoRating}>
                                             {Number(guruRating) > 0

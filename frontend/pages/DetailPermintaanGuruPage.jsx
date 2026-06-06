@@ -605,7 +605,7 @@ const DetailPermintaanGuruPage = ({
               />
             ) : (
               <View style={styles.mapPreviewFallback}>
-                <Text style={styles.mapPinEmoji}>📍</Text>
+                <MapPin size={30} color="#999" style={{ marginBottom: 10 }} />
                 <Text style={styles.mapTapText}>
                   Peta tidak dapat dimuat
                 </Text>

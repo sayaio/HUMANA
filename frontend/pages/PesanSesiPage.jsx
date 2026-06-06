@@ -15,6 +15,7 @@ import {
 import DimmedModal from '../components/DimmedModal';
 import { MODAL_WIDE_WIDTH, wideModalCardBase } from '../components/modalTheme';
 import { WebView } from 'react-native-webview'; // Import WebView untuk peta interaktif
+import { MapPin, Search } from 'lucide-react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { pemesananService } from '../services/pemesananService';
 import PageHeader from '../components/PageHeader';
@@ -597,7 +598,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
         {isOpen && (
           <View style={styles.floatingList}>
             <View style={styles.searchBarWrap}>
-              <Text style={styles.searchIcon}>🔍</Text>
+              <Search size={18} color="#999" style={{ marginRight: 6 }} />
               <TextInput
                 style={styles.searchInput}
                 placeholder={`Cari ${label.toLowerCase()}...`}
@@ -713,7 +714,7 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
         {isOpen && options.length > 0 && (
           <View style={styles.floatingListTime}>
             <View style={styles.searchBarWrapSmall}>
-              <Text style={styles.searchIconSmall}>🔍</Text>
+              <Search size={16} color="#999" style={{ marginRight: 6 }} />
               <TextInput
                 style={styles.searchInputSmall}
                 placeholder="Cari waktu..."
@@ -1078,10 +1079,10 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
             onPress={openInGoogleMaps}
             activeOpacity={0.8}
           >
-            <View style={{ width: 24, alignItems: 'center' }}>
-              <PoinSVG size={30} color="#284B7A" />
+            <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#E9F0F8', alignItems: 'center', justifyContent: 'center' }}>
+              <MapPin size={18} color="#284B7A" />
             </View>
-            <View style={styles.lokasiTextWrap}>
+            <View style={[styles.lokasiTextWrap, { marginLeft: 12 }]}>
               <Text style={styles.lokasiTitle}>
                 Lokasi Sesi (Ketuk untuk Buka Rute)
               </Text>

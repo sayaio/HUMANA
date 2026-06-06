@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, Easing, } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, Easing, Platform } from 'react-native';
 import CustomAlert from '../components/CustomAlert';
 import axios from 'axios';
 import { API_URL } from '../src/config';
@@ -226,7 +226,7 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                         style={[styles.searchIcon, { transform: [{ rotate: spin }] }]}
                     />
                     <View style={styles.statusTextContainer}>
-                        <Text style={styles.statusTitle}>Mencari Pengajar Terbaik untukmu...</Text>
+                        <Text style={styles.statusTitle} numberOfLines={2} adjustsFontSizeToFit>Mencari Pengajar Terbaik untukmu...</Text>
                         <Text style={styles.statusSubtitle}>Biasanya kurang dari 30 detik</Text>
                     </View>
                 </View>
@@ -240,7 +240,7 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                         <View style={styles.subjectRow}>
                             <View style={{ flex: 1, marginRight: 10 }}>
                                 <Text style={styles.label}>Mata Pelajaran - Materi</Text>
-                                <Text style={styles.valueText}>
+                                <Text style={styles.valueText} numberOfLines={2} adjustsFontSizeToFit>
                                     {`${sessionData?.mata_pelajaran || sessionData?.nama_mapel || 'Mata Pelajaran'} - ${sessionData?.nama_materi || sessionData?.materi || 'Materi'}`}
                                 </Text>
                             </View>
@@ -252,7 +252,7 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                         {/* KELAS DINAMIS */}
                         <View style={[styles.smallBox, { marginRight: 10 }]}>
                             <Text style={styles.label}>Kelas</Text>
-                            <Text style={styles.smallValueText}>
+                            <Text style={styles.smallValueText} numberOfLines={1} adjustsFontSizeToFit>
                                 {kelasText}
                             </Text>
                         </View>
@@ -260,7 +260,7 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                         {/* TANGGAL DINAMIS */}
                         <View style={[styles.smallBox, { marginRight: 10 }]}>
                             <Text style={styles.label}>Tanggal</Text>
-                            <Text style={styles.smallValueText}>
+                            <Text style={styles.smallValueText} numberOfLines={1} adjustsFontSizeToFit>
                                 {sessionData?.tanggal || '-'}
                             </Text>
                         </View>
@@ -268,7 +268,7 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                         {/* WAKTU SESI DINAMIS */}
                         <View style={styles.smallBox}>
                             <Text style={styles.label}>Waktu</Text>
-                            <Text style={styles.smallValueText}>
+                            <Text style={styles.smallValueText} numberOfLines={1} adjustsFontSizeToFit>
                                 {sessionData?.waktu_mulai && sessionData?.waktu_selesai
                                     ? `${sessionData.waktu_mulai} - ${sessionData.waktu_selesai}`
                                     : (sessionData?.waktu_sesi || '-')}
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     contentWrapper: {
         flex: 1,
         justifyContent: 'flex-end', // Memastikan elemen berkumpul di bawah
-        paddingBottom: 60, // Jarak aman dari navigasi bar HP
+        paddingBottom: Platform.OS === 'ios' ? 36 : 20, // Diseragamkan dengan PesanSesiPage
         marginTop: 60,
     },
 
