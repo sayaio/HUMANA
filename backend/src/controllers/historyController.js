@@ -125,7 +125,7 @@ const getActiveSchedule = async (req, res) => {
             LEFT JOIN Materi materi ON materi.id_materi = pemesanan.id_materi
             LEFT JOIN MataPelajaran mapel ON mapel.id_mapel = materi.id_mapel
             LEFT JOIN Pembayaran bayar ON bayar.id_pemesanan = pemesanan.id_pemesanan
-            WHERE pemesanan.status_pemesanan IN ('dikonfirmasi', 'menunggu konfirmasi', 'berlangsung', 'menunggu pembayaran')
+            WHERE pemesanan.status_pemesanan IN ('dikonfirmasi', 'menunggu konfirmasi', 'berlangsung')
             AND (${whereClause} = ?)
             ORDER BY pemesanan.waktu_mulai ASC;
         `;

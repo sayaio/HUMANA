@@ -139,7 +139,7 @@ const terimaPermintaanSesi = async (req, res) => {
     if (!id_pemesanan || !id_guru || total_pembayaran_final === undefined) {
         return res.status(400).json({ success: false, message: "Data penerimaan tidak lengkap." });
     }
-
+    
     try {
         await pool.query(`
             UPDATE Pemesanan 
@@ -183,7 +183,7 @@ const getSesiDikonfirmasi = async (req, res) => {
             JOIN Materi mat ON p.id_materi = mat.id_materi
             JOIN MataPelajaran mp ON mat.id_mapel = mp.id_mapel
             LEFT JOIN Pembayaran pem ON p.id_pemesanan = pem.id_pemesanan
-            WHERE p.id_guru = ? AND LOWER(p.status_pemesanan) IN ('dikonfirmasi', 'berlangsung', 'menunggu pembayaran')
+            WHERE p.id_guru = ? AND LOWER(p.status_pemesanan) = 'dikonfirmasi'
             ORDER BY p.waktu_mulai ASC
         `, [id_guru]);
 
@@ -242,12 +242,6 @@ const selesaikanSesi = async (req, res) => {
     try {
         await pool.query(
             `UPDATE Pemesanan SET status_pemesanan = 'selesai' WHERE id_pemesanan = ?`,
-            [id_pemesanan]
-        );
-
-        // Jika metode pembayaran COD, otomatis ubah status pembayaran jadi 'lunas' dan set tanggal_pembayaran = CURDATE()
-        await pool.query(
-            `UPDATE Pembayaran SET status_pembayaran = 'lunas', tanggal_pembayaran = CURDATE() WHERE id_pemesanan = ? AND metode_pembayaran = 'cod'`,
             [id_pemesanan]
         );
 

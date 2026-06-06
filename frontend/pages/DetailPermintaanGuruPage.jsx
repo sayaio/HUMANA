@@ -9,6 +9,7 @@ import {
   Linking,
   ActivityIndicator,
   Image,
+  RefreshControl,
 } from 'react-native';
 import {
   MapPin,
@@ -99,6 +100,7 @@ const DetailPermintaanGuruPage = ({
   const [mapCoords, setMapCoords] = useState(null);
   const [displayAddress, setDisplayAddress] = useState('');
   const [loadingMap, setLoadingMap] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -192,6 +194,21 @@ const DetailPermintaanGuruPage = ({
     };
     cekPembayaran();
   }, [data.id_pemesanan, data.id]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const id = data.id_pemesanan || data.id;
+      if (id) {
+        const res = await getStatusPembayaran(id);
+        setSudahLunas(res?.status_pembayaran?.toLowerCase() === 'lunas');
+        setMetodeBayar(res?.metode_pembayaran?.toLowerCase() || data.metode_pembayaran?.toLowerCase() || '');
+      }
+    } catch (error) {
+      console.log('❌ Error refreshing DetailPermintaanGuruPage:', error);
+    }
+    setRefreshing(false);
+  };
 
   // ─── Helpers ─────────────────────────────────────────────────
   const namaInisial = data.nama_murid
@@ -489,6 +506,9 @@ const DetailPermintaanGuruPage = ({
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#284B7A']} />
+        }
       >
         <View style={styles.profileRow}>
           <View style={styles.avatarCircle}>

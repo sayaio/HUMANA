@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, ScrollView, RefreshControl } from 'react-native';
 import { prosesCod, prosesMidtrans } from '../services/bankerService';
 import { getSesiDetail } from '../services/bankerService';
 import DimmedModal from '../components/DimmedModal';
@@ -18,6 +18,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
 
     const [displayData, setDetailSesi] = useState(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
     const idSesi = sessionData?.id_sesi || sessionData?.id_pemesanan;
     const [guruRating, setGuruRating] = useState(null);
@@ -84,6 +85,31 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
 
         fetchDetail();
     }, [idSesi]);
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        if (idSesi) {
+            try {
+                const response = await getSesiDetail(idSesi);
+                if (response && response.data) {
+                    setDetailSesi(response.data);
+                } else if (response && !response.success && response.message) {
+                    console.log('⚠️ Warning:', response.message);
+                } else {
+                    setDetailSesi(response);
+                }
+
+                const idGuru = response?.data?.guru?.id_guru || displayData?.guru?.id_guru;
+                if (idGuru) {
+                    const res = await fetchGuruRating(idGuru);
+                    if (res?.success) setGuruRating(res.data?.rating ?? null);
+                }
+            } catch (error) {
+                console.log('❌ Error refreshing DetailPembayaranPage:', error);
+            }
+        }
+        setRefreshing(false);
+    };
 
     const biayaSesi = displayData?.pembayaran?.biaya_sesi ?? sessionData?.biaya_sesi ?? sessionData?.harga ?? 0;
     const biayaJarak = displayData?.pembayaran?.biaya_jarak ?? sessionData?.biaya_jarak ?? sessionData?.biaya_transport ?? 0;
@@ -174,7 +200,13 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
     return (
         <View style={styles.container}>
             <PageHeader title="Detail Pembayaran" onBack={handleBackWithConfirmation} />
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 120 }}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3A7D6B']} />
+                }
+            >
 
                 {/* CARD INFO MATERI & GURU */}
                 <View style={styles.infoCard}>

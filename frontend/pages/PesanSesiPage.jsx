@@ -278,7 +278,9 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
   // === DATA HELPER OPTIONS ===
   const generateTimeSlots = () => {
     const slots = [];
-    for (let h = 6; h <= 21; h++) {
+    slots.push('07:30');
+    for (let h = 8; h <= 20; h++) {
+      slots.push(`${h.toString().padStart(2, '0')}:00`);
       slots.push(`${h.toString().padStart(2, '0')}:30`);
     }
     return slots;
@@ -289,7 +291,8 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
     if (!waktuMulai) return [];
     const startIndex = timeSlots.indexOf(waktuMulai);
     if (startIndex === -1) return [];
-    return timeSlots.slice(startIndex + 1);
+    // Minimal 1 jam = 2 slot (2 * 30 menit)
+    return timeSlots.slice(startIndex + 2);
   };
 
   const jenjangOptions = ['SD', 'SMP', 'SMA'];
@@ -564,9 +567,14 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
       filtered.length * ITEM_HEIGHT,
       MAX_VISIBLE * ITEM_HEIGHT,
     );
+    const actualHeight = listHeight + 48; // List height + Search bar height
 
     return (
-      <View style={[styles.fieldContainer, { zIndex, elevation: zIndex }]}>
+      <View style={[
+        styles.fieldContainer, 
+        { zIndex, elevation: zIndex },
+        isOpen && { paddingBottom: actualHeight, marginBottom: 14 - actualHeight }
+      ]}>
         <Text style={styles.fieldLabel}>{label}</Text>
         <TouchableOpacity
           style={[styles.dropdownBox, isOpen && styles.dropdownBoxOpen]}
@@ -675,7 +683,11 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
     );
 
     return (
-      <View style={[styles.timeDropdownWrap, { zIndex }]}>
+      <View style={[
+        styles.timeDropdownWrap, 
+        { zIndex },
+        isOpen && { paddingBottom: 240 }
+      ]}>
         <TouchableOpacity
           style={[styles.timeBox, isOpen && styles.timeBoxOpen]}
           onPress={() => {
@@ -755,7 +767,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
                     >
                       {item}
                     </Text>
-                    {value === item && <Text style={styles.checkmark}>✓</Text>}
                   </TouchableOpacity>
                 ))
               )}
@@ -813,9 +824,14 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true}
+        scrollEnabled={!openWaktuMulai && !openWaktuSelesai && !openJenjang && !openKelas && !openMapel && !openMateri}
       >
         {/* Tanggal & Waktu Row */}
-        <View style={[styles.rowContainer, { zIndex: 100 }]}>
+        <View style={[
+          styles.rowContainer, 
+          { zIndex: 100, elevation: 100 },
+          (openWaktuMulai || openWaktuSelesai) && { marginBottom: 4 - 236 }
+        ]}>
           <View style={[styles.fieldContainer, { flex: 1, marginRight: 8 }]}>
             <Text style={styles.fieldLabel}>Tanggal</Text>
             <TouchableOpacity

@@ -24,7 +24,6 @@ const getSesiDetail = async (req, res) => {
                 murid.id_murid,
                 murid.nama_murid,
                 murid.email AS email_murid,
-                murid.kelas,
                 guru.id_guru,
                 guru.nama_guru,
                 guru.email_guru,
@@ -32,7 +31,6 @@ const getSesiDetail = async (req, res) => {
                 materi.nama_materi,
                 mapel.id_mapel,
                 mapel.nama_mapel,
-                mapel.jenjang AS jenjang_mapel,
                 bayar.id_pembayaran,
                 bayar.biaya_sesi,        -- ✅ TAMBAHKAN INI
                 bayar.biaya_jarak,       -- ✅ TAMBAHKAN INI
@@ -63,9 +61,9 @@ const getSesiDetail = async (req, res) => {
                 waktu_selesai: row.waktu_selesai,
                 lokasi_sesi: row.lokasi_sesi,
                 durasi_menit: Number(row.durasi_menit),
-                murid: { id_murid: row.id_murid, nama_murid: row.nama_murid, email: row.email_murid, kelas: row.kelas },
+                murid: { id_murid: row.id_murid, nama_murid: row.nama_murid, email: row.email_murid },
                 guru: { id_guru: row.id_guru, nama_guru: row.nama_guru, email_guru: row.email_guru },
-                mata_pelajaran: { id_mapel: row.id_mapel, nama_mapel: row.nama_mapel, jenjang: row.jenjang_mapel },
+                mata_pelajaran: { id_mapel: row.id_mapel, nama_mapel: row.nama_mapel },
                 materi: { id_materi: row.id_materi, nama_materi: row.nama_materi },
                 pembayaran: {
                     id_pembayaran: row.id_pembayaran,
@@ -90,21 +88,17 @@ const getStatusPembayaran = async (req, res) => {
 
     try {
         const rows = await pool.query(
-            `SELECT status_pembayaran, metode_pembayaran FROM Pembayaran WHERE id_pemesanan = ? LIMIT 1`,
+            `SELECT status_pembayaran FROM Pembayaran WHERE id_pemesanan = ? LIMIT 1`,
             [id_pemesanan]
         );
 
         const data = Array.isArray(rows[0]) ? rows[0] : Array.isArray(rows) ? rows : [rows];
 
         if (data.length === 0 || !data[0].status_pembayaran) {
-            return res.status(200).json({ success: true, status_pembayaran: 'menunggu', metode_pembayaran: null });
+            return res.status(200).json({ success: true, status_pembayaran: 'menunggu' });
         }
 
-        return res.status(200).json({ 
-            success: true, 
-            status_pembayaran: data[0].status_pembayaran,
-            metode_pembayaran: data[0].metode_pembayaran 
-        });
+        return res.status(200).json({ success: true, status_pembayaran: data[0].status_pembayaran });
 
     } catch (error) {
         console.error('[BankerController] Error getStatusPembayaran:', error);
@@ -203,24 +197,21 @@ const prosesPembayaranMidtrans = async (req, res) => {
         console.log(`[Database] Mengubah metode pembayaran Sesi ID: ${id_sesi} menjadi '${dbMethod}'`);
         // =========================================================================
 
-        const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        const validEmail = isValidEmail(orderData.email_murid) ? orderData.email_murid : 'murid@humana.com';
-
         const parameter = {
             transaction_details: {
                 order_id: `HUMANA-SESI-${orderData.id_pemesanan}-${Date.now()}`,
-                gross_amount: Math.round(grossAmount)
+                gross_amount: grossAmount
             },
             credit_card: { secure: true },
             customer_details: {
                 first_name: orderData.nama_murid || 'Murid',
-                email: validEmail
+                email: orderData.email_murid || 'murid@humana.com'
             },
             item_details: [{
                 id: `MAPEL-${orderData.id_pemesanan}`,
-                price: Math.round(grossAmount),
+                price: grossAmount,
                 quantity: 1,
-                name: `Sesi Privat: ${orderData.nama_mapel || 'Mata Pelajaran'}`.substring(0, 50)
+                name: `Sesi Privat: ${orderData.nama_mapel || 'Mata Pelajaran'}`
             }]
         };
 
@@ -238,23 +229,17 @@ const prosesPembayaranMidtrans = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('[BankerController] Error Midtrans processing:', error.message);
-        let errorMsg = 'Terjadi kesalahan sistem saat menghubungkan ke Midtrans.';
-        if (error.ApiResponse && error.ApiResponse.error_messages) {
-             errorMsg = error.ApiResponse.error_messages.join(', ');
-        } else if (error.message) {
-             errorMsg = error.message;
-        }
-        return res.status(500).json({ success: false, message: `Gagal Midtrans: ${errorMsg}` });
+        console.error('[BankerController] Error Midtrans processing:', error);
+        return res.status(500).json({ success: false, message: 'Terjadi kesalahan sistem saat menghubungkan ke Midtrans.' });
     }
 }; const prosesPembayaranCod = async (req, res) => {
     const { id_sesi } = req.body;
     if (!id_sesi) return res.status(400).json({ success: false, message: 'Parameter id_sesi wajib diisi.' });
 
     try {
-        // Update status pemesanan jadi menunggu pembayaran COD
+        // Update status pemesanan jadi berlangsung agar masuk ke jadwal aktif
         await pool.query(
-            `UPDATE Pemesanan SET status_pemesanan = 'menunggu pembayaran' WHERE id_pemesanan = ?`,
+            `UPDATE Pemesanan SET status_pemesanan = 'berlangsung' WHERE id_pemesanan = ?`,
             [id_sesi]
         );
 
@@ -266,12 +251,13 @@ const prosesPembayaranMidtrans = async (req, res) => {
 
         if (existingBayar.length > 0) {
             await pool.query(
-                `UPDATE Pembayaran SET metode_pembayaran = 'cod', status_pembayaran = 'menunggu' WHERE id_pemesanan = ?`,
+                `UPDATE Pembayaran SET metode_pembayaran = 'cod', status_pembayaran = 'lunas', tanggal_pembayaran = CURDATE() WHERE id_pemesanan = ?`,
                 [id_sesi]
             );
         } else {
+            // Note: fallback insert in case payment record is missing
             await pool.query(
-                `INSERT INTO Pembayaran (id_pemesanan, metode_pembayaran, nominal, status_pembayaran) VALUES (?, 'cod', 34000, 'menunggu')`,
+                `INSERT INTO Pembayaran (id_pemesanan, metode_pembayaran, nominal, status_pembayaran, tanggal_pembayaran) VALUES (?, 'cod', 34000, 'lunas', CURDATE())`,
                 [id_sesi]
             );
         }

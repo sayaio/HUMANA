@@ -36,7 +36,10 @@ class PemesananSesi {
     HitungTotalBiaya(jarakKm) {
         const tarifPerJam = 30000;
         const tarifPerKm = 3000;
-        const totalJam = this.HitungDurasiJam();
+        
+        // Minimal pemesanan adalah 1 jam, setelah 1 jam pertama dihitung proporsional (per 30 menit)
+        const totalJam = Math.max(1, this.HitungDurasiJam());
+        
         const biayaBelajar = totalJam * tarifPerJam;
         const biayaTransport = jarakKm * tarifPerKm;
 
