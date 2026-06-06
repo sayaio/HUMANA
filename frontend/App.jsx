@@ -698,7 +698,7 @@ const App = () => {
                     setIsFirstTimePesanSesi(true);
                     setCurrentPage('Home');
                     InteractionManager.runAfterInteractions(() => {
-                        showInfo('Sesi Berhasil di Pesan', 'Kamu telah memilih pembayaran di tempat (COD).');
+                        showInfo('Sesi Berhasil di Pesan', 'Kamu telah memilih pembayaran tunai.');
                     });
                 }}
                 onSesiDilepas={() => setCurrentPage('MencariPengajar')}

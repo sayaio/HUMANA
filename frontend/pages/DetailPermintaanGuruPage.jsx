@@ -463,8 +463,8 @@ const DetailPermintaanGuruPage = ({
       );
     }
 
-    // Logika tombol mati: jika sedang loading, sedang cek bayar, ATAU belum lunas (kecuali metode pembayaran COD)
-    const tombolDisabled = loading || loadingStatusBayar || (!sudahLunas && metodeBayar !== 'cod');
+    // Logika tombol mati: jika sedang loading, sedang cek bayar, ATAU belum lunas (kecuali metode pembayaran Tunai)
+    const tombolDisabled = loading || loadingStatusBayar || (!sudahLunas && metodeBayar !== 'tunai');
 
     return (
       <View style={styles.actionBar}>
