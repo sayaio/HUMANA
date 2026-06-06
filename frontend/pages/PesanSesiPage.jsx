@@ -22,6 +22,7 @@ import LocationPickerModal from '../components/LocationPickerModal';
 import PoinSVG from '../components/mapsPoint';
 import MapsSVG from '../components/mapsSVG';
 import Back from '../components/BackIconSvg';
+import { useAppAlert } from '../components/AppAlertProvider';
 
 // === KONSTANTA KALENDER ===
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
@@ -41,6 +42,7 @@ const MONTHS = [
 ];
 
 const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, resetDraft = false }) => {
+  const { showInfo } = useAppAlert();
   // === STATE FORM ===
   const [tanggal, setTanggal] = useState(null);
   const [waktuMulai, setWaktuMulai] = useState('');
@@ -478,9 +480,10 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
       !selectedMateriId ||
       !locationAddress
     ) {
-      Alert.alert(
+      showInfo(
         'Form Belum Lengkap',
         'Mohon lengkapi semua field atau pastikan Anda sudah login kembali.',
+        { type: 'gagal' }
       );
       return;
     }

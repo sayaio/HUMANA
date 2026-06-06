@@ -37,8 +37,9 @@ const NOMINATIM_HEADERS = {
 
 const parseKoordinatDariString = str => {
   if (!str) return null;
-  const parts = String(str).split(',').map(s => s.trim());
-  if (parts.length !== 2) return null;
+  const coordsStr = String(str).split('|')[0];
+  const parts = coordsStr.split(',').map(s => s.trim());
+  if (parts.length < 2) return null;
   const latitude = parseFloat(parts[0]);
   const longitude = parseFloat(parts[1]);
   if (Number.isNaN(latitude) || Number.isNaN(longitude)) return null;
@@ -109,6 +110,11 @@ const DetailPermintaanGuruPage = ({
       setLoadingMap(true);
       const alamatMentah =
         data.lokasi_sesi || data.lokasi || data.alamat || '';
+      let extractedAddress = alamatMentah;
+      const pipeIndex = alamatMentah.indexOf('|');
+      if (pipeIndex !== -1) {
+        extractedAddress = alamatMentah.substring(pipeIndex + 1);
+      }
 
       if (data.koordinat?.latitude != null && data.koordinat?.longitude != null) {
         if (!cancelled) {
@@ -117,7 +123,7 @@ const DetailPermintaanGuruPage = ({
             longitude: Number(data.koordinat.longitude),
           });
           setDisplayAddress(
-            alamatMentah ||
+            extractedAddress ||
             `${data.koordinat.latitude}, ${data.koordinat.longitude}`,
           );
           setLoadingMap(false);
@@ -129,7 +135,7 @@ const DetailPermintaanGuruPage = ({
       if (dariString) {
         if (!cancelled) {
           setMapCoords(dariString);
-          setDisplayAddress(alamatMentah);
+          setDisplayAddress(extractedAddress);
           setLoadingMap(false);
         }
         return;
@@ -142,6 +148,13 @@ const DetailPermintaanGuruPage = ({
           setLoadingMap(false);
         }
         return;
+      }
+
+      // Jika gagal diparse, ambil default (Telkom)
+      if (!cancelled) {
+        setMapCoords({ latitude: -6.9744, longitude: 107.6303 });
+        setDisplayAddress(extractedAddress);
+        setLoadingMap(false);
       }
 
       try {
