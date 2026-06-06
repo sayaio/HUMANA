@@ -191,7 +191,7 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                     </View>
                     <View style={styles.userInfo}>
                         <Text style={styles.userName} numberOfLines={1}>
-                            {guruData?.name || guruData?.nama || 'Nama Guru'}
+                            {guruData?.name || 'Nama Guru'}
                         </Text>
                         <Text style={styles.userEmail} numberOfLines={1}>
                             {guruData?.email || 'email@humana.id'}
@@ -249,7 +249,9 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
                         </TouchableOpacity>
                     </View>
                     <View style={styles.cardBox}>
-                        <DataRow label="Nama Pengguna" value={guruData?.username || guruData?.name?.toLowerCase().replace(/\s/g, '')} />
+                        <DataRow label="Nama Lengkap" value={guruData?.name || guruData?.nama || '-'} />
+                        <View style={styles.divider} />
+                        <DataRow label="Username" value={guruData?.username || guruData?.name?.toLowerCase().replace(/\s/g, '')} />
                         <View style={styles.divider} />
                         <DataRow label="No. Telepon" value={guruData?.phone || guruData?.no_telepon} />
                         <View style={styles.divider} />
@@ -321,7 +323,13 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
 
                 {/* TOMBOL LOGOUT */}
                 <View style={styles.sectionContainer}>
-                    <TouchableOpacity style={styles.logoutButton} onPress={onLogout} activeOpacity={0.6}>
+                    <TouchableOpacity
+                        style={styles.logoutButton}
+                        onPress={() => {
+                            showConfirm('Keluar akun?', 'Apakah Anda yakin ingin keluar dari akun ini?', onLogout, { cancelText: 'Batalkan' });
+                        }}
+                        activeOpacity={0.6}
+                    >
                         <LogOut color="#EE2737" size={20} style={{ marginRight: 10 }} />
                         <Text style={styles.logoutText}>Keluar dari Akun</Text>
                     </TouchableOpacity>

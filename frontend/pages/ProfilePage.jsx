@@ -15,6 +15,7 @@ import {
 import { fetchMuridProfile } from '../services/feedbackService';
 import BottomNavbar from '../components/BottomNavbar';
 import { Calendar, MessageSquare, User, Home, LogOut, Edit2 } from 'lucide-react-native';
+import { useAppAlert } from '../components/AppAlertProvider';
 
 const { width } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
@@ -43,6 +44,7 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
   const role = profileData && profileData.role ? profileData.role.toLowerCase() : 'murid';
   const idMurid = profileData?.id;
   const [refreshing, setRefreshing] = useState(false);
+  const { showConfirm } = useAppAlert();
 
   const loadLatestProfileData = useCallback(async () => {
     if (!idMurid) return;
@@ -146,7 +148,13 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
 
         {/* TOMBOL LOGOUT */}
         <View style={styles.sectionContainer}>
-          <TouchableOpacity style={styles.logoutButton} onPress={onLogout} activeOpacity={0.6}>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={() => {
+              showConfirm('Keluar akun?', 'Apakah Anda yakin ingin keluar dari akun ini?', onLogout, { cancelText: 'Batalkan' });
+            }}
+            activeOpacity={0.6}
+          >
             <LogOut color="#FF4D4D" size={20} style={styles.logoutIcon} />
             <Text style={styles.logoutText}>Keluar dari Akun</Text>
           </TouchableOpacity>

@@ -28,7 +28,6 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole, totalUnread = 0 }) 
   }, [totalUnread]);
 
   useEffect(() => {
-    if (currentScreen === 'Chat') return; 
     let isMounted = true;
 
     const fetchUnread = async () => {
@@ -42,7 +41,10 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole, totalUnread = 0 }) 
 
         const chats = await getChatList(userId, role, 50, 0); 
         if (isMounted && chats && Array.isArray(chats)) {
-          const unread = chats.reduce((sum, chat) => sum + (chat.unread_count || 0), 0);
+          const unread = chats.reduce((sum, chat) => {
+             const count = Number(chat.unread_count) || 0;
+             return sum + count;
+          }, 0);
           setUnreadCount(unread);
         }
       } catch (e) {
@@ -50,8 +52,12 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole, totalUnread = 0 }) 
       }
     };
 
-    fetchUnread();
-    const interval = setInterval(fetchUnread, 15000); // Poll every 15s
+    if (currentScreen !== 'Chat') {
+       fetchUnread();
+    }
+    
+    // Tetap poll setiap 8 detik agar lebih responsif
+    const interval = setInterval(fetchUnread, 8000); 
 
     return () => {
       isMounted = false;

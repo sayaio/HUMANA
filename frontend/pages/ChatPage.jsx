@@ -331,6 +331,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
     paddingBottom: 14,
     marginLeft: 14,
+    paddingRight: 5,
   },
   chatInfo: {
     flex: 1,

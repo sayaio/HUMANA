@@ -108,6 +108,7 @@ const App = () => {
   const [detailSesiAktifBackPage, setDetailSesiAktifBackPage] =
     useState('Activity');
   const [activityTab, setActivityTab] = useState('aktif');
+  const [activityGuruTab, setActivityGuruTab] = useState('Permintaan');
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
@@ -470,6 +471,8 @@ const App = () => {
         return (
             <ActivityGuruPage
                 guruData={profileData}
+                initialTab={activityGuruTab}
+                onTabChange={(tab) => setActivityGuruTab(tab)}
                 onNavigate={handleGlobalNavigate}
                 onDetailPermintaan={(item, tipe) => {
                     setSelectedPermintaanGuru(item);
@@ -756,6 +759,7 @@ const App = () => {
         return (
             <ActivityPage
                 initialTab={activityTab}
+                onTabChange={(tab) => setActivityTab(tab === 'Jadwal Aktif' ? 'aktif' : 'riwayat')}
                 onNavigate={page => setCurrentPage(page)}
                 onDetailClick={(item, isHistory = false) => {
                     const currentRole = (profileData.role || 'murid').toLowerCase();

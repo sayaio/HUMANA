@@ -120,9 +120,9 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
           dateObj = new Date(wStr);
         }
       }
-      
+
       if (isNaN(dateObj.getTime())) return '';
-      
+
       const h = dateObj.getHours().toString().padStart(2, '0');
       const m = dateObj.getMinutes().toString().padStart(2, '0');
       return `${h}:${m}`;
@@ -177,7 +177,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
 
       <KeyboardAvoidingView
         style={styles.contentContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 55 : 0}
       >
         <ScrollView
@@ -341,10 +341,10 @@ const styles = StyleSheet.create({
     height: 46,
   },
   textInput: { flex: 1, fontSize: 14, color: '#333' },
-  sendBtn: { marginLeft: 10 },
+  sendBtn: { marginLeft: 10, padding: 4 },
   sendIcon: {
-    width: 40,
-    height: 40,
+    width: 46,
+    height: 46,
     resizeMode: 'contain',
   },
 });

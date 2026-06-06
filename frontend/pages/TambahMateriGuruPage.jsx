@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   TextInput, ActivityIndicator, StatusBar,
 } from 'react-native';
+import { Search } from 'lucide-react-native';
 import { materiGuruService } from '../services/materiGuruService';
 import PageHeader from '../components/PageHeader';
 import { useAppAlert } from '../components/AppAlertProvider';
@@ -148,7 +149,7 @@ const TambahMateriGuruPage = ({ onBack, idGuru }) => {
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Search Bar Sesuai Figma */}
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Search size={16} color="#ABABAB" style={{ marginRight: 10 }} />
           <TextInput
             style={styles.searchInput}
             placeholder="Cari materi pelajaran..."
