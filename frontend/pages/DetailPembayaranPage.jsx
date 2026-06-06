@@ -156,7 +156,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                         onBack();
                     }
                 } else {
-                    throw new Error(result.message || 'Gagal memproses COD.');
+                    throw new Error(result.message || 'Gagal memproses pembayaran tunai.');
                 }
             } catch (error) {
                 setIsProcessing(false);
@@ -187,7 +187,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
     const getMethodLabel = () => {
         if (selectedMethod === 'va') return 'Virtual Account';
         if (selectedMethod === 'ewallet') return 'E-Wallet / QRIS';
-        if (selectedMethod === 'cod') return 'Bayar di Tempat (COD)';
+        if (selectedMethod === 'cod') return 'Tunai';
         return 'Belum Dipilih';
     };
 
@@ -345,7 +345,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                             styles.payButtonText,
                             { color: selectedMethod ? '#FFF' : '#A0A0A0' }
                         ]}>
-                            {selectedMethod === 'cod' ? 'Selesaikan Pesanan' : 'Lakukan Pembayaran'}
+                            Konfirmasi Pembayaran
                         </Text>
                     )}
                 </TouchableOpacity>
@@ -369,7 +369,7 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
                     </TouchableOpacity>
                     <TouchableOpacity style={[styles.imageOptionBox, selectedMethod === 'cod' && styles.selectedOptionBox]} onPress={() => { setShowMethodModal(false); setTimeout(() => { setSelectedMethod('cod'); }, 100); }}>
                         <Text style={styles.imageOptionIcon}>💵</Text>
-                        <Text style={styles.imageOptionText}>Bayar di Tempat (COD)</Text>
+                        <Text style={styles.imageOptionText}>Tunai</Text>
                     </TouchableOpacity>
                 </View>
             </DimmedModal>

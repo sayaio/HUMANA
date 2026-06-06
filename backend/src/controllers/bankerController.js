@@ -251,25 +251,25 @@ const prosesPembayaranMidtrans = async (req, res) => {
 
         if (existingBayar.length > 0) {
             await pool.query(
-                `UPDATE Pembayaran SET metode_pembayaran = 'cod', status_pembayaran = 'lunas', tanggal_pembayaran = CURDATE() WHERE id_pemesanan = ?`,
+                `UPDATE Pembayaran SET metode_pembayaran = 'tunai', status_pembayaran = 'lunas', tanggal_pembayaran = CURDATE() WHERE id_pemesanan = ?`,
                 [id_sesi]
             );
         } else {
             // Note: fallback insert in case payment record is missing
             await pool.query(
-                `INSERT INTO Pembayaran (id_pemesanan, metode_pembayaran, nominal, status_pembayaran, tanggal_pembayaran) VALUES (?, 'cod', 34000, 'lunas', CURDATE())`,
+                `INSERT INTO Pembayaran (id_pemesanan, metode_pembayaran, nominal, status_pembayaran, tanggal_pembayaran) VALUES (?, 'tunai', 34000, 'lunas', CURDATE())`,
                 [id_sesi]
             );
         }
 
         return res.status(200).json({
             success: true,
-            message: 'Pemesanan COD berhasil dicatat.'
+            message: 'Pemesanan tunai berhasil dicatat.'
         });
 
     } catch (error) {
         console.error('[BankerController] Error COD processing:', error);
-        return res.status(500).json({ success: false, message: 'Terjadi kesalahan saat memproses COD.' });
+        return res.status(500).json({ success: false, message: 'Terjadi kesalahan saat memproses pembayaran tunai.' });
     }
 };
 
