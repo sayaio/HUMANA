@@ -9,13 +9,13 @@ import {
   StatusBar,
   ScrollView,
   TextInput,
-  KeyboardAvoidingView,
   Platform,
   Image,
   Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BackButton from '../components/BackButton';
+import KeyboardAvoiderView from '../components/KeyboardAvoiderView';
 
 const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
   const insets = useSafeAreaInsets();
@@ -175,10 +175,9 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView
+      <KeyboardAvoiderView
         style={styles.contentContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 55 : 0}
+        offset={insets.top + 55}
       >
         <ScrollView
           ref={scrollViewRef}
@@ -249,7 +248,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardAvoiderView>
     </View>
   );
 };
