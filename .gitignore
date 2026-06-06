@@ -1,3 +1,12 @@
 node_modules/
 *.backup.jsx
 *.backup.js
+
+# Secrets & environment variables (JANGAN di-push)
+.env
+*.env
+!*.env.example
+backend/src/.env
+
+# Sertifikat SSL Aiven
+ca.pem

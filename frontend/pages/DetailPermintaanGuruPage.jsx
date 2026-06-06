@@ -123,7 +123,7 @@ const DetailPermintaanGuruPage = ({
             longitude: Number(data.koordinat.longitude),
           });
           setDisplayAddress(
-            extractedAddress ||
+            alamatMentah ||
             `${data.koordinat.latitude}, ${data.koordinat.longitude}`,
           );
           setLoadingMap(false);
@@ -423,7 +423,25 @@ const DetailPermintaanGuruPage = ({
   const waktuSesi = formatWaktu();
 
   const sekarang = new Date();
-  const waktuMulaiObj = safeParseDate(data.waktu_mulai);
+  let waktuMulaiObj = null;
+  if (data.waktu_mulai) {
+    const wStr = data.waktu_mulai.toString();
+    // Ekstrak angka murni agar tidak terpengaruh zona waktu (Z) dari backend atau masalah parsing Hermes
+    const match = wStr.match(/(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/);
+    if (match) {
+      waktuMulaiObj = new Date(
+        parseInt(match[1], 10),
+        parseInt(match[2], 10) - 1,
+        parseInt(match[3], 10),
+        parseInt(match[4], 10),
+        parseInt(match[5], 10),
+        parseInt(match[6], 10)
+      );
+    } else {
+      waktuMulaiObj = new Date(wStr.replace(' ', 'T'));
+    }
+  }
+
   const belumMulai =
     waktuMulaiObj
       ? sekarang < waktuMulaiObj
