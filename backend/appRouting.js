@@ -9,7 +9,7 @@ router.post('/login-google', authController.loginGoogle);
 const registerController = require('./src/controllers/registerController');
 router.post('/register', registerController.register);
 
-const editProfilController = require('./src/controllers/EditProfilController'); // Sesuaikan path-nya jika beda
+const editProfilController = require('./src/controllers/editProfilController'); // Sesuaikan path-nya jika beda
 router.put('/profile/basic', editProfilController.updateBasic);
 router.put('/profile/academic', editProfilController.updateAcademic);
 router.put('/profile/availability', editProfilController.updateAvailability);
@@ -30,7 +30,7 @@ const historyController = require('./src/controllers/historyController');
 router.get('/history/:role/:id', historyController.getHistory);
 router.get('/active/:role/:id', historyController.getActiveSchedule);
 
-const bankerController = require('./src/controllers/BankerController');
+const bankerController = require('./src/controllers/bankerController');
 router.get('/sesi/detail/:id', bankerController.getSesiDetail);
 router.put('/sesi/bayar-simulasi', bankerController.bayarSimulasi);
 router.post('/sesi/proses-midtrans', bankerController.prosesPembayaranMidtrans);
