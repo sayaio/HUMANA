@@ -24,6 +24,7 @@ const getSesiDetail = async (req, res) => {
                 murid.id_murid,
                 murid.nama_murid,
                 murid.email AS email_murid,
+                murid.kelas,
                 guru.id_guru,
                 guru.nama_guru,
                 guru.email_guru,
@@ -31,6 +32,7 @@ const getSesiDetail = async (req, res) => {
                 materi.nama_materi,
                 mapel.id_mapel,
                 mapel.nama_mapel,
+                mapel.jenjang AS jenjang_mapel,
                 bayar.id_pembayaran,
                 bayar.biaya_sesi,        -- ✅ TAMBAHKAN INI
                 bayar.biaya_jarak,       -- ✅ TAMBAHKAN INI
@@ -61,9 +63,9 @@ const getSesiDetail = async (req, res) => {
                 waktu_selesai: row.waktu_selesai,
                 lokasi_sesi: row.lokasi_sesi,
                 durasi_menit: Number(row.durasi_menit),
-                murid: { id_murid: row.id_murid, nama_murid: row.nama_murid, email: row.email_murid },
+                murid: { id_murid: row.id_murid, nama_murid: row.nama_murid, email: row.email_murid, kelas: row.kelas },
                 guru: { id_guru: row.id_guru, nama_guru: row.nama_guru, email_guru: row.email_guru },
-                mata_pelajaran: { id_mapel: row.id_mapel, nama_mapel: row.nama_mapel },
+                mata_pelajaran: { id_mapel: row.id_mapel, nama_mapel: row.nama_mapel, jenjang: row.jenjang_mapel },
                 materi: { id_materi: row.id_materi, nama_materi: row.nama_materi },
                 pembayaran: {
                     id_pembayaran: row.id_pembayaran,
@@ -197,21 +199,24 @@ const prosesPembayaranMidtrans = async (req, res) => {
         console.log(`[Database] Mengubah metode pembayaran Sesi ID: ${id_sesi} menjadi '${dbMethod}'`);
         // =========================================================================
 
+        const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        const validEmail = isValidEmail(orderData.email_murid) ? orderData.email_murid : 'murid@humana.com';
+
         const parameter = {
             transaction_details: {
                 order_id: `HUMANA-SESI-${orderData.id_pemesanan}-${Date.now()}`,
-                gross_amount: grossAmount
+                gross_amount: Math.round(grossAmount)
             },
             credit_card: { secure: true },
             customer_details: {
                 first_name: orderData.nama_murid || 'Murid',
-                email: orderData.email_murid || 'murid@humana.com'
+                email: validEmail
             },
             item_details: [{
                 id: `MAPEL-${orderData.id_pemesanan}`,
-                price: grossAmount,
+                price: Math.round(grossAmount),
                 quantity: 1,
-                name: `Sesi Privat: ${orderData.nama_mapel || 'Mata Pelajaran'}`
+                name: `Sesi Privat: ${orderData.nama_mapel || 'Mata Pelajaran'}`.substring(0, 50)
             }]
         };
 
@@ -229,8 +234,14 @@ const prosesPembayaranMidtrans = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('[BankerController] Error Midtrans processing:', error);
-        return res.status(500).json({ success: false, message: 'Terjadi kesalahan sistem saat menghubungkan ke Midtrans.' });
+        console.error('[BankerController] Error Midtrans processing:', error.message);
+        let errorMsg = 'Terjadi kesalahan sistem saat menghubungkan ke Midtrans.';
+        if (error.ApiResponse && error.ApiResponse.error_messages) {
+             errorMsg = error.ApiResponse.error_messages.join(', ');
+        } else if (error.message) {
+             errorMsg = error.message;
+        }
+        return res.status(500).json({ success: false, message: `Gagal Midtrans: ${errorMsg}` });
     }
 }; const prosesPembayaranCod = async (req, res) => {
     const { id_sesi } = req.body;
