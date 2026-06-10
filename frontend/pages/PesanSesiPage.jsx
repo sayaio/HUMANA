@@ -17,6 +17,8 @@ import { MODAL_WIDE_WIDTH, wideModalCardBase } from '../components/modalTheme';
 import { WebView } from 'react-native-webview'; // Import WebView untuk peta interaktif
 import { MapPin, Search } from 'lucide-react-native';
 import Geolocation from '@react-native-community/geolocation';
+import { checkProfileComplete } from '../services/authService';
+import { mapService } from '../services/mapService';
 import { pemesananService } from '../services/pemesananService';
 import PageHeader from '../components/PageHeader';
 import LocationPickerModal from '../components/LocationPickerModal';
@@ -25,6 +27,9 @@ import MapsSVG from '../components/mapsSVG';
 import Back from '../components/BackIconSvg';
 import { useAppAlert } from '../components/AppAlertProvider';
 import CustomAlert from '../components/CustomAlert';
+import CustomButton from '../components/CustomButton';
+import FloatingDropdown from '../components/FloatingDropdown';
+import TimeFloatingDropdown from '../components/TimeFloatingDropdown';
 
 // === KONSTANTA KALENDER ===
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
@@ -362,32 +367,9 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
           const { latitude, longitude } = position.coords;
           setUserLocation({ latitude, longitude });
 
-          // 👉 TAMBAHKAN HEADER USER-AGENT DI SINI
-          fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
-            {
-              headers: {
-                'User-Agent': 'HumanaApp/1.0 (Aplikasi Bimbingan Belajar)', // Beri nama bebas yang unik
-              },
-            },
-          )
-            .then(res => res.json())
-            .then(data => {
-              // Memastikan data display_name ada
-              if (data && data.display_name) {
-                setLocationAddress(data.display_name);
-              } else {
-                setLocationAddress(
-                  `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
-                );
-              }
-            })
-            .catch(err => {
-              console.log('Error Reverse Geocoding:', err);
-              setLocationAddress(
-                `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
-              );
-            });
+          mapService.getAlamatByKoordinat(latitude, longitude).then(result => {
+            setLocationAddress(result.alamat);
+          });
           setLoadingLocation(false);
         },
         error => {
@@ -558,240 +540,6 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
       : Alert.alert('Error', 'Tidak dapat membuka Google Maps');
   };
 
-  // === KONSTANTA DROPDOWN ===
-  const ITEM_HEIGHT = 44;
-  const TIME_ITEM_HEIGHT = 40;
-  const MAX_VISIBLE = 5;
-
-  // === FLOATING DROPDOWN DENGAN SEARCH ===
-  const FloatingDropdown = ({
-    label,
-    value,
-    placeholder,
-    options,
-    isOpen,
-    onToggle,
-    onSelect,
-    zIndex = 10,
-  }) => {
-    const [searchQuery, setSearchQuery] = useState('');
-    const filtered = options.filter(item =>
-      item.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-    const listHeight = Math.min(
-      filtered.length * ITEM_HEIGHT,
-      MAX_VISIBLE * ITEM_HEIGHT,
-    );
-    const actualHeight = listHeight + 48; // List height + Search bar height
-
-    return (
-      <View style={[
-        styles.fieldContainer, 
-        { zIndex, elevation: zIndex },
-        isOpen && { paddingBottom: actualHeight, marginBottom: 14 - actualHeight }
-      ]}>
-        <Text style={styles.fieldLabel}>{label}</Text>
-        <TouchableOpacity
-          style={[styles.dropdownBox, isOpen && styles.dropdownBoxOpen]}
-          onPress={() => {
-            closeAllDropdowns(label);
-            if (!isOpen) setSearchQuery('');
-            onToggle(!isOpen);
-          }}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.dropdownText, !value && styles.placeholderText]}>
-            {value || placeholder}
-          </Text>
-          <Text style={isOpen ? styles.chevronUp : styles.chevronDown}>▼</Text>
-        </TouchableOpacity>
-
-        {isOpen && (
-          <View style={styles.floatingList}>
-            <View style={styles.searchBarWrap}>
-              <Search size={18} color="#999" style={{ marginRight: 6 }} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder={`Cari ${label.toLowerCase()}...`}
-                placeholderTextColor="#AAAAAA"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                autoCorrect={false}
-                autoCapitalize="none"
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => setSearchQuery('')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.searchClear}>✕</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <ScrollView
-              style={{ maxHeight: listHeight || ITEM_HEIGHT }}
-              nestedScrollEnabled={true}
-              bounces={false}
-              showsVerticalScrollIndicator={filtered.length > MAX_VISIBLE}
-              keyboardShouldPersistTaps="handled"
-            >
-              {filtered.length === 0 ? (
-                <View style={styles.emptyResult}>
-                  <Text style={styles.emptyResultText}>
-                    Tidak ada hasil untuk "{searchQuery}"
-                  </Text>
-                </View>
-              ) : (
-                filtered.map((item, index) => (
-                  <TouchableOpacity
-                    key={`${item}-${index}`}
-                    style={[
-                      styles.floatingItem,
-                      { height: ITEM_HEIGHT },
-                      value === item && styles.floatingItemSelected,
-                      index === filtered.length - 1 && styles.floatingItemLast,
-                    ]}
-                    onPress={() => {
-                      onSelect(item);
-                      onToggle(false);
-                      setSearchQuery('');
-                    }}
-                    activeOpacity={0.6}
-                  >
-                    <Text
-                      style={[
-                        styles.floatingItemText,
-                        value === item && styles.floatingItemTextSelected,
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                    {value === item && <Text style={styles.checkmark}>✓</Text>}
-                  </TouchableOpacity>
-                ))
-              )}
-            </ScrollView>
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  // === TIME FLOATING DROPDOWN DENGAN SEARCH ===
-  const TimeFloatingDropdown = ({
-    value,
-    placeholder,
-    options,
-    isOpen,
-    onToggle,
-    onSelect,
-    zIndex = 10,
-  }) => {
-    const [searchQuery, setSearchQuery] = useState('');
-    const filtered = options.filter(item =>
-      item.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-    const listHeight = Math.min(
-      filtered.length * TIME_ITEM_HEIGHT,
-      MAX_VISIBLE * TIME_ITEM_HEIGHT,
-    );
-
-    return (
-      <View style={[
-        styles.timeDropdownWrap, 
-        { zIndex },
-        isOpen && { paddingBottom: 240 }
-      ]}>
-        <TouchableOpacity
-          style={[styles.timeBox, isOpen && styles.timeBoxOpen]}
-          onPress={() => {
-            closeAllDropdowns(placeholder);
-            if (!isOpen) setSearchQuery('');
-            onToggle(!isOpen);
-          }}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.timeText, !value && styles.placeholderText]}>
-            {value || placeholder}
-          </Text>
-          <Text
-            style={isOpen ? styles.chevronUpSmall : styles.chevronDownSmall}
-          >
-            ▼
-          </Text>
-        </TouchableOpacity>
-
-        {isOpen && options.length > 0 && (
-          <View style={styles.floatingListTime}>
-            <View style={styles.searchBarWrapSmall}>
-              <Search size={16} color="#999" style={{ marginRight: 6 }} />
-              <TextInput
-                style={styles.searchInputSmall}
-                placeholder="Cari waktu..."
-                placeholderTextColor="#AAAAAA"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                autoCorrect={false}
-                autoCapitalize="none"
-                keyboardType="numbers-and-punctuation"
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => setSearchQuery('')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.searchClear}>✕</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <ScrollView
-              style={{ maxHeight: listHeight || TIME_ITEM_HEIGHT }}
-              nestedScrollEnabled={true}
-              bounces={false}
-              showsVerticalScrollIndicator={filtered.length > MAX_VISIBLE}
-              keyboardShouldPersistTaps="handled"
-            >
-              {filtered.length === 0 ? (
-                <View style={styles.emptyResult}>
-                  <Text style={styles.emptyResultText}>Tidak ditemukan</Text>
-                </View>
-              ) : (
-                filtered.map((item, index) => (
-                  <TouchableOpacity
-                    key={`${item}-${index}`}
-                    style={[
-                      styles.floatingItem,
-                      { height: TIME_ITEM_HEIGHT },
-                      value === item && styles.floatingItemSelected,
-                      index === filtered.length - 1 && styles.floatingItemLast,
-                    ]}
-                    onPress={() => {
-                      onSelect(item);
-                      onToggle(false);
-                      setSearchQuery('');
-                    }}
-                    activeOpacity={0.6}
-                  >
-                    <Text
-                      style={[
-                        styles.floatingItemText,
-                        value === item && styles.floatingItemTextSelected,
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                ))
-              )}
-            </ScrollView>
-          </View>
-        )}
-      </View>
-    );
-  };
-
   // === TEMPLATE HTML UNTUK MAPS GRATIS (LEAFLET + OPENSTREETMAP) ===
   const latitudeSesi = userLocation?.latitude
     ? userLocation.latitude.toString()
@@ -850,12 +598,8 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
           <View style={[styles.fieldContainer, { flex: 1, marginRight: 8 }]}>
             <Text style={styles.fieldLabel}>Tanggal</Text>
             <TouchableOpacity
-              style={styles.dropdownBox}
-              onPress={() => {
-                closeAllDropdowns();
-                setShowCalendar(true);
-              }}
-              activeOpacity={0.7}
+              style={styles.datePickerButton}
+              onPress={() => setShowCalendar(true)}
             >
               <Text
                 style={[
@@ -865,52 +609,56 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
               >
                 {tanggal ? formatTanggal(tanggal) : 'Pilih Tanggal'}
               </Text>
-              <Text>📅</Text>
+              <Text style={{ fontSize: 16 }}>📅</Text>
             </TouchableOpacity>
           </View>
 
           <View style={[styles.fieldContainer, { flex: 1, marginLeft: 8 }]}>
             <Text style={styles.fieldLabel}>Waktu Sesi</Text>
             <View style={styles.timeRow}>
-              <TimeFloatingDropdown
-                value={waktuMulai}
-                placeholder="Mulai"
-                options={timeSlots}
-                isOpen={openWaktuMulai}
-                onToggle={val => {
-                  closeAllDropdowns('waktuMulai');
-                  setOpenWaktuMulai(val);
-                }}
-                onSelect={val => {
-                  setWaktuMulai(val);
-                  setWaktuSelesai('');
-                  setOpenWaktuMulai(false);
-                }}
-                zIndex={99}
-              />
+              <View style={{ flex: 1 }}>
+                <TimeFloatingDropdown
+                  value={waktuMulai}
+                  placeholder="Mulai"
+                  options={timeSlots}
+                  isOpen={openWaktuMulai}
+                  onToggle={val => {
+                    closeAllDropdowns('waktuMulai');
+                    setOpenWaktuMulai(val);
+                  }}
+                  onSelect={val => {
+                    setWaktuMulai(val);
+                    setWaktuSelesai('');
+                    setOpenWaktuMulai(false);
+                  }}
+                  zIndex={99}
+                />
+              </View>
               <Text style={styles.timeSeparator}>-</Text>
-              <TimeFloatingDropdown
-                value={waktuSelesai}
-                placeholder="Selesai"
-                options={getFilteredEndTimes()}
-                isOpen={openWaktuSelesai}
-                onToggle={val => {
-                  if (!waktuMulai) {
-                    showCustomAlert(
-                      'Pilih Waktu Mulai',
-                      'Pilih waktu mulai terlebih dahulu.',
-                    );
-                    return;
-                  }
-                  closeAllDropdowns('waktuSelesai');
-                  setOpenWaktuSelesai(val);
-                }}
-                onSelect={val => {
-                  setWaktuSelesai(val);
-                  setOpenWaktuSelesai(false);
-                }}
-                zIndex={98}
-              />
+              <View style={{ flex: 1 }}>
+                <TimeFloatingDropdown
+                  value={waktuSelesai}
+                  placeholder="Selesai"
+                  options={getFilteredEndTimes()}
+                  isOpen={openWaktuSelesai}
+                  onToggle={val => {
+                    if (!waktuMulai) {
+                      showCustomAlert(
+                        'Pilih Waktu Mulai',
+                        'Pilih waktu mulai terlebih dahulu.',
+                      );
+                      return;
+                    }
+                    closeAllDropdowns('waktuSelesai');
+                    setOpenWaktuSelesai(val);
+                  }}
+                  onSelect={val => {
+                    setWaktuSelesai(val);
+                    setOpenWaktuSelesai(false);
+                  }}
+                  zIndex={98}
+                />
+              </View>
             </View>
           </View>
         </View>
@@ -1074,12 +822,13 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
               <View style={styles.mapPreviewFallback}>
                 <Text style={styles.mapPinEmoji}>⚠️</Text>
                 <Text style={styles.mapTapText}>Lokasi belum tersedia</Text>
-                <TouchableOpacity
-                  style={styles.retryBtn}
+                <CustomButton
+                  variant="primary"
+                  title="Coba Lagi"
                   onPress={requestLocation}
-                >
-                  <Text style={styles.retryBtnText}>Coba Lagi</Text>
-                </TouchableOpacity>
+                  style={styles.retryBtn}
+                  textStyle={styles.retryBtnText}
+                />
               </View>
             )}
           </View>
@@ -1121,13 +870,12 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
 
       {/* Tombol Konfirmasi */}
       <View style={styles.bottomButtonContainer}>
-        <TouchableOpacity
-          style={styles.confirmButton}
+        <CustomButton
+          title="Konfirmasi Pesanan"
           onPress={handleConfirm}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.confirmButtonText}>Konfirmasi Pesanan</Text>
-        </TouchableOpacity>
+          style={styles.confirmButton}
+          textStyle={styles.confirmButtonText}
+        />
       </View>
 
       {/* Calendar Modal */}
@@ -1189,12 +937,13 @@ const PesanSesiPage = ({ onBack, onConfirmOrder, userId, prefillBooking = null, 
               </TouchableOpacity>
             ))}
           </View>
-          <TouchableOpacity
-            style={styles.modalCloseBtn}
+          <CustomButton
+            title="Tutup"
+            variant="outline"
             onPress={() => setShowCalendar(false)}
-          >
-            <Text style={styles.modalCloseBtnText}>Tutup</Text>
-          </TouchableOpacity>
+            style={styles.modalCloseBtn}
+            textStyle={styles.modalCloseBtnText}
+          />
         </View>
       </DimmedModal>
       {/* Location Picker Modal */}
@@ -1232,173 +981,34 @@ const styles = StyleSheet.create({
     color: '#4A4A4A',
     marginBottom: 8,
   },
-
-  // Dropdown box
-  dropdownBox: {
+  timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    backgroundColor: '#FAFAFA',
+    zIndex: 99,
   },
-  dropdownBoxOpen: {
-    borderColor: '#284B7A',
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-  },
-  dropdownText: { fontSize: 14, color: '#333', flex: 1 },
-  placeholderText: { color: '#AAAAAA' },
-  chevronDown: { fontSize: 11, color: '#999' },
-  chevronUp: {
-    fontSize: 11,
-    color: '#284B7A',
-    transform: [{ rotate: '180deg' }],
-  },
-
-  // Floating list utama
-  floatingList: {
-    position: 'absolute',
-    top: 82,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderTopWidth: 0,
-    borderColor: '#284B7A',
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
-    elevation: 999,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-  },
-
-  // Search bar dalam dropdown
-  searchBarWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#F9F9F9',
-    height: 48,
-  },
-  searchIcon: { fontSize: 14, marginRight: 6 },
-  searchInput: {
-    flex: 1,
-    fontSize: 13,
-    color: '#333',
-    paddingVertical: 4,
-    height: 36,
-  },
-  searchClear: {
-    fontSize: 13,
-    color: '#999',
-    paddingHorizontal: 6,
-    fontWeight: 'bold',
-  },
-
-  // Item dropdown
-  floatingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  floatingItemSelected: { backgroundColor: '#F0F7FF' },
-  floatingItemLast: { borderBottomWidth: 0 },
-  floatingItemText: { fontSize: 14, color: '#333' },
-  floatingItemTextSelected: { color: '#284B7A', fontWeight: '700' },
-  checkmark: { fontSize: 14, color: '#284B7A', fontWeight: 'bold' },
-
-  // Empty state
-  emptyResult: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  emptyResultText: { fontSize: 12, color: '#999', fontStyle: 'italic' },
-
-  // Time row
-  timeRow: { flexDirection: 'row', alignItems: 'flex-start' },
-  timeDropdownWrap: { flex: 1, position: 'relative' },
-  timeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 12,
-    backgroundColor: '#FAFAFA',
-    gap: 4,
-  },
-  timeBoxOpen: {
-    borderColor: '#284B7A',
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-  },
-  timeText: { fontSize: 12, color: '#2D9CDB', fontWeight: '600' },
   timeSeparator: {
     marginHorizontal: 4,
     fontSize: 16,
-    color: '#999',
-    fontWeight: 'bold',
-    paddingTop: 12,
+    color: '#666',
   },
-  chevronDownSmall: { fontSize: 8, color: '#999' },
-  chevronUpSmall: {
-    fontSize: 8,
-    color: '#284B7A',
-    transform: [{ rotate: '180deg' }],
-  },
-
-  // Floating list waktu
-  floatingListTime: {
-    position: 'absolute',
-    top: 44,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderTopWidth: 0,
-    borderColor: '#284B7A',
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
-    elevation: 999,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-  },
-
-  // Search bar kecil untuk waktu
-  searchBarWrapSmall: {
+  datePickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: '#F9F9F9',
-    height: 40,
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    height: 48,
+    paddingHorizontal: 16,
   },
-  searchIconSmall: { fontSize: 11, marginRight: 4 },
-  searchInputSmall: {
-    flex: 1,
-    fontSize: 12,
-    color: '#333',
-    paddingVertical: 2,
-    height: 32,
+  dropdownText: {
+    fontSize: 14,
+    color: '#333333',
+  },
+  placeholderText: {
+    color: '#C4C4C4',
   },
 
   // Style Baru untuk Map Section dan WebView Leaflet
@@ -1480,8 +1090,8 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     backgroundColor: '#387C65',
+    height: 56,
     borderRadius: 25,
-    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,

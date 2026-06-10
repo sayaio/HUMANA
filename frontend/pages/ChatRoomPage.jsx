@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import { getMessages, sendMessage as sendChatMessage } from '../services/chatService';
 import { API_URL } from '../src/config';
 import {
   StyleSheet,
@@ -33,10 +33,8 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
   const fetchMessages = async () => {
     const { id_guru, id_murid } = chatData;
     try {
-      const response = await axios.get(
-        `${API_URL}/chats/messages/${id_guru}/${id_murid}?role=${userRole}`,
-      );
-      const data = response.data.data || response.data;
+      const response = await getMessages(id_guru, id_murid, userRole);
+      const data = response.data || response;
       setMessages(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Gagal ambil chat:', error.response?.data || error.message);
@@ -54,7 +52,7 @@ const ChatRoomPage = ({ chatData, onBack, userId, userRole }) => {
         isi_pesan: message,
       };
 
-      await axios.post(`${API_URL}/chats/send`, payload);
+      await sendChatMessage(payload);
       setMessage('');
       await fetchMessages();
       scrollToBottom();

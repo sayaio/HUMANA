@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, Easing, Platform } from 'react-native';
 import CustomAlert from '../components/CustomAlert';
-import axios from 'axios';
-import { API_URL } from '../src/config';
 import { pemesananService } from '../services/pemesananService';
+import { createChatRoom } from '../services/chatService';
 import PageHeader from '../components/PageHeader';
 import { WebView } from 'react-native-webview';
 
@@ -62,10 +61,10 @@ const MencariPengajarPage = ({ sessionData, onCancel, onMatchSuccess, onMatchFai
                         console.log('ID MURID dari sessionData:', sessionData?.id_murid);
 
                         try {
-                            await axios.post(`${API_URL}/chats/create`, {
-                                id_guru: result.data_guru?.id_guru,
-                                id_murid: sessionData?.id_murid
-                            });
+                            await createChatRoom(
+                                result.data_guru?.id_guru,
+                                sessionData?.id_murid
+                            );
                             console.log('✅ Room chat berhasil dibuat');
                         } catch (e) {
                             console.warn('⚠️ Gagal buat room chat:', e.message);

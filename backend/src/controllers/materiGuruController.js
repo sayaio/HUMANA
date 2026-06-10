@@ -1,4 +1,5 @@
 const pool = require('../database');
+const { fetchQuery, executeQuery } = require('../utils/dbHelper');
 
 // GET — ambil materi yang sudah dipilih guru
 const getMateriGuru = async (req, res) => {
@@ -6,7 +7,7 @@ const getMateriGuru = async (req, res) => {
     const { id_guru } = req.params;
     if (!id_guru) return res.status(400).json({ success: false, message: 'id_guru wajib diisi.' });
 
-    const result = await pool.query(
+    const rows = await fetchQuery(
       `SELECT mg.id_materi, m.nama_materi, m.kelas, m.id_mapel,
               mp.nama_mapel, mp.jenjang
        FROM MateriGuru mg
@@ -15,7 +16,6 @@ const getMateriGuru = async (req, res) => {
        WHERE mg.id_guru = ?`,
       [id_guru]
     );
-    const rows = Array.isArray(result[0]) ? result[0] : Array.isArray(result) ? result : [];
     res.status(200).json({ success: true, data: rows });
   } catch (error) {
     console.error('Error getMateriGuru:', error);
@@ -88,7 +88,7 @@ const hapusMateriGuru = async (req, res) => {
     const { id_guru, id_materi } = req.params;
     if (!id_guru || !id_materi) return res.status(400).json({ success: false, message: 'id_guru dan id_materi wajib diisi.' });
 
-    await pool.query(
+    await executeQuery(
       'DELETE FROM MateriGuru WHERE id_guru = ? AND id_materi = ?',
       [id_guru, id_materi]
     );

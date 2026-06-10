@@ -16,9 +16,12 @@ import { RefreshControl } from 'react-native';
 import PageHeader from '../components/PageHeader';
 import { useAppAlert } from '../components/AppAlertProvider';
 import { batalkanSesi } from '../services/batalSesiService';
+import { authService } from '../services/authService';
+import { mapService } from '../services/mapService';
 import { pemesananService } from '../services/pemesananService';
 import { fetchGuruRating } from '../services/feedbackService';
 import { createChatRoom } from '../services/chatService';
+import { formatRupiah } from '../utils/formatters';
 import { MessageCircle, MapPin } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -75,20 +78,8 @@ const DetailSesiAktifPage = ({ onBack, sessionData, onChat }) => {
       return;
     }
     const fetchAlamat = async () => {
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${initialLat}&lon=${initialLng}&format=json`,
-          { headers: { 'User-Agent': 'HumanaApp/1.0' } },
-        );
-        const data = await response.json();
-        if (data && data.display_name) {
-          setAlamatLengkap(data.display_name);
-        } else {
-          setAlamatLengkap(`${initialLat}, ${initialLng}`);
-        }
-      } catch (err) {
-        setAlamatLengkap(`${initialLat}, ${initialLng}`);
-      }
+      const result = await mapService.getAlamatByKoordinat(initialLat, initialLng);
+      setAlamatLengkap(result.alamat);
     };
     fetchAlamat();
   }, [initialLat, initialLng, initialAddress]);
@@ -290,10 +281,7 @@ const DetailSesiAktifPage = ({ onBack, sessionData, onChat }) => {
     }
   };
 
-  const formatRupiah = angka => {
-    if (!angka && angka !== 0) return 'Rp 0';
-    return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
-  };
+
 
   const biayaSesi = sessionData?.biaya_sesi || 0;
   const biayaTransportasi = sessionData?.biaya_jarak || 0;

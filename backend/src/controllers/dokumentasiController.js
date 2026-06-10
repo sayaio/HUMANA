@@ -1,4 +1,4 @@
-const pool = require('../database');
+const { executeQuery } = require('../utils/dbHelper');
 const cloudinary = require('../cloudinary');
 
 const uploadDokumentasi = async (req, res) => {
@@ -24,15 +24,10 @@ const uploadDokumentasi = async (req, res) => {
 
         const fotoUrl = uploadResult.secure_url;
 
-        const conn = await pool.getConnection();
-        try {
-            await conn.query(
-                'UPDATE Pemesanan SET foto_dokumentasi = ? WHERE id_pemesanan = ?',
-                [fotoUrl, id_pemesanan]
-            );
-        } finally {
-            conn.release();
-        }
+        await executeQuery(
+            'UPDATE Pemesanan SET foto_dokumentasi = ? WHERE id_pemesanan = ?',
+            [fotoUrl, id_pemesanan]
+        );
 
         res.json({ success: true, foto_url: fotoUrl });
     } catch (err) {

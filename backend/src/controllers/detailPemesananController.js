@@ -1,4 +1,4 @@
-const db = require('../database');
+const { fetchQuery } = require('../utils/dbHelper');
 // Asumsi path file Class OOP yang sudah kamu buat sebelumnya
 const PemesananSesi = require('../classes/PemesananSesi');
 const Pembayaran = require('../classes/Pembayaran');
@@ -8,7 +8,7 @@ const getDetailPemesanan = async (req, res) => {
 
     try {
         // PERBAIKAN MARIADB: Menghilangkan destructuring [rows] agar tidak error
-        const rows = await db.query(`
+        const rows = await fetchQuery(`
             SELECT 
                 p.id_pemesanan,
                 p.status_pemesanan,

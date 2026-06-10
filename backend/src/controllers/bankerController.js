@@ -1,6 +1,5 @@
 // controllers/BankerController.js
-const pool = require('../database');
-const Pembayaran = require('../classes/Pembayaran');
+const { fetchQuery, fetchSingle, executeQuery } = require('../utils/dbHelper');
 const midtransClient = require('midtrans-client');
 
 const snap = new midtransClient.Snap({
@@ -32,8 +31,8 @@ const getSesiDetail = async (req, res) => {
                 mapel.id_mapel,
                 mapel.nama_mapel,
                 bayar.id_pembayaran,
-                bayar.biaya_sesi,        -- ✅ TAMBAHKAN INI
-                bayar.biaya_jarak,       -- ✅ TAMBAHKAN INI
+                bayar.biaya_sesi,        
+                bayar.biaya_jarak,       
                 bayar.metode_pembayaran,
                 bayar.nominal,
                 bayar.status_pembayaran,
@@ -48,10 +47,9 @@ const getSesiDetail = async (req, res) => {
             LIMIT 1;
         `;
 
-        const rows = await pool.query(query, [id]);
-        if (rows.length === 0) return res.status(404).json({ success: false, message: 'Detail sesi tidak ditemukan.' });
+        const row = await fetchSingle(query, [id]);
+        if (!row) return res.status(404).json({ success: false, message: 'Detail sesi tidak ditemukan.' });
 
-        const row = rows[0];
         return res.status(200).json({
             success: true,
             data: {
@@ -67,8 +65,8 @@ const getSesiDetail = async (req, res) => {
                 materi: { id_materi: row.id_materi, nama_materi: row.nama_materi },
                 pembayaran: {
                     id_pembayaran: row.id_pembayaran,
-                    biaya_sesi: row.biaya_sesi,           // ✅ TAMBAHKAN INI
-                    biaya_jarak: row.biaya_jarak,         // ✅ TAMBAHKAN INI
+                    biaya_sesi: row.biaya_sesi,           
+                    biaya_jarak: row.biaya_jarak,         
                     metode_pembayaran: row.metode_pembayaran,
                     nominal: row.nominal,
                     status_pembayaran: row.status_pembayaran,
@@ -82,29 +80,29 @@ const getSesiDetail = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Terjadi kesalahan saat mengambil detail sesi.' });
     }
 };
+
 const getStatusPembayaran = async (req, res) => {
     const { id_pemesanan } = req.params;
     if (!id_pemesanan) return res.status(400).json({ success: false, message: 'Parameter id_pemesanan wajib diisi.' });
 
     try {
-        const rows = await pool.query(
+        const row = await fetchSingle(
             `SELECT status_pembayaran FROM Pembayaran WHERE id_pemesanan = ? LIMIT 1`,
             [id_pemesanan]
         );
 
-        const data = Array.isArray(rows[0]) ? rows[0] : Array.isArray(rows) ? rows : [rows];
-
-        if (data.length === 0 || !data[0].status_pembayaran) {
+        if (!row || !row.status_pembayaran) {
             return res.status(200).json({ success: true, status_pembayaran: 'menunggu' });
         }
 
-        return res.status(200).json({ success: true, status_pembayaran: data[0].status_pembayaran });
+        return res.status(200).json({ success: true, status_pembayaran: row.status_pembayaran });
 
     } catch (error) {
         console.error('[BankerController] Error getStatusPembayaran:', error);
         return res.status(500).json({ success: false, message: 'Terjadi kesalahan saat mengambil status pembayaran.' });
     }
 };
+
 const bayarSimulasi = async (req, res) => {
     const { id_sesi } = req.body;
     if (!id_sesi) return res.status(400).json({ success: false, message: 'Parameter id_sesi wajib diisi.' });
@@ -122,17 +120,15 @@ const bayarSimulasi = async (req, res) => {
             LIMIT 1;
         `;
 
-        const rows = await pool.query(checkQuery, [id_sesi]);
-        if (rows.length === 0) return res.status(404).json({ success: false, message: 'Sesi tidak ditemukan.' });
-
-        const sesi = rows[0];
+        const sesi = await fetchSingle(checkQuery, [id_sesi]);
+        if (!sesi) return res.status(404).json({ success: false, message: 'Sesi tidak ditemukan.' });
 
         const updatePemesananQuery = `
             UPDATE Pemesanan
             SET status_pemesanan = 'berlangsung'
             WHERE id_pemesanan = ?;
         `;
-        await pool.query(updatePemesananQuery, [id_sesi]);
+        await executeQuery(updatePemesananQuery, [id_sesi]);
 
         if (sesi.id_pembayaran) {
             const updatePembayaranQuery = `
@@ -141,7 +137,7 @@ const bayarSimulasi = async (req, res) => {
                     tanggal_pembayaran = CURDATE()
                 WHERE id_pembayaran = ?;
             `;
-            await pool.query(updatePembayaranQuery, [sesi.id_pembayaran]);
+            await executeQuery(updatePembayaranQuery, [sesi.id_pembayaran]);
         }
 
         return res.status(200).json({
@@ -157,7 +153,6 @@ const bayarSimulasi = async (req, res) => {
 };
 
 const prosesPembayaranMidtrans = async (req, res) => {
-    // 1. Ambil id_sesi dan ambil juga tipe_pembayaran (va / ewallet) yang dikirim dari React Native
     const { id_sesi, tipe_pembayaran } = req.body;
     if (!id_sesi) return res.status(400).json({ success: false, message: 'Parameter id_sesi wajib diisi.' });
 
@@ -178,24 +173,18 @@ const prosesPembayaranMidtrans = async (req, res) => {
             LIMIT 1;
         `;
 
-        const rows = await pool.query(query, [id_sesi]);
-        if (rows.length === 0) return res.status(404).json({ success: false, message: 'Pemesanan tidak ditemukan.' });
+        const orderData = await fetchSingle(query, [id_sesi]);
+        if (!orderData) return res.status(404).json({ success: false, message: 'Pemesanan tidak ditemukan.' });
 
-        const orderData = rows[0];
         const grossAmount = orderData.nominal ? Number(orderData.nominal) : 34000;
 
-        // =========================================================================
-        // ✨ SEBELAH SINI: TAMBAHKAN LOGIK UPDATE METODE PEMBAYARAN DI DATABASE ✨
-        // =========================================================================
-        // Menentukan string metode yang akan disimpan di database (default 'transfer bank' jika tidak dikirim)
         const dbMethod = tipe_pembayaran || 'transfer bank';
 
-        await pool.query(
+        await executeQuery(
             `UPDATE Pembayaran SET metode_pembayaran = ?, status_pembayaran = 'menunggu' WHERE id_pemesanan = ?`,
             [dbMethod, id_sesi]
         );
         console.log(`[Database] Mengubah metode pembayaran Sesi ID: ${id_sesi} menjadi '${dbMethod}'`);
-        // =========================================================================
 
         const parameter = {
             transaction_details: {
@@ -232,31 +221,30 @@ const prosesPembayaranMidtrans = async (req, res) => {
         console.error('[BankerController] Error Midtrans processing:', error);
         return res.status(500).json({ success: false, message: 'Terjadi kesalahan sistem saat menghubungkan ke Midtrans.' });
     }
-}; const prosesPembayaranCod = async (req, res) => {
+}; 
+
+const prosesPembayaranCod = async (req, res) => {
     const { id_sesi } = req.body;
     if (!id_sesi) return res.status(400).json({ success: false, message: 'Parameter id_sesi wajib diisi.' });
 
     try {
-        // Update status pemesanan jadi berlangsung agar masuk ke jadwal aktif
-        await pool.query(
+        await executeQuery(
             `UPDATE Pemesanan SET status_pemesanan = 'berlangsung' WHERE id_pemesanan = ?`,
             [id_sesi]
         );
 
-        // Insert atau update record pembayaran
-        const existingBayar = await pool.query(
+        const existingBayar = await fetchSingle(
             `SELECT id_pembayaran FROM Pembayaran WHERE id_pemesanan = ? LIMIT 1`,
             [id_sesi]
         );
 
-        if (existingBayar.length > 0) {
-            await pool.query(
+        if (existingBayar) {
+            await executeQuery(
                 `UPDATE Pembayaran SET metode_pembayaran = 'tunai', status_pembayaran = 'lunas', tanggal_pembayaran = CURDATE() WHERE id_pemesanan = ?`,
                 [id_sesi]
             );
         } else {
-            // Note: fallback insert in case payment record is missing
-            await pool.query(
+            await executeQuery(
                 `INSERT INTO Pembayaran (id_pemesanan, metode_pembayaran, nominal, status_pembayaran, tanggal_pembayaran) VALUES (?, 'tunai', 34000, 'lunas', CURDATE())`,
                 [id_sesi]
             );
@@ -274,5 +262,3 @@ const prosesPembayaranMidtrans = async (req, res) => {
 };
 
 module.exports = { getSesiDetail, bayarSimulasi, prosesPembayaranMidtrans, prosesPembayaranCod, getStatusPembayaran };
-
-

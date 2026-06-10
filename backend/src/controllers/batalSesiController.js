@@ -1,16 +1,16 @@
-const db = require('../database');
+const { executeQuery, fetchSingle } = require('../utils/dbHelper');
 
 // Helper untuk menyimpan notifikasi ke pihak lawan (guru atau murid).
 // targetRole menentukan kolom mana yang diisi; kolom lainnya dibiarkan NULL.
 const buatNotifikasi = async (targetRole, idTarget, judul, pesan) => {
     if (!idTarget) return;
     if (targetRole === 'guru') {
-        await db.query(
+        await executeQuery(
             `INSERT INTO Notifikasi (id_guru, judul, pesan) VALUES (?, ?, ?)`,
             [idTarget, judul, pesan]
         );
     } else {
-        await db.query(
+        await executeQuery(
             `INSERT INTO Notifikasi (id_murid, judul, pesan) VALUES (?, ?, ?)`,
             [idTarget, judul, pesan]
         );
@@ -26,8 +26,8 @@ const batalSesiController = async (req, res) => {
     }
 
     try {
-        // 1. Ambil data pemesanan + pembayaran + nama kedua pihak (driver mariadb mengembalikan array langsung)
-        const rows = await db.query(`
+        // 1. Ambil data pemesanan + pembayaran + nama kedua pihak
+        const data = await fetchSingle(`
             SELECT 
                 p.id_pemesanan, p.waktu_mulai, p.status_pemesanan, p.id_guru, p.id_murid,
                 m.nama_murid, g.nama_guru,
@@ -39,11 +39,10 @@ const batalSesiController = async (req, res) => {
             WHERE p.id_pemesanan = ?
         `, [id_pemesanan]);
 
-        if (rows.length === 0) {
+        if (!data) {
             return res.status(404).json({ success: false, message: "Data pemesanan tidak ditemukan." });
         }
 
-        const data = rows[0];
         const statusPembayaran = data.status_pembayaran; // 'menunggu', 'lunas', atau null
         const waktuMulai = data.waktu_mulai ? new Date(data.waktu_mulai) : null;
         const sekarang = new Date();
@@ -59,8 +58,8 @@ const batalSesiController = async (req, res) => {
             if (role === 'murid') {
                 // KASUS 1: Murid batal sebelum bayar -> pemesanan dihapus total.
                 // Hapus pembayaran dulu karena FK Pembayaran->Pemesanan ON DELETE RESTRICT.
-                await db.query(`DELETE FROM Pembayaran WHERE id_pemesanan = ?`, [id_pemesanan]);
-                await db.query(`DELETE FROM Pemesanan WHERE id_pemesanan = ?`, [id_pemesanan]);
+                await executeQuery(`DELETE FROM Pembayaran WHERE id_pemesanan = ?`, [id_pemesanan]);
+                await executeQuery(`DELETE FROM Pemesanan WHERE id_pemesanan = ?`, [id_pemesanan]);
 
                 await buatNotifikasi(
                     'guru', idGuru,
@@ -80,8 +79,8 @@ const batalSesiController = async (req, res) => {
             if (role === 'guru') {
                 // KASUS 2: Guru batal sebelum dibayar -> lepas sesi ke pencarian ulang,
                 // hapus pembayaran (beda guru beda harga), murid cari guru lain.
-                await db.query(`DELETE FROM Pembayaran WHERE id_pemesanan = ?`, [id_pemesanan]);
-                await db.query(
+                await executeQuery(`DELETE FROM Pembayaran WHERE id_pemesanan = ?`, [id_pemesanan]);
+                await executeQuery(
                     `UPDATE Pemesanan SET id_guru = NULL, status_pemesanan = 'menunggu konfirmasi' WHERE id_pemesanan = ?`,
                     [id_pemesanan]
                 );
@@ -108,8 +107,8 @@ const batalSesiController = async (req, res) => {
         if (statusPembayaran === 'lunas') {
             if (role === 'guru') {
                 // KASUS 4: Guru batal sepihak -> murid full refund.
-                await db.query(`UPDATE Pemesanan SET status_pemesanan = 'dibatalkan_guru' WHERE id_pemesanan = ?`, [id_pemesanan]);
-                await db.query(`UPDATE Pembayaran SET status_pembayaran = 'refunded' WHERE id_pemesanan = ?`, [id_pemesanan]);
+                await executeQuery(`UPDATE Pemesanan SET status_pemesanan = 'dibatalkan_guru' WHERE id_pemesanan = ?`, [id_pemesanan]);
+                await executeQuery(`UPDATE Pembayaran SET status_pembayaran = 'refunded' WHERE id_pemesanan = ?`, [id_pemesanan]);
 
                 await buatNotifikasi(
                     'murid', idMurid,
@@ -131,8 +130,8 @@ const batalSesiController = async (req, res) => {
 
                 if (selisihJam > 2) {
                     // KASUS 3a: Batal > 2 jam sebelum sesi -> refund penuh.
-                    await db.query(`UPDATE Pemesanan SET status_pemesanan = 'dibatalkan_murid' WHERE id_pemesanan = ?`, [id_pemesanan]);
-                    await db.query(`UPDATE Pembayaran SET status_pembayaran = 'refunded' WHERE id_pemesanan = ?`, [id_pemesanan]);
+                    await executeQuery(`UPDATE Pemesanan SET status_pemesanan = 'dibatalkan_murid' WHERE id_pemesanan = ?`, [id_pemesanan]);
+                    await executeQuery(`UPDATE Pembayaran SET status_pembayaran = 'refunded' WHERE id_pemesanan = ?`, [id_pemesanan]);
 
                     await buatNotifikasi(
                         'guru', idGuru,
@@ -150,7 +149,7 @@ const batalSesiController = async (req, res) => {
                     });
                 } else {
                     // KASUS 3b: Batal <= 2 jam sebelum sesi -> dana hangus (jadi kompensasi guru).
-                    await db.query(`UPDATE Pemesanan SET status_pemesanan = 'dibatalkan_murid' WHERE id_pemesanan = ?`, [id_pemesanan]);
+                    await executeQuery(`UPDATE Pemesanan SET status_pemesanan = 'dibatalkan_murid' WHERE id_pemesanan = ?`, [id_pemesanan]);
                     // status_pembayaran tetap 'lunas' sebagai kompensasi guru.
 
                     await buatNotifikasi(

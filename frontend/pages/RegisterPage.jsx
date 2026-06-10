@@ -17,6 +17,7 @@ import { Eye, EyeOff } from 'lucide-react-native';
 import { registerUser } from '../services/registerService';
 import CustomAlert from '../components/CustomAlert';
 import DimmedModal from '../components/DimmedModal';
+import CustomButton from '../components/CustomButton';
 import { centerModalCardBase, MODAL_CARD_WIDTH } from '../components/modalTheme';
 
 const { width, height } = Dimensions.get('window');
@@ -359,12 +360,11 @@ const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
             </View>
           </View>
 
-          <TouchableOpacity
-            style={styles.submitButton}
+          <CustomButton
+            title="Daftar"
             onPress={handleRegister}
-          >
-            <Text style={styles.submitButtonText}>Daftar</Text>
-          </TouchableOpacity>
+            style={{ marginTop: 10 }}
+          />
 
           <View style={styles.orDividerContainer}>
             <View style={styles.orLine} />

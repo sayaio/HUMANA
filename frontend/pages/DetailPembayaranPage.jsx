@@ -5,6 +5,7 @@ import { getSesiDetail } from '../services/bankerService';
 import DimmedModal from '../components/DimmedModal';
 import { useAppAlert } from '../components/AppAlertProvider';
 import { batalkanSesi } from '../services/batalSesiService';
+import { formatRupiah } from '../utils/formatters';
 import { pemesananService } from '../services/pemesananService';
 import PageHeader from '../components/PageHeader';
 import { fetchGuruRating } from '../services/feedbackService';
@@ -114,11 +115,6 @@ const DetailPembayaranPage = ({ sessionData, onBack, onPaymentSuccess, onSesiDil
     const biayaSesi = displayData?.pembayaran?.biaya_sesi ?? sessionData?.biaya_sesi ?? sessionData?.harga ?? 0;
     const biayaJarak = displayData?.pembayaran?.biaya_jarak ?? sessionData?.biaya_jarak ?? sessionData?.biaya_transport ?? 0;
     const totalBayar = displayData?.pembayaran?.nominal ?? sessionData?.nominal ?? sessionData?.total_harga ?? (biayaSesi + biayaJarak);
-
-    const formatRupiah = (angka) => {
-        if (angka === undefined || angka === null) return 'Rp 0';
-        return `Rp ${Number(angka).toLocaleString('id-ID')}`;
-    };
 
     const handleBackWithConfirmation = () => {
         showConfirm(

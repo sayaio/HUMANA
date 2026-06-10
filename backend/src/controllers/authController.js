@@ -1,13 +1,10 @@
-const pool = require('../database');
+const { fetchQuery, executeQuery } = require('../utils/dbHelper');
 const Guru = require('../classes/Guru');
 const Murid = require('../classes/Murid');
 
 const login = async (req, res) => {
     const { email, password } = req.body; // 'email' field bisa berisi email atau username
-    let conn;
-
     try {
-        conn = await pool.getConnection();
         const query = `
         SELECT
             id_guru AS id, 
@@ -43,7 +40,7 @@ const login = async (req, res) => {
         `;
 
         // Eksekusi kueri dengan 4 parameter pengikat (binding parameters)
-        const rows = await conn.query(query, [email, email, email, email]);
+        const rows = await fetchQuery(query, [email, email, email, email]);
 
         if (rows.length > 0) {
             const dataDB = rows[0];
@@ -101,21 +98,17 @@ const login = async (req, res) => {
         }
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
-    } finally {
-        if (conn) conn.release();
     }
 };
 const checkEmail = async (req, res) => {
   const { email } = req.query;
-  let conn;
   try {
-    conn = await pool.getConnection();
     const query = `
       SELECT email_guru AS email FROM Guru WHERE email_guru = ?
       UNION
       SELECT email FROM Murid WHERE email = ?
     `;
-    const rows = await conn.query(query, [email, email]);
+    const rows = await fetchQuery(query, [email, email]);
     if (rows.length > 0) {
       res.json({ exists: true });
     } else {
@@ -123,15 +116,11 @@ const checkEmail = async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
-  } finally {
-    if (conn) conn.release();
   }
 };
 const loginGoogle = async (req, res) => {
   const { email } = req.body;
-  let conn;
   try {
-    conn = await pool.getConnection();
     const query = `
       SELECT
         id_guru AS id, 
@@ -163,7 +152,7 @@ const loginGoogle = async (req, res) => {
         jurusan
       FROM Murid WHERE email = ?
     `;
-    const rows = await conn.query(query, [email, email]);
+    const rows = await fetchQuery(query, [email, email]);
 
     if (rows.length === 0) {
       return res.status(404).json({
@@ -194,8 +183,6 @@ const loginGoogle = async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
-  } finally {
-    if (conn) conn.release();
   }
 };
 

@@ -1,5 +1,5 @@
 // controllers/EditProfilController.js
-const pool = require('../database');
+const { executeQuery } = require('../utils/dbHelper');
 
 const updateBasic = async (req, res) => {
     const { id, id_user, email, name, nama, username, phone, gender, domicile, role } = req.body;
@@ -31,12 +31,12 @@ const updateBasic = async (req, res) => {
         const userRole = role ? role.toLowerCase() : 'murid';
 
         if (userRole === 'guru') {
-            const result = await pool.query(
+            const result = await executeQuery(
                 `UPDATE Guru SET nama_guru = ?, username = ?, no_telepon = ?, jenis_kelamin = ?, alamat = ? WHERE id_guru = ? OR email_guru = ?`,
                 [finalName, username, phone, genderDb, domicile, userId || null, email || null]
             );
         } else {
-            const result = await pool.query(
+            const result = await executeQuery(
                 `UPDATE Murid SET nama_murid = ?, username = ?, no_telepon = ?, jenis_kelamin = ?, alamat = ? WHERE id_murid = ? OR email = ?`,
                 [finalName, username, phone, genderDb, domicile, userId || null, email || null]
             );
@@ -74,7 +74,7 @@ const updateAcademic = async (req, res) => {
         }
 
         // Jalankan query ke nama kolom database yang asli: 'kelas' dan 'jurusan'
-        await pool.query(
+        await executeQuery(
             `UPDATE Murid SET kelas = ?, jurusan = ? WHERE email = ?`,
             [kelasDb, jurusanDb, email]
         );
@@ -92,7 +92,7 @@ const updateAvailability = async (req, res) => {
     try {
         const statusDb = is_active ? 1 : 0;
 
-        const dbResult = await pool.query(
+        const dbResult = await executeQuery(
             `UPDATE Guru SET is_active = ? WHERE id_guru = ?`,
             [statusDb, id_guru]
         );

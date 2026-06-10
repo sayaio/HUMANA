@@ -56,7 +56,9 @@ const ProfilePage = ({ profileData, onNavigate, onLogout, onRefreshData }) => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadLatestProfileData();
+    if (onRefreshData) {
+      await onRefreshData(profileData);
+    }
     setRefreshing(false);
   };
 
@@ -174,7 +176,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: width * 0.05,
-    // SOLUSI RESPONSIF: Menghitung padding atas berdasarkan platform OS & tinggi StatusBar asli
     paddingTop:
       Platform.OS === 'android'
         ? StatusBar.currentHeight
@@ -186,8 +187,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#000',
+    marginBottom: 16,
   },
 
   userCard: {

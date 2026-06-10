@@ -1,4 +1,4 @@
-const pool = require('../database');
+const { fetchQuery } = require('../utils/dbHelper');
 
 /** Sesi selesai dengan nominal pembayaran tercatat = pendapatan guru */
 const SESI_SELESAI_WHERE = `
@@ -11,14 +11,14 @@ const getPendapatan = async (req, res) => {
     const { id_guru } = req.params;
 
     try {
-        const totalRows = await pool.query(`
+        const totalRows = await fetchQuery(`
             SELECT COALESCE(SUM(p.nominal), 0) AS total_pendapatan
             FROM Pembayaran p
             JOIN Pemesanan pm ON p.id_pemesanan = pm.id_pemesanan
             WHERE ${SESI_SELESAI_WHERE}
         `, [id_guru]);
 
-        const bulanIniRows = await pool.query(`
+        const bulanIniRows = await fetchQuery(`
             SELECT COALESCE(SUM(p.nominal), 0) AS bulan_ini
             FROM Pembayaran p
             JOIN Pemesanan pm ON p.id_pemesanan = pm.id_pemesanan
@@ -34,14 +34,14 @@ const getPendapatan = async (req, res) => {
               )
         `, [id_guru]);
 
-        const sesiRows = await pool.query(`
+        const sesiRows = await fetchQuery(`
             SELECT COUNT(*) AS sesi_selesai
             FROM Pemesanan
             WHERE id_guru = ?
               AND status_pemesanan = 'selesai'
         `, [id_guru]);
 
-        const riwayat = await pool.query(`
+        const riwayat = await fetchQuery(`
             SELECT
                 pm.id_pemesanan,
                 mp.nama_mapel,
@@ -114,7 +114,7 @@ const getRiwayatPendapatan = async (req, res) => {
             params.push(tahun, tahun);
         }
 
-        const riwayat = await pool.query(`
+        const riwayat = await fetchQuery(`
             SELECT
                 pm.id_pemesanan,
                 mp.nama_mapel,

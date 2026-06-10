@@ -1,4 +1,4 @@
-const db = require('../database');
+const { fetchQuery, executeQuery } = require('../utils/dbHelper');
 
 exports.getChatList = async (req, res) => {
     try {
@@ -52,17 +52,23 @@ exports.getChatList = async (req, res) => {
           LIMIT ? OFFSET ?
         `;
 
-        const data = await db.query(query, [senderField, userId, limit, offset]);
+        const data = await fetchQuery(query, [senderField, userId, limit, offset]);
 
         console.log('sample data[0]:', data[0]);
         const formattedData = Array.isArray(data) ? data : (data ? [data] : []);
+        
+        // Convert BigInt to Number
+        const serializedData = formattedData.map(item => {
+            const newItem = { ...item };
+            for (const key in newItem) {
+                if (typeof newItem[key] === 'bigint') {
+                    newItem[key] = Number(newItem[key]);
+                }
+            }
+            return newItem;
+        });
 
-        // Fix BigInt serialization dari COUNT(*)
-        const sanitized = JSON.parse(JSON.stringify(formattedData, (key, value) =>
-            typeof value === 'bigint' ? Number(value) : value
-        ));
-
-        res.status(200).json({ success: true, data: sanitized });
+        res.status(200).json({ success: true, data: serializedData });
     } catch (error) {
         console.error("Error di getChatList:", error);
         res.status(500).json({ success: false, message: "Terjadi kesalahan pada server" });
@@ -90,7 +96,7 @@ exports.getMessages = async (req, res) => {
             WHERE id_guru = ? AND id_murid = ? 
             ORDER BY timestamp ASC
         `;
-        const messages = await db.query(queryMessages, [id_guru, id_murid]);
+        const messages = await fetchQuery(queryMessages, [id_guru, id_murid]);
 
         const queryUpdate = `
             UPDATE Chat 
@@ -99,7 +105,7 @@ exports.getMessages = async (req, res) => {
               AND id_murid = ? 
               AND pengirim_role != ?
         `;
-        await db.query(queryUpdate, [id_guru, id_murid, role]);
+        await executeQuery(queryUpdate, [id_guru, id_murid, role]);
 
         res.status(200).json({ success: true, data: messages });
     } catch (error) {
@@ -126,7 +132,7 @@ exports.sendMessage = async (req, res) => {
             INSERT INTO Chat (id_guru, id_murid, pengirim_role, isi_pesan, is_read, timestamp) 
             VALUES (?, ?, ?, ?, 0, NOW())
         `;
-        await db.query(query, [id_guru, id_murid, pengirim_role, isi_pesan]);
+        await executeQuery(query, [id_guru, id_murid, pengirim_role, isi_pesan]);
 
         res.status(201).json({ success: true, message: "Pesan berhasil dikirim" });
     } catch (error) {
@@ -142,7 +148,7 @@ exports.createOrGetChatRoom = async (req, res) => {
             return res.status(400).json({ success: false, message: "id_guru dan id_murid wajib diisi" });
         }
         
-        const existing = await db.query(
+        const existing = await fetchQuery(
             'SELECT * FROM Chat WHERE id_guru = ? AND id_murid = ? LIMIT 1',
             [id_guru, id_murid]
         );
@@ -150,12 +156,12 @@ exports.createOrGetChatRoom = async (req, res) => {
         if (existing.length > 0) {
             room = existing[0];
         } else {
-            await db.query(
+            await executeQuery(
                 `INSERT INTO Chat (id_guru, id_murid, pengirim_role, isi_pesan, timestamp) 
                  VALUES (?, ?, 'guru', 'Sesi telah dikonfirmasi. Silakan mulai percakapan!', NOW())`,
                 [id_guru, id_murid]
             );
-            const newRoom = await db.query(
+            const newRoom = await fetchQuery(
                 'SELECT * FROM Chat WHERE id_guru = ? AND id_murid = ? LIMIT 1',
                 [id_guru, id_murid]
             );

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { ArrowLeft, Bell } from 'lucide-react-native';
 import { fetchPendapatan } from '../services/pendapatanService';
+import { formatRupiah } from '../utils/formatters';
 import PageHeader from '../components/PageHeader';
 
 const FONTS = {
@@ -29,11 +30,6 @@ const SUBJECT_ICONS = {
   Sejarah: require('../assets/sejarah.png'),
   Sosiologi: require('../assets/sosiologi.png'),
   'Bahasa Inggris': require('../assets/inggris.png'),
-};
-
-const formatRupiah = angka => {
-  if (!angka) return 'Rp 0';
-  return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
 };
 
 const HARI_ID = {

@@ -10,17 +10,17 @@ import CustomAlert from '../components/CustomAlert';
 import { useAppAlert } from '../components/AppAlertProvider';
 import BottomNavbar from '../components/BottomNavbar';
 import { fetchMapelByJenjang } from '../services/MateriService';
-import { getActiveSchedule } from '../services/historyService';
-import {
-    getMateriTerfavoritMurid,
-    getRekomendasiMateriAcakList,
-    formatJenjangTampilan,
-    jenjangDariKelasMurid,
-} from '../services/homeService';
+import { formatJenjangTampilan, jenjangDariKelasMurid } from '../services/homeService';
+import { Calendar, BookOpen, Wallet, FileText, Bell } from 'lucide-react-native';
+import { formatRupiah } from '../utils/formatters';
 
+import MenuItem from '../components/MenuItem';
+import SubjectItem from '../components/SubjectItem';
+import SessionCard from '../components/SessionCard';
 
-import { fetchNotifikasi } from '../services/notifikasiService';
-import { Calendar, BookOpen, Wallet, FileText, Search, MessageSquare, User, Home, Bell } from 'lucide-react-native';
+import { useActiveSessions } from '../hooks/useActiveSessions';
+import { useMateriRekomen } from '../hooks/useMateriRekomen';
+import { useNotifikasi } from '../hooks/useNotifikasi';
 
 const { width, height } = Dimensions.get('window');
 const LOGO_SOURCE = require('../assets/logo_humana.png');
@@ -46,45 +46,9 @@ const FONTS = {
     regular: 'SF-Pro-Display-Regular',
 };
 
-const formatRupiah = (angka) => {
-    if (!angka) return 'Rp 0';
-    return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
-};
 
-/** Pemetaan sesi header guru — sama tab Jadwal Aktif di ActivityGuruPage (bukan Permintaan). */
-const mapSesiKeJadwalAktifGuru = raw => {
-    const status = (raw.status_pemesanan || 'dikonfirmasi').toLowerCase();
-    const tipe = status === 'berlangsung' ? 'Berlangsung' : 'Aktif';
-    const harga =
-        raw.harga_total ||
-        raw.tarif ||
-        raw.bayaran ||
-        ((raw.biaya_sesi || 0) + (raw.biaya_jarak || 0));
-    return {
-        item: {
-            id: raw.id_pemesanan,
-            id_pemesanan: raw.id_pemesanan,
-            id_murid: raw.id_murid,
-            nama_murid: raw.nama_murid,
-            materi: raw.nama_materi || raw.materi?.nama_materi,
-            nama_materi: raw.nama_materi || raw.materi?.nama_materi,
-            nama_mapel: raw.nama_mapel || raw.mata_pelajaran?.nama_mapel,
-            jenjang_pendidikan: raw.jenjang_pendidikan,
-            waktu_mulai: raw.waktu_mulai,
-            waktu_selesai: raw.waktu_selesai,
-            waktu_string: raw.waktu_string,
-            harga_total: harga,
-            biaya_sesi: raw.biaya_sesi,
-            biaya_jarak: raw.biaya_jarak,
-            harga,
-            lokasi_sesi: raw.lokasi_sesi || raw.lokasi || raw.alamat,
-            status_pemesanan:
-                status === 'berlangsung' ? 'berlangsung' : 'dikonfirmasi',
-            tipe,
-        },
-        tipe,
-    };
-};
+
+
 
 const HomePage = ({
     namaLengkap, email, onLogout, onSelectSubject,
@@ -101,16 +65,14 @@ const HomePage = ({
     const [allSubjects, setAllSubjects] = useState([]);
     const [loadingMapel, setLoadingMapel] = useState(false);
     const [pendingAutoJenjang, setPendingAutoJenjang] = useState(null);
-    const [activeSessions, setActiveSessions] = useState([]);
-    const [loadingSessions, setLoadingSessions] = useState(false);
-    const [materiFavorit, setMateriFavorit] = useState(null);
-    const [rekomendasiList, setRekomendasiList] = useState([]);
-    const [loadingMateriRekom, setLoadingMateriRekom] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [alertConfig, setAlertConfig] = useState({
         visible: false, type: 'success', title: '', message: ''
     });
-    const [unreadNotif, setUnreadNotif] = useState(false);
+
+    const { activeSessions, loadingSessions, refetchSessions } = useActiveSessions(userId, role);
+    const { materiFavorit, rekomendasiList, loadingMateriRekom, refetchMateri } = useMateriRekomen(userId, role, jenjangMurid);
+    const { unreadNotif, refetchNotif } = useNotifikasi(userId, role);
 
     useEffect(() => {
         if (isMateriVisible) {
@@ -193,93 +155,10 @@ const HomePage = ({
         })
     )[0];
 
-    const loadActiveSessions = useCallback(async () => {
-        if (!userId || !userRole || userRole === '-') return;
-        setLoadingSessions(true);
-        try {
-            const result = await getActiveSchedule(userRole, userId);
-            if (result?.success) {
-                let raw = result.data;
-                if (!Array.isArray(raw)) raw = [raw];
-                
-                const today = new Date();
-                raw = raw.filter(sesi => {
-                    const tglRaw = sesi.waktu_mulai || sesi.jam_mulai;
-                    if (!tglRaw) return false;
-                    const tgl = new Date(tglRaw);
-                    return (
-                        tgl.getDate() === today.getDate() &&
-                        tgl.getMonth() === today.getMonth() &&
-                        tgl.getFullYear() === today.getFullYear()
-                    );
-                });
-
-                setActiveSessions(raw);
-            } else {
-                setActiveSessions([]);
-            }
-        } catch {
-            setActiveSessions([]);
-        } finally {
-            setLoadingSessions(false);
-        }
-    }, [userId, userRole]);
-
-    const loadMateriRekom = useCallback(async () => {
-        if (role !== 'murid' || !userId) return;
-        setLoadingMateriRekom(true);
-        try {
-            const [favorit, rekomendasi] = await Promise.all([
-                getMateriTerfavoritMurid(userId),
-                getRekomendasiMateriAcakList(5, jenjangMurid),
-            ]);
-            setMateriFavorit(favorit);
-            setRekomendasiList(Array.isArray(rekomendasi) ? rekomendasi : []);
-        } catch (err) {
-            console.error('[HomePage] Gagal muat materi rekom:', err);
-            setMateriFavorit(null);
-            setRekomendasiList([]);
-        } finally {
-            setLoadingMateriRekom(false);
-        }
-    }, [userId, role, jenjangMurid]);
-
-    useEffect(() => {
-        loadActiveSessions();
-    }, [loadActiveSessions]);
-
-    const loadNotif = useCallback(async () => {
-        if (!userId || !userRole) return;
-        try {
-            const resNotif = await fetchNotifikasi(role, userId);
-            if (resNotif && resNotif.success && Array.isArray(resNotif.data) && resNotif.data.length > 0) {
-                const maxId = Math.max(...resNotif.data.map(n => n.id_notifikasi));
-                const lastRead = await AsyncStorage.getItem(`last_read_notif_${userId}`);
-                if (!lastRead || maxId > parseInt(lastRead)) {
-                    setUnreadNotif(true);
-                } else {
-                    setUnreadNotif(false);
-                }
-            } else {
-                setUnreadNotif(false);
-            }
-        } catch (error) {
-            setUnreadNotif(false);
-        }
-    }, [userId, role]);
-
-    useEffect(() => {
-        loadNotif();
-    }, [loadNotif]);
-
-    useEffect(() => {
-        loadMateriRekom();
-    }, [loadMateriRekom]);
-
     const handleRefresh = async () => {
         setRefreshing(true);
-        const tasks = [loadActiveSessions(), loadNotif()];
-        if (role === 'murid') tasks.push(loadMateriRekom());
+        const tasks = [refetchSessions(), refetchNotif()];
+        if (role === 'murid') tasks.push(refetchMateri());
         await Promise.all(tasks);
         setRefreshing(false);
     };
@@ -296,163 +175,7 @@ const HomePage = ({
     };
 
 
-    const renderSubjectItem = (subject) => {
-        const icon = SUBJECT_ICONS[subject.nama_mapel] || LOGO_SOURCE;
-        return (
-            <TouchableOpacity
-                key={subject.id_mapel || Math.random()}
-                style={styles.subjectItemContainer}
-                onPress={() => {
-                    closeMateriSheet();
-                    if (onSelectSubject) onSelectSubject({ id_mapel: subject.id_mapel, subjectName: subject.nama_mapel });
-                }}
-            >
-                <View style={styles.subjectIconBox}>
-                    <Image source={icon} style={styles.subjectIconImage} resizeMode="contain" />
-                </View>
-                <Text style={styles.subjectItemText}>{subject.nama_mapel}</Text>
-            </TouchableOpacity>
-        );
-    };
-
-    // ── Render card sesi ─────────────────────────────────────────────────────
-    // ── 1. RENDER ITEM UNTUK TIAP CARD SESI ───────────────────────────────────
-    const renderSessionItem = ({ item: s }) => {
-        const rawMulai = s.waktu_mulai || s.jam_mulai;
-        const rawSelesai = s.waktu_selesai || s.jam_selesai;
-
-        let waktu = '–';
-
-        if (rawMulai && rawSelesai) {
-            try {
-                const formatTimeStr = (rawStr) => {
-                    if (typeof rawStr !== 'string') return '–';
-                    if (rawStr.includes('-') || rawStr.includes('T')) {
-                        const dateObj = new Date(rawStr);
-                        const formatZero = (num) => String(num).padStart(2, '0');
-                        return `${formatZero(dateObj.getHours())}:${formatZero(dateObj.getMinutes())}`;
-                    } else {
-                        return rawStr.substring(0, 5).replace('.', ':');
-                    }
-                };
-                waktu = `${formatTimeStr(rawMulai)} – ${formatTimeStr(rawSelesai)}`;
-            } catch (error) {
-                console.error("Gagal parsing waktu:", error);
-                waktu = '–';
-            }
-        }
-
-        const lokasi = s.lokasi || s.alamat || 'Alamat tidak tersedia';
-        const bayaran = formatRupiah(s.tarif || s.bayaran || s.total_harga || 0);
-        const gridStyle = role === 'guru' ? styles.gridCol3 : styles.gridCol2;
-
-        // Lebar card murni dihitung dinamis agar card kedua sedikit mengintip secara estetis
-        const cardWidth = width - 40;
-
-        const bukaDetailSesi = () => {
-            if (role === 'murid') {
-                if (onDetailSesiAktif) onDetailSesiAktif(s);
-                return;
-            }
-            if (role === 'guru' && onDetailPermintaan) {
-                const { item, tipe } = mapSesiKeJadwalAktifGuru(s);
-                onDetailPermintaan(item, tipe);
-            }
-        };
-
-        const cardDapatDiklik =
-            (role === 'murid' && onDetailSesiAktif) ||
-            (role === 'guru' && onDetailPermintaan);
-
-        const cardInner = (
-            <View style={[styles.sessionCard, { marginBottom: 0, marginRight: 0, width: '100%' }]}>
-                <Text style={styles.cardLabel}>SESI HARI INI</Text>
-
-                    {role === 'guru' ? (
-                        <View style={styles.rowCenter}>
-                            <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>
-                                    {(s.nama_murid || 'M').substring(0, 2).toUpperCase()}
-                                </Text>
-                            </View>
-                            <View style={{ flex: 1, marginLeft: 12 }}>
-                                <Text style={styles.sessionName} numberOfLines={1}>
-                                    {s.nama_murid || 'Nama Murid'}
-                                </Text>
-                                <Text style={styles.sessionSub} numberOfLines={1}>
-                                    {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'} — {s.materi?.nama_materi || s.nama_materi || 'Materi'}
-                                </Text>
-                            </View>
-                            <View style={styles.badgeGreen}>
-                                <Text style={styles.badgeGreenText}>• Segera</Text>
-                            </View>
-                        </View>
-                    ) : (
-                        <View style={styles.rowCenter}>
-                            {s.status_pembayaran === 'menunggu' && (
-                                <View style={[styles.badgeYellow, { marginRight: 10 }]}>
-                                    <Text style={styles.badgeYellowText}>Bayar</Text>
-                                </View>
-                            )}
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.sessionTitle} numberOfLines={2}>
-                                    <Text style={{ fontFamily: FONTS.bold }}>
-                                        {s.mata_pelajaran?.nama_mapel || s.nama_mapel || 'Mapel'}
-                                    </Text>
-                                    {' – '}{s.materi?.nama_materi || s.nama_materi || 'Materi'}
-                                </Text>
-                            </View>
-                        </View>
-                    )}
-
-
-                <View style={styles.detailGrid}>
-                    <View style={gridStyle}>
-                        <Text style={styles.detailLabel}>Waktu</Text>
-                        <Text style={styles.detailValue} numberOfLines={1}>{waktu}</Text>
-                    </View>
-                    <View style={gridStyle}>
-                        <Text style={styles.detailLabel}>{role === 'guru' ? 'Lokasi' : 'Guru'}</Text>
-                        <Text style={styles.detailValue} numberOfLines={2}>
-                            {role === 'guru' ? lokasi : (s.nama_guru || '–')}
-                        </Text>
-                    </View>
-                    {role === 'guru' && (
-                        <View style={gridStyle}>
-                            <Text style={styles.detailLabel}>Bayaran</Text>
-                            <Text style={styles.detailValue} numberOfLines={1}>{bayaran}</Text>
-                        </View>
-                    )}
-                </View>
-
-                {role === 'guru' && (
-                    <View style={styles.cardActions}>
-                        <TouchableOpacity style={styles.btnPrimary}>
-                            <Text style={styles.btnPrimaryText}>Lihat Rute</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.btnOutline}>
-                            <Text style={styles.btnOutlineText}>Chat Murid</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-            </View>
-        );
-
-        return (
-            <View style={{ width: cardWidth, marginRight: 16 }}>
-                {cardDapatDiklik ? (
-                    <TouchableOpacity activeOpacity={1} onPress={bukaDetailSesi}>
-                        {cardInner}
-                    </TouchableOpacity>
-                ) : (
-                    cardInner
-                )}
-            </View>
-        );
-    };
-
-    // ── 2. WRAPPER UTAMA FLATLIST CAROUSEL SLIDER (EFEK CENTER STANDBY) ──
-    const renderSessionCard = () => {
+    const renderSessionCardList = () => {
         if (loadingSessions) {
             return (
                 <View style={[styles.sessionCard, styles.centerContent, { height: 160, marginHorizontal: 20 }]}>
@@ -471,36 +194,32 @@ const HomePage = ({
             );
         }
 
-        // Berdasarkan gambar image_baea26.png, jarak kanan-kiri card ke tepi layar adalah 20px
-        const SIDE_PADDING = 20;
-        const cardWidth = width - 40; // Lebar card pas mengikuti sisa ruang screen
-        const gapSize = 12; // Jarak renggang antar card saat di-swipe
+        const cardWidth = width - 40;
+        const gapSize = 12;
 
         return (
             <Animated.FlatList
                 nestedScrollEnabled
                 data={activeSessions}
                 renderItem={({ item }) => (
-                    <View style={{ width: cardWidth, marginRight: gapSize }}>
-
-                        {renderSessionItem({ item })}
-                    </View>
+                    <SessionCard 
+                        session={item} 
+                        role={role} 
+                        onDetailSesiAktif={onDetailSesiAktif} 
+                        onDetailPermintaan={onDetailPermintaan} 
+                    />
                 )}
-                keyExtractor={(item, index) =>
-                    item.id_pemesanan?.toString() || item.id_jadwal?.toString() || index.toString()
-                }
+                keyExtractor={(item, index) => item.id_pemesanan?.toString() || index.toString()}
                 horizontal
-
                 pagingEnabled={false}
                 snapToInterval={cardWidth + gapSize}
                 snapToAlignment="start"
                 decelerationRate="fast"
                 disableIntervalMomentum={true}
                 showsHorizontalScrollIndicator={false}
-
                 contentContainerStyle={{
-                    paddingLeft: SIDE_PADDING,
-                    paddingRight: SIDE_PADDING,
+                    paddingLeft: 20,
+                    paddingRight: 20,
                     paddingVertical: 4
                 }}
             />
@@ -543,7 +262,7 @@ const HomePage = ({
                         </TouchableOpacity>
                     </View>
 
-                    <View>{renderSessionCard()}</View>
+                    <View>{renderSessionCardList()}</View>
 
                     <View style={styles.menuGrid}>
                         {role === 'guru' ? (
@@ -764,7 +483,17 @@ const HomePage = ({
                             ) : (
                                 <View style={styles.subjectGrid}>
                                     {allSubjects.length > 0
-                                        ? allSubjects.map(renderSubjectItem)
+                                        ? allSubjects.map(subject => (
+                                            <SubjectItem 
+                                                key={subject.id_mapel}
+                                                subject={subject}
+                                                icon={SUBJECT_ICONS[subject.nama_mapel] || LOGO_SOURCE}
+                                                onPress={() => {
+                                                    closeMateriSheet();
+                                                    if (onSelectSubject) onSelectSubject({ id_mapel: subject.id_mapel, subjectName: subject.nama_mapel });
+                                                }}
+                                            />
+                                        ))
                                         : (
                                             <Text style={styles.emptyText}>
                                                 {`Tidak ada mata pelajaran untuk jenjang ${selectedJenjang}.`}
@@ -781,12 +510,7 @@ const HomePage = ({
     );
 };
 
-const MenuItem = ({ icon, label, onPress }) => (
-    <TouchableOpacity style={styles.menuItem} onPress={onPress}>
-        <View style={styles.menuIconBox}>{icon}</View>
-        <Text style={styles.menuLabel} numberOfLines={1}>{label}</Text>
-    </TouchableOpacity>
-);
+
 
 const styles = StyleSheet.create({
     homeContainer: { flex: 1, backgroundColor: '#F5F7FA' },

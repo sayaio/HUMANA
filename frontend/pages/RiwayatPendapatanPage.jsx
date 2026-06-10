@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
 import { fetchRiwayatPendapatan } from '../services/pendapatanService';
+import { formatRupiah } from '../utils/formatters';
 import PageHeader from '../components/PageHeader';
 
 const FONTS = {
@@ -39,11 +40,6 @@ const BULAN = [
     { label: 'Sep', value: 9 }, { label: 'Okt', value: 10 },
     { label: 'Nov', value: 11 }, { label: 'Des', value: 12 },
 ];
-
-const formatRupiah = (angka) => {
-    if (!angka) return 'Rp 0';
-    return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
-};
 
 const currentYear = new Date().getFullYear();
 const TAHUN = [null, currentYear, currentYear - 1, currentYear - 2].map(y => ({

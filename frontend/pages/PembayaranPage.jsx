@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { pemesananService } from '../services/pemesananService';
 import { API_URL } from '../src/config';
 import PageHeader from '../components/PageHeader';
 
@@ -22,12 +23,12 @@ const PembayaranPage = ({ snapUrl, idPemesanan, onFinish }) => {
       }
 
       try {
-        const response = await fetch(`${API_URL}/pemesanan/cek-status?id_pemesanan=${idPemesanan}`);
-        const result = await response.json();
-        console.log('📊 Polling status:', result.status_pemesanan);
+        const result = await pemesananService.cekStatusPemesanan(idPemesanan);
+        const statusPemesanan = result.data?.status_pemesanan;
+        console.log('📊 Polling status:', statusPemesanan);
 
         // Jika status 'selesai' atau 'dikonfirmasi', anggap sukses
-        if (result.success && result.status_pemesanan === 'selesai') {
+        if (result.success && statusPemesanan === 'selesai') {
           console.log('✅ Polling mendeteksi sukses! Redirect ke Home dalam 5 detik...');
           clearInterval(interval);
           hasFinished.current = true;

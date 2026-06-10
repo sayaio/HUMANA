@@ -96,7 +96,7 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole, totalUnread = 0 }) 
         style={styles.navBarItem}
         onPress={() =>
           onNavigate &&
-          onNavigate(role === 'guru' ? 'ActivityGuru' : 'Activity', 'aktif')
+          onNavigate(role === 'guru' ? 'ActivityGuru' : 'Activity', 'Jadwal Aktif')
         }
       >
         <Actv
@@ -119,7 +119,7 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole, totalUnread = 0 }) 
         style={styles.navBarItem}
         onPress={() =>
           onNavigate &&
-          onNavigate(role === 'guru' ? 'ActivityGuru' : 'PesanSesi')
+          onNavigate(role === 'guru' ? 'ActivityGuru' : 'PesanSesi', role === 'guru' ? 'Permintaan' : undefined)
         }
       >
         <View style={{ height: 22 }} />
@@ -183,7 +183,7 @@ const BottomNavbar = ({ currentScreen, onNavigate, userRole, totalUnread = 0 }) 
           style={styles.centerFabAbsolute}
           onPress={() =>
             onNavigate &&
-            onNavigate(role === 'guru' ? 'ActivityGuru' : 'PesanSesi')
+            onNavigate(role === 'guru' ? 'ActivityGuru' : 'PesanSesi', role === 'guru' ? 'Permintaan' : undefined)
           }
           activeOpacity={0.8}
         >

@@ -1,4 +1,4 @@
-const pool = require('../database');
+const { fetchQuery, executeQuery } = require('../utils/dbHelper');
 const Guru = require('../classes/Guru');
 const Murid = require('../classes/Murid');
 const Feedback = require('../classes/Feedback');
@@ -22,11 +22,11 @@ const submitFeedback = async (req, res) => {
 
     try {
         // 0. Cegah feedback ganda: satu sesi hanya boleh punya satu feedback.
-        const sudahAda = await pool.query(
+        const sudahAda = await fetchQuery(
             'SELECT id_feedback FROM Feedback WHERE id_pemesanan = ? LIMIT 1',
             [id_pemesanan]
         );
-        const sudahAdaRows = sudahAda.rows || sudahAda;
+        const sudahAdaRows = sudahAda;
         if (sudahAdaRows && sudahAdaRows.length > 0) {
             return res.status(409).json({
                 success: false,
@@ -35,13 +35,13 @@ const submitFeedback = async (req, res) => {
         }
 
         // 1. Simpan feedback baru ke tabel Feedback
-        await pool.query(
+        await executeQuery(
             'INSERT INTO Feedback (id_pemesanan, komentar, rating) VALUES (?, ?, ?)',
             [id_pemesanan, komentar, rating]
         );
 
         // 2. Cari tahu id_guru dari id_sesi ini (Asumsi tabel Sesi memiliki kolom id_guru)
-        const sesiRows = await pool.query(
+        const sesiRows = await fetchQuery(
             'SELECT id_guru FROM Pemesanan WHERE id_pemesanan = ?',
             [id_pemesanan]
         );
@@ -52,7 +52,7 @@ const submitFeedback = async (req, res) => {
         const id_guru = sesiRows[0].id_guru;
 
         // 3. Ambil data profil Guru untuk keperluan instansiasi Class Guru
-        const guruRows = await pool.query(
+        const guruRows = await fetchQuery(
             'SELECT * FROM Guru WHERE id_guru = ?',
             [id_guru]
         );
@@ -60,7 +60,7 @@ const submitFeedback = async (req, res) => {
 
         // 4. Ambil semua data feedback milik Guru ini dari database untuk dimasukkan ke objek
         // Asumsi: Kita join Feedback ke Sesi untuk tahu feedback mana saja yang ditujukan ke id_guru ini
-        const allFeedbacks = await pool.query(
+        const allFeedbacks = await fetchQuery(
             `SELECT f.* FROM Feedback f 
              INNER JOIN Pemesanan p ON f.id_pemesanan = p.id_pemesanan 
              WHERE p.id_guru = ?`,
@@ -87,7 +87,7 @@ const submitFeedback = async (req, res) => {
         console.log(`Hasil Perhitungan getRating() Objek: ${ratingBaru}`);
 
         // 8. (Opsional) Update kolom rating rata-rata di tabel Guru jika Anda menyimpannya secara redundan demi performa query
-        await pool.query(
+        await executeQuery(
             'UPDATE Guru SET rating = ? WHERE id_guru = ?',
             [ratingBaru, id_guru]
         );
@@ -110,13 +110,13 @@ const getGuruRating = async (req, res) => {
 
     try {
         // 1. Ambil data dasar Guru (Ambil kolom secara eksplisit agar aman)
-        const guruRows = await pool.query(
+        const guruRows = await fetchQuery(
             'SELECT id_guru, username, email_guru, password, nama_guru, is_active, no_telepon, jenis_kelamin, alamat FROM Guru WHERE id_guru = ?',
             [id_guru]
         );
 
         // Menangani beberapa driver pack yang membungkus baris data di dalam array extra
-        const rows = guruRows.rows || guruRows;
+        const rows = guruRows;
 
         if (!rows || rows.length === 0) {
             return res.status(444).json({ success: false, message: 'Guru tidak ditemukan' });
@@ -124,13 +124,13 @@ const getGuruRating = async (req, res) => {
         const gData = rows[0];
 
         // 2. Ambil seluruh feedback untuk menghitung rating riil secara OOP
-        const feedbackRows = await pool.query(
+        const feedbackRows = await fetchQuery(
             `SELECT f.rating, f.komentar FROM Feedback f 
              INNER JOIN Pemesanan p ON f.id_pemesanan = p.id_pemesanan
              WHERE p.id_guru = ?`,
             [id_guru]
         );
-        const allFeedbacks = feedbackRows.rows || feedbackRows;
+        const allFeedbacks = feedbackRows;
 
         // 3. Instansiasi Objek Guru (Samakan persis dengan di authController/login)
         const statusToggleBoolean = gData.is_active == 1;
@@ -191,12 +191,12 @@ const getMuridProfile = async (req, res) => {
     const { id_murid } = req.params;
 
     try {
-        const muridRows = await pool.query(
+        const muridRows = await fetchQuery(
             'SELECT id_murid, username, email, password, nama_murid, no_telepon, jenis_kelamin, alamat, kelas, jurusan FROM Murid WHERE id_murid = ?',
             [id_murid],
         );
 
-        const rows = muridRows.rows || muridRows;
+        const rows = muridRows;
 
         if (!rows || rows.length === 0) {
             return res.status(404).json({ success: false, message: 'Murid tidak ditemukan' });
@@ -250,11 +250,11 @@ const getFeedbackByPemesanan = async (req, res) => {
     const { id_pemesanan } = req.params;
 
     try {
-        const rows = await pool.query(
+        const rows = await fetchQuery(
             'SELECT id_feedback, id_pemesanan, komentar, rating FROM Feedback WHERE id_pemesanan = ? ORDER BY id_feedback DESC LIMIT 1',
             [id_pemesanan]
         );
-        const data = rows.rows || rows;
+        const data = rows;
 
         if (!data || data.length === 0) {
             return res.status(200).json({ success: true, data: null });

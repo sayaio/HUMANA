@@ -208,6 +208,13 @@ const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) 
       : sessionData?.biaya_sesi);
   const fotoUri = resolveFotoUri(fotoDokumentasi);
 
+  const statusPemesanan = 
+    sessionData?.status_pemesanan || 
+    sessionData?.status || 
+    sessionData?.status_sesi || '';
+
+  const isDibatalkan = statusPemesanan.toLowerCase() !== 'selesai';
+
   return (
     <>
       <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
@@ -346,6 +353,12 @@ const SessionDetailPage = ({ onBack, sessionData, userId, userRole = 'murid' }) 
                   </>
                 )}
               </>
+            ) : isDibatalkan ? (
+              <View style={[styles.feedbackReadonly, { minHeight: height * 0.08 }]}>
+                <Text style={styles.feedbackReadonlyText}>
+                  Sesi ini telah dibatalkan. Anda tidak dapat memberikan rating dan komentar.
+                </Text>
+              </View>
             ) : (
               <>
                 <TextInput

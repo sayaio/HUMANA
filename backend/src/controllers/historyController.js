@@ -1,5 +1,5 @@
 // controllers/historyController.js
-const pool = require('../database');
+const { fetchQuery } = require('../utils/dbHelper');
 const PemesananSesi = require('../classes/PemesananSesi');
 
 const getHistory = async (req, res) => {
@@ -47,7 +47,7 @@ const getHistory = async (req, res) => {
     LIMIT ? OFFSET ?;
 `;
 
-        const rows = await pool.query(query, [id, limit, offset]);
+        const rows = await fetchQuery(query, [id, limit, offset]);
 
         if (rows.length === 0) {
             return res.status(200).json({ success: true, data: [], message: 'Belum ada riwayat pemesanan.' });
@@ -137,7 +137,7 @@ const getActiveSchedule = async (req, res) => {
             LIMIT ? OFFSET ?;
         `;
 
-        const rows = await pool.query(query, [id, limit, offset]);
+        const rows = await fetchQuery(query, [id, limit, offset]);
         return res.status(200).json({ success: true, data: rows });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });

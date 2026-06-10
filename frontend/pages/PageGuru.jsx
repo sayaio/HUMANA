@@ -32,6 +32,7 @@ import {
 } from '../services/matchingService';
 import { fetchMapelByJenjang } from '../services/MateriService';
 import { fetchNotifikasi, clearNotifikasi } from '../services/notifikasiService';
+import { formatRupiah } from '../utils/formatters';
 import BottomNavbar from '../components/BottomNavbar';
 import CustomAlert from '../components/CustomAlert';
 import { useAppAlert } from '../components/AppAlertProvider';
@@ -170,17 +171,6 @@ const PageGuru = ({ guruData, onNavigate, onSelectSubject, onDetailPermintaan })
     setRefreshing(true);
     await loadPermintaan(true);
     setRefreshing(false);
-  };
-
-
-
-  const formatRupiah = number => {
-    if (!number) return 'Rp 0';
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(number);
   };
 
   const formatTanggalCard = raw => {

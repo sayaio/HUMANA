@@ -24,16 +24,11 @@ import DimmedModal from '../components/DimmedModal';
 import { centerModalCardBase, MODAL_CARD_WIDTH } from '../components/modalTheme';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { uploadDokumentasi } from '../services/dokumentasiService';
-import {
-  terimaPermintaanSesiAPI,
-  selesaikanSesiAPI,
-} from '../services/matchingService';
+import { selesaikanSesiAPI, terimaPermintaanSesiAPI } from '../services/matchingService';
 import { getStatusPembayaran } from '../services/bankerService';
+import { formatRupiah } from '../utils/formatters';
 import { WebView } from 'react-native-webview';
-
-const NOMINATIM_HEADERS = {
-  'User-Agent': 'HumanaApp/1.0 (Aplikasi Bimbingan Belajar)',
-};
+import { mapService } from '../services/mapService';
 
 const parseKoordinatDariString = str => {
   if (!str) return null;
@@ -158,20 +153,14 @@ const DetailPermintaanGuruPage = ({
       }
 
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            alamatMentah,
-          )}&limit=1`,
-          { headers: NOMINATIM_HEADERS },
-        );
-        const json = await res.json();
+        const result = await mapService.searchAlamat(alamatMentah);
         if (!cancelled) {
-          if (json?.[0]) {
+          if (result.success) {
             setMapCoords({
-              latitude: parseFloat(json[0].lat),
-              longitude: parseFloat(json[0].lon),
+              latitude: result.latitude,
+              longitude: result.longitude,
             });
-            setDisplayAddress(json[0].display_name || alamatMentah);
+            setDisplayAddress(result.display_name || alamatMentah);
           } else {
             setMapCoords(null);
             setDisplayAddress(alamatMentah);
@@ -228,10 +217,7 @@ const DetailPermintaanGuruPage = ({
     ? data.nama_murid.substring(0, 2).toUpperCase()
     : 'SN';
 
-  const formatRupiah = angka => {
-    if (!angka && angka !== 0) return 'Rp 0';
-    return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
-  };
+
 
   const handleBukaMap = () => {
     if (mapCoords) {

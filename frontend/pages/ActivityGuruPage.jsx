@@ -41,6 +41,12 @@ const ActivityGuruPage = ({
     const [jadwalAktifData, setJadwalAktifData] = useState([]);
     const [riwayatData, setRiwayatData] = useState([]);
 
+    useEffect(() => {
+        if (initialTab && initialTab !== activeTab) {
+            setActiveTab(initialTab);
+        }
+    }, [initialTab]);
+
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     

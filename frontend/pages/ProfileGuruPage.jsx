@@ -160,16 +160,16 @@ const ProfileGuruPage = ({ guruData, onNavigate, onLogout, onRefreshData }) => {
         });
     };
 
-    const initialLetter = guruData?.name
-        ? guruData.name.substring(0, 2).toUpperCase()
-        : 'RN';
-
     const DataRow = ({ label, value }) => (
         <View style={styles.dataRow}>
             <Text style={styles.dataLabel}>{label}</Text>
             <Text style={styles.dataValue}>{value || '-'}</Text>
         </View>
     );
+
+    const initialLetter = guruData?.name
+        ? guruData.name.substring(0, 2).toUpperCase()
+        : 'RN';
 
     return (
         <SafeAreaView style={styles.container}>
@@ -358,7 +358,6 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         alignItems: 'center',
         paddingHorizontal: width * 0.05,
-        // SOLUSI RESPONSIF: Menghitung padding atas berdasarkan platform OS & tinggi StatusBar asli
         paddingTop:
             Platform.OS === 'android'
                 ? StatusBar.currentHeight
@@ -373,8 +372,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#000',
     },
-
-    // USER CARD — sama persis dengan ProfilePage murid
     userCard: {
         flexDirection: 'row',
         backgroundColor: '#F8F9FC',
@@ -421,8 +418,6 @@ const styles = StyleSheet.create({
         opacity: 0.4,
         zIndex: 0,
     },
-
-    // STATUS CARD
     statusCard: {
         backgroundColor: '#FFF',
         marginHorizontal: width * 0.05,

@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
   InteractionManager,
   BackHandler,
 } from 'react-native';
@@ -38,67 +35,30 @@ import RiwayatPendapatanPage from './pages/RiwayatPendapatanPage';
 import PortfolioPage from './pages/PortfolioPage';
 import NotifikasiPage from './pages/NotifikasiPage';
 import { pemesananService } from './services/pemesananService';
+import { mapSessionToBookingData } from './utils/sessionMapper';
+
+const ROOT_PAGES = ['Home', 'PageGuru', 'Login', 'Register', 'Splash'];
 
 const App = () => {
   const { showInfo } = useAppAlert();
-  const DEV_SKIP_TO_PAYMENT = false;
-
-  const [isAppLoading, setIsAppLoading] = useState(
-    DEV_SKIP_TO_PAYMENT ? false : true,
-  );
-  const [currentPage, setCurrentPage] = useState(
-    DEV_SKIP_TO_PAYMENT ? 'DetailPembayaran' : 'Splash',
-  );
-  const [bookingSessionData, setBookingSessionData] = useState(
-    DEV_SKIP_TO_PAYMENT
-      ? {
-          id_pemesanan: 13,
-          id_guru: 1,
-          id_murid: 1,
-          nama_guru: 'Dr. Ahmad Fauzi',
-          nama_mapel: 'Kimia',
-          nama_materi: 'Struktur Atom',
-          waktu_sesi: '06:30 - 07:30',
-          tanggal: '25 Mei 2026',
-          lokasi: '37.42200, -122.08400',
-        }
-      : null,
-  );
-  const [namaLengkap, setNamaLengkap] = useState(
-    DEV_SKIP_TO_PAYMENT ? 'Siswa Tester' : '',
-  );
-  const [email, setEmail] = useState(
-    DEV_SKIP_TO_PAYMENT ? 'tester@humana.com' : '',
-  );
-  const [profileData, setProfileData] = useState(
-    DEV_SKIP_TO_PAYMENT
-      ? {
-          id: 1,
-          role: 'murid',
-          name: 'Siswa Tester',
-          email: 'tester@humana.com',
-          username: 'siswatester',
-          phone: '081234567890',
-          gender: 'Laki-laki',
-          domicile: 'Bandung',
-          education: 'SMA',
-          major: 'IPA',
-          is_active: true,
-        }
-      : {
-          id: null,
-          role: '-',
-          name: '-',
-          email: '-',
-          username: '-',
-          phone: '-',
-          gender: '-',
-          domicile: '-',
-          education: '-',
-          major: '-',
-          is_active: false,
-        },
-  );
+  const [isAppLoading, setIsAppLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState('Splash');
+  const [bookingSessionData, setBookingSessionData] = useState(null);
+  const [namaLengkap, setNamaLengkap] = useState('');
+  const [email, setEmail] = useState('');
+  const [profileData, setProfileData] = useState({
+    id: null,
+    role: '-',
+    name: '-',
+    email: '-',
+    username: '-',
+    phone: '-',
+    gender: '-',
+    domicile: '-',
+    education: '-',
+    major: '-',
+    is_active: false,
+  });
 
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectedChapter, setSelectedChapter] = useState(null);
@@ -113,7 +73,6 @@ const App = () => {
   const [showLoginSuccessAlert, setShowLoginSuccessAlert] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
   const [paymentBackPage, setPaymentBackPage] = useState('PesanSesi');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [paymentSnapUrl, setPaymentSnapUrl] = useState(null);
   const [selectedPermintaanGuru, setSelectedPermintaanGuru] = useState(null);
   const [selectedTipePermintaan, setSelectedTipePermintaan] =
@@ -123,7 +82,6 @@ const App = () => {
   const [activityGuruRefreshKey, setActivityGuruRefreshKey] = useState(0);
   const [isFirstTimePesanSesi, setIsFirstTimePesanSesi] = useState(true);
 
-  const ROOT_PAGES = ['Home', 'PageGuru', 'Login', 'Register', 'Splash'];
   const pageHistoryRef = useRef([]);
   const prevPageRef = useRef(currentPage);
   const isPoppingRef = useRef(false);
@@ -212,8 +170,7 @@ const App = () => {
       console.log('====================================');
     });
 
-    if (DEV_SKIP_TO_PAYMENT) return;
-
+    // Hapus DEV_SKIP_TO_PAYMENT return;
     const checkLoginSession = async () => {
       try {
         const savedSession = await AsyncStorage.getItem('user_session');
@@ -411,6 +368,7 @@ const App = () => {
     if (page === 'HomeGuru') {
       setCurrentPage('PageGuru');
     } else if (page === 'ActivityGuru') {
+      if (tab) setActivityGuruTab(tab);
       setCurrentPage('RealActivityGuru');
     } else if (page === 'ChatGuru') {
       setCurrentPage('Chat');
@@ -556,56 +514,7 @@ const App = () => {
                 onDetailSesiAktif={item => {
                     const currentRole = (profileData.role || 'murid').toLowerCase();
                     if (currentRole === 'murid' && item.status_pembayaran === 'menunggu') {
-                        // Map the session item to bookingSessionData structure
-                        const displayLokasi = item.lokasi_sesi && item.lokasi_sesi.includes('|') ? item.lokasi_sesi.split('|')[1] : item.lokasi_sesi;
-                        let displayKoordinat = null;
-                        if (item.lokasi_sesi && item.lokasi_sesi.includes('|')) {
-                            const coords = item.lokasi_sesi.split('|')[0].split(',');
-                            if (coords.length === 2) {
-                                displayKoordinat = {
-                                    latitude: Number(coords[0]),
-                                    longitude: Number(coords[1])
-                                };
-                            }
-                        }
-
-                        const formatDateIndonesian = (dateStr) => {
-                            if (!dateStr) return '';
-                            const date = new Date(dateStr.toString().replace(' ', 'T'));
-                            if (isNaN(date.getTime())) return '';
-                            const months = [
-                              'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                              'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-                            ];
-                            return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-                        };
-
-                        const formatTimeSesi = (mulaiStr, selesaiStr) => {
-                            if (!mulaiStr || !selesaiStr) return '';
-                            const mulai = new Date(mulaiStr.toString().replace(' ', 'T'));
-                            const selesai = new Date(selesaiStr.toString().replace(' ', 'T'));
-                            if (isNaN(mulai.getTime()) || isNaN(selesai.getTime())) return '';
-                            const pad = (num) => String(num).padStart(2, '0');
-                            return `${pad(mulai.getHours())}:${pad(mulai.getMinutes())} - ${pad(selesai.getHours())}:${pad(selesai.getMinutes())}`;
-                        };
-
-                        const mappedSession = {
-                            id_pemesanan: item.id_pemesanan,
-                            id_sesi: item.id_pemesanan,
-                            nama_mapel: item.nama_mapel,
-                            nama_materi: item.nama_materi,
-                            jenjang: item.jenjang_pendidikan,
-                            kelas: item.kelas_murid,
-                            lokasi: displayLokasi,
-                            koordinat: displayKoordinat,
-                            tanggal: formatDateIndonesian(item.waktu_mulai),
-                            waktu_sesi: formatTimeSesi(item.waktu_mulai, item.waktu_selesai),
-                            biaya_sesi: item.biaya_sesi,
-                            biaya_jarak: item.biaya_jarak,
-                            nominal: item.nominal,
-                            total_harga: item.nominal,
-                        };
-
+                        const mappedSession = mapSessionToBookingData(item);
                         setBookingSessionData(mappedSession);
                         setPaymentBackPage('Home');
                         setCurrentPage('DetailPembayaran');
@@ -683,11 +592,7 @@ const App = () => {
             <DetailPembayaranPage
                 sessionData={bookingSessionData}
                 onBack={() => {
-                    if (DEV_SKIP_TO_PAYMENT) {
-                        setCurrentPage('Login');
-                    } else {
-                        setCurrentPage(paymentBackPage);
-                    }
+                    setCurrentPage(paymentBackPage);
                 }}
                 onPaymentSuccess={snapUrl => {
                     setPaymentSnapUrl(snapUrl);
@@ -765,56 +670,7 @@ const App = () => {
                 onDetailClick={(item, isHistory = false) => {
                     const currentRole = (profileData.role || 'murid').toLowerCase();
                     if (currentRole === 'murid' && !isHistory && item.status_pembayaran === 'menunggu') {
-                        // Map the session item to bookingSessionData structure
-                        const displayLokasi = item.lokasi_sesi && item.lokasi_sesi.includes('|') ? item.lokasi_sesi.split('|')[1] : item.lokasi_sesi;
-                        let displayKoordinat = null;
-                        if (item.lokasi_sesi && item.lokasi_sesi.includes('|')) {
-                            const coords = item.lokasi_sesi.split('|')[0].split(',');
-                            if (coords.length === 2) {
-                                displayKoordinat = {
-                                    latitude: Number(coords[0]),
-                                    longitude: Number(coords[1])
-                                };
-                            }
-                        }
-
-                        const formatDateIndonesian = (dateStr) => {
-                            if (!dateStr) return '';
-                            const date = new Date(dateStr.toString().replace(' ', 'T'));
-                            if (isNaN(date.getTime())) return '';
-                            const months = [
-                              'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                              'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-                            ];
-                            return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-                        };
-
-                        const formatTimeSesi = (mulaiStr, selesaiStr) => {
-                            if (!mulaiStr || !selesaiStr) return '';
-                            const mulai = new Date(mulaiStr.toString().replace(' ', 'T'));
-                            const selesai = new Date(selesaiStr.toString().replace(' ', 'T'));
-                            if (isNaN(mulai.getTime()) || isNaN(selesai.getTime())) return '';
-                            const pad = (num) => String(num).padStart(2, '0');
-                            return `${pad(mulai.getHours())}:${pad(mulai.getMinutes())} - ${pad(selesai.getHours())}:${pad(selesai.getMinutes())}`;
-                        };
-
-                        const mappedSession = {
-                            id_pemesanan: item.id_pemesanan,
-                            id_sesi: item.id_pemesanan,
-                            nama_mapel: item.nama_mapel,
-                            nama_materi: item.nama_materi,
-                            jenjang: item.jenjang_pendidikan,
-                            kelas: item.kelas_murid,
-                            lokasi: displayLokasi,
-                            koordinat: displayKoordinat,
-                            tanggal: formatDateIndonesian(item.waktu_mulai),
-                            waktu_sesi: formatTimeSesi(item.waktu_mulai, item.waktu_selesai),
-                            biaya_sesi: item.biaya_sesi,
-                            biaya_jarak: item.biaya_jarak,
-                            nominal: item.nominal,
-                            total_harga: item.nominal,
-                        };
-
+                        const mappedSession = mapSessionToBookingData(item);
                         setBookingSessionData(mappedSession);
                         setPaymentBackPage('Activity');
                         setCurrentPage('DetailPembayaran');
@@ -1139,11 +995,7 @@ const App = () => {
       <DetailPembayaranPage
         sessionData={bookingSessionData}
         onBack={() => {
-          if (DEV_SKIP_TO_PAYMENT) {
-            setCurrentPage('Login');
-          } else {
-            setCurrentPage('PesanSesi');
-          }
+          setCurrentPage(paymentBackPage);
         }}
         onPaymentSuccess={snapUrl => {
           setPaymentSnapUrl(snapUrl);

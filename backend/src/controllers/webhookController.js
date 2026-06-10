@@ -1,5 +1,5 @@
 // src/controllers/webhookController.js
-const pool = require('../database'); // Koneksi database kamu
+const { executeQuery } = require('../utils/dbHelper');
 
 const handleMidtrans = async (req, res) => {
     try {
@@ -29,7 +29,7 @@ const handleMidtrans = async (req, res) => {
         if (statusBaru) {
             // Mengupdate tabel Pembayaran berdasarkan kolom id_pemesanan
             const queryText = 'UPDATE Pembayaran SET status_pembayaran = ? WHERE id_pemesanan = ?';
-            await pool.query(queryText, [statusBaru, idPemesanan]);
+            await executeQuery(queryText, [statusBaru, idPemesanan]);
 
             console.log(`[Database Sync] Berhasil mengupdate tabel Pembayaran untuk id_pemesanan ${idPemesanan} menjadi '${statusBaru}'`);
         }

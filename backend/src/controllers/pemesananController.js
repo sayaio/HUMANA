@@ -1,4 +1,4 @@
-const pool = require('../database');
+const { fetchQuery, executeQuery } = require('../utils/dbHelper');
 
 // 1. Controller untuk mengambil materi (Sudah di-JOIN dengan MataPelajaran)
 const getMateriDropdown = async (req, res) => {
@@ -33,11 +33,7 @@ const getMateriDropdown = async (req, res) => {
             params.push(kelas);
         }
 
-        const result = await pool.query(querySQL, params); // ← hapus destructuring [rows]
-
-        // Ambil array dari result
-        const rows = Array.isArray(result[0]) ? result[0] :
-            Array.isArray(result) ? result : [result];
+        const rows = await fetchQuery(querySQL, params);
 
         res.status(200).json({ success: true, data: rows });
     } catch (error) {
@@ -51,20 +47,16 @@ const getMapelByJenjang = async (req, res) => {
     try {
         const { jenjang } = req.query;
 
-        let query = "SELECT id_mapel AS id, nama_mapel AS namaMapel, jenjang FROM MataPelajaran";
+        let querySQL = "SELECT id_mapel AS id, nama_mapel AS namaMapel, jenjang FROM MataPelajaran";
         let params = [];
 
         if (jenjang) {
-            query += " WHERE jenjang = ?";
+            querySQL += " WHERE jenjang = ?";
             params.push(jenjang);
         }
 
-        const result = await pool.query(query, params); // ← hapus destructuring [rows]
-        console.log('Raw result:', result); // ← tambah sementara
-
-        // Ambil array dari result
-        const rows = Array.isArray(result[0]) ? result[0] :
-            Array.isArray(result) ? result : [result];
+        const rows = await fetchQuery(querySQL, params);
+        console.log('Raw result (Mapel):', rows);
 
         res.json({ success: true, data: rows });
     } catch (error) {
@@ -88,18 +80,9 @@ const tambahPemesanan = async (req, res) => {
             VALUES (?, null, ?, 'menunggu konfirmasi', ?, ?, ?)
         `;
 
-        const result = await pool.query(querySQL, [id_murid, id_materi, waktu_mulai, waktu_selesai, lokasi_sesi]);
-
-        let insertedId = result[0]?.insertId || result.insertId || null;
+        const result = await executeQuery(querySQL, [id_murid, id_materi, waktu_mulai, waktu_selesai, lokasi_sesi]);
+        let insertedId = result?.insertId || null;
         const safeId = insertedId !== null ? insertedId.toString() : null;
-
-        // *** TAMBAHKAN: Hapus draft setelah pemesanan sukses ***
-        // try {
-        //     await pool.query(`DELETE FROM draft_pemesanan WHERE id_murid = ?`, [id_murid]);
-        //     console.log(`Draft untuk murid ${id_murid} berhasil dihapus setelah pemesanan sukses`);
-        // } catch (clearError) {
-        //     console.warn("Gagal menghapus draft (non-critical):", clearError);
-        // }
 
         res.status(201).json({
             success: true,
@@ -131,7 +114,7 @@ const saveDraftPemesanan = async (req, res) => {
                 FOREIGN KEY (id_murid) REFERENCES Murid(id_murid) ON DELETE CASCADE
             )
         `;
-        await pool.query(checkTableQuery);
+        await executeQuery(checkTableQuery);
 
         // Simpan atau update draft
         const querySQL = `
@@ -142,7 +125,7 @@ const saveDraftPemesanan = async (req, res) => {
                 updated_at = NOW()
         `;
         
-        await pool.query(querySQL, [id_murid, JSON.stringify(draft_data)]);
+        await executeQuery(querySQL, [id_murid, JSON.stringify(draft_data)]);
         
         res.status(200).json({ 
             success: true, 
@@ -169,11 +152,7 @@ const getDraftPemesanan = async (req, res) => {
             WHERE id_murid = ?
         `;
         
-        const result = await pool.query(querySQL, [id_murid]);
-        
-        // Proteksi format array
-        const rows = Array.isArray(result[0]) ? result[0] : 
-                    (Array.isArray(result) ? result : [result]);
+        const rows = await fetchQuery(querySQL, [id_murid]);
         
         if (rows.length === 0) {
             return res.status(200).json({ success: true, data: null });
@@ -181,7 +160,7 @@ const getDraftPemesanan = async (req, res) => {
         
         res.status(200).json({ 
             success: true, 
-            data: rows[0].draft_data,  // ← LANGSUNG PAKAI, karena sudah object dari MySQL
+            data: rows[0].draft_data, 
             updated_at: rows[0].updated_at
         });
         
@@ -196,7 +175,7 @@ const clearDraftPemesanan = async (req, res) => {
         const { id_murid } = req.params;
         
         const querySQL = `DELETE FROM draft_pemesanan WHERE id_murid = ?`;
-        const result = await pool.query(querySQL, [id_murid]);
+        const result = await executeQuery(querySQL, [id_murid]);
         
         res.status(200).json({ 
             success: true, 
@@ -218,7 +197,7 @@ const cekStatusPemesananMurid = async (req, res) => {
     }
 
     try {
-        const result = await pool.query(`
+        const rows = await fetchQuery(`
             SELECT 
                 p.id_pemesanan, 
                 p.status_pemesanan,
@@ -229,13 +208,9 @@ const cekStatusPemesananMurid = async (req, res) => {
             WHERE p.id_pemesanan = ?
         `, [id_pemesanan]);
 
-        // Proteksi format array dari driver pool mysql
-        const rows = Array.isArray(result[0]) ? result[0] : (Array.isArray(result) ? result : [result]);
-
         console.log("=== [DEBUG BACKEND] Rows Terdeteksi ===", rows);
 
         if (!rows || rows.length === 0) {
-            // Jangan pakai 204 (tanpa body) karena response.json() di frontend akan gagal parse.
             return res.status(200).json({ success: false, status_pemesanan: null, message: "Pesanan tidak ditemukan." });
         }
 
@@ -268,10 +243,7 @@ const batalPemesanan = async (req, res) => {
             LIMIT 1;
         `;
 
-        const result = await pool.query(checkQuery, [id_pemesanan]);
-
-        const rows = Array.isArray(result[0]) ? result[0] :
-            Array.isArray(result) ? result : [result];
+        const rows = await fetchQuery(checkQuery, [id_pemesanan]);
 
         if (rows.length === 0) {
             return res.status(404).json({ success: false, message: 'Pemesanan tidak ditemukan.' });
@@ -286,7 +258,7 @@ const batalPemesanan = async (req, res) => {
             });
         }
 
-        const deleteResult = await pool.query(`DELETE FROM Pemesanan WHERE id_pemesanan = ?`, [id_pemesanan]);
+        const deleteResult = await executeQuery(`DELETE FROM Pemesanan WHERE id_pemesanan = ?`, [id_pemesanan]);
 
         if (deleteResult.affectedRows === 0) {
             return res.status(500).json({ success: false, message: 'Gagal menghapus pemesanan.' });

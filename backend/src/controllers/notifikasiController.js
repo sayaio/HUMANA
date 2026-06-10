@@ -1,4 +1,4 @@
-const pool = require('../database');
+const { fetchQuery } = require('../utils/dbHelper');
 
 // Ambil semua notifikasi milik seorang user (guru/murid).
 const getNotifikasi = async (req, res) => {
@@ -15,7 +15,7 @@ const getNotifikasi = async (req, res) => {
     const offset = parseInt(req.query.offset) || 0;
 
     try {
-        const rows = await pool.query(
+        const rows = await fetchQuery(
             `SELECT id_notifikasi, judul, pesan FROM Notifikasi WHERE ${kolom} = ? ORDER BY id_notifikasi DESC LIMIT ? OFFSET ?`,
             [id, limit, offset]
         );
