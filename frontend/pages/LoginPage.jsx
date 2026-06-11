@@ -81,6 +81,16 @@ const LoginPage = ({
       return;
     }
 
+    if (email.trim().length < 5) {
+      showAlert('error', 'Validasi Gagal', 'Email atau Username minimal 5 karakter.');
+      return;
+    }
+
+    if (password.trim().length < 5) {
+      showAlert('error', 'Validasi Gagal', 'Password minimal 5 karakter.');
+      return;
+    }
+
     try {
       const result = await loginUser(email, password);
 

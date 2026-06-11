@@ -55,18 +55,38 @@ const EditBasicProfilePage = ({ profileData, onSave, onCancel }) => {
 
     const handleSave = async () => {
 
-        // ==========================================
-        // === REVISI VALIDASI IMK: ANGKA MURNI ===
-        // ==========================================
-        const numericRegex = /^[0-9]+$/;
-        if (!numericRegex.test(phone)) {
+        if (!name.trim() || !username.trim()) {
+            showInfo('Data Kosong', 'Nama lengkap dan Username tidak boleh kosong.');
+            return;
+        }
+
+        const nameRegex = /^[A-Za-z\s.,]{5,}$/;
+        if (!nameRegex.test(name.trim())) {
+            showInfo('Format Salah', 'Nama lengkap minimal 5 karakter dan tidak boleh mengandung karakter acak (hanya huruf, titik, koma).');
+            return;
+        }
+
+        if (username.trim().length < 5) {
+            showInfo('Format Salah', 'Username minimal 5 karakter.');
+            return;
+        }
+
+        const phoneRegex = /^08[0-9]{9,}$/;
+        if (!phoneRegex.test(phone.trim())) {
             showInfo(
                 'Format Salah',
-                'Nomor telepon tidak valid! Mohon masukkan angka murni (tidak boleh mengandung huruf atau karakter khusus).',
+                'Nomor telepon harus diawali dengan 08, minimal 11 angka, dan tanpa huruf.',
             );
-            return; // Gagalkan proses pengiriman ke server
+            return;
         }
-        // ==========================================
+
+        if (domicile.trim()) {
+            const domisiliRegex = /^[A-Za-z0-9\s.,-]+$/;
+            if (!domisiliRegex.test(domicile.trim())) {
+                showInfo('Format Salah', 'Domisili tidak boleh mengandung karakter acak (hanya huruf, angka, spasi, titik, koma).');
+                return;
+            }
+        }
 
         setIsLoading(true);
         try {

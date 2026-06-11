@@ -64,70 +64,58 @@ const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
   };
 
   const handleRegister = async () => {
-    if (
-      namaLengkap !== '' &&
-      email !== '' &&
-      password !== '' &&
-      confirmPassword !== ''
-    ) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        showAlert(
-          'error',
-          'Format Email Salah',
-          'Alamat email harus menggunakan format yang benar (mengandung "@" dan domain seperti .com).',
-        );
-        return;
-      }
+    if (!namaLengkap || !email || !password || !confirmPassword) {
+      showAlert('error', 'Data Belum Lengkap', 'Mohon isi semua kolom yang tersedia.');
+      return;
+    }
 
-      if (password === confirmPassword) {
-        const userData = {
-          namaLengkap: namaLengkap,
-          email: email,
-          password: password,
-          role: role,
-          username: email.split('@')[0],
-        };
+    const nameRegex = /^[A-Za-z\s.,]{5,}$/;
+    if (!nameRegex.test(namaLengkap.trim())) {
+      showAlert('error', 'Validasi Gagal', 'Nama lengkap minimal 5 karakter tanpa karakter acak (hanya huruf, titik, koma, spasi).');
+      return;
+    }
 
-        try {
-          const result = await registerUser(userData);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      showAlert('error', 'Format Email Salah', 'Alamat email harus menggunakan format yang benar (mengandung "@" dan domain seperti .com).');
+      return;
+    }
 
-          if (result.success) {
-            showAlert(
-              'success',
-              'Sukses!',
-              'Akun kamu berhasil dibuat.',
-              () => {
-                onNavigateToLogin();
-              },
-            );
-          } else {
-            showAlert(
-              'error',
-              'Pendaftaran Gagal',
-              result.message || 'Terjadi kesalahan pada server.',
-            );
-          }
-        } catch (error) {
-          showAlert(
-            'error',
-            'Terjadi Kesalahan',
-            'Coba cek koneksi internetmu atau coba metode lain.',
-          );
-        }
+    if (password.trim().length < 5) {
+      showAlert('error', 'Validasi Gagal', 'Password minimal 5 karakter.');
+      return;
+    }
+
+    if (confirmPassword.trim().length < 5) {
+      showAlert('error', 'Validasi Gagal', 'Konfirmasi password minimal 5 karakter.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showAlert('error', 'Pendaftaran Gagal', 'Password dan Konfirmasi Password tidak cocok!');
+      return;
+    }
+
+    const userData = {
+      namaLengkap: namaLengkap.trim(),
+      email: email.trim(),
+      password: password,
+      role: role,
+      username: email.trim().split('@')[0],
+    };
+
+    try {
+      const result = await registerUser(userData);
+
+      if (result.success) {
+        showAlert('success', 'Sukses!', 'Akun kamu berhasil dibuat.', () => {
+          onNavigateToLogin();
+        });
       } else {
-        showAlert(
-          'error',
-          'Pendaftaran Gagal',
-          'Password dan Konfirmasi Password tidak cocok!',
-        );
+        showAlert('error', 'Pendaftaran Gagal', result.message || 'Terjadi kesalahan pada server.');
       }
-    } else {
-      showAlert(
-        'error',
-        'Data Belum Lengkap',
-        'Mohon isi semua kolom yang tersedia.',
-      );
+    } catch (error) {
+      showAlert('error', 'Terjadi Kesalahan', 'Coba cek koneksi internetmu atau coba metode lain.');
     }
   };
 
