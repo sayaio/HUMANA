@@ -348,11 +348,12 @@ const RegisterPage = ({ onRegisterSuccess, onNavigateToLogin }) => {
             </View>
           </View>
 
-          <CustomButton
-            title="Daftar"
+          <TouchableOpacity 
+            style={[styles.submitButton, { marginTop: 10 }]} 
             onPress={handleRegister}
-            style={{ marginTop: 10 }}
-          />
+          >
+            <Text style={styles.submitButtonText}>Daftar</Text>
+          </TouchableOpacity>
 
           <View style={styles.orDividerContainer}>
             <View style={styles.orLine} />
@@ -669,8 +670,8 @@ const styles = StyleSheet.create({
   radioText: { fontSize: 14, color: '#333', fontWeight: '500' },
   submitButton: {
     backgroundColor: '#3a7d6b',
-    borderRadius: 16,
-    height: height * 0.056,
+    borderRadius: 25,
+    height: height * 0.06,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -749,7 +750,7 @@ const styles = StyleSheet.create({
   },
   modalConfirmButton: {
     backgroundColor: '#3a7d6b',
-    borderRadius: 16,
+    borderRadius: 25,
     height: 48,
     width: '100%',
     justifyContent: 'center',
